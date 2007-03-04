@@ -1,5 +1,5 @@
 /*
- * $Id: Balance.java,v 1.11 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: Balance.java,v 1.12 2007-03-04 20:45:23 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -60,7 +60,7 @@ public class Balance
         
         if (resultOfOperations.isPositive()) {
             // add a profit
-            Account profitAccount = new ResultAccount(false, resultOfOperations);
+            Account profitAccount = new ResultAccount(false, resultOfOperations, database);
             Account[] newLiabilities = new Account[liabilities.length+1];
             System.arraycopy(liabilities, 0, newLiabilities, 0, liabilities.length);
             newLiabilities[liabilities.length] = profitAccount;
@@ -69,7 +69,7 @@ public class Balance
         } else if (resultOfOperations.isNegative()) {
             // add a loss
             Account lossAccount = new ResultAccount(true, 
-                    resultOfOperations.negate());
+                    resultOfOperations.negate(), database);
             Account[] newAssets = new Account[assets.length+1];
             System.arraycopy(assets, 0, newAssets, 0, assets.length);
             newAssets[assets.length] = lossAccount;
@@ -232,7 +232,7 @@ public class Balance
      *
      * @author Sander Kooijmans
      */
-    private static class ResultAccount extends Account {
+    private class ResultAccount extends Account {
 
         private Amount amount;
         
@@ -243,10 +243,10 @@ public class Balance
          *         <code>false</code> indicates this account is a profit.
          * @param amount the amount of result
          */
-        public ResultAccount(boolean debet, Amount amount) {
+        public ResultAccount(boolean debet, Amount amount, Database database) {
             super("", TextResource.getInstance().getString(
                     debet ?"gen.loss" : "gen.profit"), 
-                    debet);
+                    debet, database);
             this.amount = amount;
         }
 

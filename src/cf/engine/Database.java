@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.20 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: Database.java,v 1.21 2007-03-04 20:44:32 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -11,9 +11,14 @@ import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 import nl.gogognome.text.Amount;
+import nl.gogognome.util.DateUtil;
 
 /**
  * This class maintains all accounts, journals, debtors and
@@ -253,6 +258,24 @@ public class Database {
         this.revenues = revenues;
         updateIdsToAccountsMap();
         notifyChange();
+    }
+
+    /**
+     * Gets all accounts of this database. The accounts are a concatenation of the
+     * assets, liabilities, expenses and revenues.
+     * @return all accounts of this database
+     */
+    public Account[] getAllAccounts() {
+        Account[] assets = getAssets();
+        Account[] liabilities = getLiabilities();
+        Account[] expenses = getExpenses();
+        Account[] revenues = getRevenues();
+        Account[] accounts = new Account[assets.length + liabilities.length + expenses.length + revenues.length];
+        System.arraycopy(assets, 0, accounts, 0, assets.length);
+        System.arraycopy(liabilities, 0, accounts, assets.length, liabilities.length);
+        System.arraycopy(expenses, 0, accounts, assets.length + liabilities.length, expenses.length);
+        System.arraycopy(revenues, 0, accounts, assets.length + liabilities.length + expenses.length, revenues.length);
+        return accounts;
     }
     
     public Date getStartOfPeriod() 
@@ -498,4 +521,161 @@ public class Database {
         return result;
     }
     
+    /**
+     * All journals before or at the specified date are replaced by
+     * a single journal. This method will not change the balance at the
+     * specified date or of later dates.
+     * 
+     * <p>Journals with a date before the specified date will only be remained
+     * if they contain references to amounts that are still to be paid to creditors or
+     * received from debtors.
+     * 
+     * <p>This method will remove journals. It should be used carefully. Typically,
+     * it should not be used on a database that contains unsaved changes.
+     * 
+     * @param date the date
+     */
+    public void cleanUpJournalsBefore(Date date) {
+        ArrayList journalsToBeDeleted = new ArrayList(Arrays.asList(getJournals()));
+        
+        // maps accounts to the amount of the corresponding accounts.
+        HashMap accountsToAmountMap = new HashMap();
+        
+        // maps parties to the amount to be received from the corresponding party.
+        HashMap partiesToAmountMap = new HashMap();
+        
+        // maps parties to a LinkedList of journals referring to the party
+        HashMap partiesToJournalsMap = new HashMap();
+        
+        int index = 0;
+        while (index < journalsToBeDeleted.size()) {
+            Journal journal = (Journal)journalsToBeDeleted.get(index);
+            if (DateUtil.compareDayOfYear(journal.getDate(), date) > 0) {
+                // The journal has a date after the specified date and should
+                // therefore not be replaced.
+                journalsToBeDeleted.remove(index);
+            } else {
+                JournalItem[] items = journal.getItems();
+
+                Party foundParty = null;
+                Amount partyAmount = null;
+                for (int i = 0; i < items.length; i++) {
+                    JournalItem item = items[i];
+                    
+                    Amount amount = getAmountFromMap(accountsToAmountMap, item.getAccount());
+                    if (item.isDebet()) {
+                        amount = amount.add(item.getAmount());
+                    } else {
+                        amount = amount.subtract(item.getAmount());
+                    }
+                    accountsToAmountMap.put(item.getAccount(), amount);
+                    
+                    Party party = item.getParty();
+                    if (party != null) {
+                        if (foundParty != null) {
+                            throw new IllegalStateException("Found a journal with more than 1 item with a party!");
+                        }
+                        
+                        foundParty = party;
+                        partyAmount = getAmountFromMap(partiesToAmountMap, party);
+                        if (item.isDebet()) {
+                            partyAmount = partyAmount.add(item.getAmount());
+                        } else {
+                            partyAmount = partyAmount.subtract(item.getAmount());
+                        }
+                        partiesToAmountMap.put(party, partyAmount);
+                        
+                        List list = (List)partiesToJournalsMap.get(party);
+                        if (list == null) {
+                            list = new LinkedList();
+                            partiesToJournalsMap.put(party, list);
+                        }
+                        list.add(journal);
+                    }
+                }
+                
+                index++;
+
+                if (foundParty != null && partyAmount != null && partyAmount.isZero()) {
+                    // The party that was found has an amount of zero. The journals
+                    // that refer to the party can be removed.
+                    List list = (List)partiesToJournalsMap.get(foundParty);
+                    list.clear();
+                }
+            }
+        }
+
+        // For each of the parties whose balance is not zero, make sure that the
+        // journals referring to that party are not removed.
+        for (Iterator iter = partiesToJournalsMap.entrySet().iterator(); iter.hasNext();) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            Party party = (Party)entry.getKey();
+            List list = (List)entry.getValue();
+            for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+                Journal journal = (Journal) iterator.next();
+                journalsToBeDeleted.remove(journal);
+                
+                // Undo the update of the amounts in accountsToAmountMap.
+                JournalItem[] items = journal.getItems();
+                for (int i = 0; i < items.length; i++) {
+                    JournalItem item = items[i];
+                    
+                    Amount amount = getAmountFromMap(accountsToAmountMap, item.getAccount());
+	                if (!item.isDebet()) {
+	                    amount = amount.add(item.getAmount());
+	                } else {
+	                    amount = amount.subtract(item.getAmount());
+	                }
+	                accountsToAmountMap.put(item.getAccount(), amount);
+	                
+	                if (item.getParty() != null && !party.equals(item.getParty())) {
+	                    throw new InternalError("Journal contains wrong party!");
+	                }
+                }
+            }
+        }
+        
+        
+        // Remove the journals.
+        for (Iterator iter = journalsToBeDeleted.iterator(); iter.hasNext();) {
+            Journal journal = (Journal) iter.next();
+            journals.remove(journal);
+        }
+        
+        // Add a journal that matches the amounts of the removed journals.
+        Set accountToAmountEntries = accountsToAmountMap.entrySet();
+        JournalItem[] items = new JournalItem[accountToAmountEntries.size()];
+        index = 0;
+        for (Iterator iter = accountToAmountEntries.iterator(); iter.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)iter.next();
+            Account account = (Account) entry.getKey();
+            Amount amount = (Amount) entry.getValue();
+            if (!amount.isNegative()) {
+                items[index] = new JournalItem(amount, account, true, null);
+            } else {
+                items[index] = new JournalItem(amount.negate(), account, false, null);
+            }
+            index++;
+        }
+        
+        journals.addElement(new Journal("reset", "reset", date, items));
+    }
+    
+    /**
+     * Gets an amount from a <code>Map</code>.
+     * 
+     * @param map the map
+     * @param key the key for which the corresponding <code>Amount</code> is
+     *         to be returned
+     * @return the <code>Amount</code> that corresponds to the specified key or
+     *         an amount representing zero if no <code>Amount</code> was associated
+     *         with the key.
+     */
+    private Amount getAmountFromMap(Map map, Object key) {
+        Amount result = (Amount)map.get(key);
+        if (result == null) {
+            result = Amount.getZero(getCurrency()); 
+        }
+        return result;
+    }
 }
