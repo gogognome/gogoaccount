@@ -1,0 +1,526 @@
+/*
+ * $Id: MainFrame.java,v 1.22 2007-02-10 16:28:46 sanderk Exp $
+ *
+ * Copyright (C) 2006 Sander Kooijmans
+ */
+package cf.ui;
+
+import java.awt.Dimension;
+import java.awt.FileDialog;
+import java.awt.event.*;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.Date;
+import java.util.Locale;
+
+import javax.swing.*;
+
+import nl.gogognome.swing.MessageDialog;
+import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.text.TextResource;
+
+import cf.engine.Account;
+import cf.engine.Database;
+import cf.engine.DatabaseListener;
+import cf.engine.Journal;
+import cf.engine.ParseException;
+import cf.engine.Party;
+import cf.engine.XMLFileReader;
+import cf.engine.XMLFileWriter;
+import cf.ui.dialogs.AccountSelectionDialog;
+import cf.ui.dialogs.DateSelectionDialog;
+import cf.ui.dialogs.EditJournalDialog;
+import cf.ui.dialogs.EditJournalsDialog;
+import cf.ui.dialogs.InvoiceDialog;
+import cf.ui.dialogs.InvoiceGeneratorDialog;
+import cf.ui.dialogs.PartySelectionDialog;
+import cf.ui.dialogs.ReportDialog;
+import cf.ui.dialogs.ViewAccountOverviewDialog;
+import cf.ui.dialogs.ViewBalanceDialog;
+import cf.ui.dialogs.ViewOperationalResultDialog;
+import cf.ui.dialogs.ViewPartiesOverviewDialog;
+import cf.ui.dialogs.ViewPartyOverviewDialog;
+
+/**
+ * This class implements the main frame of the application. 
+ * 
+ * @author Sander Kooijmans
+ */
+public class MainFrame extends JFrame implements ActionListener, DatabaseListener 
+{
+	/** The menu bar of the application. */
+	private JMenuBar menuBar = new JMenuBar();
+
+	/** Creates the main frame. */
+	public MainFrame() 
+	{
+		super(createTitle());
+		Database.addListener(this);
+		createMenuBar();
+		setDefaultCloseOperation( WindowConstants.DO_NOTHING_ON_CLOSE );
+
+		// Add a panel to enforce a size of the main frame.  
+		JPanel panel = new JPanel() {
+		    public Dimension getPreferredSize() { return new Dimension(500,10); }
+		};
+		getContentPane().add(panel);
+		
+		addWindowListener( new WindowAdapter() {
+			public void windowClosing(WindowEvent e) { handleExit(); } }
+		);
+		
+		pack();
+	}
+	
+	/**
+	 * Creates the title to be shown in the title bar of the main frame.
+	 * @return the title
+	 */
+	private static String createTitle()
+	{
+	    String result = TextResource.getInstance().getString("mf.title");
+	    Database db = Database.getInstance();
+	    String description = db.getDescription();
+	    if (description != null)
+	    {
+	        result += " - " + description;
+	        if (db.hasUnsavedChanges())
+	        {
+	            result += "*";
+	        }
+	    }
+	    return result;
+	}
+	/** Creates the menu bar. */
+	private void createMenuBar() {
+		// the menus
+		WidgetFactory wf = WidgetFactory.getInstance();
+		JMenu fileMenu = wf.createMenu("mi.file" );
+		JMenu editMenu = wf.createMenu("mi.edit" );
+		JMenu viewMenu = wf.createMenu("mi.view" );
+		JMenu reportingMenu = wf.createMenu("mi.reporting" );
+		JMenu helpMenu = wf.createMenu("mi.help" );
+
+		// the file menu
+		JMenuItem miNewEdition = wf.createMenuItem("mi.newBookkeeping", this);
+		JMenuItem miOpenEdition = wf.createMenuItem("mi.openBookkeeping", this);
+		JMenuItem miSaveEdition = wf.createMenuItem("mi.saveBookkeeping", this);
+		JMenuItem miSaveEditionAs = wf.createMenuItem("mi.saveBookkeepingAs", this);
+		JMenuItem miExit = wf.createMenuItem("mi.exit", this);
+
+		// the edit menu
+		JMenuItem miAddJournal = wf.createMenuItem("mi.addJournal", this);
+		JMenuItem miEditJournals = wf.createMenuItem("mi.editJournals", this);
+		JMenuItem miAddInvoices = wf.createMenuItem("mi.addInvoices", this);
+
+		// the view menu
+		JMenuItem miViewBalance = wf.createMenuItem("mi.viewBalance", this);
+		JMenuItem miViewOperationalResult = wf.createMenuItem("mi.viewOperationalResult", this);
+		JMenuItem miViewAccountOverview = wf.createMenuItem("mi.viewAccountOverview", this);
+		JMenuItem miViewPartyOverview = wf.createMenuItem("mi.viewPartyOverview", this);
+		JMenuItem miViewPartiesOverview = wf.createMenuItem("mi.viewPartiesOverview", this);
+
+		// the invoices menu
+		JMenuItem miGenerateInvoices = wf.createMenuItem("mi.generateInvoices", this);
+		JMenuItem miGenerateReport = wf.createMenuItem("mi.generateReport", this);
+		
+		// the help menu
+		JMenuItem miAbout = wf.createMenuItem("mi.about", this);
+
+		fileMenu.add( miNewEdition );
+		fileMenu.add( miOpenEdition );
+		fileMenu.add( miSaveEdition );
+		fileMenu.add( miSaveEditionAs );
+		fileMenu.add( miExit );
+		
+		editMenu.add( miAddJournal );
+		editMenu.add( miEditJournals );
+		editMenu.add( miAddInvoices );
+		
+		viewMenu.add( miViewBalance );
+		viewMenu.add( miViewOperationalResult );
+		viewMenu.add( miViewAccountOverview );
+		viewMenu.add( miViewPartyOverview );
+		viewMenu.add( miViewPartiesOverview );
+		
+		reportingMenu.add( miGenerateInvoices );
+		reportingMenu.add( miGenerateReport );
+		
+		helpMenu.add( miAbout );
+		
+		menuBar.add( fileMenu );
+		menuBar.add( editMenu );
+		menuBar.add( viewMenu );
+		menuBar.add( reportingMenu );
+		menuBar.add( helpMenu );
+		
+		setJMenuBar( menuBar );
+	}
+	
+	/**
+	 * This method is invoked when an action occurs.
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
+	public void actionPerformed(ActionEvent e) 
+	{
+		String command = e.getActionCommand();
+		if ("mi.openBookkeeping".equals(command)) { handleOpenBookkeeping(); }
+		if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
+		if ("mi.saveBookkeepingAs".equals(command)) { handleSaveBookeepingAs(); }
+		if ("mi.exit".equals(command)) { handleExit(); }
+		if ("mi.viewBalance".equals(command)) { handleViewBalance(); }
+		if ("mi.viewOperationalResult".equals(command)) { handleViewOperationalResult(); }
+		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountOverview(); }
+		if ("mi.viewPartyOverview".equals(command)) { handleViewPartyOverview(); }
+		if ("mi.viewPartiesOverview".equals(command)) { handleViewPartiesOverview(); }
+		if ("mi.addJournal".equals(command)) { handleAddJournal(); }
+		if ("mi.editJournals".equals(command)) { handleEditJournals(); }
+		if ("mi.addInvoices".equals(command)) { handleAddInvoices(); }
+		if ("mi.generateInvoices".equals(command)) { handleGenerateInvoices(); }
+		if ("mi.generateReport".equals(command)) { handleGenerateReport(); }
+	}
+
+	/**
+	 * Starts the application.
+	 * @param args command line arguments; if one argument is passed, then
+	 *        it is used as file name of an edition that is loaded.
+	 *        Further, if the argument <tt>-lang=X</tt> is used, then
+	 *        the language is set to </tt>X</tt>. </tt>X</tt> should be a valid
+	 *        ISO 639 language code.
+	 */
+	public static void main( String[] args ) 
+	{
+		// parse arguments: language must be set before creating main frame
+		String fileName = null;
+		for (int i=0; i<args.length; i++) 
+		{
+			if (args[i].startsWith("-lang=")) 
+			{
+				TextResource.getInstance().setLocale( new Locale(args[i].substring(6)) );
+			} 
+			else 
+			{
+				fileName = args[i];
+			}
+		}
+		
+        // Create and show main frame.
+		MainFrame mf = new MainFrame();
+        mf.setVisible(true);
+        mf.requestFocus();
+
+		if (fileName != null) 
+		{
+		    mf.loadFile(fileName);
+		}
+	}
+
+	/**
+	 * Checks whether the database may be destroyed. 
+	 * 
+	 * <p>If the database has been
+	 * changed since the last load or save, then the user is asked whether these
+	 * changes must be saved. If the user wants these changes to be saved, then
+	 * changes are saved before this method returns.
+	 * 
+	 * <p>If the user does not wants to save the changes, then this method simply
+	 * returns.
+	 * 
+	 * @return <tt>true</tt> if the database may be destroyed; <tt>false</tt> otherwise.
+	 */
+	private boolean mayCurrentDatabaseBeDestroyed() 
+	{
+		boolean result;
+		if (Database.getInstance().hasUnsavedChanges()) 
+		{
+		    TextResource tr = TextResource.getInstance();
+			MessageDialog dialog = new MessageDialog(this, 
+				"gen.titleWarning",
+				tr.getString("mf.saveChangesBeforeExit"),
+				new String[] {"gen.yes", "gen.no", "gen.cancel"});
+			switch(dialog.getSelectedButton()) 
+			{
+				case 0: // yes
+					handleSaveBookkeeping();
+					result = true;
+					break;
+				case 1: // no; continue without saving
+					result = true;
+					break;
+				case -1: // user pressed escape or closed dialog
+				case 2: // cancel
+					result = false;
+					break;
+				default:
+					throw new IllegalStateException("Unknown button pressed. Index: " 
+						+ dialog.getSelectedButton());
+			}
+		} 
+		else 
+		{ // database has not been changed since last save/load
+			result = true;
+		}
+		
+		return result;
+	}
+	
+	/** Handles the new edition event. */
+/*	private void handleNewEdition() 
+	{
+		if (mayCurrentDatabaseBeDestroyed()) {
+			Database db = new Database();
+			Database.setCurrentDatabase(db);
+			handleEditEdition();
+		}
+	}
+	
+	/** Handles the open bookkeeping event. */
+	private void handleOpenBookkeeping() 
+	{
+		if (mayCurrentDatabaseBeDestroyed()) 
+		{
+		    TextResource tr = TextResource.getInstance();		    
+			FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleOpenBookkeeping"), FileDialog.LOAD);
+			fileDialog.setFilenameFilter( new FilenameFilter() {
+				public boolean accept(File dir, String name) {
+					File compositeName = new File(dir,name);  
+					return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } } 
+				);
+			fileDialog.show();
+			String directory = fileDialog.getDirectory();
+			String filename  = fileDialog.getFile();
+			if (directory != null && filename != null) 
+			{
+				loadFile( directory + filename );
+			}
+			requestFocus();
+		}
+	}
+
+	/** Handles the save bookkeeping event. */
+	private void handleSaveBookkeeping() 
+	{
+		String fileName = Database.getInstance().getFileName(); 
+		if (fileName != null) 
+		{
+		    saveBookkeeping(fileName);
+		} 
+		else 
+		{
+			handleSaveBookeepingAs(); 
+		}
+	}
+	
+	/** Handles the save edition as event. */
+	private void handleSaveBookeepingAs() 
+	{
+	    TextResource tr = TextResource.getInstance();		    
+		FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleSaveAs"), FileDialog.SAVE);
+		fileDialog.setFilenameFilter( new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				File compositeName = new File(dir,name);  
+				return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } } 
+			);
+		fileDialog.setFile( Database.getInstance().getFileName() );
+		fileDialog.show();
+		String directory = fileDialog.getDirectory();
+		String filename  = fileDialog.getFile();
+		if (directory != null && filename != null) 
+		{
+			saveBookkeeping( directory + filename );
+		}
+		requestFocus();
+	}
+
+	/**
+	 * Loads a bookkeeping from an XML file.
+	 * @param fileName the name of the file.
+	 */
+	private void loadFile( String fileName ) 
+	{	
+		try 
+		{
+			Database db = XMLFileReader.createDatabaseFromFile(fileName);
+//			db.startMultipleUpdates();
+			Database.setInstance(db);
+			db.databaseConsistentWithFile();
+//			db.endMultipleUpdates();			
+		}
+		catch (ParseException e) 
+		{
+			new MessageDialog(this, "mf.errorOpeningFile", e);
+		} 
+		databaseChanged( Database.getInstance() );
+	}
+	
+	/**
+	 * Saves the current bookkeeping to an XML file.
+	 * @param fileName the name of the file.
+	 */
+	private void saveBookkeeping( String fileName ) {
+		try 
+		{
+			XMLFileWriter.writeDatabaseToFile( Database.getInstance(), fileName );
+			Database db = Database.getInstance(); 
+			db.setFileName(fileName);
+			db.databaseConsistentWithFile();
+		} 
+		catch (RuntimeException e) 
+		{
+			String message = e.getMessage(); 
+			new MessageDialog(this, "gen.error", 
+				message != null ? message : e.toString());
+		}
+	}
+	
+	/** Handles the exit event. */
+	private void handleExit() 
+	{
+		if (mayCurrentDatabaseBeDestroyed()) 
+		{
+			Database.removeListener(this);
+			dispose();
+		}
+	}
+
+	private void handleViewBalance()
+	{
+	    DateSelectionDialog dateSelectionDialog = 
+	        new DateSelectionDialog(this, "mf.selectDateForBalance");
+	    dateSelectionDialog.showDialog();
+	    Date date = dateSelectionDialog.getDate();
+	    if (date != null)
+	    {
+	        ViewBalanceDialog dialog = new ViewBalanceDialog(this, date);
+	        dialog.showDialog();
+	    }
+	}
+	
+	private void handleViewOperationalResult()
+	{
+	    DateSelectionDialog dateSelectionDialog = 
+	        new DateSelectionDialog(this, "mf.selectDateForOperationalResult");
+	    dateSelectionDialog.showDialog();
+	    Date date = dateSelectionDialog.getDate();
+	    if (date != null)
+	    {
+	        ViewOperationalResultDialog dialog = new ViewOperationalResultDialog(this, date);
+	        dialog.showDialog();
+	    }
+	}
+	
+	private void handleViewAccountOverview()
+	{
+        AccountSelectionDialog accountSelectionDialog = new
+        	AccountSelectionDialog(this, "mf.selectAccountForAccountOverview");
+        accountSelectionDialog.showDialog();
+        Account account = accountSelectionDialog.getAccount();
+        if (account != null)
+        {
+            DateSelectionDialog dateSelectionDialog = 
+                new DateSelectionDialog(this, "mf.selectDateForAccountOverview");
+            dateSelectionDialog.showDialog();
+            Date date = dateSelectionDialog.getDate();
+            if (date != null)
+            {
+	            ViewAccountOverviewDialog dialog = new ViewAccountOverviewDialog(this, account, date);
+	            dialog.showDialog();
+	        }
+	    }
+	}
+	
+	private void handleViewPartyOverview()
+	{
+        PartySelectionDialog partySelectionDialog = new
+    		PartySelectionDialog(this, "mf.selectPartyForPartyOverview",
+    		        PartySelectionDialog.SELECTION_MODE);
+	    partySelectionDialog.showDialog();
+	    Party party = partySelectionDialog.getSelectedParty();
+	    if (party != null)
+	    {
+	        DateSelectionDialog dateSelectionDialog = 
+	            new DateSelectionDialog(this, "mf.selectDateForPartyOverview");
+	        dateSelectionDialog.showDialog();
+	        Date date = dateSelectionDialog.getDate();
+	        if (date != null)
+	        {
+	            ViewPartyOverviewDialog dialog = new ViewPartyOverviewDialog(this, party, date);
+	            dialog.showDialog();
+	        }
+	    }
+	}
+
+	private void handleViewPartiesOverview()
+	{
+        DateSelectionDialog dateSelectionDialog = 
+            new DateSelectionDialog(this, "mf.selectDateForPartiesOverview");
+        dateSelectionDialog.showDialog();
+        Date date = dateSelectionDialog.getDate();
+        if (date != null)
+        {
+            ViewPartiesOverviewDialog dialog = new ViewPartiesOverviewDialog(this, date);
+            dialog.showDialog();
+        }
+	}
+	
+	private void handleAddJournal()
+	{
+	    Database db = Database.getInstance();
+	    if (!db.hasAccounts())
+	    {
+	        MessageDialog messageDialg = new MessageDialog(this, "gen.warning", 
+	                TextResource.getInstance().getString("mf.noAccountsPresent"));
+	    }
+	    else
+	    {
+		    EditJournalDialog dialog = new EditJournalDialog(this, "ajd.title", true);
+		    dialog.showDialog();
+		    Journal[] journals = dialog.getEditedJournals();
+		    for (int i = 0; i < journals.length; i++) {
+		        db.addJournal(journals[i]);
+            }
+	    }
+	}
+	
+	private void handleEditJournals()
+	{
+	    Database db = Database.getInstance();
+	    if (!db.hasAccounts())
+	    {
+	        MessageDialog messageDialg = new MessageDialog(this, "gen.warning", 
+	                TextResource.getInstance().getString("mf.noAccountsPresent"));
+	    }
+	    else
+	    {
+		    EditJournalsDialog dialog = new EditJournalsDialog(this);
+		    dialog.showDialog();
+	    }
+	}
+	
+	private void handleGenerateInvoices()
+	{
+	    InvoiceDialog dialog = new InvoiceDialog(this);
+	    dialog.showDialog();
+	}
+
+	private void handleGenerateReport()
+	{
+	    ReportDialog dialog = new ReportDialog(this);
+	    dialog.showDialog();
+	}
+	
+	private void handleAddInvoices() {
+	    InvoiceGeneratorDialog dialog = new InvoiceGeneratorDialog(this);
+	    dialog.showDialog();
+	}
+	
+    /**
+     * This method is called when the database has changed.
+     * @param db the database that has changed
+     */
+    public void databaseChanged(Database db) 
+    {
+        setTitle(createTitle());
+    }
+
+}
