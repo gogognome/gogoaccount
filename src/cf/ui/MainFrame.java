@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.22 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: MainFrame.java,v 1.23 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -468,7 +468,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    Database db = Database.getInstance();
 	    if (!db.hasAccounts())
 	    {
-	        MessageDialog messageDialg = new MessageDialog(this, "gen.warning", 
+	        MessageDialog.showMessage(this, "gen.warning", 
 	                TextResource.getInstance().getString("mf.noAccountsPresent"));
 	    }
 	    else
@@ -487,7 +487,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    Database db = Database.getInstance();
 	    if (!db.hasAccounts())
 	    {
-	        MessageDialog messageDialg = new MessageDialog(this, "gen.warning", 
+	        MessageDialog.showMessage(this, "gen.warning", 
 	                TextResource.getInstance().getString("mf.noAccountsPresent"));
 	    }
 	    else

@@ -1,5 +1,5 @@
 /*
- * $Id: ItemsTableModel.java,v 1.5 2006-12-19 19:30:37 sanderk Exp $
+ * $Id: ItemsTableModel.java,v 1.6 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -267,8 +267,7 @@ class ItemsTableModel implements TableModel
      */
     public void addEmptyItem()
     {
-        int row = items.size();
-        Account dummyAccount = new Account("???", "???", true);
+        Account dummyAccount = new Account("???", "???", true, Database.getInstance());
         addItem(new JournalItem(Amount.getZero(Database.getInstance().getCurrency()), dummyAccount, true, null));
     }
     

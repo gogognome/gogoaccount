@@ -34,9 +34,6 @@ public class TextPainter {
 		return FONTS[f]; 
 	}
 
-	/** The font metrics for each of the fonts. */
-	private final static FontMetrics[] FONT_METRICS = new FontMetrics[FONTS.length];
-
 	/**
 	 * Gets the dimensions of the specified text.
 	 * 

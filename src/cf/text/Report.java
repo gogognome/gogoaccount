@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.12 2007-03-04 20:42:20 sanderk Exp $
+ * $Id: Report.java,v 1.13 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -477,10 +477,15 @@ public class Report
 	            Amount startAmount = account.getStartBalance();
                 values[4] = "";
                 values[6] = "";
-                values[startAmount.isPositive() ? 4 : 6] = 
+                values[account.isDebet() ? 4 : 6] = 
                     af.formatAmountWithoutCurrency(startAmount);
                 values[8] = "";
                 result.append(textFormat.getRow(values));
+                
+                // Convert the start amount to a debet value if it is a credit value.
+                if (!account.isDebet()) {
+                    startAmount = startAmount.negate();
+                }
                 
                 // Append the items of 'account'.
                 Amount totalDebetMutations = Amount.getZero(startAmount.getCurrency());

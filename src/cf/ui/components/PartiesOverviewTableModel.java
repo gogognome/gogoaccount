@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesOverviewTableModel.java,v 1.6 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: PartiesOverviewTableModel.java,v 1.7 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -34,8 +34,6 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /** The parties to be shown in the table. */
     private Party[] parties;
     
-    private final static int WIDTH = 800;
-    
     /**
      * Constructs a new <code>partyOverviewComponent</code>.
      * @param party the party to be shown
@@ -46,7 +44,6 @@ public class PartiesOverviewTableModel extends AbstractTableModel
         super();
         this.date = date;
         parties = Database.getInstance().getParties();
-        Database db = Database.getInstance();
     }
 
     /* (non-Javadoc)

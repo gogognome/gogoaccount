@@ -1,5 +1,5 @@
 /*
- * $Id: PartyOverviewTableModel.java,v 1.6 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: PartyOverviewTableModel.java,v 1.7 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -47,8 +47,6 @@ public class PartyOverviewTableModel extends AbstractTableModel
     private Amount totalDebet;
     
     private Amount totalCredit;
-    
-    private final static int WIDTH = 800;
     
     /**
      * Constructs a new <code>partyOverviewComponent</code>.

@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.12 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.13 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -69,26 +69,25 @@ public class XMLFileReader
 			
 			// parse accounts
 			Account[] assets = 
-			    parseAccounts(rootElement.getElementsByTagName("assets"), true); 
+			    parseAccounts(rootElement.getElementsByTagName("assets"), true, db); 
 			db.setAssets(assets);
 			
 			Account[] liabilities = 
-			    parseAccounts(rootElement.getElementsByTagName("liabilities"), false); 
+			    parseAccounts(rootElement.getElementsByTagName("liabilities"), false, db); 
 			db.setLiabilities(liabilities);
 			
 			Account[] expenses = 
-			    parseAccounts(rootElement.getElementsByTagName("expenses"), true); 
+			    parseAccounts(rootElement.getElementsByTagName("expenses"), true, db); 
 			db.setExpenses(expenses);
 			
 			Account[] revenues = 
-			    parseAccounts(rootElement.getElementsByTagName("revenues"), false); 
+			    parseAccounts(rootElement.getElementsByTagName("revenues"), false, db); 
 			db.setRevenues(revenues);
 			
 			Party[] parties =
 			    parseParties(rootElement.getElementsByTagName("parties"));
 			db.setParties(parties);
 		    
-		    Vector journals = new Vector();
 		    NodeList journalsNodes = rootElement.getElementsByTagName("journals");
 			AmountFormat af = new AmountFormat(Locale.US);
 		    for (int i=0; i<journalsNodes.getLength(); i++)
@@ -111,7 +110,6 @@ public class XMLFileReader
 		                String amountString = itemElem.getAttribute("amount");
 		                Amount amount = af.parse(amountString);
 		                String side = itemElem.getAttribute("side");
-		                Party debtorCreditor = null;
 		                String partyString = itemElem.getAttribute("party");
 		                itemsVector.addElement(new JournalItem(amount, db.getAccount(itemId), 
 	                        "debet".equals(side), db.getParty(partyString)));
@@ -144,9 +142,10 @@ public class XMLFileReader
 	 * @param nodes a node list containing accounts 
 	 * @param debet indicates whether the accounts in the list are on the
 	 *              debet side (<code>true</code>) or credit side (<code>false</code>).
+	 * @param database the database to which the accounts belong
 	 * @return the accounts
 	 */
-	private static Account[] parseAccounts(NodeList nodes, boolean debet)
+	private static Account[] parseAccounts(NodeList nodes, boolean debet, Database database)
 	{
 	    Vector accounts = new Vector();
 	    for (int i=0; i<nodes.getLength(); i++)
@@ -158,7 +157,7 @@ public class XMLFileReader
 	            Element accountElem = (Element)accountNodes.item(j);
 	            String id = accountElem.getAttribute("id");
 	            String name = accountElem.getAttribute("name");
-	            accounts.addElement(new Account(id, name, debet));
+	            accounts.addElement(new Account(id, name, debet, database));
 	        }
 	    }
 	    Account[] result = new Account[accounts.size()];

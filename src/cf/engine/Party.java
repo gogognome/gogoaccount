@@ -1,5 +1,5 @@
 /*
- * $Id: Party.java,v 1.9 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: Party.java,v 1.10 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -107,6 +107,13 @@ public class Party implements Comparable
         return city;
     }
     
+    /**
+     * Gets the hash code for this instance.
+     * @return the hash code
+     */
+    public int hashCode() {
+        return id.hashCode();
+    }
     
     /**
      * Checks whether this instance equals another instance.

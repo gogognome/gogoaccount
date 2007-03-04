@@ -1,5 +1,5 @@
 /*
- * $Id: ReportDialog.java,v 1.5 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: ReportDialog.java,v 1.6 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,14 +7,16 @@ package cf.ui.dialogs;
 
 import java.awt.Frame;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Vector;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -35,24 +37,13 @@ import nl.gogognome.text.TextResource;
 /**
  * This class implements the report dialog. This dialog can generate
  * a report consisting of balance, operational result and overviews of
- * debtors and creditors in different file formats.
+ * debtors and creditors, journals and ledger in different file formats.
  * 
  * @author Sander Kooijmans
  */
-public class ReportDialog extends OkCancelDialog 
-{
-    private static class Invoice
-    {
-        String date;
-        String partyName;
-        String partyId;
-        Vector itemDescriptions = new Vector();
-        Vector itemAmounts = new Vector();
-        Vector itemDates = new Vector();
-        String totalAmount;
-    }
+public class ReportDialog extends OkCancelDialog { 
     
-    private JTextField tfPdfFileName;
+    private JTextField tfFileName;
     private JSpinner.DateEditor dateEditor;
     
     private JRadioButton rbTxtFile;
@@ -60,9 +51,6 @@ public class ReportDialog extends OkCancelDialog
     private JRadioButton rbHtmlFile;
     
     private Frame parentFrame;
-    
-    /** The contents of the template file. */
-    private ArrayList templateContents;
     
     /**
      * Constructor.
@@ -84,9 +72,22 @@ public class ReportDialog extends OkCancelDialog
         fileNamePanel.add(lbTemplateFileName, 
                 SwingUtils.createLabelGBConstraints(0, 0));
         
-        tfPdfFileName = wf.createTextField(30);
-        fileNamePanel.add(tfPdfFileName,
+        tfFileName = wf.createTextField(30);
+        fileNamePanel.add(tfFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
+        
+        JButton button = wf.createButton("gen.btSelectFile"); 
+        button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                JFileChooser fileChooser = new JFileChooser(tfFileName.getText());
+                if (fileChooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION) {
+                    tfFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
+                }
+                
+            }
+        });
+        fileNamePanel.add(button,
+                SwingUtils.createLabelGBConstraints(2, 0));
         
         JLabel lbDate = wf.createLabel("genreport.date");
         fileNamePanel.add(lbDate, 
@@ -123,7 +124,7 @@ public class ReportDialog extends OkCancelDialog
                 SwingUtils.createGBConstraints(0, 2));
         buttonGroup.add(rbTxtFile);
         
-        rbPdfFile.setSelected(true);
+        rbTxtFile.setSelected(true);
 
         // Create top panel
         gbl = new GridBagLayout();
@@ -164,7 +165,7 @@ public class ReportDialog extends OkCancelDialog
             return;
         }
         
-        generateReport(tfPdfFileName.getText(), fileType, date);
+        generateReport(tfFileName.getText(), fileType, date);
         hideDialog();
     }
 

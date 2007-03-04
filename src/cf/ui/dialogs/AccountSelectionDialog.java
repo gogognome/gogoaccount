@@ -1,5 +1,5 @@
 /*
- * $Id: AccountSelectionDialog.java,v 1.2 2006-11-20 18:40:06 sanderk Exp $
+ * $Id: AccountSelectionDialog.java,v 1.3 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -30,8 +30,6 @@ public class AccountSelectionDialog extends OkCancelDialog
      */
     private Account account;
     
-    private Frame parentFrame;
-
     private AccountCellEditor accountCellEditor;
     
     /**
@@ -42,7 +40,6 @@ public class AccountSelectionDialog extends OkCancelDialog
     public AccountSelectionDialog(Frame frame, String id) 
     {
         super(frame, "as.selectAccount");
-        this.parentFrame = frame;
         JComponent component = new JPanel();
         component.add(new JLabel(TextResource.getInstance().getString(id)));
         

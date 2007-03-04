@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.11 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.12 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -175,7 +175,6 @@ public class InvoiceDialog extends OkCancelDialog
     private void generateInvoices(Date date)
     {
         TextResource tr = TextResource.getInstance();
-        AmountFormat af = tr.getAmountFormat();
         
         try
         {
@@ -208,7 +207,6 @@ public class InvoiceDialog extends OkCancelDialog
         Database db = Database.getInstance();
         Journal[] journals = db.getJournals();
         Party[] debtors = db.getDebtors(date);
-        ArrayList invoices = new ArrayList();
         for (int i = 0; i < debtors.length; i++) 
         {
             Amount balance = Amount.getZero(Database.getInstance().getCurrency());

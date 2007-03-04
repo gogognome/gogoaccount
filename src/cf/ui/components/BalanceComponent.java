@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceComponent.java,v 1.7 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.8 2007-03-04 21:04:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat;
 
 import javax.swing.JComponent;
 
-import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 
@@ -53,7 +52,6 @@ public class BalanceComponent extends JComponent
 
     private void initializeValues()
     {
-        WidgetFactory wf = WidgetFactory.getInstance();
         TextResource tr = TextResource.getInstance();
         AmountFormat af = tr.getAmountFormat();
         Account[] assets = balance.getAssets();
