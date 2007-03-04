@@ -1,10 +1,11 @@
 /*
- * $Id: Account.java,v 1.10 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: Account.java,v 1.11 2007-03-04 20:43:54 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import nl.gogognome.text.Amount;
@@ -32,6 +33,9 @@ public class Account implements Comparable
      */
     private boolean debet;
     
+    /** The database to which this account belongs. */
+    private Database database;
+    
     /**
      * Constructs an acount.
      * @param id the id of this account
@@ -40,12 +44,14 @@ public class Account implements Comparable
      *              of the results.
      * <code>true</code> indicates this account is an asset or a expense;
      * <code>false</code> indicates this account is a liability or a revenue.
+     * @param database the database to which this account belongs. It is used
+     *         to calculate the balance of this account at a specific date.
      */
-    public Account(String id, String name, boolean debet) 
-    {
+    public Account(String id, String name, boolean debet, Database database) {
         this.id = id;
         this.name = name;
         this.debet = debet;
+        this.database = database;
     }
     
     /**
@@ -84,8 +90,8 @@ public class Account implements Comparable
      */
     public Amount getBalance(Date date)
     {
-        Journal[] journals = Database.getInstance().getJournals();
-        Amount result = Amount.getZero(Database.getInstance().getCurrency());
+        Journal[] journals = database.getJournals();
+        Amount result = Amount.getZero(database.getCurrency());
         for (int i = 0; i < journals.length; i++) 
         {
             if (DateUtil.compareDayOfYear(journals[i].getDate(), date) <= 0)
@@ -109,7 +115,28 @@ public class Account implements Comparable
         }
         return result;
     }
+
+    /**
+     * Gets the balance of this account at start of the bookkeeping.
+     * @return the balance of this account at start of the bookkeeping
+     */
+    public Amount getStartBalance() {
+        Date date = database.getStartOfPeriod();
+        
+        // Subtract one day of the period start date, because otherwise the changes
+        // made on that day will be taken into account too.
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.DAY_OF_YEAR, -1);
+        date = cal.getTime();
+        
+        return getBalance(date);
+    }
     
+    /**
+     * Gets the hash code for this instance.
+     * @return the hash code
+     */
     public int hashCode()
     {
         return id.hashCode();
