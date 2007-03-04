@@ -1,5 +1,5 @@
 /*
- * $Id: JournalItem.java,v 1.6 2006-11-20 18:40:06 sanderk Exp $
+ * $Id: JournalItem.java,v 1.7 2007-03-04 20:47:14 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -100,5 +100,26 @@ public class JournalItem
     public boolean isCredit()
     {
         return !debet;
+    }
+    
+    /**
+     * Checks whether this instance is equal to another instance.
+     * @param o the other instance
+     * @return <code>true</code> if this instance is equal to <code>o</code>;
+     *          <code>false</code> otherwise
+     */
+    public boolean equals(Object o) {
+        if (o instanceof JournalItem) {
+            JournalItem that = (JournalItem) o;
+            boolean equalParties = this.party != null ? this.party.equals(that.party) : that.party != null;
+            return this.account.equals(that.account) && this.amount.equals(that.amount) 
+            	&& this.debet == that.debet && equalParties;
+        } else {
+            return false;
+        }
+    }
+    
+    public int hashCode() {
+        return amount.hashCode() + account.hashCode();
     }
 }
