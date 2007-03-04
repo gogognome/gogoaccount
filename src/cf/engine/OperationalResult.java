@@ -1,5 +1,5 @@
 /*
- * $Id: OperationalResult.java,v 1.7 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: OperationalResult.java,v 1.8 2007-03-04 21:04:24 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -97,7 +97,6 @@ public class OperationalResult {
         int columnWidth = 45;
         
         StringBuffer sb = null;
-        Database database = Database.getInstance();
         Account[] expenses = getExpenses();
         Account[] revenues = getRevenues();
         
