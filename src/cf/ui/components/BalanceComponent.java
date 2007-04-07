@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceComponent.java,v 1.8 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.9 2007-04-07 15:27:25 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -9,14 +9,19 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.swing.JComponent;
 
+import nl.gogognome.framework.models.AbstractModel;
+import nl.gogognome.framework.models.DateModel;
+import nl.gogognome.framework.models.ModelChangeListener;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Account;
 import cf.engine.Balance;
+import cf.engine.Database;
+import cf.engine.DatabaseListener;
 import cf.ui.TextPainter;
 
 /**
@@ -29,6 +34,18 @@ public class BalanceComponent extends JComponent
     /** The balance shown in the component. */
     private Balance balance;
 
+    /** 
+     * The database used to create the balance. Changes in this database will
+     * lead to updates on this component.
+     */
+    private Database database;
+    
+    /** 
+     * The date model used to create the balance. Changes in this model will
+     * lead to updates on this component.
+     */
+    private DateModel dateModel;
+    
     private String[] assetNames;
     private String[] assetAmounts;
     private String[] liabilityNames;
@@ -40,18 +57,38 @@ public class BalanceComponent extends JComponent
     
     /**
      * Creates a new <code>BalanceComponent</code>. 
-     * @param balance the balance to be shown. 
+     * @param database the datebase used to create the balance
+     * @param dateModel the date model used to determine the date of the balance 
      */
-    public BalanceComponent(Balance balance) 
+    public BalanceComponent(Database database, DateModel dateModel) 
     {
         super();
-        this.balance = balance;
+        this.database = database;
+        this.dateModel = dateModel;
         
+        database.addListener(new DatabaseListener() {
+            public void databaseChanged(Database db) {
+                initializeValues();
+                repaint();
+            }
+        });
+        
+        dateModel.addModelChangeListener(new ModelChangeListener() {
+            public void modelChanged(AbstractModel model) {
+                initializeValues();
+                repaint();
+            }
+        });
         initializeValues();
     }
 
-    private void initializeValues()
-    {
+    private void initializeValues() {
+        Date date = dateModel.getDate();
+        if (date == null) {
+            return; // do not change the current balance if the date is invalid
+        }
+        
+        balance = new Balance(database, date);
         TextResource tr = TextResource.getInstance();
         AmountFormat af = tr.getAmountFormat();
         Account[] assets = balance.getAssets();
@@ -80,7 +117,7 @@ public class BalanceComponent extends JComponent
     public Dimension getPreferredSize()
     {
         return new Dimension(WIDTH + 20, 
-                30 * (2 + Math.max(assetAmounts.length, liabilityAmounts.length)));
+                30 * (4 + Math.max(assetAmounts.length, liabilityAmounts.length)));
     }
     
     public void paint(Graphics g)

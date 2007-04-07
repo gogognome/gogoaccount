@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.21 2007-03-04 20:44:32 sanderk Exp $
+ * $Id: Database.java,v 1.22 2007-04-07 15:27:25 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -69,32 +69,32 @@ public class Database {
 	/** 
 	 * Contains the <tt>DatabaseListeners</tt>. 
 	 */
-	private static Vector listeners = new Vector();
+	private ArrayList listeners = new ArrayList();
 	
 	/**
 	 * Adds a database listener.
 	 * @param l the database listener.
 	 */
-	public static void addListener( DatabaseListener l ) 
+	public void addListener( DatabaseListener l ) 
 	{
-		listeners.addElement(l);
+		listeners.add(l);
 	}
 
 	/**
 	 * Removes a database listener.
 	 * @param l the database listener.
 	 */
-	public static void removeListener( DatabaseListener l ) 
+	public void removeListener( DatabaseListener l ) 
 	{
-		listeners.removeElement(l);
+		listeners.remove(l);
 	}
 	
 	/** Notifies the listeners. */
-	private static void notifyListeners() 
+	private void notifyListeners() 
 	{
 		for (int i=0; i<listeners.size(); i++) 
 		{
-			DatabaseListener l = (DatabaseListener)listeners.elementAt(i);
+			DatabaseListener l = (DatabaseListener)listeners.get(i);
 			l.databaseChanged(instance);
 		}
 	}
@@ -659,6 +659,8 @@ public class Database {
         }
         
         journals.addElement(new Journal("reset", "reset", date, items));
+        
+        notifyChange();
     }
     
     /**

@@ -1,24 +1,30 @@
 /*
- * $Id: MainFrame.java,v 1.23 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: MainFrame.java,v 1.24 2007-04-07 15:27:25 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui;
 
-import java.awt.Dimension;
 import java.awt.FileDialog;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Date;
 import java.util.Locale;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.WindowConstants;
 
+import nl.gogognome.framework.ViewTabbedPane;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
@@ -36,10 +42,10 @@ import cf.ui.dialogs.InvoiceGeneratorDialog;
 import cf.ui.dialogs.PartySelectionDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
-import cf.ui.dialogs.ViewBalanceDialog;
 import cf.ui.dialogs.ViewOperationalResultDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
+import cf.ui.views.BalanceView;
 
 /**
  * This class implements the main frame of the application. 
@@ -51,21 +57,24 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** The menu bar of the application. */
 	private JMenuBar menuBar = new JMenuBar();
 
+	/** The tabbed pane containing the views. */
+	private ViewTabbedPane viewTabbedPane;
+	
+	/** The balance view. */
+	private BalanceView balanceView;
+	
 	/** Creates the main frame. */
 	public MainFrame() 
 	{
 		super(createTitle());
-		Database.addListener(this);
+		Database.getInstance().addListener(this);
 		createMenuBar();
-		setDefaultCloseOperation( WindowConstants.DO_NOTHING_ON_CLOSE );
+		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-		// Add a panel to enforce a size of the main frame.  
-		JPanel panel = new JPanel() {
-		    public Dimension getPreferredSize() { return new Dimension(500,10); }
-		};
-		getContentPane().add(panel);
+		viewTabbedPane = new ViewTabbedPane();
+		getContentPane().add(viewTabbedPane);
 		
-		addWindowListener( new WindowAdapter() {
+		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) { handleExit(); } }
 		);
 		
@@ -95,11 +104,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private void createMenuBar() {
 		// the menus
 		WidgetFactory wf = WidgetFactory.getInstance();
-		JMenu fileMenu = wf.createMenu("mi.file" );
-		JMenu editMenu = wf.createMenu("mi.edit" );
-		JMenu viewMenu = wf.createMenu("mi.view" );
-		JMenu reportingMenu = wf.createMenu("mi.reporting" );
-		JMenu helpMenu = wf.createMenu("mi.help" );
+		JMenu fileMenu = wf.createMenu("mi.file");
+		JMenu editMenu = wf.createMenu("mi.edit");
+		JMenu viewMenu = wf.createMenu("mi.view");
+		JMenu reportingMenu = wf.createMenu("mi.reporting");
+		JMenu helpMenu = wf.createMenu("mi.help");
 
 		// the file menu
 		JMenuItem miNewEdition = wf.createMenuItem("mi.newBookkeeping", this);
@@ -112,6 +121,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		JMenuItem miAddJournal = wf.createMenuItem("mi.addJournal", this);
 		JMenuItem miEditJournals = wf.createMenuItem("mi.editJournals", this);
 		JMenuItem miAddInvoices = wf.createMenuItem("mi.addInvoices", this);
+		JMenuItem miCleanUp = wf.createMenuItem("mi.cleanUp", this);
 
 		// the view menu
 		JMenuItem miViewBalance = wf.createMenuItem("mi.viewBalance", this);
@@ -127,34 +137,36 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		// the help menu
 		JMenuItem miAbout = wf.createMenuItem("mi.about", this);
 
-		fileMenu.add( miNewEdition );
-		fileMenu.add( miOpenEdition );
-		fileMenu.add( miSaveEdition );
-		fileMenu.add( miSaveEditionAs );
-		fileMenu.add( miExit );
+		fileMenu.add(miNewEdition);
+		fileMenu.add(miOpenEdition);
+		fileMenu.add(miSaveEdition);
+		fileMenu.add(miSaveEditionAs);
+		fileMenu.add(miExit);
 		
-		editMenu.add( miAddJournal );
-		editMenu.add( miEditJournals );
-		editMenu.add( miAddInvoices );
+		editMenu.add(miAddJournal);
+		editMenu.add(miEditJournals);
+		editMenu.add(miAddInvoices);
+		editMenu.addSeparator();
+		editMenu.add(miCleanUp);
 		
-		viewMenu.add( miViewBalance );
-		viewMenu.add( miViewOperationalResult );
-		viewMenu.add( miViewAccountOverview );
-		viewMenu.add( miViewPartyOverview );
-		viewMenu.add( miViewPartiesOverview );
+		viewMenu.add(miViewBalance);
+		viewMenu.add(miViewOperationalResult);
+		viewMenu.add(miViewAccountOverview);
+		viewMenu.add(miViewPartyOverview);
+		viewMenu.add(miViewPartiesOverview);
 		
-		reportingMenu.add( miGenerateInvoices );
-		reportingMenu.add( miGenerateReport );
+		reportingMenu.add(miGenerateInvoices);
+		reportingMenu.add(miGenerateReport);
 		
-		helpMenu.add( miAbout );
+		helpMenu.add(miAbout);
 		
-		menuBar.add( fileMenu );
-		menuBar.add( editMenu );
-		menuBar.add( viewMenu );
-		menuBar.add( reportingMenu );
-		menuBar.add( helpMenu );
+		menuBar.add(fileMenu);
+		menuBar.add(editMenu);
+		menuBar.add(viewMenu);
+		menuBar.add(reportingMenu);
+		menuBar.add(helpMenu);
 		
-		setJMenuBar( menuBar );
+		setJMenuBar(menuBar);
 	}
 	
 	/**
@@ -175,6 +187,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.viewPartiesOverview".equals(command)) { handleViewPartiesOverview(); }
 		if ("mi.addJournal".equals(command)) { handleAddJournal(); }
 		if ("mi.editJournals".equals(command)) { handleEditJournals(); }
+		if ("mi.cleanUp".equals(command)) { handleCleanUp(); }
 		if ("mi.addInvoices".equals(command)) { handleAddInvoices(); }
 		if ("mi.generateInvoices".equals(command)) { handleGenerateInvoices(); }
 		if ("mi.generateReport".equals(command)) { handleGenerateReport(); }
@@ -188,7 +201,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 *        the language is set to </tt>X</tt>. </tt>X</tt> should be a valid
 	 *        ISO 639 language code.
 	 */
-	public static void main( String[] args ) 
+	public static void main(String[] args) 
 	{
 		// parse arguments: language must be set before creating main frame
 		String fileName = null;
@@ -196,7 +209,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		{
 			if (args[i].startsWith("-lang=")) 
 			{
-				TextResource.getInstance().setLocale( new Locale(args[i].substring(6)) );
+				TextResource.getInstance().setLocale(new Locale(args[i].substring(6)));
 			} 
 			else 
 			{
@@ -261,6 +274,10 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			result = true;
 		}
 		
+		if (result) {
+		    
+		}
+		
 		return result;
 	}
 	
@@ -281,7 +298,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		{
 		    TextResource tr = TextResource.getInstance();		    
 			FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleOpenBookkeeping"), FileDialog.LOAD);
-			fileDialog.setFilenameFilter( new FilenameFilter() {
+			fileDialog.setFilenameFilter(new FilenameFilter() {
 				public boolean accept(File dir, String name) {
 					File compositeName = new File(dir,name);  
 					return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } } 
@@ -291,7 +308,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			String filename  = fileDialog.getFile();
 			if (directory != null && filename != null) 
 			{
-				loadFile( directory + filename );
+				loadFile(directory + filename);
 			}
 			requestFocus();
 		}
@@ -316,18 +333,18 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	{
 	    TextResource tr = TextResource.getInstance();		    
 		FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleSaveAs"), FileDialog.SAVE);
-		fileDialog.setFilenameFilter( new FilenameFilter() {
+		fileDialog.setFilenameFilter(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
 				File compositeName = new File(dir,name);  
 				return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } } 
 			);
-		fileDialog.setFile( Database.getInstance().getFileName() );
+		fileDialog.setFile(Database.getInstance().getFileName());
 		fileDialog.show();
 		String directory = fileDialog.getDirectory();
 		String filename  = fileDialog.getFile();
 		if (directory != null && filename != null) 
 		{
-			saveBookkeeping( directory + filename );
+			saveBookkeeping(directory + filename);
 		}
 		requestFocus();
 	}
@@ -336,31 +353,35 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * Loads a bookkeeping from an XML file.
 	 * @param fileName the name of the file.
 	 */
-	private void loadFile( String fileName ) 
+	private void loadFile(String fileName) 
 	{	
 		try 
 		{
 			Database db = XMLFileReader.createDatabaseFromFile(fileName);
 //			db.startMultipleUpdates();
+			Database.getInstance().removeListener(this);
 			Database.setInstance(db);
+			db.addListener(this);
 			db.databaseConsistentWithFile();
-//			db.endMultipleUpdates();			
+//			db.endMultipleUpdates();
+			closeBalanceView();
+			handleViewBalance();
 		}
 		catch (ParseException e) 
 		{
 			new MessageDialog(this, "mf.errorOpeningFile", e);
 		} 
-		databaseChanged( Database.getInstance() );
+		databaseChanged(Database.getInstance());
 	}
 	
 	/**
 	 * Saves the current bookkeeping to an XML file.
 	 * @param fileName the name of the file.
 	 */
-	private void saveBookkeeping( String fileName ) {
+	private void saveBookkeeping(String fileName) {
 		try 
 		{
-			XMLFileWriter.writeDatabaseToFile( Database.getInstance(), fileName );
+			XMLFileWriter.writeDatabaseToFile(Database.getInstance(), fileName);
 			Database db = Database.getInstance(); 
 			db.setFileName(fileName);
 			db.databaseConsistentWithFile();
@@ -378,21 +399,18 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	{
 		if (mayCurrentDatabaseBeDestroyed()) 
 		{
-			Database.removeListener(this);
+			Database.getInstance().removeListener(this);
 			dispose();
 		}
 	}
 
-	private void handleViewBalance()
-	{
-	    DateSelectionDialog dateSelectionDialog = 
-	        new DateSelectionDialog(this, "mf.selectDateForBalance");
-	    dateSelectionDialog.showDialog();
-	    Date date = dateSelectionDialog.getDate();
-	    if (date != null)
-	    {
-	        ViewBalanceDialog dialog = new ViewBalanceDialog(this, date);
-	        dialog.showDialog();
+	private void handleViewBalance() {
+	    if (balanceView == null) {
+	        balanceView = new BalanceView(Database.getInstance());
+	        viewTabbedPane.addView(balanceView);
+	        pack();
+	    } else {
+	        viewTabbedPane.selectView(balanceView);
 	    }
 	}
 	
@@ -497,6 +515,24 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    }
 	}
 	
+	private void handleCleanUp() {
+	    TextResource tr = TextResource.getInstance();
+		MessageDialog dialog = new MessageDialog(this, "gen.titleWarning",
+			tr.getString("mf.cleanUpWarning"),
+			new String[] {"gen.yes", "gen.no"});
+		if (dialog.getSelectedButton() != 0) {
+		    return; // user does not want to continue
+		}
+
+	    DateSelectionDialog dateSelectionDialog = 
+	        new DateSelectionDialog(this, "mf.selectDateForCleanUp");
+	    dateSelectionDialog.showDialog();
+	    Date date = dateSelectionDialog.getDate();
+	    if (date != null) {
+	        Database.getInstance().cleanUpJournalsBefore(date);
+	    }
+	}
+	
 	private void handleGenerateInvoices()
 	{
 	    InvoiceDialog dialog = new InvoiceDialog(this);
@@ -523,4 +559,14 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         setTitle(createTitle());
     }
 
+    /**
+     * Closes the balance view if it is opened. If it is not opened, this method
+     * has no effect.
+     */
+    private void closeBalanceView() {
+        if (balanceView != null) {
+            viewTabbedPane.removeView(balanceView);
+            balanceView = null;
+        }
+    }
 }
