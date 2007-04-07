@@ -1,12 +1,11 @@
 /*
- * $Id: BalanceView.java,v 1.1 2007-04-07 15:27:25 sanderk Exp $
+ * $Id: BalanceView.java,v 1.2 2007-04-07 17:28:42 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.Date;
 
@@ -69,8 +68,6 @@ public class BalanceView extends View {
 		JScrollPane scrollPane = new JScrollPane(balanceComponent);
 		scrollPane.setSize(500, 500);
 		add(scrollPane, BorderLayout.CENTER);
-		
-		setPreferredSize(new Dimension(900, 500));
     }
 
     /* (non-Javadoc)

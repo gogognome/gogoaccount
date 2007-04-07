@@ -1,28 +1,29 @@
 /*
- * $Id: BalanceComponent.java,v 1.9 2007-04-07 15:27:25 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.10 2007-04-07 17:28:42 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.text.SimpleDateFormat;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Date;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 
 import nl.gogognome.framework.models.AbstractModel;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.framework.models.ModelChangeListener;
+import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Balance;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
-import cf.ui.TextPainter;
 
 /**
  * This class implements a graphical component that shows a balance.
@@ -51,17 +52,14 @@ public class BalanceComponent extends JComponent
     private String[] liabilityNames;
     private String[] liabilityAmounts;
     private String totalAssets;
-    private String totalLiabilitiesAndResult;
-    
-    private final static int WIDTH = 800;
+    private String totalLiabilities;
     
     /**
      * Creates a new <code>BalanceComponent</code>. 
      * @param database the datebase used to create the balance
      * @param dateModel the date model used to determine the date of the balance 
      */
-    public BalanceComponent(Database database, DateModel dateModel) 
-    {
+    public BalanceComponent(Database database, DateModel dateModel) {
         super();
         this.database = database;
         this.dateModel = dateModel;
@@ -79,6 +77,8 @@ public class BalanceComponent extends JComponent
                 repaint();
             }
         });
+        
+        setLayout(new GridBagLayout());
         initializeValues();
     }
 
@@ -111,75 +111,112 @@ public class BalanceComponent extends JComponent
         }
         
         totalAssets = af.formatAmount(balance.getTotalAssets());
-        totalLiabilitiesAndResult = af.formatAmount(balance.getTotalLiabilities());
-    }
-    
-    public Dimension getPreferredSize()
-    {
-        return new Dimension(WIDTH + 20, 
-                30 * (4 + Math.max(assetAmounts.length, liabilityAmounts.length)));
-    }
-    
-    public void paint(Graphics g)
-    {
-        TextResource tr = TextResource.getInstance();
-        FontMetrics fm = g.getFontMetrics(TextPainter.getFont(TextPainter.NORMAL_FONT));
+        totalLiabilities = af.formatAmount(balance.getTotalLiabilities());
         
-        int x = 10;
-        int y = 10;
+        // The component may have been initialized before. Therefore, remove all components.
+        removeAll(); 
+
+        // Add label for the date
+        int row = 0;
+        add(new JLabel(tr.formatDate("gen.dateFormat", balance.getDate())),
+                SwingUtils.createLabelGBConstraints(0, row));
+        row++;
         
-        SimpleDateFormat dateFormat = new SimpleDateFormat(
-                TextResource.getInstance().getString("gen.dateFormat"));
-        TextPainter.paintText(g, TextPainter.NORMAL_FONT, 
-                dateFormat.format(balance.getDate()), x, y);
-     
-        y += fm.getHeight();
+        // Add labels for the table header
+        Border bottomBorder = new LineBorder(LineBorder.LB_BOTTOM, 3);
+        JLabel label = new JLabel(tr.getString("gen.assets"));
+        label.setBorder(bottomBorder);
+        add(label,
+                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
+                        10, 0, 0, 0));
         
-        TextPainter.paintText(g, TextPainter.NORMAL_FONT, 
-                tr.getString("gen.assets"), x, y);
-        TextPainter.paintTextRightAligned(g, TextPainter.NORMAL_FONT, 
-                tr.getString("gen.liabilities"), x, y, WIDTH);
+        label = new JLabel();
+        label.setBorder(bottomBorder);
+        add(label,
+                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
+                        10, 0, 0, 0));
         
-        y += fm.getHeight();
+        label = new JLabel();
+        label.setBorder(bottomBorder);
+        add(label,
+                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
+                        10, 0, 0, 0));
         
-        g.fillRect(x, y, WIDTH, 3);
-        int lineY = y;
+        label = new JLabel(tr.getString("gen.liabilities"), SwingConstants.RIGHT); 
+        label.setBorder(bottomBorder);
+        add(label, 
+                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
+                        10, 0, 0, 0));
+        row++;
         
-        y += 5;
-        
-        for (int i=0; i<assetNames.length; i++)
-        {
-            TextPainter.paintText(g, TextPainter.NORMAL_FONT, assetNames[i], x, y);
-            TextPainter.paintTextRightAligned(g, TextPainter.NORMAL_FONT, assetAmounts[i], x, y, WIDTH / 2 - 10);
-            y += fm.getHeight();
+        // Add the table rows
+        int firstRow = row;
+        for (int i=0; i<assetNames.length; i++) {
+            add(new JLabel(assetNames[i]), 
+                    SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
+                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            0, 0, 0, 0));
+            add(new JLabel(assetAmounts[i], SwingConstants.RIGHT), 
+                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            0, 0, 0, 5));
+            row++;
         }
         
-        int y2 = lineY + 5;
-        int x2 = x + WIDTH / 2 + 10; 
+        int row2 = firstRow;
         for (int i=0; i<liabilityNames.length; i++)
         {
-            TextPainter.paintText(g, TextPainter.NORMAL_FONT, liabilityNames[i], x2, y2);
-            TextPainter.paintTextRightAligned(g, TextPainter.NORMAL_FONT, liabilityAmounts[i], x2, y2, WIDTH / 2 - 10);
-            y2 += fm.getHeight();
+            add(new JLabel(liabilityNames[i]), 
+                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0, 
+                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            0, 5, 0, 0));
+            add(new JLabel(liabilityAmounts[i], SwingConstants.RIGHT), 
+                    SwingUtils.createGBConstraints(3, row2, 1, 1, 1.0, 1.0, 
+                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            0, 0, 0, 0));
+            row2++;
         }
-        
-        y = Math.max(y, y2);
-        
-        y += 2;
-        g.drawLine(x, y, x + WIDTH, y);
-        y += 2;
-        
-        TextPainter.paintText(g, TextPainter.NORMAL_FONT, 
-                tr.getString("gen.total"), x, y);
-        TextPainter.paintTextRightAligned(g, TextPainter.NORMAL_FONT, 
-                totalAssets, x, y, WIDTH / 2 - 10);
-        TextPainter.paintText(g, TextPainter.NORMAL_FONT, 
-                tr.getString("gen.total"), x2, y);
-        TextPainter.paintTextRightAligned(g, TextPainter.NORMAL_FONT, 
-                totalLiabilitiesAndResult, x2, y, WIDTH / 2 - 10);
-        
-        y += fm.getHeight();
 
-        g.fillRect(x + WIDTH / 2 - 1, lineY, 3, y - lineY);
+        row = Math.max(row, row2);
+        
+        Border topBorder = new LineBorder(LineBorder.LB_TOP, 1);
+        label = new JLabel(tr.getString("gen.total"));
+        label.setBorder(topBorder);
+        add(label, 
+                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                        0, 0, 10, 0));
+
+        label = new JLabel(totalAssets, SwingConstants.RIGHT);
+        label.setBorder(topBorder);
+        add(label, 
+                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                        0, 0, 10, 5));
+
+        label = new JLabel(tr.getString("gen.total"));
+        label.setBorder(topBorder);
+        add(label, 
+                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                        0, 5, 10, 0));
+
+        label = new JLabel(totalLiabilities, SwingConstants.RIGHT);
+        label.setBorder(topBorder);
+        add(label, 
+                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                        0, 0, 10, 0));
+        row++;
+        
+        // Add label to push other labels to the left and top.
+        add(new JLabel(""),
+                SwingUtils.createGBConstraints(5, row, 1, 1, 1.0, 1.0, 
+                        GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+                        0, 0, 0, 0));
     }
 }
