@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceView.java,v 1.2 2007-04-07 17:28:42 sanderk Exp $
+ * $Id: BalanceView.java,v 1.3 2007-04-10 18:34:53 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -11,7 +11,6 @@ import java.util.Date;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
@@ -64,10 +63,7 @@ public class BalanceView extends View {
         add(datePanel, BorderLayout.NORTH);
         
 		BalanceComponent balanceComponent = new BalanceComponent(database, dateModel);
-		
-		JScrollPane scrollPane = new JScrollPane(balanceComponent);
-		scrollPane.setSize(500, 500);
-		add(scrollPane, BorderLayout.CENTER);
+		add(balanceComponent, BorderLayout.CENTER);
     }
 
     /* (non-Javadoc)
