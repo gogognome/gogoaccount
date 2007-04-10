@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalDialog.java,v 1.9 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: EditJournalDialog.java,v 1.10 2007-04-10 18:33:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -187,7 +187,7 @@ public class EditJournalDialog extends OkCancelDialog
             }
         });
 
-        JButton okAndNextButton = wf.createButton("ajd.okAndNextItem");
+        JButton okAndNextButton = wf.createButton("ajd.okAndNextJournal");
         okAndNextButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 handleOkAndNextButtonPressed();
