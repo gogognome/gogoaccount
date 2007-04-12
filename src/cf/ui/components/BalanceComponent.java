@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceComponent.java,v 1.11 2007-04-10 18:48:08 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.12 2007-04-12 18:42:18 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -170,13 +170,13 @@ public class BalanceComponent extends JScrollPane {
         for (int i=0; i<assetNames.length; i++) {
             panel.add(new JLabel(assetNames[i]), 
                     SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
-                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                            0, 0, 0, 0));
+                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+                            0, 0, 0, 20));
             label = new JLabel(assetAmounts[i], SwingConstants.RIGHT);
             label.setBorder(rightBorder);
             panel.add(label, 
                     SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
-                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row++;
         }
@@ -190,11 +190,11 @@ public class BalanceComponent extends JScrollPane {
             label.setBorder(leftBorder);
             panel.add(label, 
                     SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0, 
-                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                            0, 0, 0, 0));
+                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+                            0, 0, 0, 20));
             panel.add(new JLabel(liabilityAmounts[i], SwingConstants.RIGHT), 
                     SwingUtils.createGBConstraints(3, row2, 1, 1, 1.0, 1.0, 
-                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row2++;
         }
@@ -204,7 +204,7 @@ public class BalanceComponent extends JScrollPane {
             label.setBorder(rightBorder);
             panel.add(label, 
                     SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
-                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row++;
         }
@@ -213,7 +213,7 @@ public class BalanceComponent extends JScrollPane {
             label.setBorder(leftBorder);
             panel.add(label, 
                     SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0, 
-                            GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row2++;
         }
