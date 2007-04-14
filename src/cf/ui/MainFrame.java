@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.25 2007-04-14 12:47:18 sanderk Exp $
+ * $Id: MainFrame.java,v 1.26 2007-04-14 16:06:14 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -370,6 +370,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			closeBalanceView();
 			closeOperationalResultView();
 			handleViewBalance();
+			handleViewOperationalResult();
 		}
 		catch (ParseException e) 
 		{
