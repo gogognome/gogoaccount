@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceComponent.java,v 1.12 2007-04-12 18:42:18 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.13 2007-04-14 12:47:18 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -35,11 +35,8 @@ import cf.engine.DatabaseListener;
  */
 public class BalanceComponent extends JScrollPane {
     
-    /** The panel that contains the components of the <code>BalanceComponent</code> */
+    /** The panel that contains the components of the <code>BalanceComponent</code>. */
     private JPanel panel;
-    
-    /** The balance shown in the component. */
-    private Balance balance;
 
     /** 
      * The database used to create the balance. Changes in this database will
@@ -94,7 +91,7 @@ public class BalanceComponent extends JScrollPane {
             return; // do not change the current balance if the date is invalid
         }
         
-        balance = new Balance(database, date);
+        Balance balance = database.getBalance(date);
         TextResource tr = TextResource.getInstance();
         AmountFormat af = tr.getAmountFormat();
         Account[] assets = balance.getAssets();

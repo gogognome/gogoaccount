@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.24 2007-04-07 15:27:25 sanderk Exp $
+ * $Id: MainFrame.java,v 1.25 2007-04-14 12:47:18 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -42,10 +42,10 @@ import cf.ui.dialogs.InvoiceGeneratorDialog;
 import cf.ui.dialogs.PartySelectionDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
-import cf.ui.dialogs.ViewOperationalResultDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.BalanceView;
+import cf.ui.views.OperationalResultView;
 
 /**
  * This class implements the main frame of the application. 
@@ -62,6 +62,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	
 	/** The balance view. */
 	private BalanceView balanceView;
+
+	/** The operational result view. */
+	private OperationalResultView operationalResultView;
 	
 	/** Creates the main frame. */
 	public MainFrame() 
@@ -365,6 +368,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			db.databaseConsistentWithFile();
 //			db.endMultipleUpdates();
 			closeBalanceView();
+			closeOperationalResultView();
 			handleViewBalance();
 		}
 		catch (ParseException e) 
@@ -414,16 +418,13 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    }
 	}
 	
-	private void handleViewOperationalResult()
-	{
-	    DateSelectionDialog dateSelectionDialog = 
-	        new DateSelectionDialog(this, "mf.selectDateForOperationalResult");
-	    dateSelectionDialog.showDialog();
-	    Date date = dateSelectionDialog.getDate();
-	    if (date != null)
-	    {
-	        ViewOperationalResultDialog dialog = new ViewOperationalResultDialog(this, date);
-	        dialog.showDialog();
+	private void handleViewOperationalResult() {
+	    if (operationalResultView == null) {
+	        operationalResultView = new OperationalResultView(Database.getInstance());
+	        viewTabbedPane.addView(operationalResultView);
+	        pack();
+	    } else {
+	        viewTabbedPane.selectView(operationalResultView);
 	    }
 	}
 	
@@ -569,4 +570,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             balanceView = null;
         }
     }
+    
+    /**
+     * Closes the operational result view if it is opened. If it is not opened, this method
+     * has no effect.
+     */
+    private void closeOperationalResultView() {
+        if (operationalResultView != null) {
+            viewTabbedPane.removeView(operationalResultView);
+            operationalResultView = null;
+        }
+    }
+    
 }

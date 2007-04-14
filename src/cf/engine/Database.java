@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.22 2007-04-07 15:27:25 sanderk Exp $
+ * $Id: Database.java,v 1.23 2007-04-14 12:47:18 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -437,8 +437,7 @@ public class Database {
      * @param date the date
      * @return the balance
      */
-    public Balance getBalance(Date date)
-    {
+    public Balance getBalance(Date date) {
         return new Balance(this, date);
     }
     
@@ -447,9 +446,8 @@ public class Database {
      * @param date the date
      * @return the operation result
      */
-    public OperationalResult getOperationalResult(Date date)
-    {
-        return new OperationalResult(date);
+    public OperationalResult getOperationalResult(Date date) {
+        return new OperationalResult(this, date);
     }
     
     public String getFileName()

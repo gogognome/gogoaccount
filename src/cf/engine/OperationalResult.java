@@ -1,5 +1,5 @@
 /*
- * $Id: OperationalResult.java,v 1.8 2007-03-04 21:04:24 sanderk Exp $
+ * $Id: OperationalResult.java,v 1.9 2007-04-14 12:47:18 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -25,12 +25,13 @@ public class OperationalResult {
     private Amount totalRevenues;
     
     /**
-     * 
+     * Constructor.
+     * @param database the datebase from which the operational result is constructed
+     * @param date the date of the operational result
      */
-    public OperationalResult(Date date) 
-    {
+    protected OperationalResult(Database database, Date date) {
         this.date = date;
-        totalExpenses = Amount.getZero(Database.getInstance().getCurrency());
+        totalExpenses = Amount.getZero(database.getCurrency());
         totalRevenues = totalExpenses;
         
         Account[] expenses = getExpenses();

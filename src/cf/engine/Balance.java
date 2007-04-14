@@ -1,5 +1,5 @@
 /*
- * $Id: Balance.java,v 1.12 2007-03-04 20:45:23 sanderk Exp $
+ * $Id: Balance.java,v 1.13 2007-04-14 12:47:18 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -36,7 +36,7 @@ public class Balance
      * @param database the database on which this balance is based.
      * @param date the date of the balance.
      */
-    public Balance(Database database, Date date) 
+    protected Balance(Database database, Date date) 
     {
         this.date = date;
         totalAssets = Amount.getZero(database.getCurrency());
