@@ -1,10 +1,11 @@
 /*
- * $Id: OperationalResultComponent.java,v 1.6 2007-04-14 12:47:18 sanderk Exp $
+ * $Id: OperationalResultComponent.java,v 1.7 2007-04-14 16:06:46 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Date;
@@ -78,8 +79,9 @@ public class OperationalResultComponent extends JScrollPane {
         
         panel = new JPanel(new GridBagLayout());
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        setViewportView(panel);
-        setSize(800, 500);
+        JPanel tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        tempPanel.add(panel);
+        setViewportView(tempPanel);
         
         initializeValues();
     }
@@ -119,12 +121,13 @@ public class OperationalResultComponent extends JScrollPane {
 
         // Add label for the date
         int row = 0;
-        panel.add(new JLabel(tr.getString("gen.date")),
-                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
-                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                        10, 0, 10, 5));
-        panel.add(new JLabel(tr.formatDate("gen.dateFormat", operationalResult.getDate())),
-                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+        JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        datePanel.add(new JLabel(tr.getString("gen.date")));
+
+        datePanel.add(new JLabel(tr.formatDate("gen.dateFormat", operationalResult.getDate())));
+        
+        panel.add(datePanel,
+                SwingUtils.createGBConstraints(0, row, 4, 1, 1.0, 0.0, 
                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                         10, 0, 10, 0));
         row++;
