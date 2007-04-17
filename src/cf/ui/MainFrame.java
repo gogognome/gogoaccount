@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.26 2007-04-14 16:06:14 sanderk Exp $
+ * $Id: MainFrame.java,v 1.27 2007-04-17 18:28:28 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -46,6 +46,7 @@ import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.BalanceView;
 import cf.ui.views.OperationalResultView;
+import cf.ui.views.PartiesView;
 
 /**
  * This class implements the main frame of the application. 
@@ -80,8 +81,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) { handleExit(); } }
 		);
-		
-		pack();
 	}
 	
 	/**
@@ -223,10 +222,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         // Create and show main frame.
 		MainFrame mf = new MainFrame();
         mf.setVisible(true);
-        mf.requestFocus();
+		mf.setExtendedState(MAXIMIZED_BOTH);
 
-		if (fileName != null) 
-		{
+		if (fileName != null) {
 		    mf.loadFile(fileName);
 		}
 	}
@@ -367,10 +365,14 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			db.addListener(this);
 			db.databaseConsistentWithFile();
 //			db.endMultipleUpdates();
-			closeBalanceView();
-			closeOperationalResultView();
+			viewTabbedPane.closeAllViews();
+			balanceView = null;
+			operationalResultView = null;
+			
 			handleViewBalance();
 			handleViewOperationalResult();
+			// TODO: Remove the following line:
+	        viewTabbedPane.openView(new PartiesView(db));
 		}
 		catch (ParseException e) 
 		{
@@ -412,8 +414,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private void handleViewBalance() {
 	    if (balanceView == null) {
 	        balanceView = new BalanceView(Database.getInstance());
-	        viewTabbedPane.addView(balanceView);
-	        pack();
+	        viewTabbedPane.openView(balanceView);
 	    } else {
 	        viewTabbedPane.selectView(balanceView);
 	    }
@@ -422,8 +423,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private void handleViewOperationalResult() {
 	    if (operationalResultView == null) {
 	        operationalResultView = new OperationalResultView(Database.getInstance());
-	        viewTabbedPane.addView(operationalResultView);
-	        pack();
+	        viewTabbedPane.openView(operationalResultView);
 	    } else {
 	        viewTabbedPane.selectView(operationalResultView);
 	    }
@@ -560,27 +560,4 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
     {
         setTitle(createTitle());
     }
-
-    /**
-     * Closes the balance view if it is opened. If it is not opened, this method
-     * has no effect.
-     */
-    private void closeBalanceView() {
-        if (balanceView != null) {
-            viewTabbedPane.removeView(balanceView);
-            balanceView = null;
-        }
-    }
-    
-    /**
-     * Closes the operational result view if it is opened. If it is not opened, this method
-     * has no effect.
-     */
-    private void closeOperationalResultView() {
-        if (operationalResultView != null) {
-            viewTabbedPane.removeView(operationalResultView);
-            operationalResultView = null;
-        }
-    }
-    
 }
