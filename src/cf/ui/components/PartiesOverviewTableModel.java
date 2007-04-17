@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesOverviewTableModel.java,v 1.7 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: PartiesOverviewTableModel.java,v 1.8 2007-04-17 18:29:22 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -9,6 +9,7 @@ import java.util.Date;
 
 import javax.swing.table.AbstractTableModel;
 
+import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
@@ -39,11 +40,10 @@ public class PartiesOverviewTableModel extends AbstractTableModel
      * @param party the party to be shown
      * @param date the date
      */
-    public PartiesOverviewTableModel(Date date) 
-    {
+    public PartiesOverviewTableModel(Database database, DateModel dateModel) {
         super();
-        this.date = date;
-        parties = Database.getInstance().getParties();
+        this.date = dateModel.getDate();
+        parties = database.getParties();
     }
 
     /* (non-Javadoc)
