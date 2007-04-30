@@ -1,5 +1,5 @@
 /*
- * $Id: OperationalResultComponent.java,v 1.7 2007-04-14 16:06:46 sanderk Exp $
+ * $Id: OperationalResultComponent.java,v 1.8 2007-04-30 10:22:15 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -134,7 +134,7 @@ public class OperationalResultComponent extends JScrollPane {
         
         // Add labels for the table header
         Border bottomBorder = new LineBorder(LineBorder.LB_BOTTOM, 3);
-        JLabel label = new JLabel(tr.getString("gen.assets"));
+        JLabel label = new JLabel(tr.getString("gen.expenses"));
         label.setBorder(bottomBorder);
         panel.add(label,
                 SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
@@ -155,7 +155,7 @@ public class OperationalResultComponent extends JScrollPane {
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
                         10, 0, 0, 0));
         
-        label = new JLabel(tr.getString("gen.liabilities"), SwingConstants.RIGHT); 
+        label = new JLabel(tr.getString("gen.revenues"), SwingConstants.RIGHT); 
         label.setBorder(bottomBorder);
         panel.add(label, 
                 SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0, 
