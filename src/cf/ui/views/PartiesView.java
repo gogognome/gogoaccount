@@ -1,18 +1,23 @@
 /*
- * $Id: PartiesView.java,v 1.1 2007-04-17 18:27:58 sanderk Exp $
+ * $Id: PartiesView.java,v 1.2 2007-05-03 18:12:44 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.util.Date;
 
+import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.models.DateModel;
+import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
@@ -53,7 +58,24 @@ public class PartiesView extends View {
         partiesTableModel = new PartiesTableModel(database);
         JTable table = new JTable(partiesTableModel);
         JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane);
+        table.getColumnModel().getColumn(0).setPreferredWidth(40);
+        table.getColumnModel().getColumn(1).setPreferredWidth(200);
+        table.getColumnModel().getColumn(2).setPreferredWidth(200);
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+        table.getColumnModel().getColumn(4).setPreferredWidth(100);
+        
+        // Create button panel
+        WidgetFactory wf = WidgetFactory.getInstance();
+        JButton addButton = wf.createButton("partiesView.addParty");
+        JButton editButton = wf.createButton("partiesView.editParty");
+        JButton deleteButton = wf.createButton("partiesView.deleteParty");
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 0, 5));
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+        
+        add(scrollPane, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.EAST);
     }
 
     /* (non-Javadoc)
