@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.12 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.13 2007-05-19 17:33:53 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Vector;
 
@@ -35,7 +36,6 @@ import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
@@ -53,14 +53,16 @@ public class InvoiceDialog extends OkCancelDialog
     private static final Amount AMOUNT_TO_BE_IGNORED = 
         Amount.getZero(Database.getInstance().getCurrency());
         
-    private static class Invoice
-    {
+    private static class Invoice {
         String date;
+        String dueDate;
         Party party;
         Vector itemDescriptions = new Vector();
         Vector itemAmounts = new Vector();
         Vector itemDates = new Vector();
         Amount totalAmount;
+        String ourReference;
+        String concerning;
     }
     
     private JTextField tfTemplateFileName;
@@ -68,6 +70,12 @@ public class InvoiceDialog extends OkCancelDialog
     private JTextField tfPdfFileName;
     
     private JTextField tfDate;
+    
+    private JTextField tfConcerning;
+    
+    private JTextField tfOurReference;
+
+    private JTextField tfDueDate;
     
     private Frame parentFrame;
     
@@ -143,12 +151,33 @@ public class InvoiceDialog extends OkCancelDialog
         
         panel.add(wf.createLabel("id.date"),
                 SwingUtils.createLabelGBConstraints(0, 2));
+        Calendar calendar = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat(
                 TextResource.getInstance().getString("gen.dateFormat"));
         tfDate = wf.createTextField(10);
-        tfDate.setText(sdf.format(new java.util.Date()));
+        tfDate.setText(sdf.format(calendar.getTime()));
         panel.add(tfDate,
                 SwingUtils.createLabelGBConstraints(1, 2));
+
+        panel.add(wf.createLabel("id.concerning"),
+                SwingUtils.createLabelGBConstraints(0, 3));
+        tfConcerning = wf.createTextField(30);
+        panel.add(tfConcerning,
+                SwingUtils.createLabelGBConstraints(1, 3));
+        
+        panel.add(wf.createLabel("id.ourReference"),
+                SwingUtils.createLabelGBConstraints(0, 4));
+        tfOurReference = wf.createTextField(30);
+        panel.add(tfOurReference,
+                SwingUtils.createLabelGBConstraints(1, 4));
+
+        panel.add(wf.createLabel("id.dueDate"),
+                SwingUtils.createLabelGBConstraints(0, 5));
+        tfDueDate = wf.createTextField(10);
+        calendar.add(Calendar.DAY_OF_MONTH, 14);
+        tfDueDate.setText(sdf.format(calendar.getTime()));
+        panel.add(tfDueDate,
+                SwingUtils.createLabelGBConstraints(1, 5));
         
         componentInitialized(panel);
     }
@@ -168,20 +197,29 @@ public class InvoiceDialog extends OkCancelDialog
             	
             return;
         }
-        generateInvoices(date);
+
+        Date dueDate;
+        try {
+            dueDate = sdf.parse(tfDate.getText());
+        } catch (ParseException e) {
+            MessageDialog.showMessage(parentFrame, "gen.error",
+                    TextResource.getInstance().getString("gen.invalidDate"));
+            	
+            return;
+        }
+        
+        generateInvoices(date, tfConcerning.getText(), tfOurReference.getText(), dueDate);
         hideDialog();
     }
 
-    private void generateInvoices(Date date)
-    {
+    private void generateInvoices(Date date, String concerning, String ourReference,
+            Date dueDate) {
         TextResource tr = TextResource.getInstance();
         
-        try
-        {
+        try {
             readTemplate(tfTemplateFileName.getText());
         }
-        catch (IOException e)
-        {
+        catch (IOException e) {
             MessageDialog.showMessage(parentFrame, "gen.titleError", 
                 tr.getString("id.cantReadTemplateFile",
                 new Object[] {tfTemplateFileName.getText()}));
@@ -191,12 +229,10 @@ public class InvoiceDialog extends OkCancelDialog
         File pdfFile = new File(tfPdfFileName.getText());
         File pdfFileDirectory = new File(pdfFile.getParent());
         File texFile = new File(PdfLatex.getTexFileName(tfPdfFileName.getText()));
-        try
-        {
+        try {
             writeTexHeader(texFile);
         }
-        catch (IOException e)
-        {
+        catch (IOException e) {
             MessageDialog md = new MessageDialog(parentFrame, 
                 "gen.titleError", tr.getString("id.cantCreateTexFile",
                 new Object[] {texFile.getAbsolutePath()}));
@@ -207,39 +243,34 @@ public class InvoiceDialog extends OkCancelDialog
         Database db = Database.getInstance();
         Journal[] journals = db.getJournals();
         Party[] debtors = db.getDebtors(date);
-        for (int i = 0; i < debtors.length; i++) 
-        {
+        for (int i = 0; i < debtors.length; i++) {
             Amount balance = Amount.getZero(Database.getInstance().getCurrency());
             Party debtor = debtors[i];
             Invoice invoice = new Invoice();
             invoice.party = debtor;
             invoice.date = tr.formatDate("gen.dateFormatFull", date);
-            for (int j=0; j<journals.length; j++) 
-            {
+            invoice.concerning = concerning;
+            invoice.ourReference = ourReference;
+            invoice.dueDate = tr.formatDate("gen.dateFormatFull", dueDate);
+            for (int j=0; j<journals.length; j++) {
                 Journal journal = journals[j];
                 JournalItem[] items = journal.getItems();
-                if (journal.hasItemWithParty(debtor))
-                {
+                if (journal.hasItemWithParty(debtor)) {
                     invoice.itemDescriptions.addElement(journal.getDescription());
                     invoice.itemDates.addElement(
                             tr.formatDate("gen.dateFormat", journal.getDate()));
                     invoice.itemAmounts.addElement(AMOUNT_TO_BE_IGNORED);
                     
-	                for (int k=0; k<items.length; k++)
-	                {
+	                for (int k=0; k<items.length; k++) {
 	                    JournalItem item = items[k];
-	                    if (!debtor.equals(item.getParty()))
-	                    {
+	                    if (!debtor.equals(item.getParty())) {
 	                        invoice.itemDescriptions.addElement(item.getAccount().getName());
 	                        invoice.itemDates.addElement(
 	                                tr.formatDate("gen.dateFormat", journal.getDate()));
-	                        if (item.isCredit())
-	                        {
+	                        if (item.isCredit()) {
 	                            balance = balance.add(item.getAmount());
 	                            invoice.itemAmounts.addElement(item.getAmount());
-	                        }
-	                        else
-	                        {
+	                        } else {
 	                            Amount negAmount = item.getAmount().negate();
 	                            balance = balance.add(negAmount);
 	                            invoice.itemAmounts.addElement(negAmount);
@@ -325,6 +356,9 @@ public class InvoiceDialog extends OkCancelDialog
             replace(sb, "$party-address$", invoice.party.getAddress());
             replace(sb, "$party-zip$", invoice.party.getZipCode());
             replace(sb, "$party-city$", invoice.party.getCity());
+            replace(sb, "$concerning$", invoice.concerning);
+            replace(sb, "$our-reference$", invoice.ourReference);
+            replace(sb, "$due-date$", invoice.dueDate);
             replace(sb, "$total-amount$", formatAmountForTex(invoice.totalAmount));
             int index = sb.indexOf("$item-line$");
             if (index != -1) {
