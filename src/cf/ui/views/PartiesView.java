@@ -1,27 +1,36 @@
 /*
- * $Id: PartiesView.java,v 1.2 2007-05-03 18:12:44 sanderk Exp $
+ * $Id: PartiesView.java,v 1.3 2007-05-19 17:33:17 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
 import java.util.Date;
 
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.models.DateModel;
+import nl.gogognome.swing.ActionWrapper;
+import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
-import cf.engine.DatabaseListener;
 import cf.engine.Party;
+import cf.engine.PartySearchCriteria;
 
 /**
  * This class implements a view for adding, removing and editing parties.
@@ -32,11 +41,21 @@ public class PartiesView extends View {
 
     private PartiesTableModel partiesTableModel;
     
+    private JTable table;
+    
     /** The database whose parties are to be shown and changed. */
     private Database database;
     
     /** The date model that determines the date for the balance of the parties. */  
     private DateModel dateModel;
+
+    private JTextField tfId;
+    private JTextField tfName;
+    private JTextField tfAddress;
+    private JTextField tfZipCode;
+    private JTextField tfCity;
+
+    private JButton btSearch;
     
     public PartiesView(Database database) {
         this.database = database;
@@ -55,15 +74,6 @@ public class PartiesView extends View {
      * @see nl.gogognome.framework.View#onInit()
      */
     public void onInit() {
-        partiesTableModel = new PartiesTableModel(database);
-        JTable table = new JTable(partiesTableModel);
-        JScrollPane scrollPane = new JScrollPane(table);
-        table.getColumnModel().getColumn(0).setPreferredWidth(40);
-        table.getColumnModel().getColumn(1).setPreferredWidth(200);
-        table.getColumnModel().getColumn(2).setPreferredWidth(200);
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);
-        table.getColumnModel().getColumn(4).setPreferredWidth(100);
-        
         // Create button panel
         WidgetFactory wf = WidgetFactory.getInstance();
         JButton addButton = wf.createButton("partiesView.addParty");
@@ -74,8 +84,94 @@ public class PartiesView extends View {
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
         
-        add(scrollPane, BorderLayout.CENTER);
+        add(createPanel(), BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.EAST);
+    }
+
+    /**
+     * Creates the panel with search criteria and the table with
+     * found parties.
+     * 
+     * @return the panel
+     */
+    private JPanel createPanel() {
+        WidgetFactory wf = WidgetFactory.getInstance();
+        TextResource tr =  TextResource.getInstance();
+        
+        // Create the criteria panel
+        JPanel criteriaPanel = new JPanel(new GridBagLayout());
+        criteriaPanel.setBorder(new TitledBorder(
+                tr.getString("partiesView.searchCriteria"))); 
+	   
+        tfId = new JTextField();
+        criteriaPanel.add(wf.createLabel("gen.id"), 
+                SwingUtils.createLabelGBConstraints(0, 0));
+        criteriaPanel.add(tfId, 
+                SwingUtils.createTextFieldGBConstraints(1, 0));
+        
+        tfName = new JTextField();
+        criteriaPanel.add(wf.createLabel("gen.name"), 
+                SwingUtils.createLabelGBConstraints(0, 1));
+        criteriaPanel.add(tfName, 
+                SwingUtils.createTextFieldGBConstraints(1, 1));
+        
+        tfAddress = new JTextField();
+        criteriaPanel.add(wf.createLabel("gen.address"), 
+                SwingUtils.createLabelGBConstraints(0, 2));
+        criteriaPanel.add(tfAddress, 
+                SwingUtils.createTextFieldGBConstraints(1, 2));
+        
+        tfZipCode = new JTextField();
+        criteriaPanel.add(wf.createLabel("gen.zipCode"), 
+                SwingUtils.createLabelGBConstraints(0, 3));
+        criteriaPanel.add(tfZipCode, 
+                SwingUtils.createTextFieldGBConstraints(1, 3));
+        
+        tfCity = new JTextField();
+        criteriaPanel.add(wf.createLabel("gen.city"), 
+                SwingUtils.createLabelGBConstraints(0, 4));
+        criteriaPanel.add(tfCity, 
+                SwingUtils.createTextFieldGBConstraints(1, 4));
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        ActionWrapper actionWrapper = wf.createAction("partiesView.btnSearch");
+        actionWrapper.setAction(new AbstractAction() {
+            public void actionPerformed(ActionEvent event) {
+                handleSearch();
+            }
+        });
+        btSearch = new JButton(actionWrapper);
+        
+        buttonPanel.add(btSearch);
+        criteriaPanel.add(buttonPanel,
+                SwingUtils.createGBConstraints(0, 5, 2, 1, 0.0, 0.0, 
+                        GridBagConstraints.EAST, GridBagConstraints.NONE, 
+                        5, 0, 0, 0));
+        
+        // Create the result panel
+        JPanel resultPanel = new JPanel(new BorderLayout());
+        resultPanel.setBorder(new TitledBorder(
+                tr.getString("partiesView.foundParties"))); 
+
+        partiesTableModel = new PartiesTableModel();
+        table = new JTable(partiesTableModel);
+        JScrollPane scrollPane = new JScrollPane(table);
+        table.getColumnModel().getColumn(0).setPreferredWidth(40);
+        table.getColumnModel().getColumn(1).setPreferredWidth(200);
+        table.getColumnModel().getColumn(2).setPreferredWidth(200);
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+        table.getColumnModel().getColumn(4).setPreferredWidth(100);
+        
+        resultPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        // Create a panel containing the search criteria and result panels
+        JPanel result = new JPanel(new GridBagLayout());
+        result.add(criteriaPanel,
+                SwingUtils.createTextFieldGBConstraints(0, 0));
+        result.add(resultPanel,
+                SwingUtils.createTextFieldGBConstraints(0, 1));
+        
+        return result;
     }
 
     /* (non-Javadoc)
@@ -86,18 +182,47 @@ public class PartiesView extends View {
         
     }
 
-    /** The table model that shows information about the parties. */
-    private static class PartiesTableModel extends AbstractTableModel implements DatabaseListener {
+    /**
+     * Searches for matching parties. The entered search criteria are used 
+     * to find parties. The matching parties are shown in the table. 
+     */
+    private void handleSearch() {
+        PartySearchCriteria searchCriteria = new PartySearchCriteria();
 
-        private Database database;
-        
+        if (tfId.getText().length() > 0) {
+            searchCriteria.setId(tfId.getText());
+        }
+        if (tfName.getText().length() > 0) {
+            searchCriteria.setName(tfName.getText());
+        }
+        if (tfAddress.getText().length() > 0) {
+            searchCriteria.setAddress(tfAddress.getText());
+        }
+        if (tfZipCode.getText().length() > 0) {
+            searchCriteria.setZipCode(tfZipCode.getText());
+        }
+        if (tfCity.getText().length() > 0) {
+            searchCriteria.setCity(tfCity.getText());
+        }
+
+        partiesTableModel.setParties(database.getParties(searchCriteria));
+        table.getSelectionModel().setSelectionInterval(0, 0);
+        table.requestFocusInWindow();
+    }
+    
+    /** The table model that shows information about the parties. */
+    private static class PartiesTableModel extends AbstractTableModel {
+
         /** The parties to be shown. */
-        private Party[] parties;
-        
-        public PartiesTableModel(Database database) {
-            this.database = database;
-            parties = database.getParties();
-            database.addListener(this);
+        private Party[] parties = new Party[0];
+
+        /**
+         * Sets the parties to be shown in the table.
+         * @param parties the parties
+         */
+        public void setParties(Party[] parties) {
+            this.parties = parties;
+            fireTableDataChanged();
         }
         
         public String getColumnName(int columnIndex) {
@@ -140,14 +265,6 @@ public class PartiesView extends View {
             case 4: return parties[row].getCity();
             default: return null;
             }
-        }
-
-        /* (non-Javadoc)
-         * @see cf.engine.DatabaseListener#databaseChanged(cf.engine.Database)
-         */
-        public void databaseChanged(Database db) {
-            parties = database.getParties();
-            fireTableDataChanged();
         }
         
     }
