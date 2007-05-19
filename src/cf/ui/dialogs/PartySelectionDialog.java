@@ -1,5 +1,5 @@
 /*
- * $Id: PartySelectionDialog.java,v 1.5 2007-02-08 19:22:13 sanderk Exp $
+ * $Id: PartySelectionDialog.java,v 1.6 2007-05-19 17:33:31 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -128,7 +128,7 @@ public class PartySelectionDialog extends DialogWithButtons {
      * Creates the panel with search criteria and the table with
      * found parties.
      * 
-     * @return
+     * @return the panel
      */
     private JPanel createPanel() {
         WidgetFactory wf = WidgetFactory.getInstance();
