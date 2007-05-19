@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.27 2007-04-17 18:28:28 sanderk Exp $
+ * $Id: MainFrame.java,v 1.28 2007-05-19 17:34:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Date;
@@ -33,6 +34,7 @@ import cf.engine.ParseException;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
+import cf.print.AddressLabelPrinter;
 import cf.ui.dialogs.AccountSelectionDialog;
 import cf.ui.dialogs.DateSelectionDialog;
 import cf.ui.dialogs.EditJournalDialog;
@@ -132,9 +134,10 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		JMenuItem miViewPartyOverview = wf.createMenuItem("mi.viewPartyOverview", this);
 		JMenuItem miViewPartiesOverview = wf.createMenuItem("mi.viewPartiesOverview", this);
 
-		// the invoices menu
+		// the reporting menu
 		JMenuItem miGenerateInvoices = wf.createMenuItem("mi.generateInvoices", this);
 		JMenuItem miGenerateReport = wf.createMenuItem("mi.generateReport", this);
+		JMenuItem miPrintAddressLabels = wf.createMenuItem("mi.printAddressLabels", this);
 		
 		// the help menu
 		JMenuItem miAbout = wf.createMenuItem("mi.about", this);
@@ -159,6 +162,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		
 		reportingMenu.add(miGenerateInvoices);
 		reportingMenu.add(miGenerateReport);
+		reportingMenu.add(miPrintAddressLabels);
 		
 		helpMenu.add(miAbout);
 		
@@ -193,6 +197,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.addInvoices".equals(command)) { handleAddInvoices(); }
 		if ("mi.generateInvoices".equals(command)) { handleGenerateInvoices(); }
 		if ("mi.generateReport".equals(command)) { handleGenerateReport(); }
+		if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
 	}
 
 	/**
@@ -541,10 +546,19 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    dialog.showDialog();
 	}
 
-	private void handleGenerateReport()
-	{
+	private void handleGenerateReport() {
 	    ReportDialog dialog = new ReportDialog(this);
 	    dialog.showDialog();
+	}
+	
+	private void handlePrintAddressLabels() {
+	    AddressLabelPrinter alp = new AddressLabelPrinter(Database.getInstance().getParties());
+	    try {
+            alp.printAddressLabels();
+        } catch (PrinterException e) {
+	        MessageDialog.showMessage(this, "gen.error", 
+	                TextResource.getInstance().getString("mf.problemWhilePrinting"));
+        }
 	}
 	
 	private void handleAddInvoices() {
