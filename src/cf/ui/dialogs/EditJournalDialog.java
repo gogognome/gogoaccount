@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalDialog.java,v 1.10 2007-04-10 18:33:55 sanderk Exp $
+ * $Id: EditJournalDialog.java,v 1.11 2007-05-21 15:55:27 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -9,13 +9,13 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
 
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -32,7 +32,6 @@ import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 
@@ -166,29 +165,25 @@ public class EditJournalDialog extends OkCancelDialog
         columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
 
         // Add buttons
-        JButton addButton = wf.createButton("ajd.addItem");
-        addButton.addActionListener(new ActionListener() {
+        JButton addButton = wf.createButton("ajd.addItem", new AbstractAction() {
             public void actionPerformed(ActionEvent evt) {
                 handleAddButtonPressed(evt);
             }
         });
 
-        JButton editButton = wf.createButton("ajd.editItem");
-        editButton.addActionListener(new ActionListener() {
+        JButton editButton = wf.createButton("ajd.editItem", new AbstractAction() {
             public void actionPerformed(ActionEvent evt) {
                 handleEditButtonPressed(evt);
             }
         });
         
-        JButton deleteButton = wf.createButton("ajd.deleteItem");
-        deleteButton.addActionListener(new ActionListener() {
+        JButton deleteButton = wf.createButton("ajd.deleteItem", new AbstractAction() {
             public void actionPerformed(ActionEvent evt) {
                 handleDeleteButtonPressed(evt);
             }
         });
 
-        JButton okAndNextButton = wf.createButton("ajd.okAndNextJournal");
-        okAndNextButton.addActionListener(new ActionListener() {
+        JButton okAndNextButton = wf.createButton("ajd.okAndNextJournal", new AbstractAction() {
             public void actionPerformed(ActionEvent evt) {
                 handleOkAndNextButtonPressed();
             }

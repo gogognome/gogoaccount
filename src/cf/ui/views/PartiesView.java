@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.3 2007-05-19 17:33:17 sanderk Exp $
+ * $Id: PartiesView.java,v 1.4 2007-05-21 15:56:39 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -76,9 +76,14 @@ public class PartiesView extends View {
     public void onInit() {
         // Create button panel
         WidgetFactory wf = WidgetFactory.getInstance();
-        JButton addButton = wf.createButton("partiesView.addParty");
-        JButton editButton = wf.createButton("partiesView.editParty");
-        JButton deleteButton = wf.createButton("partiesView.deleteParty");
+        JButton addButton = wf.createButton("partiesView.addParty", new AbstractAction() {
+            public void actionPerformed(ActionEvent evt) {
+                onAddParty();
+            }
+        });
+        
+        JButton editButton = wf.createButton("partiesView.editParty", null);
+        JButton deleteButton = wf.createButton("partiesView.deleteParty", null);
         JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 0, 5));
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
@@ -137,7 +142,7 @@ public class PartiesView extends View {
         ActionWrapper actionWrapper = wf.createAction("partiesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
-                handleSearch();
+                onSearch();
             }
         });
         btSearch = new JButton(actionWrapper);
@@ -186,7 +191,7 @@ public class PartiesView extends View {
      * Searches for matching parties. The entered search criteria are used 
      * to find parties. The matching parties are shown in the table. 
      */
-    private void handleSearch() {
+    private void onSearch() {
         PartySearchCriteria searchCriteria = new PartySearchCriteria();
 
         if (tfId.getText().length() > 0) {
@@ -208,6 +213,10 @@ public class PartiesView extends View {
         partiesTableModel.setParties(database.getParties(searchCriteria));
         table.getSelectionModel().setSelectionInterval(0, 0);
         table.requestFocusInWindow();
+    }
+    
+    private void onAddParty() {
+        
     }
     
     /** The table model that shows information about the parties. */

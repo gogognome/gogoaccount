@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorDialog.java,v 1.5 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: InvoiceGeneratorDialog.java,v 1.6 2007-05-21 15:56:09 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -17,6 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -230,7 +231,7 @@ public class InvoiceGeneratorDialog extends DialogWithButtons {
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             0, 0, 0, 0));
             
-            JButton deleteButton = wf.createButton("invoicegenerator.delete");
+            JButton deleteButton = wf.createButton("invoicegenerator.delete", null);
             deleteButton.addActionListener(new DeleteActionListener(i));
             templateLinesPanel.add(deleteButton, 
                     SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0, 
@@ -239,8 +240,7 @@ public class InvoiceGeneratorDialog extends DialogWithButtons {
             row++;
         }
         
-        JButton newButton = wf.createButton("invoicegenerator.new");
-        newButton.addActionListener(new ActionListener() {
+        JButton newButton = wf.createButton("invoicegenerator.new", new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 templateLines.add(new TemplateLine());
                 updateTemplateLinesPanel();

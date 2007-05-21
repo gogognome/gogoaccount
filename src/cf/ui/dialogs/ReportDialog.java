@@ -1,5 +1,5 @@
 /*
- * $Id: ReportDialog.java,v 1.6 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: ReportDialog.java,v 1.7 2007-05-21 15:56:20 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -8,12 +8,12 @@ package cf.ui.dialogs;
 import java.awt.Frame;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -25,14 +25,13 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerDateModel;
 import javax.swing.border.TitledBorder;
 
-import cf.engine.Database;
-import cf.text.Report;
-
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
+import cf.engine.Database;
+import cf.text.Report;
 
 /**
  * This class implements the report dialog. This dialog can generate
@@ -76,8 +75,7 @@ public class ReportDialog extends OkCancelDialog {
         fileNamePanel.add(tfFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
         
-        JButton button = wf.createButton("gen.btSelectFile"); 
-        button.addActionListener(new ActionListener() {
+        JButton button = wf.createButton("gen.btSelectFile", new AbstractAction() { 
             public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfFileName.getText());
                 if (fileChooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION) {

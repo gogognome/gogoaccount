@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsDialog.java,v 1.7 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: EditJournalsDialog.java,v 1.8 2007-05-21 15:55:47 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -10,11 +10,11 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import javax.swing.AbstractAction;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -35,10 +35,9 @@ import javax.swing.table.TableModel;
 import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Database;
-import cf.engine.Party;
 import cf.engine.Journal;
+import cf.engine.Party;
 import cf.ui.components.AccountCellEditor;
 
 /**
@@ -163,24 +162,21 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 		// Create button panel
 		JPanel buttonsPanel = new JPanel(new FlowLayout());
 
-		JButton editButton = wf.createButton("ejd.editJournal");
-		editButton.addActionListener(new ActionListener() {
+		JButton editButton = wf.createButton("ejd.editJournal", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 handleEditItem();
             }
 		});
 		buttonsPanel.add(editButton);
 
-		JButton addButton = wf.createButton("ejd.addJournal");
-		addButton.addActionListener(new ActionListener() {
+		JButton addButton = wf.createButton("ejd.addJournal", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 handleAddItem();
             }
 		});
 		buttonsPanel.add(addButton);
 
-		JButton deleteButton = wf.createButton("ejd.deleteJournal");
-		deleteButton.addActionListener(new ActionListener() {
+		JButton deleteButton = wf.createButton("ejd.deleteJournal", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 handleDeleteItem();
             }

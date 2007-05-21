@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.13 2007-05-19 17:33:53 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.14 2007-05-21 15:55:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -8,7 +8,6 @@ package cf.ui.dialogs;
 import java.awt.Frame;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,6 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Vector;
 
+import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -117,8 +117,7 @@ public class InvoiceDialog extends OkCancelDialog
         panel.add(tfTemplateFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
 
-        JButton button = wf.createButton("gen.btSelectFile"); 
-        button.addActionListener(new ActionListener() {
+        JButton button = wf.createButton("gen.btSelectFile", new AbstractAction() { 
             public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfTemplateFileName.getText());
                 if (fileChooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
@@ -136,8 +135,7 @@ public class InvoiceDialog extends OkCancelDialog
         panel.add(tfPdfFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 1));
 
-        button = wf.createButton("gen.btSelectFile"); 
-        button.addActionListener(new ActionListener() {
+        button = wf.createButton("gen.btSelectFile", new AbstractAction() { 
             public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfPdfFileName.getText());
                 if (fileChooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
