@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.23 2007-04-14 12:47:18 sanderk Exp $
+ * $Id: Database.java,v 1.24 2007-05-21 15:54:00 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -472,6 +472,66 @@ public class Database {
     }
     
     /**
+     * Gets the total of debet amounts of a party at the specified date.
+     * @param party the party
+     * @param date the date 
+     * @return the total of debet amounts of the party
+     */
+    public Amount getTotalDebetForParty(Party party, Date date) {
+        Amount result = Amount.getZero(getCurrency());
+        for (Iterator iter = journals.iterator(); iter.hasNext();) {
+            Journal journal = (Journal) iter.next();
+            if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
+	            JournalItem[] items = journal.getItems();
+	            for (int j = 0; j < items.length; j++) {
+	                if (party.equals(items[j].getParty())) {
+	                    if (items[j].isDebet()) {
+	                        result = result.add(items[j].getAmount());
+	                    }
+	                }
+	            }
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Gets the total of credit amounts of a party at the specified date.
+     * @param party the party
+     * @param date the date 
+     * @return the total of credit amounts of the party
+     */
+    public Amount getTotalCreditForParty(Party party, Date date) {
+        Amount result = Amount.getZero(getCurrency());
+        for (Iterator iter = journals.iterator(); iter.hasNext();) {
+            Journal journal = (Journal) iter.next();
+            if (DateUtil.compareDayOfYear(journal.getDate(), date) <=0) {
+	            JournalItem[] items = journal.getItems();
+	            for (int j = 0; j < items.length; j++) {
+	                if (party.equals(items[j].getParty())) {
+	                    if (items[j].isCredit()) {
+	                        result = result.add(items[j].getAmount());
+	                    }
+	                }
+	            }
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * Gets the balance for a party at the specified date. The balance consists
+     * of the total debet amount minus the total credit amount of the party.
+     * 
+     * @param party the party
+     * @param date the date
+     * @return the balance for the party
+     */
+    public Amount getBalanceForParty(Party party, Date date) {
+        return getTotalDebetForParty(party, date).subtract(getTotalCreditForParty(party, date));
+    }
+    
+    /**
      * Gets the debtors at the specified date. Debtors are parties that still have 
      * to pay money to the club.
      * @param date the date
@@ -482,8 +542,8 @@ public class Database {
         for (int i=0; i<parties.size(); i++)
         {
             Party party = (Party)parties.elementAt(i);
-            Amount totalDebet = party.getTotalDebet(date);
-            Amount totalCredit = party.getTotalCredit(date);
+            Amount totalDebet = getTotalDebetForParty(party, date);
+            Amount totalCredit = getTotalCreditForParty(party, date);
             Amount balance = totalDebet.subtract(totalCredit);
             if (balance.isPositive())
             {
@@ -506,8 +566,8 @@ public class Database {
         for (int i=0; i<parties.size(); i++)
         {
             Party party = (Party)parties.elementAt(i);
-            Amount totalDebet = party.getTotalDebet(date);
-            Amount totalCredit = party.getTotalCredit(date);
+            Amount totalDebet = getTotalDebetForParty(party, date);
+            Amount totalCredit = getTotalCreditForParty(party, date);
             Amount balance = totalDebet.subtract(totalCredit);
             if (balance.isNegative())
             {

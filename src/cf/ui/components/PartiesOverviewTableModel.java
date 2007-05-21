@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesOverviewTableModel.java,v 1.8 2007-04-17 18:29:22 sanderk Exp $
+ * $Id: PartiesOverviewTableModel.java,v 1.9 2007-05-21 15:55:01 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -35,6 +35,9 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /** The parties to be shown in the table. */
     private Party[] parties;
     
+    /** The database from which the amounts of the parties are obtained. */
+    private Database database;
+    
     /**
      * Constructs a new <code>partyOverviewComponent</code>.
      * @param party the party to be shown
@@ -43,6 +46,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     public PartiesOverviewTableModel(Database database, DateModel dateModel) {
         super();
         this.date = dateModel.getDate();
+        this.database = database;
         parties = database.getParties();
     }
 
@@ -79,9 +83,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	            
 	        case 1:
 	        {
-	            Amount totalDebet = parties[row].getTotalDebet(date);
-	            Amount totalCredit = parties[row].getTotalCredit(date);
-	            Amount balance = totalDebet.subtract(totalCredit);
+	            Amount balance = database.getBalanceForParty(parties[row], date);
 	            if (balance.isPositive())
 	            {
 	                result = af.formatAmount(balance);
@@ -94,9 +96,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	        }   
 	        case 2:
 	        {
-	            Amount totalDebet = parties[row].getTotalDebet(date);
-	            Amount totalCredit = parties[row].getTotalCredit(date);
-	            Amount balance = totalCredit.subtract(totalDebet);
+	            Amount balance = database.getBalanceForParty(parties[row], date).negate();
 	            if (balance.isPositive())
 	            {
 	                result = af.formatAmount(balance);
@@ -123,9 +123,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	            Amount totalDebet = Amount.getZero(Database.getInstance().getCurrency());
 	            for (int i = 0; i < parties.length; i++) 
 	            {
-		            Amount partyTotalDebet = parties[i].getTotalDebet(date);
-		            Amount partyTotalCredit = parties[i].getTotalCredit(date);
-		            Amount balance = partyTotalDebet.subtract(partyTotalCredit);
+		            Amount balance = database.getBalanceForParty(parties[i], date);
 		            if (!balance.isNegative())
 		            {
 		                totalDebet = totalDebet.add(balance);
@@ -138,9 +136,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	            Amount totalCredit = Amount.getZero(Database.getInstance().getCurrency());
 	            for (int i = 0; i < parties.length; i++) 
 	            {
-		            Amount partyTotalDebet = parties[i].getTotalDebet(date);
-		            Amount partyTotalCredit = parties[i].getTotalCredit(date);
-		            Amount balance = partyTotalDebet.subtract(partyTotalCredit);
+		            Amount balance = database.getBalanceForParty(parties[i], date);
 		            if (balance.isNegative())
 		            {
 		                totalCredit = totalCredit.subtract(balance);

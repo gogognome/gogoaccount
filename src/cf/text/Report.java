@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.13 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: Report.java,v 1.14 2007-05-21 15:54:50 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -294,8 +294,8 @@ public class Report
             
             for (int i=0; i<debtors.length; i++) {
                 values[0] = debtors[i].getId() + " - " + debtors[i].getName();
-                Amount amount = debtors[i].getTotalDebet(date).subtract(
-                        debtors[i].getTotalCredit(date)); 
+                Amount amount = database.getTotalDebetForParty(debtors[i], date).subtract(
+                        database.getTotalCreditForParty(debtors[i], date)); 
                 values[1] = textFormat.formatAmount(amount);
                 total = total == null ? amount : total.add(amount);
                 result.append(textFormat.getRow(values));
@@ -335,8 +335,8 @@ public class Report
             
             for (int i=0; i<creditors.length; i++) {
                 values[0] = creditors[i].getId() + " - " + creditors[i].getName();
-                Amount amount = creditors[i].getTotalCredit(date).subtract(
-                        creditors[i].getTotalDebet(date)); 
+                Amount amount = database.getTotalCreditForParty(creditors[i], date).subtract(
+                        database.getTotalDebetForParty(creditors[i], date)); 
                 values[1] = textFormat.formatAmount(amount);
                 total = total == null ? amount : total.add(amount);
                 result.append(textFormat.getRow(values));

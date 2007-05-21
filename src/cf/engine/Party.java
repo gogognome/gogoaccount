@@ -1,14 +1,10 @@
 /*
- * $Id: Party.java,v 1.10 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: Party.java,v 1.11 2007-05-21 15:54:00 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
 
-import java.util.Date;
-
-import nl.gogognome.text.Amount;
-import nl.gogognome.util.DateUtil;
 
 /**
  * This class represents a party. A party can be either a debtor or a creditor.
@@ -132,61 +128,6 @@ public class Party implements Comparable
         return result;
     }
     
-    /**
-     * Gets the total of debet amounts of this party at the specified date.
-     * @param date the date 
-     * @return the total of debet amounts of this party
-     */
-    public Amount getTotalDebet(Date date) {
-        Amount result = Amount.getZero(Database.getInstance().getCurrency());
-        Journal[] journals = Database.getInstance().getJournals();
-        for (int i = 0; i < journals.length; i++) 
-        {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), date) <= 0)
-            {
-	            JournalItem[] items = journals[i].getItems();
-	            for (int j = 0; j < items.length; j++) 
-	            {
-	                if (this.equals(items[j].getParty()))
-	                {
-	                    if (items[j].isDebet())
-	                    {
-	                        result = result.add(items[j].getAmount());
-	                    }
-	                }
-	            }
-            }
-        }
-        return result;
-    }
-    
-    /**
-     * Gets the total of credit amounts of this party at the specified date.
-     * @param date the date 
-     * @return the total of credit amounts of this party
-     */
-    public Amount getTotalCredit(Date date) {
-        Amount result = Amount.getZero(Database.getInstance().getCurrency());
-        Journal[] journals = Database.getInstance().getJournals();
-        for (int i = 0; i < journals.length; i++) 
-        {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), date) <=0)
-            {
-	            JournalItem[] items = journals[i].getItems();
-	            for (int j = 0; j < items.length; j++) 
-	            {
-	                if (this.equals(items[j].getParty()))
-	                {
-	                    if (items[j].isCredit())
-	                    {
-	                        result = result.add(items[j].getAmount());
-	                    }
-	                }
-	            }
-            }
-        }
-        return result;
-    }
     
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
