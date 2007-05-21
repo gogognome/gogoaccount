@@ -1,5 +1,5 @@
 /*
- * $Id: AddressLabelPrinter.java,v 1.1 2007-05-19 17:34:07 sanderk Exp $
+ * $Id: AddressLabelPrinter.java,v 1.2 2007-05-21 15:54:29 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -26,37 +26,39 @@ import nl.gogognome.util.StringUtil;
 import cf.engine.Party;
 
 /**
- * This class prints address labels.
+ * This class prints address labels. Currently only A4-sized sheets with 3x8 labels
+ * are supported.
  *
+ * <p>The addresses are taken from an array of parties.
+ * 
  * @author Sander Kooijmans
  */
 public class AddressLabelPrinter implements Printable {
 
-    /** The parties to be printed. */
-    Party[] parties;
-    
-    private final static int ROWS_PER_PAGE = 8;
-    private final static int COLUMNS_PER_PAGE = 3;
-    private final static int PARTIES_PER_PAGE = ROWS_PER_PAGE * COLUMNS_PER_PAGE;
-    
+    /** The parties whose addresses are to be printed. */
+    private Party[] parties;
+
+    /**
+     * Constructor.
+     * @param parties the parties whose addresses are to be printed
+     */
     public AddressLabelPrinter(Party[] parties) {
         this.parties = parties;
     }
     
+    /**
+     * Prints the labels.
+     * @throws PrinterException if a problem occurs while printing
+     */
     public void printAddressLabels() throws PrinterException {
     	PrintRequestAttributeSet pras = new HashPrintRequestAttributeSet();
 		pras.add(MediaSizeName.ISO_A4);
-		int x = 5; //left and right margin
-		int y = 10; //top and bottom margin. Note that bottom margin cannot be less than 15 mm
-		int w = 200; //Width
-		int h = 272; //Height
-		int units = MediaPrintableArea.MM;
-		pras.add(new MediaPrintableArea(x, y, w, h, units));
+		pras.add(new MediaPrintableArea(5, 10, 210 - 2*5, 297 - 2*10, MediaPrintableArea.MM));
 		
         PrinterJob printerJob = PrinterJob.getPrinterJob();
         
         Book book = new Book();
-        book.append(this, new PageFormat(), (parties.length + PARTIES_PER_PAGE - 1) / PARTIES_PER_PAGE);
+        book.append(this, new PageFormat(), (parties.length + getNrPartiesPerPage() - 1) / getNrPartiesPerPage());
         printerJob.setPageable(book);
         boolean doPrint = printerJob.printDialog(pras);
         if (doPrint) {
@@ -75,20 +77,25 @@ public class AddressLabelPrinter implements Printable {
         Paper paper = format.getPaper();
         double paperWidth = paper.getWidth();
         double paperHeight = paper.getHeight();
+        // It seems that under Linux always the size of Letter is used instead of A4.
+        // This is a workaround:
+        paperWidth = (210.0 / 25.4) * 72.0;
+        paperHeight = (297.0 / 25.4) * 72.0;
+        
         Font font = new Font("Serif", Font.PLAIN, 10);
         g2d.setFont(font);
         FontMetrics fm = g2d.getFontMetrics();
         
-        int partyIndex = pageIndex * PARTIES_PER_PAGE;
-        double labelWidth = paperWidth / COLUMNS_PER_PAGE;
-        double labelHeight = paperHeight / ROWS_PER_PAGE;
+        int partyIndex = pageIndex * getNrPartiesPerPage();
+        double labelWidth = paperWidth / getNrColumnsPerPage();
+        double labelHeight = paperHeight / (getNrRowsPerPage() + (isTypeOfPaperOverruled() ? 1 : 0));
         int fontHeight = fm.getHeight();
         int y = 0;
         int x = 0;
-        for (int i=partyIndex; i < parties.length && i<partyIndex + PARTIES_PER_PAGE; i++) {
-            double labelX = x * labelWidth;
-            double labelY = y * labelHeight;
-            g2d.drawRect((int)labelX, (int)labelY, (int)labelWidth, (int)labelHeight);
+        for (int i=partyIndex; i < parties.length && i<partyIndex + getNrPartiesPerPage(); i++) {
+            double labelX = labelWidth * x;
+            double labelY = labelHeight* y;
+//            g2d.drawRect((int)labelX, (int)labelY, (int)labelWidth, (int)labelHeight);
             
             Party party = parties[i];
             String name = StringUtil.nullToEmptyString(party.getName());
@@ -112,11 +119,30 @@ public class AddressLabelPrinter implements Printable {
             g2d.drawString(zipAndCity, textX, textY + 2 * fontHeight);
             
             x++;
-            if (x == COLUMNS_PER_PAGE) {
+            if (x == getNrColumnsPerPage()) {
                 x = 0;
                 y++;
             }
         }
         return Printable.PAGE_EXISTS;
+    }
+    
+    public int getNrColumnsPerPage() {
+        return 3;
+    }
+    
+    public int getNrRowsPerPage() {
+        if (isTypeOfPaperOverruled()) {
+            return 7;
+        }
+        return 8;
+    }
+    
+    public int getNrPartiesPerPage() {
+        return getNrColumnsPerPage() * getNrRowsPerPage();
+    }
+    
+    private boolean isTypeOfPaperOverruled() {
+        return "A4".equals(System.getProperty("forcePaper"));
     }
 }
