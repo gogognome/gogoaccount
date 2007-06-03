@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.4 2007-05-21 15:56:39 sanderk Exp $
+ * $Id: PartiesView.java,v 1.5 2007-06-03 11:10:10 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -216,7 +216,8 @@ public class PartiesView extends View {
     }
     
     private void onAddParty() {
-        
+        EditPartyDialog dialog = new EditPartyDialog(getParentFrame());
+        dialog.showDialog();
     }
     
     /** The table model that shows information about the parties. */

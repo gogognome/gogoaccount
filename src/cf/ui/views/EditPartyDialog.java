@@ -1,13 +1,19 @@
 /*
- * $Id: EditPartyDialog.java,v 1.1 2007-05-21 15:57:07 sanderk Exp $
+ * $Id: EditPartyDialog.java,v 1.2 2007-06-03 11:10:10 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
 package cf.ui.views;
 
 import java.awt.Frame;
+import java.awt.GridBagLayout;
+
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import nl.gogognome.swing.OkCancelDialog;
+import nl.gogognome.swing.SwingUtils;
+import nl.gogognome.swing.WidgetFactory;
 import cf.engine.Party;
 
 /**
@@ -18,6 +24,12 @@ import cf.engine.Party;
  */
 public class EditPartyDialog extends OkCancelDialog {
 
+    private JTextField tfId;
+    private JTextField tfName;
+    private JTextField tfAddress;
+    private JTextField tfZipCode;
+    private JTextField tfCity;
+    
     /** 
      * The party that was entered by the user. If the user cancels this dialog,
      * then <code>resultParty</code> is <code>null</code>.
@@ -30,7 +42,7 @@ public class EditPartyDialog extends OkCancelDialog {
      */
     protected EditPartyDialog(Frame parent, Party party) {
         super(parent, "editPartyDialog.titleEdit");
-        // TODO Auto-generated constructor stub
+        componentInitialized(getPanel(party));
     }
 
     /**
@@ -39,7 +51,51 @@ public class EditPartyDialog extends OkCancelDialog {
      */
     protected EditPartyDialog(Frame parent) {
         super(parent, "editPartyDialog.titleAdd");
-        // TODO Auto-generated constructor stub
+        componentInitialized(getPanel(null));
+    }
+    
+    /**
+     * Gets the panel for editing a party.
+     * @param initialParty the party used to initialize the text fields
+     * @return the panel
+     */
+    private JPanel getPanel(Party initialParty) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        
+        WidgetFactory wf = WidgetFactory.getInstance();
+        
+        int row = 0;
+        panel.add(wf.createLabel("editPartyDialog.id"),
+                SwingUtils.createLabelGBConstraints(0, row));
+        tfId = wf.createTextField(30);
+        panel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
+        
+        panel.add(wf.createLabel("editPartyDialog.name"),
+                SwingUtils.createLabelGBConstraints(0, row));
+        tfName = wf.createTextField(30);
+        panel.add(tfName, SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
+        
+        panel.add(wf.createLabel("editPartyDialog.address"),
+                SwingUtils.createLabelGBConstraints(0, row));
+        tfAddress = wf.createTextField(30);
+        panel.add(tfAddress, SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
+
+        panel.add(wf.createLabel("editPartyDialog.zipCode"),
+                SwingUtils.createLabelGBConstraints(0, row));
+        tfZipCode = wf.createTextField(30);
+        panel.add(tfZipCode, SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
+        
+        panel.add(wf.createLabel("editPartyDialog.city"),
+                SwingUtils.createLabelGBConstraints(0, row));
+        tfCity = wf.createTextField(30);
+        panel.add(tfCity, SwingUtils.createTextFieldGBConstraints(1, row));
+        
+        // TODO: add text fields to the panel and initialize the text fields with values from initialParty
+        return panel;
     }
     
     /*
