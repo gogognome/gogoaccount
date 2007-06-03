@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.28 2007-05-19 17:34:07 sanderk Exp $
+ * $Id: MainFrame.java,v 1.29 2007-06-03 11:09:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -77,7 +77,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		createMenuBar();
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-		viewTabbedPane = new ViewTabbedPane();
+		viewTabbedPane = new ViewTabbedPane(this);
 		getContentPane().add(viewTabbedPane);
 		
 		addWindowListener(new WindowAdapter() {
