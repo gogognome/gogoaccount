@@ -1,5 +1,5 @@
 /*
- * $Id: Party.java,v 1.11 2007-05-21 15:54:00 sanderk Exp $
+ * $Id: Party.java,v 1.12 2007-07-18 19:54:00 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -128,6 +128,9 @@ public class Party implements Comparable
         return result;
     }
     
+    public String toString() {
+        return id + " " + name + " " + address + " "  + zipCode + " " + city;
+    }
     
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
