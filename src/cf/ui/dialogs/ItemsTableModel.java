@@ -1,11 +1,12 @@
 /*
- * $Id: ItemsTableModel.java,v 1.6 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: ItemsTableModel.java,v 1.7 2007-07-26 19:06:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.dialogs;
 
-import java.util.Enumeration;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Vector;
 
 import javax.swing.event.TableModelEvent;
@@ -15,11 +16,10 @@ import javax.swing.table.TableModel;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Account;
 import cf.engine.Database;
-import cf.engine.Party;
 import cf.engine.JournalItem;
+import cf.engine.Party;
 
 class ItemsTableModel implements TableModel
 {
@@ -27,7 +27,7 @@ class ItemsTableModel implements TableModel
     private Vector items = new Vector();
     
     /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
-    private Vector itemTableModelListeners = new Vector();
+    private ArrayList itemTableModelListeners = new ArrayList();
     
     public void setJournalItems(JournalItem[] itemsArray)
     {
@@ -45,9 +45,9 @@ class ItemsTableModel implements TableModel
      */
     private void notifyListeners(TableModelEvent event)
     {
-        for (Enumeration enum = itemTableModelListeners.elements(); enum.hasMoreElements();)
+        for (Iterator iter = itemTableModelListeners.iterator(); iter.hasNext();)
         {
-            TableModelListener listener = (TableModelListener)enum.nextElement();
+            TableModelListener listener = (TableModelListener)iter.next();
             listener.tableChanged(event);
         }
     }
@@ -206,7 +206,7 @@ class ItemsTableModel implements TableModel
      */
     public void addTableModelListener(TableModelListener listener) 
     {
-        itemTableModelListeners.addElement(listener);
+        itemTableModelListeners.add(listener);
     }
 
     /* (non-Javadoc)
@@ -214,7 +214,7 @@ class ItemsTableModel implements TableModel
      */
     public void removeTableModelListener(TableModelListener listener) 
     {
-        itemTableModelListeners.removeElement(listener);
+        itemTableModelListeners.remove(listener);
     }
 
     /**

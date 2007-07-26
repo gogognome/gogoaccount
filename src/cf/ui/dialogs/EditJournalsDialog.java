@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsDialog.java,v 1.8 2007-05-21 15:55:47 sanderk Exp $
+ * $Id: EditJournalsDialog.java,v 1.9 2007-07-26 19:06:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -10,9 +10,9 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.Vector;
+import java.util.Iterator;
 
 import javax.swing.AbstractAction;
 import javax.swing.DefaultCellEditor;
@@ -56,10 +56,10 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
     private ItemsTableModel itemsTableModel;
     
     /** Contains the journals as shown in the user interface. */
-    private Vector journalsInUi = new Vector();
+    private ArrayList journalsInUi = new ArrayList();
     
     /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
-    private Vector journalsTableModelListeners = new Vector();
+    private ArrayList journalsTableModelListeners = new ArrayList();
     
     /** The parent frame of this dialog. */
     private Frame parent;
@@ -80,7 +80,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 		Journal[] journals = Database.getInstance().getJournals();
 		for (int i=0; i<journals.length; i++)
 		{
-		    journalsInUi.addElement(journals[i]);
+		    journalsInUi.add(journals[i]);
 		}
 		// Create table of journals
 		// TODO: when table sorter is used, the items table show the wrong items!
@@ -202,7 +202,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 	protected void handleOk() 
 	{
 	    Journal[] journalsArray = new Journal[journalsInUi.size()];
-	    journalsInUi.copyInto(journalsArray);
+	    journalsInUi.toArray(journalsArray);
 	    Database.getInstance().setJournals(journalsArray);
 		hideDialog();
 	}
@@ -244,7 +244,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
      */
     public Object getValueAt(int row, int col) 
     {
-        Journal journal = (Journal)journalsInUi.elementAt(row);
+        Journal journal = (Journal)journalsInUi.get(row);
         Object result = null;
         switch(col)
         {
@@ -266,7 +266,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
      */
     public void setValueAt(Object value, int row, int col) 
     {
-        Journal journal = (Journal)journalsInUi.elementAt(row);
+        Journal journal = (Journal)journalsInUi.get(row);
         Date date = journal.getDate();
         String id = journal.getId();
         String description = journal.getDescription();
@@ -284,7 +284,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
         }
         
         journal = new Journal(id, description, date, journal.getItems());
-        journalsInUi.setElementAt(journal, row);
+        journalsInUi.set(row, journal);
     }
 
     /* (non-Javadoc)
@@ -313,7 +313,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
      */
     public void addTableModelListener(TableModelListener listener) 
     {
-        journalsTableModelListeners.addElement(listener);
+        journalsTableModelListeners.add(listener);
     }
 
     /* (non-Javadoc)
@@ -329,7 +329,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
         int row = journalsTable.getSelectedRow();
         if (row != -1)
         {
-            Journal journal = (Journal)journalsInUi.elementAt(row);
+            Journal journal = (Journal)journalsInUi.get(row);
             EditJournalDialog dialog = 
                 new EditJournalDialog(parent, "ejd.editJournal", journal, false);
             dialog.showDialog();
@@ -338,7 +338,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
                 if (journals.length != 1) {
                     throw new IllegalStateException("journals.length must be 1");
                 }
-                journalsInUi.setElementAt(journals[0], row);
+                journalsInUi.set(row, journals[0]);
                 notifyListeners(new TableModelEvent(this));
                 updateJournalItemTable(row);
             }
@@ -351,7 +351,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
         dialog.showDialog();
         Journal[] journals = dialog.getEditedJournals();
         for (int i = 0; i < journals.length; i++) {
-            journalsInUi.addElement(journals[i]);
+            journalsInUi.add(journals[i]);
         }
         if (journals.length > 0) {
             notifyListeners(new TableModelEvent(this));
@@ -364,7 +364,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
         if (row != -1)
         {
             // TODO: add "are you sure?" dialog.
-            journalsInUi.removeElementAt(row);
+            journalsInUi.remove(row);
             notifyListeners(new TableModelEvent(this));
         }
     }
@@ -375,9 +375,9 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
      */
     private void notifyListeners(TableModelEvent event)
     {
-        for (Enumeration enum = journalsTableModelListeners.elements(); enum.hasMoreElements();)
+        for (Iterator iter = journalsTableModelListeners.iterator(); iter.hasNext();)
         {
-            TableModelListener listener = (TableModelListener)enum.nextElement();
+            TableModelListener listener = (TableModelListener)iter.next();
             listener.tableChanged(event);
         }
     }
@@ -390,6 +390,6 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
     private void updateJournalItemTable(int row)
     {
         itemsTableModel.setJournalItems(
-                ((Journal)journalsInUi.elementAt(row)).getItems());
+                ((Journal)journalsInUi.get(row)).getItems());
     }
 }
