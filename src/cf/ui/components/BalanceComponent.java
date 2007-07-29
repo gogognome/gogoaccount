@@ -1,10 +1,11 @@
 /*
- * $Id: BalanceComponent.java,v 1.14 2007-04-14 16:06:46 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.15 2007-07-29 12:33:40 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -39,6 +40,8 @@ public class BalanceComponent extends JScrollPane {
     /** The panel that contains the components of the <code>BalanceComponent</code>. */
     private JPanel panel;
 
+    private JPanel tempPanel;
+    
     /** 
      * The database used to create the balance. Changes in this database will
      * lead to updates on this component.
@@ -78,8 +81,10 @@ public class BalanceComponent extends JScrollPane {
         });
         
         panel = new JPanel(new GridBagLayout());
+        panel.setBackground(getBackground());
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        JPanel tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        tempPanel.setBackground(getBackground());
         tempPanel.add(panel);
         setViewportView(tempPanel);
         
@@ -122,6 +127,7 @@ public class BalanceComponent extends JScrollPane {
         // Add label for the date
         int row = 0;
         JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        datePanel.setOpaque(false);
         datePanel.add(new JLabel(tr.getString("gen.date")));
 
         datePanel.add(new JLabel(tr.formatDate("gen.dateFormat", balance.getDate())));
@@ -253,5 +259,20 @@ public class BalanceComponent extends JScrollPane {
                 SwingUtils.createGBConstraints(5, row, 1, 1, 1.0, 1.0, 
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         0, 0, 0, 0));
+    }
+    
+    /**
+     * Sets the background color.
+     * @param color the background color
+     */
+    public void setBackground(Color color) {
+        super.setBackground(color);
+        getViewport().setBackground(color);
+        if (panel != null) {
+            panel.setBackground(color);
+        }
+        if (tempPanel != null) {
+            tempPanel.setBackground(color);
+        }
     }
 }

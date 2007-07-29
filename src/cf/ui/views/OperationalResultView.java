@@ -1,16 +1,18 @@
 /*
- * $Id: OperationalResultView.java,v 1.1 2007-04-14 12:47:18 sanderk Exp $
+ * $Id: OperationalResultView.java,v 1.2 2007-07-29 12:33:40 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridBagLayout;
 import java.util.Date;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
@@ -26,6 +28,8 @@ import cf.ui.components.OperationalResultComponent;
  * @author Sander Kooijmans
  */
 public class OperationalResultView extends View {
+
+    private final static Color BACKGROUND_COLOR = new Color(209, 255, 255);
 
     private DateSelectionBean dateSelectionBean;
 
@@ -50,11 +54,14 @@ public class OperationalResultView extends View {
     public void onInit() {
         setLayout(new BorderLayout());
         
+        setBackground(BACKGROUND_COLOR);
         TextResource tr = TextResource.getInstance();
         
         JPanel datePanel = new JPanel(new GridBagLayout());
         datePanel.add(new JLabel(tr.getString("operationalResultView.selectDate")),
                 SwingUtils.createLabelGBConstraints(0, 0));
+        datePanel.setOpaque(false);
+        datePanel.setBorder(new EmptyBorder(5, 10, 5, 5));
         
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
@@ -69,6 +76,8 @@ public class OperationalResultView extends View {
         
 		OperationalResultComponent operationalResultComponent = 
 		    new OperationalResultComponent(database, dateModel);
+        operationalResultComponent.setBackground(BACKGROUND_COLOR);
+        
 		add(operationalResultComponent, BorderLayout.CENTER);
     }
 
