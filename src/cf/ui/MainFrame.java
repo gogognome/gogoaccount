@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.30 2007-07-26 19:08:44 sanderk Exp $
+ * $Id: MainFrame.java,v 1.31 2007-07-29 12:33:27 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,14 +20,11 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
 import nl.gogognome.framework.ViewTabbedPane;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.swing.plaf.DefaultLookAndFeel;
 import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
@@ -227,14 +224,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 				fileName = args[i];
 			}
 		}
-		
-        try {
-            UIManager.setLookAndFeel(new DefaultLookAndFeel());
-        } catch (UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
-            // Don't let application crash because of an unsupported look and feel.
-        }
-        
+
         // Create and show main frame.
 		MainFrame mf = new MainFrame();
         mf.setVisible(true);
