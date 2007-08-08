@@ -2,6 +2,7 @@
 
 	<!-- set global properties for this build -->
 	<property name="srcdir" value="src" />
+	<property name="testdir" value="test/src" />
 	<property name="libdir" value="lib" />
 	<property name="resourcedir" value="resources" />
 	<property name="generateddir" value="generated" />
@@ -21,7 +22,10 @@
 		<mkdir dir="${classdir}"/>
 
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${srcdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" debug="true" />
+		<javac srcdir="${srcdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.4" target="1.4" debug="true" />
+		
+		<!-- Compile the java code from ${src} into ${build} -->
+		<javac srcdir="${testdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.4" target="1.4" debug="true" />
 		
 		<copy todir="${classdir}">
 			<fileset dir="${resourcedir}">
