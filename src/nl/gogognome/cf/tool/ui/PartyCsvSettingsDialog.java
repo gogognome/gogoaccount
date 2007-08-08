@@ -1,5 +1,5 @@
 /*
- * $Id: PartyCsvSettingsDialog.java,v 1.1 2007-07-18 19:53:39 sanderk Exp $
+ * $Id: PartyCsvSettingsDialog.java,v 1.2 2007-08-08 19:02:03 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -15,8 +15,6 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -62,6 +60,9 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
     
     private JTextArea taSampleOutput;
     
+    /** The parser used to parse the CSV file. */
+    private CsvFileParser parser;
+    
     /**
      * @param dialog
      * @param file the CSV file to be read
@@ -70,7 +71,7 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
     public PartyCsvSettingsDialog(Frame parent, File file) throws IOException {
         super(parent, "partyCsvSettingsDlg.title");
         this.file = file;
-        CsvFileParser parser = new CsvFileParser(file);
+        parser = new CsvFileParser(file);
         values = parser.getValues();
         lastPartyIndex = values.length - 1;
         componentInitialized(createPanel());
@@ -122,20 +123,6 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
                 updateSample();
             }
         });
-        tfOutputFormat.addKeyListener(new KeyListener() {
-            public void keyPressed(KeyEvent e) {
-            }
-
-            public void keyReleased(KeyEvent e) {
-            }
-
-            public void keyTyped(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    updateSample();
-                }
-            }
-            
-        });
         outputFormatPanel.add(tfOutputFormat,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
         
@@ -179,12 +166,34 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
         taSampleOutput.setText(sample);
     }
     
+    public int getFirstPartyIndex() {
+        return firstPartyIndex;
+    }
+    
+    public int getLastPartyIndex() {
+        return lastPartyIndex;
+    }
+    
+    public String getOutputFormat() {
+        return tfOutputFormat.getText();
+    }
+    
+    /**
+     * Gets the parser as it is configured by the user. This method should
+     * only be called if the user exited the dialog by pressing the Ok button.
+     * @return the parser
+     */
+    public CsvFileParser getParser() {
+        parser.setNrFirstLine(firstPartyIndex);
+        parser.setNrLastLine(lastPartyIndex);
+        return parser;
+    }
+    
     /* (non-Javadoc)
      * @see nl.gogognome.swing.OkCancelDialog#handleOk()
      */
     protected void handleOk() {
-        // TODO Auto-generated method stub
-        handleCancel();
+        hideDialog();
     }
 
     private class CsvTableModel extends AbstractTableModel {
