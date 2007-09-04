@@ -62,6 +62,7 @@
 
 	<target name="run" depends="compile" description="runs the application">
 		<java classname="${mainClass}" classpath="${classdir}:${libdir}/gogolib.jar:${classpath}" fork="yes">
+			<arg line="-lang=nl" />
 		</java>
 	</target>
 
