@@ -1,5 +1,5 @@
 /*
- * $Id: PartyCsvSettingsDialog.java,v 1.2 2007-08-08 19:02:03 sanderk Exp $
+ * $Id: PartyCsvSettingsView.java,v 1.1 2007-09-04 19:04:27 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -9,7 +9,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -19,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.AbstractAction;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -31,18 +31,18 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import nl.gogognome.csv.CsvFileParser;
-import nl.gogognome.swing.OkCancelDialog;
+import nl.gogognome.framework.View;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 
 /**
- * This class implements a dialog that allows the user to change settings
+ * This class implements a view that allows the user to change settings
  * for the <code>PartyCsvReader</code>. 
  *
  * @author Sander Kooijmans
  */
-public class PartyCsvSettingsDialog extends OkCancelDialog {
+public class PartyCsvSettingsView extends View {
 
     /** The model of the table showing the CSV file. */ 
     private CsvTableModel tableModel;
@@ -62,19 +62,35 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
     
     /** The parser used to parse the CSV file. */
     private CsvFileParser parser;
+
+    private String idOkButton;
+    private String idCancelButton;
     
+    /** Contains the identifier of the button that was used to close this view. */
+    private String idPressedButton;
+
     /**
      * @param dialog
      * @param file the CSV file to be read
+     * @param idOkButton the identifier of the OK button
+     * @param idCancelButton the identifier of the cancel button
      * @throws IOException if a problem occurs while reading the CSV file
      */
-    public PartyCsvSettingsDialog(Frame parent, File file) throws IOException {
-        super(parent, "partyCsvSettingsDlg.title");
+    public PartyCsvSettingsView(File file, String idOkButton, String idCancelButton) throws IOException {
         this.file = file;
+        this.idOkButton = idOkButton;
+        this.idCancelButton = idCancelButton;
         parser = new CsvFileParser(file);
         values = parser.getValues();
         lastPartyIndex = values.length - 1;
-        componentInitialized(createPanel());
+    }
+
+    /**
+     * Gets the identifier of the button that was used to close this view.
+     * @return the identifier of the button
+     */
+    public String getIdPressedButton() {
+        return idPressedButton;
     }
 
     /**
@@ -142,12 +158,30 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
                 new TitledBorder(TextResource.getInstance().getString("partyCsvSettingsDlg.outputFormatBorderTitle")),
                 new EmptyBorder(5, 10, 0, 10)));
 
+        // Create panel with ok and cancel buttons
+        buttonPanel = new JPanel(new FlowLayout());
+        JButton okButton = wf.createButton(idOkButton, new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                idPressedButton = idOkButton;
+                closeAction.actionPerformed(e);
+            }
+        });
+        buttonPanel.add(okButton);
+        JButton cancelButton = wf.createButton(idCancelButton, new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                idPressedButton = idCancelButton;
+                closeAction.actionPerformed(e);
+            }
+        });
+        buttonPanel.add(cancelButton);
+        
         // Put all panels on the main panel
         mainPanel.add(tablePanel, 
                 SwingUtils.createPanelGBConstraints(0, 0));
-
         mainPanel.add(outputFormatPanel, 
                 SwingUtils.createPanelGBConstraints(0, 1));
+        mainPanel.add(buttonPanel, 
+            SwingUtils.createPanelGBConstraints(0, 2));
 
         return mainPanel;
     }
@@ -189,13 +223,6 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
         return parser;
     }
     
-    /* (non-Javadoc)
-     * @see nl.gogognome.swing.OkCancelDialog#handleOk()
-     */
-    protected void handleOk() {
-        hideDialog();
-    }
-
     private class CsvTableModel extends AbstractTableModel {
 
         private int nrColumns;
@@ -259,5 +286,18 @@ public class PartyCsvSettingsDialog extends OkCancelDialog {
             return result;
         }
         
+    }
+
+    public String getTitle() {
+        return TextResource.getInstance().getString("partyCsvSettingsDlg.title");
+    }
+
+    public void onClose() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void onInit() {
+        add(createPanel());
     }
 }
