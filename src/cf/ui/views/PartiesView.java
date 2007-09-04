@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.5 2007-06-03 11:10:10 sanderk Exp $
+ * $Id: PartiesView.java,v 1.6 2007-09-04 19:04:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -23,8 +23,10 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
 import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.ActionWrapper;
+import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
@@ -216,8 +218,19 @@ public class PartiesView extends View {
     }
     
     private void onAddParty() {
-        EditPartyDialog dialog = new EditPartyDialog(getParentFrame());
+        EditPartyView editPartyView = new EditPartyView(null);
+        ViewDialog dialog = new ViewDialog(getParentFrame(), editPartyView);
         dialog.showDialog();
+        
+        Party party = editPartyView.getEnteredParty();
+        if (party != null) {
+            try {
+                database.addParty(party);
+            } catch (IllegalArgumentException e) {
+                MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
+                    TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
+            }
+        }
     }
     
     /** The table model that shows information about the parties. */
