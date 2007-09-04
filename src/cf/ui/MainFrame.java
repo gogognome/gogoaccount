@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.31 2007-07-29 12:33:27 sanderk Exp $
+ * $Id: MainFrame.java,v 1.32 2007-09-04 19:02:27 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,11 +20,16 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
+import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewListener;
 import nl.gogognome.framework.ViewTabbedPane;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.swing.plaf.DefaultLookAndFeel;
 import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
@@ -225,6 +230,13 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			}
 		}
 
+       try {
+            UIManager.setLookAndFeel(new DefaultLookAndFeel());
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+            // Don't let application crash because of an unsupported look and feel.
+        }
+            
         // Create and show main frame.
 		MainFrame mf = new MainFrame();
         mf.setVisible(true);
@@ -310,7 +322,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 					File compositeName = new File(dir,name);  
 					return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } } 
 				);
-			fileDialog.show();
+			fileDialog.setVisible(true);
 			String directory = fileDialog.getDirectory();
 			String filename  = fileDialog.getFile();
 			if (directory != null && filename != null) 
@@ -346,7 +358,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 				return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } } 
 			);
 		fileDialog.setFile(Database.getInstance().getFileName());
-		fileDialog.show();
+		fileDialog.setVisible(true);
 		String directory = fileDialog.getDirectory();
 		String filename  = fileDialog.getFile();
 		if (directory != null && filename != null) 
@@ -420,15 +432,27 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private void handleViewBalance() {
 	    if (balanceView == null) {
 	        balanceView = new BalanceView(Database.getInstance());
-	        viewTabbedPane.openView(balanceView);
-	    } else {
-	        viewTabbedPane.selectView(balanceView);
+            balanceView.addViewListener(new ViewListener() {
+                public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    balanceView = null;
+                }
+            });
+            viewTabbedPane.openView(balanceView);
+        } else {
+            viewTabbedPane.selectView(balanceView);
 	    }
 	}
 	
 	private void handleViewOperationalResult() {
 	    if (operationalResultView == null) {
 	        operationalResultView = new OperationalResultView(Database.getInstance());
+            operationalResultView.addViewListener(new ViewListener() {
+                public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    operationalResultView = null;
+                }
+            });
 	        viewTabbedPane.openView(operationalResultView);
 	    } else {
 	        viewTabbedPane.selectView(operationalResultView);
