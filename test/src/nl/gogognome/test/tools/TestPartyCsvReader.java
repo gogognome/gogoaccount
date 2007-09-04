@@ -1,21 +1,23 @@
 /*
- * $Id: TestPartyCsvReader.java,v 1.1 2007-07-24 18:38:57 sanderk Exp $
+ * $Id: TestPartyCsvReader.java,v 1.2 2007-09-04 19:05:39 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
 package nl.gogognome.test.tools;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.JFrame;
-
-import nl.gogognome.cf.tool.PartyCsvReader;
-import nl.gogognome.cf.tool.ui.PartyCsvSettingsDialog;
+import nl.gogognome.cf.tool.ui.PartyCsvSettingsView;
 import nl.gogognome.csv.CsvFileParser;
-import cf.engine.Party;
+import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewContainer;
+import nl.gogognome.framework.ViewFrame;
+import nl.gogognome.framework.ViewListener;
+import nl.gogognome.print.LabelPrinter;
+import nl.gogognome.print.TextLabel;
+import nl.gogognome.print.ui.SimpleLabelSheetSetupView;
 
 /**
  * Tests the class <code>PartyCsvReader</code>.
@@ -24,25 +26,65 @@ import cf.engine.Party;
  */
 public class TestPartyCsvReader {
 
-    public static void main(String[] args) throws IOException {
+    static ViewFrame frame;
+    static ViewContainer viewContainer;
+    static PartyCsvSettingsView pcsView;
+    static SimpleLabelSheetSetupView labelSheetSetupView;
+    static TextLabel[] labels;
+    
+    public static void main(String[] args) throws IOException, PrinterException {
         String fileName = args[0];
-        final JFrame frame = new JFrame(TestPartyCsvReader.class.getName());
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-               frame.dispose(); 
+        viewContainer = new ViewContainer("Party label printer");
+        frame = new ViewFrame(viewContainer);
+        pcsView = new PartyCsvSettingsView(new File(fileName),
+            "gen.continue", "gen.cancel");
+        pcsView.addViewListener(new ViewListener() {
+            public void onViewClosed(View view) {
+                onClosePartyCsvSettingsView();
             }
         });
-        frame.show();
-        PartyCsvSettingsDialog pcsDialog = new PartyCsvSettingsDialog(frame, new File(fileName));
-        pcsDialog.showDialog();
+        viewContainer.setView(pcsView);
+        frame.showFrame();
+    }
+    
+    private static void onClosePartyCsvSettingsView() {
+        if ("gen.cancel".equals(pcsView.getIdPressedButton())) {
+            frame.dispose();
+            return;
+        }
         
-        CsvFileParser parser = new CsvFileParser(new File(fileName));
-        PartyCsvReader pcr = new  PartyCsvReader(parser.getValues());
-        pcr.setNrFirstLine(2);
-        pcr.setNrLastLine(36);
-        Party[] parties = pcr.getParties();
-        for (int i = 0; i < parties.length; i++) {
-            System.out.println(parties[i]);
+        CsvFileParser parser = pcsView.getParser();
+        String[] labelTexts;
+        try {
+            labelTexts = parser.getFormattedValues(pcsView.getOutputFormat());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        
+        labels = new TextLabel[labelTexts.length];
+        for (int i = 0; i < labels.length; i++) {
+            labels[i] = new TextLabel(labelTexts[i]);
+        }
+        labelSheetSetupView = new SimpleLabelSheetSetupView(labels, "gen.finish", "gen.cancel");
+
+        labelSheetSetupView.addViewListener(new ViewListener() {
+            public void onViewClosed(View view) {
+                onCloseLabelSheetSetupView();
+            }
+        });
+        viewContainer.setView(labelSheetSetupView);
+    }
+    
+    private static void onCloseLabelSheetSetupView() {
+        frame.dispose();
+        if ("gen.cancel".equals(labelSheetSetupView.getIdPressedButton())) {
+            return;
+        }
+        try {
+            LabelPrinter.printLabels(labels, labelSheetSetupView.getResultingLabelSheets());
+        } catch (PrinterException e) {
+            e.printStackTrace();
         }
     }
 }
