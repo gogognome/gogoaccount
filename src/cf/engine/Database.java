@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.24 2007-05-21 15:54:00 sanderk Exp $
+ * $Id: Database.java,v 1.25 2007-09-09 19:39:40 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -371,12 +371,10 @@ public class Database {
     {
         Vector newParties = new Vector();
         HashMap newIdsToPartiesMap = new HashMap();
-		for (int i = 0; i < parties.length; i++) 
-		{
+		for (int i = 0; i < parties.length; i++) {
 		    String id = parties[i].getId();
 		    newParties.addElement(parties[i]);
-		    if (newIdsToPartiesMap.get(id) != null)
-		    {
+		    if (newIdsToPartiesMap.get(id) != null) {
 	            throw new IllegalArgumentException("A party id "
 	                    + id + " already exists!");
 		    }
@@ -394,16 +392,48 @@ public class Database {
      * @param party the party to be added
      * @throws IllegalArgumentException if another party exists with the same id. 
      */
-    public void addParty(Party party)
-    {
+    public void addParty(Party party) {
         String id = party.getId();
-        if (idsToPartiesMap.get(id) != null)
-        {
-            throw new IllegalArgumentException("A party id "
-                    + id + " already exists!");
+        if (idsToPartiesMap.get(id) != null) {
+            throw new IllegalArgumentException("A party with ID " + id + " already exists!");
         }
         parties.addElement(party);
         idsToPartiesMap.put(id, party);
+        notifyChange();
+    }
+
+    /**
+     * Updates a party in the database.
+     * @param oldParty the old party (which must exist in the database)
+     * @param newParty the new party (which may not exist yet in the database)
+     * @throws IllegalArgumentException if another party exists with the same id as <code>newParty</code> 
+     *         and if <code>oldParty</code>'s ID is different from <code>newParty</code>'s ID or if
+     *         <code>oldParty</code> does not exist in the database 
+     */
+    public void updateParty(Party oldParty, Party newParty) {
+        if (idsToPartiesMap.get(oldParty.getId()) == null) {
+            throw new IllegalArgumentException("A party with ID " + oldParty.getId() + " does not exist!");
+        }
+        if (!oldParty.getId().equals(newParty.getId())) {
+            if (idsToPartiesMap.get(newParty.getId()) != null) {
+                throw new IllegalArgumentException("A party with ID " + newParty.getId() + " already exists!");
+            }
+        }
+        parties.set(parties.indexOf(oldParty), newParty);
+        idsToPartiesMap.put(newParty.getId(), newParty);
+        notifyChange();
+    }
+    
+    /**
+     * Removes a party from the database.
+     * @param party the party to be removed
+     */
+    public void removeParty(Party party) {
+        if (idsToPartiesMap.get(party.getId()) == null) {
+            throw new IllegalArgumentException("A party with ID " + party.getId() + " does not exist!");
+        }
+        idsToPartiesMap.remove(party.getId());
+        parties.remove(party);
         notifyChange();
     }
     
