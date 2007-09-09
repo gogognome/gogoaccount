@@ -1,5 +1,5 @@
 /*
- * $Id: EditPartyView.java,v 1.1 2007-09-04 19:03:40 sanderk Exp $
+ * $Id: EditPartyView.java,v 1.2 2007-09-09 19:41:44 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -14,7 +14,9 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
+import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
@@ -33,6 +35,7 @@ public class EditPartyView extends View {
     private JTextField tfAddress;
     private JTextField tfZipCode;
     private JTextField tfCity;
+    private DateModel dateModel;
     
     /** 
      * The party that was entered by the user. If the user cancels this dialog,
@@ -104,13 +107,21 @@ public class EditPartyView extends View {
                 SwingUtils.createLabelGBConstraints(0, row));
         tfCity = wf.createTextField(30);
         textfieldPanel.add(tfCity, SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
         
+        textfieldPanel.add(wf.createLabel("editPartyView.birthDate"),
+            SwingUtils.createLabelGBConstraints(0, row));
+        dateModel = new DateModel();
+        DateSelectionBean dsbBirthDate = new DateSelectionBean(dateModel);
+        textfieldPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
+
         if (initialParty != null) {
             tfId.setText(initialParty.getId());
             tfName.setText(initialParty.getName());
             tfAddress.setText(initialParty.getAddress());
             tfZipCode.setText(initialParty.getZipCode());
             tfCity.setText(initialParty.getCity());
+            dateModel.setDate(initialParty.getBirthDate(), null);
         }
         
         // Create panel with buttons
@@ -118,7 +129,7 @@ public class EditPartyView extends View {
         okButton = wf.createButton("gen.ok", new AbstractAction() { 
             public void actionPerformed(ActionEvent event) {
                 resultParty = new Party(tfId.getText(), tfName.getText(),
-                    tfAddress.getText(), tfZipCode.getText(), tfCity.getText());
+                    tfAddress.getText(), tfZipCode.getText(), tfCity.getText(), dateModel.getDate());
                 closeAction.actionPerformed(event);
             }  
         }); 

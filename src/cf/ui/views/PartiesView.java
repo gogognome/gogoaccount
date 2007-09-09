@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.6 2007-09-04 19:04:03 sanderk Exp $
+ * $Id: PartiesView.java,v 1.7 2007-09-09 19:42:00 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -22,6 +22,7 @@ import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
+import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.DateModel;
@@ -56,7 +57,8 @@ public class PartiesView extends View {
     private JTextField tfAddress;
     private JTextField tfZipCode;
     private JTextField tfCity;
-
+    private DateModel birthDateModel;
+    
     private JButton btSearch;
     
     public PartiesView(Database database) {
@@ -84,15 +86,26 @@ public class PartiesView extends View {
             }
         });
         
-        JButton editButton = wf.createButton("partiesView.editParty", null);
-        JButton deleteButton = wf.createButton("partiesView.deleteParty", null);
+        JButton editButton = wf.createButton("partiesView.editParty", new AbstractAction() {
+            public void actionPerformed(ActionEvent evt) {
+                onEditParty();
+            }
+        });
+        JButton deleteButton = wf.createButton("partiesView.deleteParty", new AbstractAction() {
+            public void actionPerformed(ActionEvent evt) {
+                onDeleteParty();
+            }
+        });
         JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 0, 5));
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
         
-        add(createPanel(), BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.EAST);
+        setLayout(new GridBagLayout());
+        add(createPanel(), SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 1.0, 
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 12, 12, 12, 12));
+        add(buttonPanel, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0, 
+            GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 12, 12, 12));
     }
 
     /**
@@ -110,36 +123,49 @@ public class PartiesView extends View {
         criteriaPanel.setBorder(new TitledBorder(
                 tr.getString("partiesView.searchCriteria"))); 
 	   
+        int row = 0;
         tfId = new JTextField();
         criteriaPanel.add(wf.createLabel("gen.id"), 
-                SwingUtils.createLabelGBConstraints(0, 0));
+                SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfId, 
-                SwingUtils.createTextFieldGBConstraints(1, 0));
+                SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
         
         tfName = new JTextField();
         criteriaPanel.add(wf.createLabel("gen.name"), 
-                SwingUtils.createLabelGBConstraints(0, 1));
+                SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfName, 
-                SwingUtils.createTextFieldGBConstraints(1, 1));
+                SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
         
         tfAddress = new JTextField();
         criteriaPanel.add(wf.createLabel("gen.address"), 
-                SwingUtils.createLabelGBConstraints(0, 2));
+                SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfAddress, 
-                SwingUtils.createTextFieldGBConstraints(1, 2));
+                SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
         
         tfZipCode = new JTextField();
         criteriaPanel.add(wf.createLabel("gen.zipCode"), 
-                SwingUtils.createLabelGBConstraints(0, 3));
+                SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfZipCode, 
-                SwingUtils.createTextFieldGBConstraints(1, 3));
+                SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
         
         tfCity = new JTextField();
         criteriaPanel.add(wf.createLabel("gen.city"), 
-                SwingUtils.createLabelGBConstraints(0, 4));
+                SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfCity, 
-                SwingUtils.createTextFieldGBConstraints(1, 4));
+                SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
         
+        criteriaPanel.add(wf.createLabel("gen.birthDate"),
+            SwingUtils.createLabelGBConstraints(0, row));
+        birthDateModel = new DateModel();
+        DateSelectionBean dsbBirthDate = new DateSelectionBean(birthDateModel);
+        criteriaPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
+
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = wf.createAction("partiesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
@@ -151,7 +177,7 @@ public class PartiesView extends View {
         
         buttonPanel.add(btSearch);
         criteriaPanel.add(buttonPanel,
-                SwingUtils.createGBConstraints(0, 5, 2, 1, 0.0, 0.0, 
+                SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0, 
                         GridBagConstraints.EAST, GridBagConstraints.NONE, 
                         5, 0, 0, 0));
         
@@ -168,6 +194,7 @@ public class PartiesView extends View {
         table.getColumnModel().getColumn(2).setPreferredWidth(200);
         table.getColumnModel().getColumn(3).setPreferredWidth(80);
         table.getColumnModel().getColumn(4).setPreferredWidth(100);
+        table.getColumnModel().getColumn(5).setPreferredWidth(100);
         
         resultPanel.add(scrollPane, BorderLayout.CENTER);
         
@@ -176,17 +203,15 @@ public class PartiesView extends View {
         result.add(criteriaPanel,
                 SwingUtils.createTextFieldGBConstraints(0, 0));
         result.add(resultPanel,
-                SwingUtils.createTextFieldGBConstraints(0, 1));
+                SwingUtils.createPanelGBConstraints(0, 1));
         
         return result;
     }
 
-    /* (non-Javadoc)
+    /**
      * @see nl.gogognome.framework.View#onClose()
      */
     public void onClose() {
-        // TODO Auto-generated method stub
-        
     }
 
     /**
@@ -211,12 +236,18 @@ public class PartiesView extends View {
         if (tfCity.getText().length() > 0) {
             searchCriteria.setCity(tfCity.getText());
         }
-
+        if (birthDateModel.getDate() != null) {
+            searchCriteria.setBirthDate(birthDateModel.getDate());
+        }
+        
         partiesTableModel.setParties(database.getParties(searchCriteria));
         table.getSelectionModel().setSelectionInterval(0, 0);
         table.requestFocusInWindow();
     }
     
+    /**
+     * This method is called when the "add party" button is pressed.
+     */
     private void onAddParty() {
         EditPartyView editPartyView = new EditPartyView(null);
         ViewDialog dialog = new ViewDialog(getParentFrame(), editPartyView);
@@ -231,8 +262,54 @@ public class PartiesView extends View {
                     TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
             }
         }
+        onSearch();
     }
-    
+
+    /**
+     * This method is called when the "edit party" button is pressed.
+     */
+    private void onEditParty() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            return;
+        }
+        
+        Party oldParty = partiesTableModel.getParty(row);
+        EditPartyView editPartyView = new EditPartyView(oldParty);
+        ViewDialog dialog = new ViewDialog(getParentFrame(), editPartyView);
+        dialog.showDialog();
+        
+        Party party = editPartyView.getEnteredParty();
+        if (party != null) {
+            try {
+                database.updateParty(oldParty, party);
+            } catch (IllegalArgumentException e) {
+                MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
+                    TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
+            }
+        }
+        onSearch();
+    }
+
+    /**
+     * This method is called when the "delete party" button is pressed.
+     */
+    private void onDeleteParty() {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            return;
+        }
+        
+        Party party = partiesTableModel.getParty(row);
+        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.warning", 
+            TextResource.getInstance().getString("partiesView.areYouSurePartyIsDeleted", party.getName()), 
+            new String[] { "gen.yes", "gen.no" });
+        if (messageDialog.getSelectedButton() == 0) {
+            database.removeParty(party);
+        }
+        onSearch();
+    }
+
     /** The table model that shows information about the parties. */
     private static class PartiesTableModel extends AbstractTableModel {
 
@@ -248,6 +325,14 @@ public class PartiesView extends View {
             fireTableDataChanged();
         }
         
+        /**
+         * Gets the party for the specified row.
+         * @param row the row
+         */
+        public Party getParty(int row) {
+            return parties[row];
+        }
+        
         public String getColumnName(int columnIndex) {
             String id; 
             switch(columnIndex) {
@@ -256,6 +341,7 @@ public class PartiesView extends View {
             case 2: id = "gen.address"; break;
             case 3: id = "gen.zipCode"; break;
             case 4: id = "gen.city"; break;
+            case 5: id = "gen.birthDate"; break;
             default: 
                 id = null;
             }
@@ -266,7 +352,7 @@ public class PartiesView extends View {
          * @see javax.swing.table.TableModel#getColumnCount()
          */
         public int getColumnCount() {
-            return 5;
+            return 6;
         }
 
         /* (non-Javadoc)
@@ -286,9 +372,23 @@ public class PartiesView extends View {
             case 2: return parties[row].getAddress();
             case 3: return parties[row].getZipCode();
             case 4: return parties[row].getCity();
+            case 5: Date birthDate = parties[row].getBirthDate();
+                if (birthDate != null) {
+                    return TextResource.getInstance().formatDate("gen.dateFormat", birthDate);
+                } else {
+                    return null;
+                }
             default: return null;
             }
         }
         
+    }
+
+    /**
+     * Gets the default button of this view.
+     * @return the default button of this view
+     */
+    public JButton getDefaultButton() {
+        return btSearch;
     }
 }
