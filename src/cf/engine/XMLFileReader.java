@@ -1,11 +1,12 @@
 /*
- * $Id: XMLFileReader.java,v 1.13 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.14 2007-09-09 19:40:15 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Currency;
 import java.util.Date;
 import java.util.Locale;
@@ -26,11 +27,10 @@ import org.w3c.dom.NodeList;
  *
  * @author Sander Kooijmans
  */
-public class XMLFileReader 
-{
+public class XMLFileReader {
+    private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
 
-    private XMLFileReader()
-    {
+    private XMLFileReader() {
         // should never be called
     }
 
@@ -63,8 +63,7 @@ public class XMLFileReader
 		    db.setCurrency(Currency.getInstance(currency));
 
 			// parse start date
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
-		    Date startDate = sdf.parse(rootElement.getAttribute("startdate"));
+		    Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
 		    db.setStartOfPeriod(startDate);
 			
 			// parse accounts
@@ -99,7 +98,7 @@ public class XMLFileReader
 		            Element journalElem = (Element)journalNodes.item(j);
 		            String id = journalElem.getAttribute("id");
 		            String dateString = journalElem.getAttribute("date");
-		            Date date = sdf.parse(dateString);
+		            Date date = DATE_FORMAT.parse(dateString);
 		            description = journalElem.getAttribute("description");
 		            NodeList itemNodes = journalElem.getElementsByTagName("item");
 		            Vector itemsVector = new Vector();
@@ -168,18 +167,16 @@ public class XMLFileReader
 	/**
 	 * Parses parties.
 	 * @param nodes a node list containing parties. 
-	 * @return
+	 * @return an array of parties found in <code>nodes</code>
+     * @throws ParseException if a syntax error is found in the nodes
 	 */
-	private static Party[] parseParties(NodeList nodes)
-	{
-	    Vector parties = new Vector();
-	    for (int i=0; i<nodes.getLength(); i++)
-	    {
+	private static Party[] parseParties(NodeList nodes)	throws ParseException {
+	    ArrayList parties = new ArrayList();
+	    for (int i=0; i<nodes.getLength(); i++) {
 	        Element elem = (Element)nodes.item(i);
-	        NodeList accountNodes = elem.getElementsByTagName("party");
-	        for (int j=0; j<accountNodes.getLength(); j++)
-	        {
-	            Element accountElem = (Element)accountNodes.item(j);
+	        NodeList partyNodes = elem.getElementsByTagName("party");
+	        for (int j=0; j<partyNodes.getLength(); j++) {
+	            Element accountElem = (Element)partyNodes.item(j);
 	            String id = accountElem.getAttribute("id");
 	            String name = accountElem.getAttribute("name");
 	            String address = accountElem.getAttribute("address");
@@ -197,11 +194,19 @@ public class XMLFileReader
                 {
 	                city = null;
                 }
-		        parties.addElement(new Party(id, name, address, zipCode, city));
+                String birthDateString = accountElem.getAttribute("birthdate");
+                Date birthDate = null;
+                if (birthDateString.length() > 0) {
+                    try {
+                        birthDate = DATE_FORMAT.parse(birthDateString);
+                    } catch (java.text.ParseException e) {
+                        throw new ParseException("Invalid birth date: \"" + birthDateString + "\"");
+                    }
+                }
+		        parties.add(new Party(id, name, address, zipCode, city, birthDate));
 	        }
 	    }
-	    Party[] result = new Party[parties.size()];
-	    parties.copyInto(result);
-	    return result;
+        
+	    return (Party[]) parties.toArray(new Party[parties.size()]);
 	}
 }

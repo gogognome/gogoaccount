@@ -1,5 +1,5 @@
 /*
- * $Id: PartyCsvReader.java,v 1.1 2007-07-18 19:53:39 sanderk Exp $
+ * $Id: PartyCsvReader.java,v 1.2 2007-09-09 19:42:27 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -43,7 +43,7 @@ public class PartyCsvReader {
                     CsvFileParser.composeValue(colName, columns),
                     CsvFileParser.composeValue(colAddress, columns),
                     CsvFileParser.composeValue(colZip, columns),
-                    CsvFileParser.composeValue(colCity, columns));
+                    CsvFileParser.composeValue(colCity, columns), null);
             parties.add(party);
         }
         

@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.13 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.14 2007-09-09 19:40:15 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -29,11 +29,11 @@ import org.w3c.dom.Element;
  *
  * @author Sander Kooijmans
  */
-public class XMLFileWriter 
-{
+public class XMLFileWriter {
 
-    private XMLFileWriter()
-    {
+    private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
+
+    private XMLFileWriter() {
         // should never be called
     }
     
@@ -59,8 +59,7 @@ public class XMLFileWriter
 			rootElement.setAttribute("currency", db.getCurrency().getCurrencyCode());
 			
 			// write start date
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
-			rootElement.setAttribute("startdate", sdf.format(db.getStartOfPeriod()));
+			rootElement.setAttribute("startdate", DATE_FORMAT.format(db.getStartOfPeriod()));
 			
 			// write accounts
 			rootElement.appendChild(createElementForAccounts(doc, db, "assets", 
@@ -84,7 +83,7 @@ public class XMLFileWriter
 			{
 			    Element journalElem = doc.createElement("journal");
 			    journalElem.setAttribute("id", journals[i].getId());
-			    journalElem.setAttribute("date", sdf.format(journals[i].getDate()));
+			    journalElem.setAttribute("date", DATE_FORMAT.format(journals[i].getDate()));
 			    journalElem.setAttribute("description", journals[i].getDescription());
 			    JournalItem[] items = journals[i].getItems();
 			    for (int j = 0; j < items.length; j++) 
@@ -161,6 +160,9 @@ public class XMLFileWriter
 		    {
 		        elem.setAttribute("city", parties[i].getCity());
 		    }
+            if (parties[i].getBirthDate() != null) {
+                elem.setAttribute("birthdate", DATE_FORMAT.format(parties[i].getBirthDate()));
+            }
 		    groupElem.appendChild(elem);
 		}
 		return groupElem;

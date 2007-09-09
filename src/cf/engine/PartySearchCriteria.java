@@ -1,9 +1,13 @@
 /*
- * $Id: PartySearchCriteria.java,v 1.1 2007-01-15 18:32:46 sanderk Exp $
+ * $Id: PartySearchCriteria.java,v 1.2 2007-09-09 19:40:15 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
+
+import java.util.Date;
+
+import nl.gogognome.util.DateUtil;
 
 /**
  * This class represents search criteria for parties. 
@@ -17,6 +21,7 @@ public class PartySearchCriteria {
     private String address;
     private String zipCode;
     private String city;
+    private Date birthDate;
     
     public String getAddress() {
         return address;
@@ -48,6 +53,12 @@ public class PartySearchCriteria {
     public void setZipCode(String zipCode) {
         this.zipCode = zipCode;
     }
+    public Date getBirthDate() {
+        return birthDate;
+    }
+    public void setBirthDate(Date birthDate) {
+        this.birthDate = birthDate;
+    }
     
     /**
      * Checks whether the specified <code>Party</code> matches these criteria.
@@ -71,6 +82,13 @@ public class PartySearchCriteria {
         }
         if (city != null) {
             matches = matches && matches(city, party.getCity());
+        }
+        if (birthDate != null) {
+            if (party.getBirthDate() != null) {
+                matches = matches && DateUtil.compareDayOfYear(birthDate, party.getBirthDate()) == 0;
+            } else {
+                matches = false;
+            }
         }
         
         return matches;
