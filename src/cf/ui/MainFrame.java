@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.32 2007-09-04 19:02:27 sanderk Exp $
+ * $Id: MainFrame.java,v 1.33 2007-09-09 19:40:35 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,8 +20,6 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
 import nl.gogognome.framework.View;
@@ -230,12 +228,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			}
 		}
 
-       try {
-            UIManager.setLookAndFeel(new DefaultLookAndFeel());
-        } catch (UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
-            // Don't let application crash because of an unsupported look and feel.
-        }
+        DefaultLookAndFeel.useDefaultLookAndFeel();
             
         // Create and show main frame.
 		MainFrame mf = new MainFrame();
