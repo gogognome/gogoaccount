@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.14 2007-05-21 15:55:57 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.15 2007-09-15 19:00:05 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Vector;
 
@@ -29,6 +26,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import nl.gogognome.beans.DateSelectionBean;
+import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.SwingUtils;
@@ -36,6 +35,7 @@ import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
+import nl.gogognome.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
@@ -69,13 +69,13 @@ public class InvoiceDialog extends OkCancelDialog
     
     private JTextField tfPdfFileName;
     
-    private JTextField tfDate;
+    private DateModel dateModel;
     
     private JTextField tfConcerning;
     
     private JTextField tfOurReference;
 
-    private JTextField tfDueDate;
+    private DateModel dueDateModel;
     
     private Frame parentFrame;
     
@@ -149,12 +149,9 @@ public class InvoiceDialog extends OkCancelDialog
         
         panel.add(wf.createLabel("id.date"),
                 SwingUtils.createLabelGBConstraints(0, 2));
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat(
-                TextResource.getInstance().getString("gen.dateFormat"));
-        tfDate = wf.createTextField(10);
-        tfDate.setText(sdf.format(calendar.getTime()));
-        panel.add(tfDate,
+        dateModel = new DateModel();
+        dateModel.setDate(new Date(), null);
+        panel.add(new DateSelectionBean(dateModel),
                 SwingUtils.createLabelGBConstraints(1, 2));
 
         panel.add(wf.createLabel("id.concerning"),
@@ -171,10 +168,9 @@ public class InvoiceDialog extends OkCancelDialog
 
         panel.add(wf.createLabel("id.dueDate"),
                 SwingUtils.createLabelGBConstraints(0, 5));
-        tfDueDate = wf.createTextField(10);
-        calendar.add(Calendar.DAY_OF_MONTH, 14);
-        tfDueDate.setText(sdf.format(calendar.getTime()));
-        panel.add(tfDueDate,
+        dueDateModel = new DateModel();
+        dueDateModel.setDate(DateUtil.addDays(new Date(), 14), null);
+        panel.add(new DateSelectionBean(dueDateModel),
                 SwingUtils.createLabelGBConstraints(1, 5));
         
         componentInitialized(panel);
@@ -184,25 +180,17 @@ public class InvoiceDialog extends OkCancelDialog
      * @see cf.ui.dialogs.OkCancelDialog#handleOk()
      */
     protected void handleOk() {
-        SimpleDateFormat sdf = new SimpleDateFormat(
-                TextResource.getInstance().getString("gen.dateFormat"));
-        Date date;
-        try {
-            date = sdf.parse(tfDate.getText());
-        } catch (ParseException e) {
+        Date date = dateModel.getDate();
+        if (date == null) {
             MessageDialog.showMessage(parentFrame, "gen.error",
                     TextResource.getInstance().getString("gen.invalidDate"));
-            	
             return;
         }
 
-        Date dueDate;
-        try {
-            dueDate = sdf.parse(tfDate.getText());
-        } catch (ParseException e) {
+        Date dueDate = dueDateModel.getDate();
+        if (dueDate == null) {
             MessageDialog.showMessage(parentFrame, "gen.error",
                     TextResource.getInstance().getString("gen.invalidDate"));
-            	
             return;
         }
         
