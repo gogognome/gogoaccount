@@ -1,12 +1,11 @@
 /*
- * $Id: PartyCsvSettingsView.java,v 1.1 2007-09-04 19:04:27 sanderk Exp $
+ * $Id: PartyCsvSettingsView.java,v 1.2 2007-09-15 19:01:56 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
 package nl.gogognome.cf.tool.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -19,19 +18,25 @@ import java.io.IOException;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
 
 import nl.gogognome.csv.CsvFileParser;
 import nl.gogognome.framework.View;
+import nl.gogognome.swing.ButtonPanel;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
@@ -47,15 +52,17 @@ public class PartyCsvSettingsView extends View {
     /** The model of the table showing the CSV file. */ 
     private CsvTableModel tableModel;
     
-    /** The values of the CSV file. */
-    private String[][] values;
+    /** The table showing the CSV file. */
+    private JTable table;
     
-    private int firstPartyIndex = 0;
-    private int lastPartyIndex = Integer.MAX_VALUE;
-    
+    /** The values of the CSV file. Must never be <code>null</code>. */
+    private String[][] values = new String[0][0];
+
     /** The CSV file. */
     private File file;
     
+    private JTextField tfFileName;
+
     private JTextField tfOutputFormat;
     
     private JTextArea taSampleOutput;
@@ -68,7 +75,7 @@ public class PartyCsvSettingsView extends View {
     
     /** Contains the identifier of the button that was used to close this view. */
     private String idPressedButton;
-
+    
     /**
      * @param dialog
      * @param file the CSV file to be read
@@ -76,13 +83,9 @@ public class PartyCsvSettingsView extends View {
      * @param idCancelButton the identifier of the cancel button
      * @throws IOException if a problem occurs while reading the CSV file
      */
-    public PartyCsvSettingsView(File file, String idOkButton, String idCancelButton) throws IOException {
-        this.file = file;
+    public PartyCsvSettingsView(String idOkButton, String idCancelButton) throws IOException {
         this.idOkButton = idOkButton;
         this.idCancelButton = idCancelButton;
-        parser = new CsvFileParser(file);
-        values = parser.getValues();
-        lastPartyIndex = values.length - 1;
     }
 
     /**
@@ -102,29 +105,29 @@ public class PartyCsvSettingsView extends View {
         JPanel mainPanel = new JPanel(new GridBagLayout());
         WidgetFactory wf = WidgetFactory.getInstance();
         
+        // Create file panel
+        JPanel filePanel = new JPanel(new GridBagLayout());
+        filePanel.add(wf.createLabel("partyCsvSettingsDlg.filename"),
+            SwingUtils.createLabelGBConstraints(0, 0));
+
+        tfFileName = wf.createTextField(30);
+        filePanel.add(tfFileName, SwingUtils.createTextFieldGBConstraints(1, 0));
+
+        JButton button = wf.createButton("gen.btSelectFile", new AbstractAction() { 
+            public void actionPerformed(ActionEvent event) {
+                onChoseFile();
+            }
+        });
+        filePanel.add(button, SwingUtils.createGBConstraints(2, 0, 1, 1, 0.0, 0.0, 
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, 0, 5, 0, 0));
+        
         // Create table panel
         JPanel tablePanel = new JPanel(new BorderLayout());
         tableModel = new CsvTableModel();
-        final JTable table = new JTable(tableModel);
-        table.setDefaultRenderer(String.class, new ColoredStringRenderer());
+        table = new JTable(tableModel);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         JScrollPane scrollPane = new JScrollPane(table);
         tablePanel.add(scrollPane, BorderLayout.CENTER);
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.add(wf.createButton("partyCsvSettingsDlg.firstPartyBtn", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                firstPartyIndex = table.getSelectedRow();
-                tableModel.fireTableDataChanged();
-                updateSample();
-            }
-        }));
-        buttonPanel.add(wf.createButton("partyCsvSettingsDlg.lastPartyBtn", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                lastPartyIndex = table.getSelectedRow();
-                tableModel.fireTableDataChanged();
-                updateSample();
-            }
-        }));
-        tablePanel.add(buttonPanel, BorderLayout.SOUTH);
         tablePanel.setBorder(new CompoundBorder(
                 new TitledBorder(TextResource.getInstance().getString("partyCsvSettingsDlg.tableBorderTitle")),
                 new EmptyBorder(5, 10, 0, 10)));
@@ -133,7 +136,7 @@ public class PartyCsvSettingsView extends View {
         JPanel outputFormatPanel = new JPanel(new GridBagLayout());
         outputFormatPanel.add(wf.createLabel("partyCsvSettingsDlg.format"),
                 SwingUtils.createLabelGBConstraints(0, 0));
-        tfOutputFormat = new JTextField("{0} {1}\\n{2}\\n{3}");
+        tfOutputFormat = new JTextField("{2} {1}\\n{3}\\n{4} {5}");
         tfOutputFormat.addFocusListener(new FocusAdapter() {
             public void focusLost(FocusEvent e) {
                 updateSample();
@@ -159,7 +162,8 @@ public class PartyCsvSettingsView extends View {
                 new EmptyBorder(5, 10, 0, 10)));
 
         // Create panel with ok and cancel buttons
-        buttonPanel = new JPanel(new FlowLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
         JButton okButton = wf.createButton(idOkButton, new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 idPressedButton = idOkButton;
@@ -176,12 +180,21 @@ public class PartyCsvSettingsView extends View {
         buttonPanel.add(cancelButton);
         
         // Put all panels on the main panel
+        mainPanel.add(filePanel, 
+            SwingUtils.createPanelGBConstraints(0, 0));
         mainPanel.add(tablePanel, 
-                SwingUtils.createPanelGBConstraints(0, 0));
-        mainPanel.add(outputFormatPanel, 
                 SwingUtils.createPanelGBConstraints(0, 1));
+        mainPanel.add(outputFormatPanel, 
+                SwingUtils.createPanelGBConstraints(0, 2));
         mainPanel.add(buttonPanel, 
-            SwingUtils.createPanelGBConstraints(0, 2));
+            SwingUtils.createPanelGBConstraints(0, 3));
+
+        // Finally, add listeners
+        table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                updateSample();
+            }
+        });
 
         return mainPanel;
     }
@@ -189,23 +202,16 @@ public class PartyCsvSettingsView extends View {
     private void updateSample() {
         String format = tfOutputFormat.getText();
         String sample;
-        int index = (firstPartyIndex + lastPartyIndex) / 2;
-        if (index < values.length) {
-            sample = CsvFileParser.composeValue(format, values[index]);
+        int[] rows = table.getSelectedRows();
+        int index = rows.length / 2;
+        if (index < rows.length) {
+            sample = CsvFileParser.composeValue(format, values[rows[index]]);
         } else {
             sample = TextResource.getInstance().getString("partyCsvSettingsDlg.emptySelection");
         }
         sample = sample.replaceAll("\\\\n", "\n");
         
         taSampleOutput.setText(sample);
-    }
-    
-    public int getFirstPartyIndex() {
-        return firstPartyIndex;
-    }
-    
-    public int getLastPartyIndex() {
-        return lastPartyIndex;
     }
     
     public String getOutputFormat() {
@@ -218,16 +224,19 @@ public class PartyCsvSettingsView extends View {
      * @return the parser
      */
     public CsvFileParser getParser() {
-        parser.setNrFirstLine(firstPartyIndex);
-        parser.setNrLastLine(lastPartyIndex);
+        parser.setRowIndices(table.getSelectedRows());
         return parser;
     }
     
     private class CsvTableModel extends AbstractTableModel {
 
         private int nrColumns;
-        
+
         public CsvTableModel() {
+            initValues();
+        }
+
+        public void initValues() {
             nrColumns = 0;
             for (int i = 0; i < values.length; i++) {
                 nrColumns = Math.max(nrColumns, values[i].length);
@@ -268,36 +277,51 @@ public class PartyCsvSettingsView extends View {
         }
         
     }
-    
-    private class ColoredStringRenderer extends DefaultTableCellRenderer {
-
-        /* (non-Javadoc)
-         * @see javax.swing.table.TableCellRenderer#getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int)
-         */
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
-            Component result = super.getTableCellRendererComponent(table, value, isSelected, 
-                    hasFocus, row, column);
-            if (firstPartyIndex <= row && row <= lastPartyIndex) {
-                result.setBackground(Color.CYAN);
-            } else {
-                result.setBackground(Color.WHITE);
-            }
-            return result;
-        }
-        
-    }
 
     public String getTitle() {
         return TextResource.getInstance().getString("partyCsvSettingsDlg.title");
     }
 
     public void onClose() {
-        // TODO Auto-generated method stub
-        
     }
 
     public void onInit() {
         add(createPanel());
+        onFileChanged();
+    }
+    
+    /** Opens the file selection dialog to let the user select a file. */
+    private void onChoseFile() {
+        JFileChooser fileChooser = new JFileChooser(tfFileName.getText());
+        fileChooser.setFileFilter(new FileFilter() {
+
+            public boolean accept(File f) {
+                return f.isDirectory() || f.getName().endsWith(".csv");
+            }
+
+            public String getDescription() {
+                return TextResource.getInstance().getString("partyCsvSettingsDlg.csvFile");
+            }
+            
+        });
+        if (fileChooser.showOpenDialog(PartyCsvSettingsView.this) == JFileChooser.APPROVE_OPTION) {
+            file = fileChooser.getSelectedFile();
+            onFileChanged();
+        }
+    }
+    
+    private void onFileChanged() {
+        tfFileName.setText(file != null ? file.getAbsolutePath() : "");
+        parser = new CsvFileParser(file);
+        try {
+            values = parser.getValues();
+            if (tableModel != null) {
+                tableModel.initValues();
+                tableModel.fireTableStructureChanged();
+                table.selectAll();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
