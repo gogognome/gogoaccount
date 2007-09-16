@@ -1,5 +1,5 @@
 /*
- * $Id: PdfLatex.java,v 1.2 2006-12-25 09:30:36 sanderk Exp $
+ * $Id: PdfLatex.java,v 1.3 2007-09-16 19:55:20 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -34,9 +34,27 @@ public class PdfLatex {
         String command = "pdflatex -interaction=nonstopmode " 
             + "-output-directory " + pdfFileDirectory.getAbsolutePath()
             + " " + texFile.getAbsolutePath();
-        Runtime.getRuntime().exec(command).waitFor();
+        if (Runtime.getRuntime().exec(command).waitFor() != 0) {
+            throw new IOException("Conversion from Tex to PDF has failed.");
+        }
     }
 
+    /**
+     * Checks whether the PDF converter is available.
+     * @return <code>true</code> if it is available; <code>false</code> otherwise
+     */
+    public static boolean pdfConverterAvailable() {
+        String command = "pdflatex -version";
+        boolean pdfConverterPresent = false;
+        try {
+            Process process = Runtime.getRuntime().exec(command);
+            pdfConverterPresent = process.waitFor() == 0;
+        } catch (InterruptedException e) {
+        } catch (IOException e) {
+        }
+        return pdfConverterPresent;
+    }
+    
     /**
      * Gets the name of the tex file that corresponds to a PDF file.
      * @param pdfFileName the name of the PDF file
