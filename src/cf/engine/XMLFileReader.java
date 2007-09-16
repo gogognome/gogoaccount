@@ -1,10 +1,11 @@
 /*
- * $Id: XMLFileReader.java,v 1.14 2007-09-09 19:40:15 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.15 2007-09-16 19:54:58 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Currency;
@@ -39,11 +40,10 @@ public class XMLFileReader {
 	 * 
 	 * @param fileName the name of the file.
 	 * @return a <tt>Database</tt> with the contents of the file.
-	 * @throws ParseException if an I/O error occurs or if a syntax error is found 
-	 *         in the file.
+	 * @throws ParseException if a syntax error is found in the file.
+     * @throws IOException if an I/O problem occurs while reading the file.
 	 */
-	public static Database createDatabaseFromFile(String fileName) throws ParseException 
-	{
+	public static Database createDatabaseFromFile(String fileName) throws ParseException, IOException {
 		try 
 		{
 		    Database db = new Database();
@@ -125,12 +125,11 @@ public class XMLFileReader {
 		catch(Exception e) 
 		{
 			//logger.warn("Exception occurred while parsing XML file.", e);
-			if (e instanceof ParseException) 
-			{
+			if (e instanceof ParseException) {
 				throw (ParseException)e;
-			} 
-			else 
-			{
+            } else if (e instanceof IOException) {
+                throw (IOException) e;
+			} else {
 				throw new ParseException(e);
 			}
 		}

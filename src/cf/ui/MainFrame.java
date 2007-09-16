@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.33 2007-09-09 19:40:35 sanderk Exp $
+ * $Id: MainFrame.java,v 1.34 2007-09-16 19:54:58 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -13,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
 
@@ -365,10 +366,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * Loads a bookkeeping from an XML file.
 	 * @param fileName the name of the file.
 	 */
-	private void loadFile(String fileName) 
-	{	
-		try 
-		{
+	private void loadFile(String fileName) {	
+		try {
 			Database db = XMLFileReader.createDatabaseFromFile(fileName);
 //			db.startMultipleUpdates();
 			Database.getInstance().removeListener(this);
@@ -384,11 +383,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			handleViewOperationalResult();
 			// TODO: Remove the following line:
 	        viewTabbedPane.openView(new PartiesView(db));
-		}
-		catch (ParseException e) 
-		{
+		} catch (ParseException e) {
 			new MessageDialog(this, "mf.errorOpeningFile", e);
-		} 
+		} catch (IOException e) {
+            new MessageDialog(this, "mf.errorOpeningFile", e);
+        }
 		databaseChanged(Database.getInstance());
 	}
 	
