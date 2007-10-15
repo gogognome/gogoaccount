@@ -1,5 +1,5 @@
 /*
- * $Id: Party.java,v 1.13 2007-09-09 19:39:56 sanderk Exp $
+ * $Id: Party.java,v 1.14 2007-10-15 19:33:48 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -32,6 +32,12 @@ public class Party implements Comparable {
     /** The birth date of this party. */
     private Date birthDate;
     
+    /** THe type of this party. */
+    private String type;
+    
+    /** Contains remarks about this party. */
+    private String remarks;
+    
     /**
      * Constructs a party.
      * @param name the name of the party.
@@ -52,13 +58,16 @@ public class Party implements Comparable {
      * @param city the city where the party lives
      * @param birthDate the birth date of the party
      */
-    public Party(String id, String name, String address, String zipCode, String city, Date birthDate) {
+    public Party(String id, String name, String address, String zipCode, String city, Date birthDate,
+        String type, String remarks) {
         this.id = id;
         this.name = name;
         this.address = address;
         this.zipCode = zipCode;
         this.city = city;
         this.birthDate = birthDate;
+        this.type = type;
+        this.remarks = remarks;
     }
     
     /**
@@ -123,6 +132,22 @@ public class Party implements Comparable {
     }
     
     /**
+     * Gets the type of this party.
+     * @return the type of this party
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * Gets the remarks for this party.
+     * @return the remarks for this party
+     */
+    public String getRemarks() {
+        return remarks;
+    }
+
+    /**
      * Checks whether this instance equals another instance.
      * @param that the instance to which this instance is compared.
      * @return <code>true</code> if this instance equals <code>that</code>;
@@ -140,7 +165,7 @@ public class Party implements Comparable {
     }
     
     public String toString() {
-        return id + " " + name + " " + address + " "  + zipCode + " " + city + " " + birthDate;
+        return id + " " + name + " " + address + " "  + zipCode + " " + city + " " + birthDate + " ";
     }
     
     /* (non-Javadoc)

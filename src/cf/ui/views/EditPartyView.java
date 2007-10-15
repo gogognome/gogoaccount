@@ -1,5 +1,5 @@
 /*
- * $Id: EditPartyView.java,v 1.3 2007-09-15 19:06:54 sanderk Exp $
+ * $Id: EditPartyView.java,v 1.4 2007-10-15 19:33:48 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -13,6 +13,8 @@ import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import nl.gogognome.beans.DateSelectionBean;
@@ -36,6 +38,8 @@ public class EditPartyView extends View {
     private JTextField tfAddress;
     private JTextField tfZipCode;
     private JTextField tfCity;
+    private JTextField tfType;
+    private JTextArea taRemarks;
     private DateModel dateModel;
     
     /** 
@@ -115,7 +119,22 @@ public class EditPartyView extends View {
         textfieldPanel.add(tfCity, SwingUtils.createTextFieldGBConstraints(1, row));
         label.setLabelFor(tfCity);
         row++;
-        
+
+        label = wf.createLabel("editPartyView.type");
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
+        tfType = wf.createTextField(30);
+        textfieldPanel.add(tfType, SwingUtils.createTextFieldGBConstraints(1, row));
+        label.setLabelFor(tfType);
+        row++;
+
+        label = wf.createLabel("editPartyView.remarks");
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
+        taRemarks = new JTextArea(5, 30);
+        JScrollPane remarksPane = new JScrollPane(taRemarks);
+        textfieldPanel.add(remarksPane, SwingUtils.createTextFieldGBConstraints(1, row));
+        label.setLabelFor(remarksPane);
+        row++;
+
         label = wf.createLabel("editPartyView.birthDate");
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         dateModel = new DateModel();
@@ -129,6 +148,8 @@ public class EditPartyView extends View {
             tfAddress.setText(initialParty.getAddress());
             tfZipCode.setText(initialParty.getZipCode());
             tfCity.setText(initialParty.getCity());
+            tfType.setText(initialParty.getType());
+            taRemarks.setText(initialParty.getRemarks());
             dateModel.setDate(initialParty.getBirthDate(), null);
         }
         
@@ -137,7 +158,8 @@ public class EditPartyView extends View {
         okButton = wf.createButton("gen.ok", new AbstractAction() { 
             public void actionPerformed(ActionEvent event) {
                 resultParty = new Party(tfId.getText(), tfName.getText(),
-                    tfAddress.getText(), tfZipCode.getText(), tfCity.getText(), dateModel.getDate());
+                    tfAddress.getText(), tfZipCode.getText(), tfCity.getText(), dateModel.getDate(),
+                    tfType.getText(), taRemarks.getText());
                 closeAction.actionPerformed(event);
             }  
         }); 

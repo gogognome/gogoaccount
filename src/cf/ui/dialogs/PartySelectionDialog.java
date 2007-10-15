@@ -1,5 +1,5 @@
 /*
- * $Id: PartySelectionDialog.java,v 1.6 2007-05-19 17:33:31 sanderk Exp $
+ * $Id: PartySelectionDialog.java,v 1.7 2007-10-15 19:33:48 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -11,6 +11,9 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -32,7 +35,7 @@ import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 
 /**
- * 
+ * This class implements a dialog for selecting parties from a CSV file.
  *
  * @author Sander Kooijmans
  */
@@ -99,30 +102,30 @@ public class PartySelectionDialog extends DialogWithButtons {
         return selectedParty;
     }
     
-	/**
-	 * Handles the button-pressed event. This method is called when one of the buttons
-	 * has been pressed by the user.
-	 * @param index the index of the button (as specified by the <tt>buttonIds</tt>
-	 *        passed to the constructor. 
-	 */
-	protected void handleButton(int index) {
-	    switch(mode) {
-	    case SELECTION_MODE:
-	        if (index == 0) {
-	            int row = table.getSelectedRow();
-	            if (row != -1 && row < tableModel.getParties().length) {
-	                selectedParty = tableModel.getParties()[row];
-		    		hideDialog(); 
-	            }
-	        } else {
-	    		hideDialog(); 
-	        }
-	        break;
-	        
-	    case EDIT_MODE:
-	        break;
-	    }
-	}
+    /**
+     * Handles the button-pressed event. This method is called when one of the buttons
+     * has been pressed by the user.
+     * @param index the index of the button (as specified by the <tt>buttonIds</tt>
+     *        passed to the constructor. 
+     */
+    protected void handleButton(int index) {
+        switch(mode) {
+        case SELECTION_MODE:
+            if (index == 0) {
+                int row = table.getSelectedRow();
+                if (row != -1 && row < tableModel.getParties().length) {
+                    selectedParty = tableModel.getParties()[row];
+                    hideDialog(); 
+                }
+            } else {
+                hideDialog(); 
+            }
+            break;
+            
+        case EDIT_MODE:
+            break;
+        }
+    }
     
     /**
      * Creates the panel with search criteria and the table with
@@ -138,32 +141,43 @@ public class PartySelectionDialog extends DialogWithButtons {
         JPanel criteriaPanel = new JPanel(new GridBagLayout());
         criteriaPanel.setBorder(new TitledBorder(
                 tr.getString("psd.searchCriteria"))); 
-	   
+       
+        FocusListener focusListener = new FocusAdapter() {
+            public void focusGained(FocusEvent e) {
+                setDefaultButton(btSearch);
+            }
+        };
+        
         tfId = new JTextField();
+        tfId.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("gen.id"), 
                 SwingUtils.createLabelGBConstraints(0, 0));
         criteriaPanel.add(tfId, 
                 SwingUtils.createTextFieldGBConstraints(1, 0));
         
         tfName = new JTextField();
+        tfName.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("gen.name"), 
                 SwingUtils.createLabelGBConstraints(0, 1));
         criteriaPanel.add(tfName, 
                 SwingUtils.createTextFieldGBConstraints(1, 1));
         
         tfAddress = new JTextField();
+        tfAddress.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("gen.address"), 
                 SwingUtils.createLabelGBConstraints(0, 2));
         criteriaPanel.add(tfAddress, 
                 SwingUtils.createTextFieldGBConstraints(1, 2));
         
         tfZipCode = new JTextField();
+        tfZipCode.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("gen.zipCode"), 
                 SwingUtils.createLabelGBConstraints(0, 3));
         criteriaPanel.add(tfZipCode, 
                 SwingUtils.createTextFieldGBConstraints(1, 3));
         
         tfCity = new JTextField();
+        tfCity.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("gen.city"), 
                 SwingUtils.createLabelGBConstraints(0, 4));
         criteriaPanel.add(tfCity, 
@@ -264,11 +278,11 @@ public class PartySelectionDialog extends DialogWithButtons {
         {
             String id = null;
             switch(col) {
-	            case 0: id = "gen.id"; break;
-	            case 1: id = "gen.name"; break;
-	            case 2: id = "gen.address"; break;
-	            case 3: id = "gen.zipCode"; break;
-	            case 4: id = "gen.city"; break;
+                case 0: id = "gen.id"; break;
+                case 1: id = "gen.name"; break;
+                case 2: id = "gen.address"; break;
+                case 3: id = "gen.zipCode"; break;
+                case 4: id = "gen.city"; break;
             }
             return TextResource.getInstance().getString(id);
         }
@@ -294,11 +308,11 @@ public class PartySelectionDialog extends DialogWithButtons {
             String result = null;
             Party party = parties[row];
             switch(col) {
-	            case 0: result = party.getId(); break;
-	            case 1: result = party.getName(); break;
-	            case 2: result = party.getAddress(); break;
-	            case 3: result = party.getZipCode(); break;
-	            case 4: result = party.getCity(); break;
+                case 0: result = party.getId(); break;
+                case 1: result = party.getName(); break;
+                case 2: result = party.getAddress(); break;
+                case 3: result = party.getZipCode(); break;
+                case 4: result = party.getCity(); break;
             }
             return result;
         }

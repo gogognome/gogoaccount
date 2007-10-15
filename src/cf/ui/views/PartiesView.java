@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.7 2007-09-09 19:42:00 sanderk Exp $
+ * $Id: PartiesView.java,v 1.8 2007-10-15 19:33:48 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -125,41 +125,41 @@ public class PartiesView extends View {
 	   
         int row = 0;
         tfId = new JTextField();
-        criteriaPanel.add(wf.createLabel("gen.id"), 
+        criteriaPanel.add(wf.createLabel("partiesView.id"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfId, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
         
         tfName = new JTextField();
-        criteriaPanel.add(wf.createLabel("gen.name"), 
+        criteriaPanel.add(wf.createLabel("partiesView.name"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfName, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
         
         tfAddress = new JTextField();
-        criteriaPanel.add(wf.createLabel("gen.address"), 
+        criteriaPanel.add(wf.createLabel("partiesView.address"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfAddress, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
         
         tfZipCode = new JTextField();
-        criteriaPanel.add(wf.createLabel("gen.zipCode"), 
+        criteriaPanel.add(wf.createLabel("partiesView.zipCode"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfZipCode, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
         
         tfCity = new JTextField();
-        criteriaPanel.add(wf.createLabel("gen.city"), 
+        criteriaPanel.add(wf.createLabel("partiesView.city"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfCity, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
         
-        criteriaPanel.add(wf.createLabel("gen.birthDate"),
+        criteriaPanel.add(wf.createLabel("partiesView.birthDate"),
             SwingUtils.createLabelGBConstraints(0, row));
         birthDateModel = new DateModel();
         DateSelectionBean dsbBirthDate = new DateSelectionBean(birthDateModel);
@@ -342,6 +342,8 @@ public class PartiesView extends View {
             case 3: id = "gen.zipCode"; break;
             case 4: id = "gen.city"; break;
             case 5: id = "gen.birthDate"; break;
+            case 6: id = "gen.type"; break;
+            case 7: id = "gen.remarks"; break;
             default: 
                 id = null;
             }
@@ -352,7 +354,7 @@ public class PartiesView extends View {
          * @see javax.swing.table.TableModel#getColumnCount()
          */
         public int getColumnCount() {
-            return 6;
+            return 8;
         }
 
         /* (non-Javadoc)
@@ -378,6 +380,14 @@ public class PartiesView extends View {
                 } else {
                     return null;
                 }
+            case 6: return parties[row].getType();
+            case 7:
+                String remarks = parties[row].getRemarks();
+                if (remarks != null && remarks.length() > 30) {
+                    int size = Math.max(20, remarks.lastIndexOf(' ', 30));
+                    remarks = remarks.substring(0, size) + "...";
+                }
+                return remarks;
             default: return null;
             }
         }

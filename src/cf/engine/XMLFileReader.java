@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.15 2007-09-16 19:54:58 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.16 2007-10-15 19:33:48 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -179,20 +179,28 @@ public class XMLFileReader {
 	            String id = accountElem.getAttribute("id");
 	            String name = accountElem.getAttribute("name");
 	            String address = accountElem.getAttribute("address");
-	            if (address.length() == 0)
-	            {
+	            if (address.length() == 0) {
 	                address = null;
 	            }
 	            String zipCode = accountElem.getAttribute("zip");
-	            if (zipCode.length() == 0)
-	            {
+	            if (zipCode.length() == 0) {
 	                zipCode = null;
 	            }
 	            String city = accountElem.getAttribute("city");
-	            if (city.length() == 0)
-                {
+	            if (city.length() == 0) {
 	                city = null;
                 }
+                
+                String type = accountElem.getAttribute("type");
+                if (type.length() == 0) {
+                    type = null;
+                }
+
+                String remarks = accountElem.getAttribute("remarks");
+                if (remarks.length() == 0) {
+                    remarks = null;
+                }
+
                 String birthDateString = accountElem.getAttribute("birthdate");
                 Date birthDate = null;
                 if (birthDateString.length() > 0) {
@@ -202,7 +210,7 @@ public class XMLFileReader {
                         throw new ParseException("Invalid birth date: \"" + birthDateString + "\"");
                     }
                 }
-		        parties.add(new Party(id, name, address, zipCode, city, birthDate));
+		        parties.add(new Party(id, name, address, zipCode, city, birthDate, type, remarks));
 	        }
 	    }
         

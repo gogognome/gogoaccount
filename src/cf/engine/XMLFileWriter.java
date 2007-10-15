@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.14 2007-09-09 19:40:15 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.15 2007-10-15 19:33:48 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -140,26 +140,27 @@ public class XMLFileWriter {
 	}
 	
 	private static Element createElementForParties(Document doc, Database db, 
-	        String groupName, Party[] parties)
-	{
+	        String groupName, Party[] parties) {
 		Element groupElem = doc.createElement(groupName);
-		for (int i=0; i<parties.length; i++) 
-		{
+		for (int i=0; i<parties.length; i++) {
 		    Element elem = doc.createElement("party");
 		    elem.setAttribute("id", parties[i].getId());
 		    elem.setAttribute("name", parties[i].getName());
-		    if (parties[i].getAddress() != null)
-		    {
+		    if (parties[i].getAddress() != null) {
 		        elem.setAttribute("address", parties[i].getAddress());
 		    }
-		    if (parties[i].getZipCode() != null)
-		    {
+		    if (parties[i].getZipCode() != null) {
 		        elem.setAttribute("zip", parties[i].getZipCode());
 		    }
-		    if (parties[i].getCity() != null)
-		    {
+		    if (parties[i].getCity() != null) {
 		        elem.setAttribute("city", parties[i].getCity());
 		    }
+            if (parties[i].getType() != null) {
+                elem.setAttribute("type", parties[i].getType());
+            }
+            if (parties[i].getRemarks() != null) {
+                elem.setAttribute("remarks", parties[i].getRemarks());
+            }
             if (parties[i].getBirthDate() != null) {
                 elem.setAttribute("birthdate", DATE_FORMAT.format(parties[i].getBirthDate()));
             }
