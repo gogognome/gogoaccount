@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.34 2007-09-16 19:54:58 sanderk Exp $
+ * $Id: MainFrame.java,v 1.35 2007-11-03 19:38:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -74,6 +74,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** The operational result view. */
 	private OperationalResultView operationalResultView;
 	
+    /** THe view for editing parties. */
+    private PartiesView partiesView;
+    
 	/** Creates the main frame. */
 	public MainFrame() 
 	{
@@ -130,6 +133,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		JMenuItem miAddJournal = wf.createMenuItem("mi.addJournal", this);
 		JMenuItem miEditJournals = wf.createMenuItem("mi.editJournals", this);
 		JMenuItem miAddInvoices = wf.createMenuItem("mi.addInvoices", this);
+        JMenuItem miEditParties = wf.createMenuItem("mi.editParties", this);
 		JMenuItem miCleanUp = wf.createMenuItem("mi.cleanUp", this);
 
 		// the view menu
@@ -156,6 +160,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		editMenu.add(miAddJournal);
 		editMenu.add(miEditJournals);
 		editMenu.add(miAddInvoices);
+        editMenu.add(miEditParties);
 		editMenu.addSeparator();
 		editMenu.add(miCleanUp);
 		
@@ -200,6 +205,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.editJournals".equals(command)) { handleEditJournals(); }
 		if ("mi.cleanUp".equals(command)) { handleCleanUp(); }
 		if ("mi.addInvoices".equals(command)) { handleAddInvoices(); }
+        if ("mi.editParties".equals(command)) { handleEditParties(); }
 		if ("mi.generateInvoices".equals(command)) { handleGenerateInvoices(); }
 		if ("mi.generateReport".equals(command)) { handleGenerateReport(); }
 		if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
@@ -381,8 +387,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			
 			handleViewBalance();
 			handleViewOperationalResult();
-			// TODO: Remove the following line:
-	        viewTabbedPane.openView(new PartiesView(db));
 		} catch (ParseException e) {
 			new MessageDialog(this, "mf.errorOpeningFile", e);
 		} catch (IOException e) {
@@ -431,6 +435,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
                 }
             });
             viewTabbedPane.openView(balanceView);
+            viewTabbedPane.selectView(balanceView);
         } else {
             viewTabbedPane.selectView(balanceView);
 	    }
@@ -446,11 +451,28 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
                 }
             });
 	        viewTabbedPane.openView(operationalResultView);
+            viewTabbedPane.selectView(operationalResultView);
 	    } else {
 	        viewTabbedPane.selectView(operationalResultView);
 	    }
 	}
-	
+
+    private void handleEditParties() {
+        if (partiesView == null) {
+            partiesView = new PartiesView(Database.getInstance());
+            partiesView.addViewListener(new ViewListener() {
+                public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    partiesView = null;
+                }
+            });
+            viewTabbedPane.openView(partiesView);
+            viewTabbedPane.selectView(partiesView);
+        } else {
+            viewTabbedPane.selectView(partiesView);
+        }
+    }
+
 	private void handleViewAccountOverview()
 	{
         AccountSelectionDialog accountSelectionDialog = new
