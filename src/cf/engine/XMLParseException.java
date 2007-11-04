@@ -1,5 +1,5 @@
 /*
- * $Id: ParseException.java,v 1.1 2006-07-20 18:28:03 sanderk Exp $
+ * $Id: XMLParseException.java,v 1.1 2007-11-04 19:25:22 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -10,14 +10,14 @@ package cf.engine;
  * 
  * @author Sander Kooijmans
  */
-public class ParseException extends Exception 
+public class XMLParseException extends Exception 
 {
-	public ParseException( String description ) 
+	public XMLParseException( String description ) 
 	{
 		super(description);
 	}
 	
-	public ParseException( Exception cause ) 
+	public XMLParseException( Exception cause ) 
 	{
 		super(cause);
 	}

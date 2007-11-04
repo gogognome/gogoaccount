@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.25 2007-09-09 19:39:40 sanderk Exp $
+ * $Id: Database.java,v 1.26 2007-11-04 19:25:22 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
@@ -42,15 +41,20 @@ public class Database {
     
     private Account[] expenses = new Account[0];
     
-    private Vector journals = new Vector();
+    private ArrayList journals = new ArrayList();
     
-    private Vector parties = new Vector();
+    private ArrayList parties = new ArrayList();
+
+    private ArrayList invoices = new ArrayList();
     
     /** Maps ids of accounts to <code>Account</code>s. */
     private HashMap idsToAccountsMap = new HashMap();
     
     /** Maps ids of parties to <code>Party</code> instances. */
     private HashMap idsToPartiesMap = new HashMap();
+    
+    /** Maps ids of invoices to <code>Invoice</code> instances. */
+    private HashMap idsToInvoicesMap = new HashMap();
     
     /** 
      * Contains the start date of the account period.
@@ -181,13 +185,19 @@ public class Database {
         return assets;
     }
     
-    public void setAssets(Account[] assets) 
+    /**
+     * Sets the assets.
+     * @param assets the assets
+     * @throws DatabaseModificationFailedException if there is an asset for which holds
+     *         <code>!asset.isDebet()</code>.
+     */
+    public void setAssets(Account[] assets) throws DatabaseModificationFailedException
     {
         for (int i=0; i<assets.length; i++)
         {
             if (!assets[i].isDebet())
             {
-                throw new IllegalArgumentException("Assets must have debet equal to true!");
+                throw new DatabaseModificationFailedException("Assets must have debet equal to true!");
             }
         }
         
@@ -202,13 +212,19 @@ public class Database {
         return expenses;
     }
     
-    public void setExpenses(Account[] expenses) 
+    /**
+     * Sets the expenses.
+     * @param expenses the expenses
+     * @throws DatabaseModificationFailedException if there is an expense for which holds
+     *         <code>!expense.isDebet()</code>
+     */
+    public void setExpenses(Account[] expenses) throws DatabaseModificationFailedException 
     {
         for (int i=0; i<expenses.length; i++)
         {
             if (!expenses[i].isDebet())
             {
-                throw new IllegalArgumentException("Expenses must have debet equal to true!");
+                throw new DatabaseModificationFailedException("Expenses must have debet equal to true!");
             }
         }
         
@@ -223,13 +239,13 @@ public class Database {
         return liabilities;
     }
     
-    public void setLiabilities(Account[] liabilities) 
+    public void setLiabilities(Account[] liabilities) throws DatabaseModificationFailedException
     {
         for (int i=0; i<liabilities.length; i++)
         {
             if (liabilities[i].isDebet())
             {
-                throw new IllegalArgumentException("Liabilities must have debet equal to false!");
+                throw new DatabaseModificationFailedException("Liabilities must have debet equal to false!");
             }
         }
         
@@ -244,13 +260,13 @@ public class Database {
         return revenues;
     }
     
-    public void setRevenues(Account[] revenues) 
+    public void setRevenues(Account[] revenues) throws DatabaseModificationFailedException 
     {
         for (int i=0; i<revenues.length; i++)
         {
             if (revenues[i].isDebet())
             {
-                throw new IllegalArgumentException("Revenues must have debet equal to false!");
+                throw new DatabaseModificationFailedException("Revenues must have debet equal to false!");
             }
         }
         
@@ -303,34 +319,28 @@ public class Database {
      * Sets the journals in the database.
      * @param journals the new journals of the database.
      */
-    public void setJournals(Journal[] journals)
-    {
-        this.journals.removeAllElements();
-        for (int i=0; i<journals.length; i++)
-        {
-            this.journals.addElement(journals[i]);
+    public void setJournals(Journal[] journals) {
+        this.journals.clear();
+        for (int i=0; i<journals.length; i++) {
+            this.journals.add(journals[i]);
         }
         notifyChange();
     }
     
     public void addJournal(Journal journal)
     {
-        journals.addElement(journal);
+        journals.add(journal);
         notifyChange();
     }
     
-    public Journal[] getJournals()
-    {
-        Journal[] result = new Journal[journals.size()];
-        journals.copyInto(result);
+    public Journal[] getJournals() {
+        Journal[] result = (Journal[]) journals.toArray(new Journal[journals.size()]);
         Arrays.sort(result);
         return result;
     }
     
-    public Party[] getParties()
-    {
-        Party[] result = new Party[parties.size()];
-        parties.copyInto(result);
+    public Party[] getParties() {
+        Party[] result = (Party[]) parties.toArray(new Party[parties.size()]);
         Arrays.sort(result);
         return result;
     }
@@ -364,19 +374,17 @@ public class Database {
      * Sets the debtors in the database. Any debtors present in the database
      * are replaced.
      * @param debtors the debtors.
-     * @throws IllegalArgumentException if at least two debtors were present 
+     * @throws DatabaseModificationFailedException if at least two debtors were present 
      *         with the same id.
      */
-    public void setParties(Party[] parties)
-    {
-        Vector newParties = new Vector();
+    public void setParties(Party[] parties) throws DatabaseModificationFailedException {
+        ArrayList newParties = new ArrayList();
         HashMap newIdsToPartiesMap = new HashMap();
 		for (int i = 0; i < parties.length; i++) {
 		    String id = parties[i].getId();
-		    newParties.addElement(parties[i]);
+		    newParties.add(parties[i]);
 		    if (newIdsToPartiesMap.get(id) != null) {
-	            throw new IllegalArgumentException("A party id "
-	                    + id + " already exists!");
+	            throw new DatabaseModificationFailedException("A party id " + id + " already exists!");
 		    }
 		    newIdsToPartiesMap.put(id, parties[i]);
 		}
@@ -390,14 +398,14 @@ public class Database {
     /**
      * Adds a party to the database.
      * @param party the party to be added
-     * @throws IllegalArgumentException if another party exists with the same id. 
+     * @throws DatabaseModificationFailedException if another party exists with the same id. 
      */
-    public void addParty(Party party) {
+    public void addParty(Party party) throws DatabaseModificationFailedException {
         String id = party.getId();
         if (idsToPartiesMap.get(id) != null) {
-            throw new IllegalArgumentException("A party with ID " + id + " already exists!");
+            throw new DatabaseModificationFailedException("A party with ID " + id + " already exists!");
         }
-        parties.addElement(party);
+        parties.add(party);
         idsToPartiesMap.put(id, party);
         notifyChange();
     }
@@ -406,17 +414,17 @@ public class Database {
      * Updates a party in the database.
      * @param oldParty the old party (which must exist in the database)
      * @param newParty the new party (which may not exist yet in the database)
-     * @throws IllegalArgumentException if another party exists with the same id as <code>newParty</code> 
+     * @throws DatabaseModificationFailedException if another party exists with the same id as <code>newParty</code> 
      *         and if <code>oldParty</code>'s ID is different from <code>newParty</code>'s ID or if
      *         <code>oldParty</code> does not exist in the database 
      */
-    public void updateParty(Party oldParty, Party newParty) {
+    public void updateParty(Party oldParty, Party newParty) throws DatabaseModificationFailedException {
         if (idsToPartiesMap.get(oldParty.getId()) == null) {
-            throw new IllegalArgumentException("A party with ID " + oldParty.getId() + " does not exist!");
+            throw new DatabaseModificationFailedException("A party with ID " + oldParty.getId() + " does not exist!");
         }
         if (!oldParty.getId().equals(newParty.getId())) {
             if (idsToPartiesMap.get(newParty.getId()) != null) {
-                throw new IllegalArgumentException("A party with ID " + newParty.getId() + " already exists!");
+                throw new DatabaseModificationFailedException("A party with ID " + newParty.getId() + " already exists!");
             }
         }
         parties.set(parties.indexOf(oldParty), newParty);
@@ -427,10 +435,11 @@ public class Database {
     /**
      * Removes a party from the database.
      * @param party the party to be removed
+     * @throws DatabaseModificationFailedException if the party does not exist
      */
-    public void removeParty(Party party) {
+    public void removeParty(Party party) throws DatabaseModificationFailedException {
         if (idsToPartiesMap.get(party.getId()) == null) {
-            throw new IllegalArgumentException("A party with ID " + party.getId() + " does not exist!");
+            throw new DatabaseModificationFailedException("A party with ID " + party.getId() + " does not exist!");
         }
         idsToPartiesMap.remove(party.getId());
         parties.remove(party);
@@ -568,20 +577,18 @@ public class Database {
      * @return the debtors
      */
     public Party[] getDebtors(Date date) {
-        Vector debtors = new Vector();
-        for (int i=0; i<parties.size(); i++)
-        {
-            Party party = (Party)parties.elementAt(i);
+        ArrayList debtors = new ArrayList();
+        for (int i=0; i<parties.size(); i++) {
+            Party party = (Party)parties.get(i);
             Amount totalDebet = getTotalDebetForParty(party, date);
             Amount totalCredit = getTotalCreditForParty(party, date);
             Amount balance = totalDebet.subtract(totalCredit);
             if (balance.isPositive())
             {
-                debtors.addElement(party);
+                debtors.add(party);
             }
         }
-        Party[] result = new Party[debtors.size()];
-        debtors.copyInto(result);
+        Party[] result = (Party[]) debtors.toArray(new Party[debtors.size()]);
         return result;
     }
     
@@ -592,20 +599,17 @@ public class Database {
      * @return the creditors
      */
     public Party[] getCreditors(Date date) {
-        Vector creditors = new Vector();
-        for (int i=0; i<parties.size(); i++)
-        {
-            Party party = (Party)parties.elementAt(i);
+        ArrayList creditors = new ArrayList();
+        for (int i=0; i<parties.size(); i++) {
+            Party party = (Party)parties.get(i);
             Amount totalDebet = getTotalDebetForParty(party, date);
             Amount totalCredit = getTotalCreditForParty(party, date);
             Amount balance = totalDebet.subtract(totalCredit);
-            if (balance.isNegative())
-            {
-                creditors.addElement(party);
+            if (balance.isNegative()) {
+                creditors.add(party);
             }
         }
-        Party[] result = new Party[creditors.size()];
-        creditors.copyInto(result);
+        Party[] result = (Party[]) creditors.toArray(new Party[creditors.size()]);
         return result;
     }
     
@@ -746,7 +750,7 @@ public class Database {
             index++;
         }
         
-        journals.addElement(new Journal("reset", "reset", date, items));
+        journals.add(new Journal("reset", "reset", date, items));
         
         notifyChange();
     }
@@ -766,6 +770,56 @@ public class Database {
         if (result == null) {
             result = Amount.getZero(getCurrency()); 
         }
+        return result;
+    }
+    
+    /**
+     * Adds an invoice to the database.
+     * @param invoice the invoice to be added
+     * @throws DatabaseModificationFailedException if another invoice exists with the same id. 
+     */
+    public void addInvoice(Invoice invoice) throws DatabaseModificationFailedException {
+        String id = invoice.getId();
+        if (idsToInvoicesMap.get(id) != null) {
+            throw new DatabaseModificationFailedException("An invoice with ID " + id + " already exists!");
+        }
+        invoices.add(invoice);
+        idsToInvoicesMap.put(id, invoice);
+        notifyChange();
+    }
+
+    /**
+     * Sets the invoices for the database. Any invoices present in the database
+     * are replaced.
+     * @param invoices the invoices
+     * @throws DatabaseModificationFailedException if at least two invoices are added 
+     *         with the same id.
+     */
+    public void setInvoices(Invoice[] invoices) throws DatabaseModificationFailedException {
+        ArrayList newInvoices = new ArrayList();
+        HashMap newIdsToInvoicesMap = new HashMap();
+        for (int i = 0; i < invoices.length; i++) {
+            String id = invoices[i].getId();
+            newInvoices.add(invoices[i]);
+            if (newIdsToInvoicesMap.get(id) != null) {
+                throw new DatabaseModificationFailedException("Two invoices with the id " + id + " are being added!");
+            }
+            newIdsToInvoicesMap.put(id, invoices[i]);
+        }
+        
+        // All invoices have a unique id.
+        this.invoices = newInvoices;
+        idsToInvoicesMap = newIdsToInvoicesMap;
+        notifyChange();
+    }
+    
+    /**
+     * Gets all invoices, sorted on ID.
+     * @return the invoices
+     */
+    public Invoice[] getInvoices() {
+        Invoice[] result = (Invoice[]) parties.toArray(new Invoice[invoices.size()]);
+        Arrays.sort(result);
         return result;
     }
 }
