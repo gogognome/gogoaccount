@@ -1,5 +1,5 @@
 /*
- * $Id: PrintAgeOfParties.java,v 1.1 2007-09-16 19:55:59 sanderk Exp $
+ * $Id: PrintAgeOfParties.java,v 1.2 2007-11-04 19:26:23 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -16,7 +16,7 @@ import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
 
 import cf.engine.Database;
-import cf.engine.ParseException;
+import cf.engine.XMLParseException;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;
 
@@ -93,7 +93,7 @@ public class PrintAgeOfParties {
                     System.out.println(tr.getString("printAge.unknownBirthDay"));
                 }
             }
-        } catch (ParseException e) {
+        } catch (XMLParseException e) {
             System.out.println(tr.getString("printAge.syntaxError", e.getMessage()));
         } catch (IOException e) {
             System.out.println(tr.getString("printAge.ioError", e.getMessage()));
