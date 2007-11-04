@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.8 2007-10-15 19:33:48 sanderk Exp $
+ * $Id: PartiesView.java,v 1.9 2007-11-04 19:26:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -32,6 +32,7 @@ import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
+import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Party;
 import cf.engine.PartySearchCriteria;
 
@@ -257,7 +258,7 @@ public class PartiesView extends View {
         if (party != null) {
             try {
                 database.addParty(party);
-            } catch (IllegalArgumentException e) {
+            } catch (DatabaseModificationFailedException e) {
                 MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
                     TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
             }
@@ -283,7 +284,7 @@ public class PartiesView extends View {
         if (party != null) {
             try {
                 database.updateParty(oldParty, party);
-            } catch (IllegalArgumentException e) {
+            } catch (DatabaseModificationFailedException e) {
                 MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
                     TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
             }
@@ -305,7 +306,12 @@ public class PartiesView extends View {
             TextResource.getInstance().getString("partiesView.areYouSurePartyIsDeleted", party.getName()), 
             new String[] { "gen.yes", "gen.no" });
         if (messageDialog.getSelectedButton() == 0) {
-            database.removeParty(party);
+            try {
+                database.removeParty(party);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
+                    TextResource.getInstance().getString("partiesView.partyCouldNotBeDeleted"));
+            }
         }
         onSearch();
     }

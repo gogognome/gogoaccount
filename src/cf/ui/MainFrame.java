@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.35 2007-11-03 19:38:59 sanderk Exp $
+ * $Id: MainFrame.java,v 1.36 2007-11-04 19:26:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -34,7 +34,7 @@ import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
 import cf.engine.Journal;
-import cf.engine.ParseException;
+import cf.engine.XMLParseException;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
@@ -387,7 +387,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			
 			handleViewBalance();
 			handleViewOperationalResult();
-		} catch (ParseException e) {
+		} catch (XMLParseException e) {
 			new MessageDialog(this, "mf.errorOpeningFile", e);
 		} catch (IOException e) {
             new MessageDialog(this, "mf.errorOpeningFile", e);
