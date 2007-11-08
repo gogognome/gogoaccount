@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.9 2007-11-04 19:26:03 sanderk Exp $
+ * $Id: PartiesView.java,v 1.10 2007-11-08 20:18:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -15,6 +15,7 @@ import java.util.Date;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -58,6 +59,7 @@ public class PartiesView extends View {
     private JTextField tfAddress;
     private JTextField tfZipCode;
     private JTextField tfCity;
+    private JComboBox cmbType;
     private DateModel birthDateModel;
     
     private JButton btSearch;
@@ -167,6 +169,15 @@ public class PartiesView extends View {
         criteriaPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
+        String[] types = database.getPartyTypes();
+        if (types.length > 0) {
+            criteriaPanel.add(wf.createLabel("partiesView.type"),
+                SwingUtils.createLabelGBConstraints(0, row));
+            cmbType = new JComboBox(types);
+            criteriaPanel.add(cmbType, SwingUtils.createTextFieldGBConstraints(1, row));
+            row++;
+        }
+        
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = wf.createAction("partiesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {

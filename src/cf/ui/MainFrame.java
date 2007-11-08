@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.36 2007-11-04 19:26:03 sanderk Exp $
+ * $Id: MainFrame.java,v 1.37 2007-11-08 20:18:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -475,8 +475,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleViewAccountOverview()
 	{
-        AccountSelectionDialog accountSelectionDialog = new
-        	AccountSelectionDialog(this, "mf.selectAccountForAccountOverview");
+        AccountSelectionDialog accountSelectionDialog =
+        	new AccountSelectionDialog(this, Database.getInstance(), "mf.selectAccountForAccountOverview");
         accountSelectionDialog.showDialog();
         Account account = accountSelectionDialog.getAccount();
         if (account != null)
@@ -537,7 +537,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    }
 	    else
 	    {
-		    EditJournalDialog dialog = new EditJournalDialog(this, "ajd.title", true);
+		    EditJournalDialog dialog = new EditJournalDialog(this, db, "ajd.title", true);
 		    dialog.showDialog();
 		    Journal[] journals = dialog.getEditedJournals();
 		    for (int i = 0; i < journals.length; i++) {
@@ -556,7 +556,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    }
 	    else
 	    {
-		    EditJournalsDialog dialog = new EditJournalsDialog(this);
+		    EditJournalsDialog dialog = new EditJournalsDialog(this, db);
 		    dialog.showDialog();
 	    }
 	}

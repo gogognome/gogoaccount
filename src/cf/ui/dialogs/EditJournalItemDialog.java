@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.5 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.6 2007-11-08 20:18:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -28,7 +28,7 @@ import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.engine.JournalItem;
-import cf.ui.components.AccountCellEditor;
+import cf.ui.components.AccountSelectionBean;
 import cf.ui.components.PartySelector;
 
 /**
@@ -36,9 +36,8 @@ import cf.ui.components.PartySelector;
  *
  * @author Sander Kooijmans
  */
-class EditJournalItemDialog extends OkCancelDialog
-{
-    private AccountCellEditor accountCellEditor;
+class EditJournalItemDialog extends OkCancelDialog {
+    private AccountSelectionBean sbAccount;
     
     private JTextField tfAmount;
     
@@ -48,22 +47,24 @@ class EditJournalItemDialog extends OkCancelDialog
     
     private Frame parent;
     
+    private Database database;
     
     /** 
      * Contains the journal item thas has been entered.
      * Its value will be set when the user presses the Ok button and the input fields
-     * are correct. Otherwise, this variable will be <code>null</code>.
+     * are correct. Otherwise, this variable will be <code>null</code>.Object
      */
     private JournalItem enteredJournalItem;
     
     /**
      * Constructor.
      * @param parent the parent frame of this dialog.
+     * @param database the database
      * @param titleId the id of this dialog's title.
      */
-    public EditJournalItemDialog(Frame parent, String titleId) 
-    {
+    public EditJournalItemDialog(Frame parent, Database database, String titleId) {
         super(parent, titleId);
+        this.database = database;
         this.parent = parent;
         initDialog("", null, true, null);
     }
@@ -71,13 +72,14 @@ class EditJournalItemDialog extends OkCancelDialog
     /**
      * Constructor.
      * @param parent the parent dialog of this dialog.
+     * @param database the database
      * @param titleId the id of this dialog's title.
      * @param item the item used to fill in the initial values of the fields.
      */
-    public EditJournalItemDialog(Frame parent, String titleId, JournalItem item) 
-    {
+    public EditJournalItemDialog(Frame parent, Database database, String titleId, JournalItem item) {
         super(parent, titleId);
         this.parent = parent;
+        this.database = database;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(), 
                 item.isDebet(), item.getParty());
@@ -109,8 +111,8 @@ class EditJournalItemDialog extends OkCancelDialog
         WidgetFactory wf = WidgetFactory.getInstance();
         addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.account"), 
                 gridBag, labelConstraints);
-        accountCellEditor = new AccountCellEditor(account);
-        addComponentToGridBag(labelsAndFieldsPanel, accountCellEditor.getComponent(),
+        sbAccount = new AccountSelectionBean(database, account);
+        addComponentToGridBag(labelsAndFieldsPanel, sbAccount,
                 gridBag, fieldConstraints);
         
         addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.amount"), 
@@ -156,7 +158,7 @@ class EditJournalItemDialog extends OkCancelDialog
             return;
         }
         
-        Account account = (Account)accountCellEditor.getCellEditorValue();
+        Account account = (Account)sbAccount.getSelectedAccount();
         boolean debet = cbSide.getSelectedIndex() == 0; 
         Party party = partySelector.getSelectedParty();
         

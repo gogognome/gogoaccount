@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsDialog.java,v 1.9 2007-07-26 19:06:57 sanderk Exp $
+ * $Id: EditJournalsDialog.java,v 1.10 2007-11-08 20:18:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -38,7 +38,6 @@ import nl.gogognome.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.Party;
-import cf.ui.components.AccountCellEditor;
 
 /**
  * This class implements the Edit journals dialog. 
@@ -64,16 +63,20 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
     /** The parent frame of this dialog. */
     private Frame parent;
     
+    /** The database. */
+    private Database database;
+    
 	/** 
 	 * Creates a "Edit journals" dialog.
-	 * @param parent the frame that owns this dialog. 
+	 * @param parent the frame that owns this dialog.
+     * @param database the database 
 	 * @param date the date of the balance.
 	 */
-	public EditJournalsDialog( Frame parent ) 
-	{
+	public EditJournalsDialog(Frame parent, Database database) {
 		super(parent, "ej.editJournals");
 		
 		this.parent = parent;
+        this.database = database;
 		
 		WidgetFactory wf = WidgetFactory.getInstance();
 		
@@ -121,9 +124,6 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 		columnModel.getColumn(1).setPreferredWidth(100);
 		columnModel.getColumn(2).setPreferredWidth(100);
 		columnModel.getColumn(3).setPreferredWidth(300);
-		
-		// Create combo box for accounts
-		columnModel.getColumn(0).setCellEditor(new AccountCellEditor(null));
 		
 		// Set renderers for column 1 and 2.
 		TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
@@ -331,7 +331,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
         {
             Journal journal = (Journal)journalsInUi.get(row);
             EditJournalDialog dialog = 
-                new EditJournalDialog(parent, "ejd.editJournal", journal, false);
+                new EditJournalDialog(parent, database, "ejd.editJournal", journal, false);
             dialog.showDialog();
             Journal[] journals = dialog.getEditedJournals();
             if (journals.length > 0) {
@@ -347,7 +347,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
     
     private void handleAddItem()
     {
-        EditJournalDialog dialog = new EditJournalDialog(parent, "ajd.title", true);
+        EditJournalDialog dialog = new EditJournalDialog(parent, database, "ajd.title", true);
         dialog.showDialog();
         Journal[] journals = dialog.getEditedJournals();
         for (int i = 0; i < journals.length; i++) {

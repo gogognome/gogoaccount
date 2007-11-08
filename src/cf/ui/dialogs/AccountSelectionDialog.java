@@ -1,5 +1,5 @@
 /*
- * $Id: AccountSelectionDialog.java,v 1.3 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: AccountSelectionDialog.java,v 1.4 2007-11-08 20:18:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -15,7 +15,8 @@ import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.text.TextResource;
 
 import cf.engine.Account;
-import cf.ui.components.AccountCellEditor;
+import cf.engine.Database;
+import cf.ui.components.AccountSelectionBean;
 
 /**
  * This class implements an account selection dialog.
@@ -30,21 +31,22 @@ public class AccountSelectionDialog extends OkCancelDialog
      */
     private Account account;
     
-    private AccountCellEditor accountCellEditor;
+    private AccountSelectionBean sbAccount;
     
     /**
      * Constructor.
      * @param frame the frame to which this dialog belongs.
+     * @param database the database
      * @param id the identifer of the description shown in this dialog.
      */
-    public AccountSelectionDialog(Frame frame, String id) 
+    public AccountSelectionDialog(Frame frame, Database database, String id) 
     {
         super(frame, "as.selectAccount");
         JComponent component = new JPanel();
         component.add(new JLabel(TextResource.getInstance().getString(id)));
         
-        accountCellEditor = new AccountCellEditor(null);
-        component.add(accountCellEditor.getComponent());
+        sbAccount = new AccountSelectionBean(database, null);
+        component.add(sbAccount);
         
         componentInitialized(component);
     }
@@ -54,7 +56,7 @@ public class AccountSelectionDialog extends OkCancelDialog
      */
     protected void handleOk() 
     {
-        account = (Account)accountCellEditor.getCellEditorValue();
+        account = (Account)sbAccount.getSelectedAccount();
         if (account != null)
         {
             hideDialog();

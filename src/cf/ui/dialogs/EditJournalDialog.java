@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalDialog.java,v 1.11 2007-05-21 15:55:27 sanderk Exp $
+ * $Id: EditJournalDialog.java,v 1.12 2007-11-08 20:18:03 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -9,8 +9,6 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -27,11 +25,14 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
+import nl.gogognome.beans.DateSelectionBean;
+import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
+import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 
@@ -46,7 +47,7 @@ public class EditJournalDialog extends OkCancelDialog
     private JTextField tfId;
 
     /** The text field of the date. */
-    private JTextField tfDate;
+    private DateSelectionBean sbDate;
 
     /** The text field of the description. */
     private JTextField tfDescription;
@@ -59,9 +60,12 @@ public class EditJournalDialog extends OkCancelDialog
     /** The parent frame of this dialog. */
     private Frame parent;
 
-    /** The format used for the dates shown in this dialog. */
-    private SimpleDateFormat dateFormat;
-
+    /** The date model used to edit the date. */
+    private DateModel dateModel;
+    
+    /** The database. */
+    private Database database;
+    
     /**
      * Contains the journals as edited by the user.
      */
@@ -77,12 +81,13 @@ public class EditJournalDialog extends OkCancelDialog
      * Constructor.
      * 
      * @param parent the paren frame
+     * @param database the database
      * @param id the id of the title
      */
-    public EditJournalDialog(Frame parent, String id, boolean showNextButton) 
-    {
+    public EditJournalDialog(Frame parent, Database database, String id, boolean showNextButton) {
         super(parent, id);
         this.parent = parent;
+        this.database = database;
         this.showNextButton = showNextButton;
         initializeDialog("", new Date(), "", new JournalItem[0]);
     }
@@ -91,13 +96,14 @@ public class EditJournalDialog extends OkCancelDialog
      * Constructor.
      * 
      * @param parent the paren frame
+     * @param database the database
      * @param id the id of the title
      * @param journal the journal used to initialize the elements of the dialog
      */
-    public EditJournalDialog(Frame parent, String id, Journal journal, boolean showNextButton) 
-    {
+    public EditJournalDialog(Frame parent, Database database, String id, Journal journal, boolean showNextButton) {
         super(parent, id);
         this.parent = parent;
+        this.database = database;
         this.showNextButton = showNextButton;
         initializeDialog(journal.getId(), journal.getDate(), journal.getDescription(),
                 journal.getItems());
@@ -111,11 +117,8 @@ public class EditJournalDialog extends OkCancelDialog
      * @param description the description of the journal.
      * @param items the items of the journal.
      */
-    private void initializeDialog(String id, Date date, String description, JournalItem[] items)
-    {
-        TextResource tr = TextResource.getInstance();
+    private void initializeDialog(String id, Date date, String description, JournalItem[] items) {
         WidgetFactory wf = WidgetFactory.getInstance();
-        dateFormat = new SimpleDateFormat(tr.getString("gen.dateFormat"));
 
         // Create panel with ID, date and description.
         GridBagLayout gbl = new GridBagLayout();
@@ -130,8 +133,10 @@ public class EditJournalDialog extends OkCancelDialog
         label = wf.createLabel("gen.date");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 1));
         
-        tfDate = wf.createTextField(dateFormat.format(date));
-        topPanel.add(tfDate, SwingUtils.createTextFieldGBConstraints(1, 1));
+        dateModel = new DateModel();
+        dateModel.setDate(date, null);
+        sbDate = new DateSelectionBean(dateModel); 
+        topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, 1));
 
         label = wf.createLabel("gen.description");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 2));
@@ -274,15 +279,9 @@ public class EditJournalDialog extends OkCancelDialog
      */
     private Journal getJournalFromDialog() {
         TextResource tr = TextResource.getInstance();
-        Date date = null;
-        try 
-        {
-            date = dateFormat.parse(tfDate.getText());
-        } 
-        catch (ParseException e) 
-        {
-            MessageDialog.showMessage(parent, "gen.titleError", 
-                    tr.getString("gen.invalidDate"));
+        Date date = dateModel.getDate();
+        if (date == null) {
+            MessageDialog.showMessage(parent, "gen.titleError", tr.getString("gen.invalidDate"));
             return null;
         }
 
@@ -290,12 +289,10 @@ public class EditJournalDialog extends OkCancelDialog
         String description = tfDescription.getText();
         JournalItem[] items = itemsTableModel.getItems();
 
-        try 
-        {
+        try {
             return new Journal(id, description, date, items);
         } 
-        catch (IllegalArgumentException e) 
-        {
+        catch (IllegalArgumentException e) {
             new MessageDialog(parent, "gen.titleError", 
                     tr.getString("gen.itemsNotInBalance"));
             return null;
@@ -304,7 +301,7 @@ public class EditJournalDialog extends OkCancelDialog
     
     private void handleAddButtonPressed(ActionEvent e) 
     {
-        EditJournalItemDialog dialog = new EditJournalItemDialog(parent, "ajd.addJournalItem");
+        EditJournalItemDialog dialog = new EditJournalItemDialog(parent, database, "ajd.addJournalItem");
         dialog.showDialog();
         JournalItem item = dialog.getEnteredJournalItem();
         if (item != null)
@@ -320,7 +317,7 @@ public class EditJournalDialog extends OkCancelDialog
         if (item != null)
         {
 	        EditJournalItemDialog dialog = 
-	            new EditJournalItemDialog(parent, "ajd.editJournalItem", item);
+	            new EditJournalItemDialog(parent, database, "ajd.editJournalItem", item);
 	        dialog.showDialog();
 	        item = dialog.getEnteredJournalItem();
 	        if (item != null)
