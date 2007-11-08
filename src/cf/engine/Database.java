@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.26 2007-11-04 19:25:22 sanderk Exp $
+ * $Id: Database.java,v 1.27 2007-11-08 20:16:31 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -335,6 +336,23 @@ public class Database {
     
     public Journal[] getJournals() {
         Journal[] result = (Journal[]) journals.toArray(new Journal[journals.size()]);
+        Arrays.sort(result);
+        return result;
+    }
+    
+    /**
+     * Gets the different types of the parties.
+     * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
+     */
+    public String[] getPartyTypes() {
+        HashSet set = new HashSet();
+        for (Iterator iter = parties.iterator(); iter.hasNext();) {
+            Party party = (Party) iter.next();
+            if (party.getType() != null) {
+                set.add(party.getType());
+            }
+        }
+        String[] result = (String[]) set.toArray(new String[set.size()]);
         Arrays.sort(result);
         return result;
     }
@@ -818,7 +836,7 @@ public class Database {
      * @return the invoices
      */
     public Invoice[] getInvoices() {
-        Invoice[] result = (Invoice[]) parties.toArray(new Invoice[invoices.size()]);
+        Invoice[] result = (Invoice[]) invoices.toArray(new Invoice[invoices.size()]);
         Arrays.sort(result);
         return result;
     }
