@@ -1,5 +1,5 @@
 /*
- * $Id: PartySearchCriteria.java,v 1.2 2007-09-09 19:40:15 sanderk Exp $
+ * $Id: PartySearchCriteria.java,v 1.3 2007-11-11 19:49:46 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -102,6 +102,6 @@ public class PartySearchCriteria {
      *          <code>false</code> otherwise
      */
     private boolean matches(String criteria, String value) {
-        return value.toLowerCase().indexOf(criteria.toLowerCase()) != -1;
+        return value != null && value.toLowerCase().indexOf(criteria.toLowerCase()) != -1;
     }
 }
