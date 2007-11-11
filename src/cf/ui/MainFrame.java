@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.37 2007-11-08 20:18:03 sanderk Exp $
+ * $Id: MainFrame.java,v 1.38 2007-11-11 14:40:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -24,6 +24,7 @@ import javax.swing.JMenuItem;
 import javax.swing.WindowConstants;
 
 import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.ViewListener;
 import nl.gogognome.framework.ViewTabbedPane;
 import nl.gogognome.swing.MessageDialog;
@@ -34,10 +35,10 @@ import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
 import cf.engine.Journal;
-import cf.engine.XMLParseException;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
+import cf.engine.XMLParseException;
 import cf.print.AddressLabelPrinter;
 import cf.ui.dialogs.AccountSelectionDialog;
 import cf.ui.dialogs.DateSelectionDialog;
@@ -45,7 +46,6 @@ import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.EditJournalsDialog;
 import cf.ui.dialogs.InvoiceDialog;
 import cf.ui.dialogs.InvoiceGeneratorDialog;
-import cf.ui.dialogs.PartySelectionDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
@@ -459,7 +459,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
     private void handleEditParties() {
         if (partiesView == null) {
-            partiesView = new PartiesView(Database.getInstance());
+            partiesView = new PartiesView(Database.getInstance(), false);
             partiesView.addViewListener(new ViewListener() {
                 public void onViewClosed(View view) {
                     view.removeViewListener(this);
@@ -493,13 +493,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    }
 	}
 	
-	private void handleViewPartyOverview()
-	{
-        PartySelectionDialog partySelectionDialog = new
-    		PartySelectionDialog(this, "mf.selectPartyForPartyOverview",
-    		        PartySelectionDialog.SELECTION_MODE);
-	    partySelectionDialog.showDialog();
-	    Party party = partySelectionDialog.getSelectedParty();
+	private void handleViewPartyOverview() {
+        PartiesView partiesView = new PartiesView(Database.getInstance(), true);
+        ViewDialog partyViewDialog = new ViewDialog(this, partiesView);
+        partyViewDialog.showDialog();
+        
+	    Party party = partiesView.getSelectedParty();
 	    if (party != null)
 	    {
 	        DateSelectionDialog dateSelectionDialog = 

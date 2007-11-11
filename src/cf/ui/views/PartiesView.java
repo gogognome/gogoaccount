@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.10 2007-11-08 20:18:03 sanderk Exp $
+ * $Id: PartiesView.java,v 1.11 2007-11-11 14:40:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -11,11 +11,15 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.Date;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -54,18 +58,40 @@ public class PartiesView extends View {
     /** The date model that determines the date for the balance of the parties. */  
     private DateModel dateModel;
 
+    /** Indicates whether this view should also allow the user to select a party. */
+    private boolean selectioEnabled;
+    
+    /** The party selected by the user or <code>null</code> if no party has been selected. */
+    private Party selectedParty;
+    
     private JTextField tfId;
     private JTextField tfName;
     private JTextField tfAddress;
     private JTextField tfZipCode;
     private JTextField tfCity;
     private JComboBox cmbType;
+    private DateSelectionBean dsbBirthDate;
+    
     private DateModel birthDateModel;
     
     private JButton btSearch;
+    private JButton btSelect;
     
-    public PartiesView(Database database) {
+    /** Contains the default button of this view. */
+    private JButton defaultButton;
+    
+    /** Focus listener used to change the deafult button. */
+    private FocusListener focusListener;
+    
+    /**
+     * Constructor.
+     * @param database the database used to search for parties and to add, delete or update parties from.
+     * @param selectioEnabled <code>true</code> if the user should be able to select a party;
+     *         <code>false</code> if the user cannot select a party
+     */
+    public PartiesView(Database database, boolean selectionEnabled) {
         this.database = database;
+        this.selectioEnabled = selectionEnabled;
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
     }
@@ -99,10 +125,20 @@ public class PartiesView extends View {
                 onDeleteParty();
             }
         });
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 0, 5));
+        btSelect = wf.createButton("partiesView.selectParty", new AbstractAction() {
+            public void actionPerformed(ActionEvent evt) {
+                onSelectParty();
+            }
+        });
+        
+        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 0, 5));
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
+        if (selectioEnabled) {
+            buttonPanel.add(new JLabel());
+            buttonPanel.add(btSelect);
+        }
         
         setLayout(new GridBagLayout());
         add(createPanel(), SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 1.0, 
@@ -126,8 +162,17 @@ public class PartiesView extends View {
         criteriaPanel.setBorder(new TitledBorder(
                 tr.getString("partiesView.searchCriteria"))); 
 	   
+        focusListener = new FocusAdapter() {
+
+            public void focusGained(FocusEvent e) {
+                defaultButton = btSearch;
+                updateDefaultButton();
+            }
+        };
+        
         int row = 0;
         tfId = new JTextField();
+        tfId.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("partiesView.id"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfId, 
@@ -135,6 +180,7 @@ public class PartiesView extends View {
         row++;
         
         tfName = new JTextField();
+        tfName.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("partiesView.name"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfName, 
@@ -142,6 +188,7 @@ public class PartiesView extends View {
         row++;
         
         tfAddress = new JTextField();
+        tfAddress.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("partiesView.address"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfAddress, 
@@ -149,6 +196,7 @@ public class PartiesView extends View {
         row++;
         
         tfZipCode = new JTextField();
+        tfZipCode.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("partiesView.zipCode"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfZipCode, 
@@ -156,6 +204,7 @@ public class PartiesView extends View {
         row++;
         
         tfCity = new JTextField();
+        tfCity.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("partiesView.city"), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfCity, 
@@ -165,7 +214,8 @@ public class PartiesView extends View {
         criteriaPanel.add(wf.createLabel("partiesView.birthDate"),
             SwingUtils.createLabelGBConstraints(0, row));
         birthDateModel = new DateModel();
-        DateSelectionBean dsbBirthDate = new DateSelectionBean(birthDateModel);
+        dsbBirthDate = new DateSelectionBean(birthDateModel);
+        dsbBirthDate.getFocusableComponent().addFocusListener(focusListener);
         criteriaPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
@@ -174,6 +224,7 @@ public class PartiesView extends View {
             criteriaPanel.add(wf.createLabel("partiesView.type"),
                 SwingUtils.createLabelGBConstraints(0, row));
             cmbType = new JComboBox(types);
+            cmbType.addFocusListener(focusListener);
             criteriaPanel.add(cmbType, SwingUtils.createTextFieldGBConstraints(1, row));
             row++;
         }
@@ -186,6 +237,7 @@ public class PartiesView extends View {
             }
         });
         btSearch = new JButton(actionWrapper);
+        defaultButton = btSearch;
         
         buttonPanel.add(btSearch);
         criteriaPanel.add(buttonPanel,
@@ -224,6 +276,16 @@ public class PartiesView extends View {
      * @see nl.gogognome.framework.View#onClose()
      */
     public void onClose() {
+        tfId.removeFocusListener(focusListener);
+        tfName.removeFocusListener(focusListener);
+        tfAddress.removeFocusListener(focusListener);
+        tfZipCode.removeFocusListener(focusListener);
+        tfCity.removeFocusListener(focusListener);
+        dsbBirthDate.getFocusableComponent().removeFocusListener(focusListener);
+        if (cmbType != null) {
+            cmbType.removeFocusListener(focusListener);
+        }
+        focusListener = null;
     }
 
     /**
@@ -255,6 +317,12 @@ public class PartiesView extends View {
         partiesTableModel.setParties(database.getParties(searchCriteria));
         table.getSelectionModel().setSelectionInterval(0, 0);
         table.requestFocusInWindow();
+        
+        // Update the default button if the select button is present
+        if (btSelect != null) {
+            defaultButton = btSelect;
+            updateDefaultButton();
+        }
     }
     
     /**
@@ -327,6 +395,25 @@ public class PartiesView extends View {
         onSearch();
     }
 
+    /**
+     * This method is called when the "select party" button is pressed.
+     */
+    private void onSelectParty() {
+        int row = table.getSelectedRow();
+        if (row != -1) {
+            selectedParty = partiesTableModel.getParty(row);
+            closeAction.actionPerformed(null);
+        }
+    }
+    
+    /**
+     * Gets the party that was selected by the user.
+     * @return the party or <code>null</code> if no party has been selected
+     */
+    public Party getSelectedParty() {
+        return selectedParty;
+    }
+    
     /** The table model that shows information about the parties. */
     private static class PartiesTableModel extends AbstractTableModel {
 
@@ -416,6 +503,6 @@ public class PartiesView extends View {
      * @return the default button of this view
      */
     public JButton getDefaultButton() {
-        return btSearch;
+        return defaultButton;
     }
 }
