@@ -1,5 +1,5 @@
 /*
- * $Id: EditPartyView.java,v 1.4 2007-10-15 19:33:48 sanderk Exp $
+ * $Id: EditPartyView.java,v 1.5 2007-11-11 19:51:34 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -66,6 +66,7 @@ public class EditPartyView extends View {
     /** This method is called when the view is to be shown. */
     public void onInit() {
         add(createPanel());
+        setDefaultButton(okButton);
     }
     
     /** This method is called when the view is to be closed. */
@@ -188,14 +189,5 @@ public class EditPartyView extends View {
      */
     public String getTitle() {
         return TextResource.getInstance().getString(initialParty != null ? "editPartyView.titleEdit" : "editPartyView.titleAdd");
-    }
-    
-    /**
-     * Gets the default button of this view.
-     * @return the default button of this view or <code>null</code> if this view
-     *         has no default button
-     */
-    public JButton getDefaultButton() {
-        return okButton;
     }
 }

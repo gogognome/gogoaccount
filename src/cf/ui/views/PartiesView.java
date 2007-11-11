@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.11 2007-11-11 14:40:34 sanderk Exp $
+ * $Id: PartiesView.java,v 1.12 2007-11-11 19:51:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -77,9 +77,6 @@ public class PartiesView extends View {
     private JButton btSearch;
     private JButton btSelect;
     
-    /** Contains the default button of this view. */
-    private JButton defaultButton;
-    
     /** Focus listener used to change the deafult button. */
     private FocusListener focusListener;
     
@@ -145,6 +142,8 @@ public class PartiesView extends View {
             GridBagConstraints.CENTER, GridBagConstraints.BOTH, 12, 12, 12, 12));
         add(buttonPanel, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0, 
             GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 12, 12, 12));
+        
+        setDefaultButton(btSearch);
     }
 
     /**
@@ -165,15 +164,14 @@ public class PartiesView extends View {
         focusListener = new FocusAdapter() {
 
             public void focusGained(FocusEvent e) {
-                defaultButton = btSearch;
-                updateDefaultButton();
+                setDefaultButton(btSearch);
             }
         };
         
         int row = 0;
         tfId = new JTextField();
         tfId.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.id"), 
+        criteriaPanel.add(wf.createLabel("partiesView.id", tfId), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfId, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -181,7 +179,7 @@ public class PartiesView extends View {
         
         tfName = new JTextField();
         tfName.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.name"), 
+        criteriaPanel.add(wf.createLabel("partiesView.name", tfName), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfName, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -189,7 +187,7 @@ public class PartiesView extends View {
         
         tfAddress = new JTextField();
         tfAddress.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.address"), 
+        criteriaPanel.add(wf.createLabel("partiesView.address", tfAddress), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfAddress, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -197,7 +195,7 @@ public class PartiesView extends View {
         
         tfZipCode = new JTextField();
         tfZipCode.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.zipCode"), 
+        criteriaPanel.add(wf.createLabel("partiesView.zipCode", tfZipCode), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfZipCode, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -205,26 +203,26 @@ public class PartiesView extends View {
         
         tfCity = new JTextField();
         tfCity.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.city"), 
+        criteriaPanel.add(wf.createLabel("partiesView.city", tfCity), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfCity, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
         
-        criteriaPanel.add(wf.createLabel("partiesView.birthDate"),
-            SwingUtils.createLabelGBConstraints(0, row));
         birthDateModel = new DateModel();
         dsbBirthDate = new DateSelectionBean(birthDateModel);
-        dsbBirthDate.getFocusableComponent().addFocusListener(focusListener);
+        dsbBirthDate.addFocusListener(focusListener);
+        criteriaPanel.add(wf.createLabel("partiesView.birthDate", dsbBirthDate),
+            SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         String[] types = database.getPartyTypes();
         if (types.length > 0) {
-            criteriaPanel.add(wf.createLabel("partiesView.type"),
-                SwingUtils.createLabelGBConstraints(0, row));
             cmbType = new JComboBox(types);
             cmbType.addFocusListener(focusListener);
+            criteriaPanel.add(wf.createLabel("partiesView.type", cmbType),
+                SwingUtils.createLabelGBConstraints(0, row));
             criteriaPanel.add(cmbType, SwingUtils.createTextFieldGBConstraints(1, row));
             row++;
         }
@@ -237,7 +235,6 @@ public class PartiesView extends View {
             }
         });
         btSearch = new JButton(actionWrapper);
-        defaultButton = btSearch;
         
         buttonPanel.add(btSearch);
         criteriaPanel.add(buttonPanel,
@@ -281,7 +278,7 @@ public class PartiesView extends View {
         tfAddress.removeFocusListener(focusListener);
         tfZipCode.removeFocusListener(focusListener);
         tfCity.removeFocusListener(focusListener);
-        dsbBirthDate.getFocusableComponent().removeFocusListener(focusListener);
+        dsbBirthDate.removeFocusListener(focusListener);
         if (cmbType != null) {
             cmbType.removeFocusListener(focusListener);
         }
@@ -320,8 +317,7 @@ public class PartiesView extends View {
         
         // Update the default button if the select button is present
         if (btSelect != null) {
-            defaultButton = btSelect;
-            updateDefaultButton();
+            setDefaultButton(btSelect);
         }
     }
     
@@ -330,7 +326,7 @@ public class PartiesView extends View {
      */
     private void onAddParty() {
         EditPartyView editPartyView = new EditPartyView(null);
-        ViewDialog dialog = new ViewDialog(getParentFrame(), editPartyView);
+        ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
         
         Party party = editPartyView.getEnteredParty();
@@ -338,7 +334,7 @@ public class PartiesView extends View {
             try {
                 database.addParty(party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
+                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning", 
                     TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
             }
         }
@@ -356,7 +352,7 @@ public class PartiesView extends View {
         
         Party oldParty = partiesTableModel.getParty(row);
         EditPartyView editPartyView = new EditPartyView(oldParty);
-        ViewDialog dialog = new ViewDialog(getParentFrame(), editPartyView);
+        ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
         
         Party party = editPartyView.getEnteredParty();
@@ -364,7 +360,7 @@ public class PartiesView extends View {
             try {
                 database.updateParty(oldParty, party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
+                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning", 
                     TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
             }
         }
@@ -388,7 +384,7 @@ public class PartiesView extends View {
             try {
                 database.removeParty(party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentFrame(), "gen.titleWarning", 
+                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning", 
                     TextResource.getInstance().getString("partiesView.partyCouldNotBeDeleted"));
             }
         }
@@ -496,13 +492,5 @@ public class PartiesView extends View {
             }
         }
         
-    }
-
-    /**
-     * Gets the default button of this view.
-     * @return the default button of this view
-     */
-    public JButton getDefaultButton() {
-        return defaultButton;
     }
 }
