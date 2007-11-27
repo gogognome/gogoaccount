@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.16 2007-11-04 19:25:22 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.17 2007-11-27 21:14:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -54,7 +54,7 @@ public class XMLFileWriter {
 			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
 			Document doc = docBuilder.newDocument();			
-			Element rootElement = (Element) doc.createElement("cfbookkeeping");
+			Element rootElement = doc.createElement("cfbookkeeping");
 			doc.appendChild(rootElement); 
 			
 			// write description

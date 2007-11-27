@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.38 2007-11-11 14:40:34 sanderk Exp $
+ * $Id: MainFrame.java,v 1.39 2007-11-27 21:14:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -45,12 +45,12 @@ import cf.ui.dialogs.DateSelectionDialog;
 import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.EditJournalsDialog;
 import cf.ui.dialogs.InvoiceDialog;
-import cf.ui.dialogs.InvoiceGeneratorDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.BalanceView;
+import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.OperationalResultView;
 import cf.ui.views.PartiesView;
 
@@ -74,8 +74,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** The operational result view. */
 	private OperationalResultView operationalResultView;
 	
-    /** THe view for editing parties. */
+    /** The view for editing parties. */
     private PartiesView partiesView;
+    
+    /** The view for invoice generation. */ 
+    private InvoiceGeneratorView invoiceGeneratorView;
     
 	/** Creates the main frame. */
 	public MainFrame() 
@@ -600,8 +603,19 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 	
 	private void handleAddInvoices() {
-	    InvoiceGeneratorDialog dialog = new InvoiceGeneratorDialog(this);
-	    dialog.showDialog();
+        if (invoiceGeneratorView == null) {
+            invoiceGeneratorView = new InvoiceGeneratorView(Database.getInstance());
+            invoiceGeneratorView.addViewListener(new ViewListener() {
+                public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    invoiceGeneratorView = null;
+                }
+            });
+            viewTabbedPane.openView(invoiceGeneratorView);
+            viewTabbedPane.selectView(invoiceGeneratorView);
+        } else {
+            viewTabbedPane.selectView(invoiceGeneratorView);
+        }
 	}
 	
     /**

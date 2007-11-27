@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.27 2007-11-08 20:16:31 sanderk Exp $
+ * $Id: Database.java,v 1.28 2007-11-27 21:14:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -42,20 +42,20 @@ public class Database {
     
     private Account[] expenses = new Account[0];
     
-    private ArrayList journals = new ArrayList();
+    private ArrayList<Journal> journals = new ArrayList<Journal>();
     
-    private ArrayList parties = new ArrayList();
+    private ArrayList<Party> parties = new ArrayList<Party>();
 
-    private ArrayList invoices = new ArrayList();
+    private ArrayList<Invoice> invoices = new ArrayList<Invoice>();
     
     /** Maps ids of accounts to <code>Account</code>s. */
-    private HashMap idsToAccountsMap = new HashMap();
+    private HashMap<String, Account> idsToAccountsMap = new HashMap<String, Account>();
     
     /** Maps ids of parties to <code>Party</code> instances. */
-    private HashMap idsToPartiesMap = new HashMap();
+    private HashMap<String, Party> idsToPartiesMap = new HashMap<String, Party>();
     
     /** Maps ids of invoices to <code>Invoice</code> instances. */
-    private HashMap idsToInvoicesMap = new HashMap();
+    private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<String, Invoice>();
     
     /** 
      * Contains the start date of the account period.
@@ -74,14 +74,13 @@ public class Database {
 	/** 
 	 * Contains the <tt>DatabaseListeners</tt>. 
 	 */
-	private ArrayList listeners = new ArrayList();
+	private ArrayList<DatabaseListener> listeners = new ArrayList<DatabaseListener>();
 	
 	/**
 	 * Adds a database listener.
 	 * @param l the database listener.
 	 */
-	public void addListener( DatabaseListener l ) 
-	{
+	public void addListener( DatabaseListener l ) {
 		listeners.add(l);
 	}
 
@@ -89,8 +88,7 @@ public class Database {
 	 * Removes a database listener.
 	 * @param l the database listener.
 	 */
-	public void removeListener( DatabaseListener l ) 
-	{
+	public void removeListener( DatabaseListener l ) {
 		listeners.remove(l);
 	}
 	
@@ -99,7 +97,7 @@ public class Database {
 	{
 		for (int i=0; i<listeners.size(); i++) 
 		{
-			DatabaseListener l = (DatabaseListener)listeners.get(i);
+			DatabaseListener l = listeners.get(i);
 			l.databaseChanged(instance);
 		}
 	}
@@ -176,9 +174,8 @@ public class Database {
      * @return the account or <code>null</code> if no account was
      *         found with the specified id.
      */
-    public Account getAccount(String id)
-    {
-        return (Account)idsToAccountsMap.get(id);
+    public Account getAccount(String id) {
+        return idsToAccountsMap.get(id);
     }
     
     public Account[] getAssets() 
@@ -335,7 +332,7 @@ public class Database {
     }
     
     public Journal[] getJournals() {
-        Journal[] result = (Journal[]) journals.toArray(new Journal[journals.size()]);
+        Journal[] result = journals.toArray(new Journal[journals.size()]);
         Arrays.sort(result);
         return result;
     }
@@ -345,26 +342,26 @@ public class Database {
      * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
      */
     public String[] getPartyTypes() {
-        HashSet set = new HashSet();
+        HashSet<String> set = new HashSet<String>();
         for (Iterator iter = parties.iterator(); iter.hasNext();) {
             Party party = (Party) iter.next();
             if (party.getType() != null) {
                 set.add(party.getType());
             }
         }
-        String[] result = (String[]) set.toArray(new String[set.size()]);
+        String[] result = set.toArray(new String[set.size()]);
         Arrays.sort(result);
         return result;
     }
     
     public Party[] getParties() {
-        Party[] result = (Party[]) parties.toArray(new Party[parties.size()]);
+        Party[] result = parties.toArray(new Party[parties.size()]);
         Arrays.sort(result);
         return result;
     }
 
     public Party[] getParties(PartySearchCriteria searchCriteria) {
-        ArrayList matchingParties = new ArrayList();
+        ArrayList<Party> matchingParties = new ArrayList<Party>();
         for (Iterator iter = parties.iterator(); iter.hasNext();) {
             Party party = (Party) iter.next();
             if (searchCriteria.matches(party)) {
@@ -385,7 +382,7 @@ public class Database {
      */
     public Party getParty(String id)
     {
-        return (Party)idsToPartiesMap.get(id);
+        return idsToPartiesMap.get(id);
     }
     
     /**
@@ -396,8 +393,8 @@ public class Database {
      *         with the same id.
      */
     public void setParties(Party[] parties) throws DatabaseModificationFailedException {
-        ArrayList newParties = new ArrayList();
-        HashMap newIdsToPartiesMap = new HashMap();
+        ArrayList<Party> newParties = new ArrayList<Party>();
+        HashMap<String, Party> newIdsToPartiesMap = new HashMap<String, Party>();
 		for (int i = 0; i < parties.length; i++) {
 		    String id = parties[i].getId();
 		    newParties.add(parties[i]);
@@ -595,18 +592,17 @@ public class Database {
      * @return the debtors
      */
     public Party[] getDebtors(Date date) {
-        ArrayList debtors = new ArrayList();
+        ArrayList<Party> debtors = new ArrayList<Party>();
         for (int i=0; i<parties.size(); i++) {
-            Party party = (Party)parties.get(i);
+            Party party = parties.get(i);
             Amount totalDebet = getTotalDebetForParty(party, date);
             Amount totalCredit = getTotalCreditForParty(party, date);
             Amount balance = totalDebet.subtract(totalCredit);
-            if (balance.isPositive())
-            {
+            if (balance.isPositive()) {
                 debtors.add(party);
             }
         }
-        Party[] result = (Party[]) debtors.toArray(new Party[debtors.size()]);
+        Party[] result = debtors.toArray(new Party[debtors.size()]);
         return result;
     }
     
@@ -617,9 +613,9 @@ public class Database {
      * @return the creditors
      */
     public Party[] getCreditors(Date date) {
-        ArrayList creditors = new ArrayList();
+        ArrayList<Party> creditors = new ArrayList<Party>();
         for (int i=0; i<parties.size(); i++) {
-            Party party = (Party)parties.get(i);
+            Party party = parties.get(i);
             Amount totalDebet = getTotalDebetForParty(party, date);
             Amount totalCredit = getTotalCreditForParty(party, date);
             Amount balance = totalDebet.subtract(totalCredit);
@@ -627,7 +623,7 @@ public class Database {
                 creditors.add(party);
             }
         }
-        Party[] result = (Party[]) creditors.toArray(new Party[creditors.size()]);
+        Party[] result = creditors.toArray(new Party[creditors.size()]);
         return result;
     }
     
@@ -646,20 +642,20 @@ public class Database {
      * @param date the date
      */
     public void cleanUpJournalsBefore(Date date) {
-        ArrayList journalsToBeDeleted = new ArrayList(Arrays.asList(getJournals()));
+        ArrayList<Journal> journalsToBeDeleted = new ArrayList<Journal>(Arrays.asList(getJournals()));
         
         // maps accounts to the amount of the corresponding accounts.
-        HashMap accountsToAmountMap = new HashMap();
+        HashMap<Account, Amount> accountsToAmountMap = new HashMap<Account, Amount>();
         
         // maps parties to the amount to be received from the corresponding party.
-        HashMap partiesToAmountMap = new HashMap();
+        HashMap<Party, Amount> partiesToAmountMap = new HashMap<Party, Amount>();
         
-        // maps parties to a LinkedList of journals referring to the party
-        HashMap partiesToJournalsMap = new HashMap();
+        // maps parties to a List of journals referring to the party
+        HashMap<Party, List<Journal>> partiesToJournalsMap = new HashMap<Party, List<Journal>>();
         
         int index = 0;
         while (index < journalsToBeDeleted.size()) {
-            Journal journal = (Journal)journalsToBeDeleted.get(index);
+            Journal journal = journalsToBeDeleted.get(index);
             if (DateUtil.compareDayOfYear(journal.getDate(), date) > 0) {
                 // The journal has a date after the specified date and should
                 // therefore not be replaced.
@@ -695,9 +691,9 @@ public class Database {
                         }
                         partiesToAmountMap.put(party, partyAmount);
                         
-                        List list = (List)partiesToJournalsMap.get(party);
+                        List<Journal> list = partiesToJournalsMap.get(party);
                         if (list == null) {
-                            list = new LinkedList();
+                            list = new LinkedList<Journal>();
                             partiesToJournalsMap.put(party, list);
                         }
                         list.add(journal);
@@ -709,7 +705,7 @@ public class Database {
                 if (foundParty != null && partyAmount != null && partyAmount.isZero()) {
                     // The party that was found has an amount of zero. The journals
                     // that refer to the party can be removed.
-                    List list = (List)partiesToJournalsMap.get(foundParty);
+                    List<Journal> list = partiesToJournalsMap.get(foundParty);
                     list.clear();
                 }
             }
@@ -814,8 +810,8 @@ public class Database {
      *         with the same id.
      */
     public void setInvoices(Invoice[] invoices) throws DatabaseModificationFailedException {
-        ArrayList newInvoices = new ArrayList();
-        HashMap newIdsToInvoicesMap = new HashMap();
+        ArrayList<Invoice> newInvoices = new ArrayList<Invoice>();
+        HashMap<String, Invoice> newIdsToInvoicesMap = new HashMap<String, Invoice>();
         for (int i = 0; i < invoices.length; i++) {
             String id = invoices[i].getId();
             newInvoices.add(invoices[i]);
@@ -836,7 +832,7 @@ public class Database {
      * @return the invoices
      */
     public Invoice[] getInvoices() {
-        Invoice[] result = (Invoice[]) invoices.toArray(new Invoice[invoices.size()]);
+        Invoice[] result = invoices.toArray(new Invoice[invoices.size()]);
         Arrays.sort(result);
         return result;
     }

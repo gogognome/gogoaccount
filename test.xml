@@ -1,39 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<cfbookkeeping description="empty bookkeeping" currency="EUR" startdate="2006.12.04">
-    <assets>
-        <account id="1" name="bank"/>
-        <account id="2" name="kassa"/>
-    </assets>
-    <liabilities>
-        <account id="3" name="eigen vermogen"/>
-        <account id="4" name="lening"/>
-    </liabilities>
-    <expenses>
-        <account id="90" name="kosten NeVoBo"/>
-    </expenses>
-    <revenues>
-        <account id="80" name="contributie 2006/2007"/>
-        <account id="81" name="huur wedstrijdshirts"/>
-        <account id="82" name="grote clubactie"/>
-    </revenues>
-    <parties>
-        <party id="123" name="Pietje Puk"/>
-        <party id="43" name="Frans Bauer"/>
-    </parties>
-    <journals>
-        <journal id="1" date="2006.12.04" description="lening">
-            <item id="1" amount="EUR 125.00" side="debet" party="123"/>
-            <item id="3" amount="EUR 125.00" side="credit"/>
-        </journal>
-        <journal id="2" date="2006.12.04" description="contributie">
-            <item id="90" amount="EUR 75.00" side="debet" party="43"/>
-            <item id="80" amount="EUR 50.00" side="credit"/>
-            <item id="81" amount="EUR 15.00" side="credit"/>
-            <item id="82" amount="EUR 10.00" side="credit"/>
-        </journal>
-        <journal id="1" date="2006.12.04" description="contributie">
-            <item id="1" amount="EUR 20.00" side="debet" party="123"/>
-            <item id="4" amount="EUR 20.00" side="credit"/>
-        </journal>
-    </journals>
+<cfbookkeeping currency="EUR" description="empty bookkeeping" startdate="2006.12.04">
+<assets>
+<account id="1" name="bank"/>
+<account id="2" name="kassa"/>
+</assets>
+<liabilities>
+<account id="3" name="eigen vermogen"/>
+<account id="4" name="lening"/>
+</liabilities>
+<expenses>
+<account id="90" name="kosten NeVoBo"/>
+</expenses>
+<revenues>
+<account id="80" name="contributie 2006/2007"/>
+<account id="81" name="huur wedstrijdshirts"/>
+<account id="82" name="grote clubactie"/>
+</revenues>
+<parties>
+<party id="123" name="Pietje Puk"/>
+<party address="" city="" id="44" name="Frans Bauer" remarks="" type="" zip=""/>
+<party address="Delphinus 7" birthdate="1975.11.28" city="Loon op Zand" id="501" name="Kooijmans" remarks="Dit is een test" type="bestuurslid" zip="5175 VB"/>
+</parties>
+<journals>
+<journal date="2006.12.04" description="lening" id="1">
+<item amount="EUR 125.00" id="1" party="123" side="debet"/>
+<item amount="EUR 125.00" id="3" side="credit"/>
+</journal>
+<journal date="2006.12.04" description="contributie" id="2">
+<item amount="EUR 75.00" id="90" party="43" side="debet"/>
+<item amount="EUR 50.00" id="80" side="credit"/>
+<item amount="EUR 15.00" id="81" side="credit"/>
+<item amount="EUR 10.00" id="82" side="credit"/>
+</journal>
+<journal date="2006.12.04" description="contributie" id="1">
+<item amount="EUR 20.00" id="1" party="123" side="debet"/>
+<item amount="EUR 20.00" id="4" side="credit"/>
+</journal>
+</journals>
 </cfbookkeeping>

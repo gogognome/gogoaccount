@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.17 2007-11-04 19:25:22 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.18 2007-11-27 21:14:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -107,7 +106,7 @@ public class XMLFileReader {
 		            Date date = DATE_FORMAT.parse(dateString);
 		            description = journalElem.getAttribute("description");
 		            NodeList itemNodes = journalElem.getElementsByTagName("item");
-		            Vector itemsVector = new Vector();
+		            ArrayList<JournalItem> itemsList = new ArrayList<JournalItem>();
 		            for (int k=0; k<itemNodes.getLength(); k++)
 		            {
 		                Element itemElem = (Element)itemNodes.item(k);
@@ -116,12 +115,11 @@ public class XMLFileReader {
 		                Amount amount = AMOUNT_FORMAT.parse(amountString);
 		                String side = itemElem.getAttribute("side");
 		                String partyString = itemElem.getAttribute("party");
-		                itemsVector.addElement(new JournalItem(amount, db.getAccount(itemId), 
+		                itemsList.add(new JournalItem(amount, db.getAccount(itemId), 
 	                        "debet".equals(side), db.getParty(partyString)));
 		            }
 		            
-		            JournalItem[] items = new JournalItem[itemsVector.size()];
-		            itemsVector.copyInto(items);
+		            JournalItem[] items = itemsList.toArray(new JournalItem[itemsList.size()]);
 			        db.addJournal( new Journal(id, description, date, items) );
 		        }
 		    }
@@ -151,7 +149,7 @@ public class XMLFileReader {
 	 */
 	private static Account[] parseAccounts(NodeList nodes, boolean debet, Database database)
 	{
-	    Vector accounts = new Vector();
+	    ArrayList<Account> accounts = new ArrayList<Account>();
 	    for (int i=0; i<nodes.getLength(); i++)
 	    {
 	        Element elem = (Element)nodes.item(i);
@@ -161,12 +159,10 @@ public class XMLFileReader {
 	            Element accountElem = (Element)accountNodes.item(j);
 	            String id = accountElem.getAttribute("id");
 	            String name = accountElem.getAttribute("name");
-	            accounts.addElement(new Account(id, name, debet, database));
+	            accounts.add(new Account(id, name, debet, database));
 	        }
 	    }
-	    Account[] result = new Account[accounts.size()];
-	    accounts.copyInto(result);
-	    return result;
+	    return accounts.toArray(new Account[accounts.size()]);
 	}
 	
 	/**
@@ -176,7 +172,7 @@ public class XMLFileReader {
      * @throws XMLParseException if a syntax error is found in the nodes
 	 */
 	private static Party[] parseParties(NodeList nodes)	throws XMLParseException {
-	    ArrayList parties = new ArrayList();
+	    ArrayList<Party> parties = new ArrayList<Party>();
 	    for (int i=0; i<nodes.getLength(); i++) {
 	        Element elem = (Element)nodes.item(i);
 	        NodeList partyNodes = elem.getElementsByTagName("party");
@@ -220,7 +216,7 @@ public class XMLFileReader {
 	        }
 	    }
         
-	    return (Party[]) parties.toArray(new Party[parties.size()]);
+	    return parties.toArray(new Party[parties.size()]);
 	}
     
     /**
@@ -230,7 +226,7 @@ public class XMLFileReader {
      * @throws XMLParseException if a syntax error is found in the nodes
      */
     private static Invoice[] parseInvoices(Party[] parties, NodeList nodes) throws XMLParseException {
-        ArrayList invoices = new ArrayList();
+        ArrayList<Invoice> invoices = new ArrayList<Invoice>();
         for (int i=0; i<nodes.getLength(); i++) {
             Element elem = (Element)nodes.item(i);
             NodeList invoiceNodes = elem.getElementsByTagName("invoice");
@@ -297,7 +293,7 @@ public class XMLFileReader {
             }
         }
         
-        return (Invoice[]) invoices.toArray(new Invoice[invoices.size()]);
+        return invoices.toArray(new Invoice[invoices.size()]);
     }
 
     /**
