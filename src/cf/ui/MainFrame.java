@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.39 2007-11-27 21:14:59 sanderk Exp $
+ * $Id: MainFrame.java,v 1.40 2007-12-02 11:18:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -387,6 +387,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			viewTabbedPane.closeAllViews();
 			balanceView = null;
 			operationalResultView = null;
+            partiesView = null;
 			
 			handleViewBalance();
 			handleViewOperationalResult();
