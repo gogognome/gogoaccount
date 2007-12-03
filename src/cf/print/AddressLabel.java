@@ -1,5 +1,5 @@
 /*
- * $Id: AddressLabel.java,v 1.1 2007-07-26 19:37:16 sanderk Exp $
+ * $Id: AddressLabel.java,v 1.2 2007-12-03 20:28:38 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -33,9 +33,8 @@ public class AddressLabel implements Label {
      * 
      * @see Label#printLabel(Graphics2D, double, double, double, double, PageFormat, int)
      */
-    public void printLabel(Graphics2D g, double x, double y, double width, double height, 
+    public void printLabel(Graphics2D g2d, double x, double y, double width, double height, 
             PageFormat format, int pageIndex) throws PrinterException {
-        Graphics2D g2d = (Graphics2D)g;
         String name = StringUtil.nullToEmptyString(party.getName());
         String address = StringUtil.nullToEmptyString(party.getAddress());
         String zipAndCity = party.getZipCode();

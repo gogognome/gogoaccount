@@ -1,5 +1,5 @@
 /*
- * $Id: PartyCsvSettingsView.java,v 1.2 2007-09-15 19:01:56 sanderk Exp $
+ * $Id: PartyCsvSettingsView.java,v 1.3 2007-12-03 20:31:29 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -81,9 +81,8 @@ public class PartyCsvSettingsView extends View {
      * @param file the CSV file to be read
      * @param idOkButton the identifier of the OK button
      * @param idCancelButton the identifier of the cancel button
-     * @throws IOException if a problem occurs while reading the CSV file
      */
-    public PartyCsvSettingsView(String idOkButton, String idCancelButton) throws IOException {
+    public PartyCsvSettingsView(String idOkButton, String idCancelButton) {
         this.idOkButton = idOkButton;
         this.idCancelButton = idCancelButton;
     }
@@ -243,7 +242,7 @@ public class PartyCsvSettingsView extends View {
             }
         }
         
-        public Class getColumnClass(int columnIndex) {
+        public Class<?> getColumnClass(int columnIndex) {
             return String.class;
         }
         

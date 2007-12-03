@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.14 2007-05-21 15:54:50 sanderk Exp $
+ * $Id: Report.java,v 1.15 2007-12-03 20:28:52 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -110,9 +110,8 @@ public class Report
     
     /**
      * Writes a report to the specified writer.
-     * @throws IOException if an I/O error occurs
      */
-    private void printReport() throws IOException {
+    private void printReport() {
         writer.println(textFormat.getStartOfDocument());
 
         printBalance(database.getBalance(date));
