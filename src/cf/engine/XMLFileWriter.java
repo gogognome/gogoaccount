@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.17 2007-11-27 21:14:59 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.18 2007-12-03 21:00:48 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -194,7 +194,7 @@ public class XMLFileWriter {
             String[] descriptions = invoices[i].getDescriptions();
             Amount[] amounts = invoices[i].getAmounts();
             assert descriptions.length == amounts.length;
-            for (int l=0; i<descriptions.length; l++) {
+            for (int l=0; l<descriptions.length; l++) {
                 Element lineElem = doc.createElement("line");
                 lineElem.setAttribute("description", descriptions[l]);
                 if (amounts[l] != null) {
