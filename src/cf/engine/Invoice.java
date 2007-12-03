@@ -1,5 +1,5 @@
 /*
- * $Id: Invoice.java,v 1.1 2007-10-18 20:15:42 sanderk Exp $
+ * $Id: Invoice.java,v 1.2 2007-12-03 20:30:53 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -12,7 +12,11 @@ import java.util.Date;
 import nl.gogognome.text.Amount;
 
 /**
- * This class represents an invoice. 
+ * This class represents an invoice. An invoice consists of an amount that has to be paid 
+ * by a debitor. A negative amount represents an amount to be paid to a creditor.
+ * 
+ * <p>Further an invoice has a list of payments that should sum up to the amount to be paid.
+ * Negative payments represent payments to the creditor.
  */
 public class Invoice {
 
@@ -28,7 +32,7 @@ public class Invoice {
      */
     private Party concerningParty;
 
-    /** The amount to be paid. */
+    /** The amount to be paid. Negative amounts represent amounts to be received. */
     private Amount amountToBePaid;
 
     /** The date this invoice was issued. */
