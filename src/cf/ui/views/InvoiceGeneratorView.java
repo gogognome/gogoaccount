@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.1 2007-11-27 21:14:59 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.2 2007-12-03 20:31:11 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -27,6 +27,7 @@ import javax.swing.border.TitledBorder;
 
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.ButtonPanel;
 import nl.gogognome.swing.MessageDialog;
@@ -151,7 +152,7 @@ public class InvoiceGeneratorView extends View {
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
         buttonPanel.add(wf.createButton("invoiceGeneratorView.addInvoices", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
-                onAddInvoices();
+                onAddInvoicesToBookkeeping();
             }
         }));
         buttonPanel.add(wf.createButton("invoiceGeneratorView.done", closeAction));
@@ -225,32 +226,6 @@ public class InvoiceGeneratorView extends View {
         revalidate();
         repaint();
     }
-    
-	/**
-	 * Handles the button-pressed event. This method is called when one of the buttons
-	 * has been pressed by the user. 
-	 * @param index the index of the button (as specified by the <tt>buttonIds</tt>
-	 *        passed to the constructor. 
-	 */
-	protected void handleButton(int index) {
-	    switch(index) {
-	    case 0:
-	        MessageDialog dialog = MessageDialog.showMessage(this, "gen.titleWarning", 
-	                TextResource.getInstance().getString("invoicegenerator.areYouSure"),
-	                new String[] { "gen.yes", "gen.no" });
-	        if (dialog.getSelectedButton() == 0) {
-	            addInvoicesToBookkeeping();
-	        }
-	        break;
-	        
-	    case 1:
-			closeAction.actionPerformed(null);
-			break;
-			
-		default:
-		    throw new IllegalArgumentException("Invalid index: " +index);
-	    }
-	}
 	
 	private class DeleteActionListener implements ActionListener {
 	    /** Index of the line to be deleted by this action. */
@@ -272,13 +247,30 @@ public class InvoiceGeneratorView extends View {
 	}
 	
 	/**
-	 * Adds invoices to the bookkeeping. The invoice and parties are taken
-	 * from the dialog.
+     * This method is called when the "add invoices" button has been pressed.
+	 * The user will be asked to select the parties for which invoices are generated.
+     * After that, a dialog asks whether the user is sure to continue. Only if the user explicitly
+     * states "yes" the invoices will be added to the bookkeeping.
 	 */
-	private void addInvoicesToBookkeeping() {
+	private void onAddInvoicesToBookkeeping() {
 	    // Add a journal for each selected party
-        Party[] parties = null;
-        // TODO: show party selection dialog.
+        PartiesView partiesView = new PartiesView(database, true, true);
+        ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
+        dialog.showDialog();
+        Party[] parties = partiesView.getSelectedParties();
+        if (parties == null) {
+            // No parties have been selected. Abort this method.
+            return;
+        }
+
+        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.titleWarning", 
+            TextResource.getInstance().getString("invoicegenerator.areYouSure"),
+            new String[] { "gen.yes", "gen.no" });
+        if (messageDialog.getSelectedButton() != 0) {
+            // The user cancelled the operation.
+            return;
+        }
+
 	    int nrInvoicesCreated = 0;
 	    for (int i=0; i<parties.length; i++) {
     	    // Create journal items from the template
@@ -357,10 +349,4 @@ public class InvoiceGeneratorView extends View {
 	    return sb.toString();
 	}
 
-    /**
-     * This method is called when the "add invoices" button has been pressed.
-     */
-    private void onAddInvoices() {
-        
-    }
 }

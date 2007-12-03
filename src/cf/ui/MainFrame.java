@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.40 2007-12-02 11:18:34 sanderk Exp $
+ * $Id: MainFrame.java,v 1.41 2007-12-03 20:31:11 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -502,16 +502,14 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         ViewDialog partyViewDialog = new ViewDialog(this, partiesView);
         partyViewDialog.showDialog();
         
-	    Party party = partiesView.getSelectedParty();
-	    if (party != null)
-	    {
+	    Party[] parties = partiesView.getSelectedParties();
+	    if (parties != null && parties.length == 1) {
 	        DateSelectionDialog dateSelectionDialog = 
 	            new DateSelectionDialog(this, "mf.selectDateForPartyOverview");
 	        dateSelectionDialog.showDialog();
 	        Date date = dateSelectionDialog.getDate();
-	        if (date != null)
-	        {
-	            ViewPartyOverviewDialog dialog = new ViewPartyOverviewDialog(this, party, date);
+	        if (date != null) {
+	            ViewPartyOverviewDialog dialog = new ViewPartyOverviewDialog(this, parties[0], date);
 	            dialog.showDialog();
 	        }
 	    }

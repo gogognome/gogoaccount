@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.12 2007-11-11 19:51:34 sanderk Exp $
+ * $Id: PartiesView.java,v 1.13 2007-12-03 20:31:11 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -14,6 +14,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Date;
 
 import javax.swing.AbstractAction;
@@ -24,6 +28,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
@@ -61,8 +66,14 @@ public class PartiesView extends View {
     /** Indicates whether this view should also allow the user to select a party. */
     private boolean selectioEnabled;
     
-    /** The party selected by the user or <code>null</code> if no party has been selected. */
-    private Party selectedParty;
+    /** 
+     * Indicates that multiple parties can be selected (<code>true</code>) or at most 
+     * one party (<code>false</code>). 
+     */
+    private boolean multiSelectionEnabled;
+    
+    /** The parties selected by the user or <code>null</code> if no party has been selected. */
+    private Party[] selectedParties;
     
     private JTextField tfId;
     private JTextField tfName;
@@ -81,18 +92,31 @@ public class PartiesView extends View {
     private FocusListener focusListener;
     
     /**
-     * Constructor.
+     * Constructor for a parties view in which at most one party can be selected.
      * @param database the database used to search for parties and to add, delete or update parties from.
      * @param selectioEnabled <code>true</code> if the user should be able to select a party;
      *         <code>false</code> if the user cannot select a party
      */
     public PartiesView(Database database, boolean selectionEnabled) {
+        this(database, selectionEnabled, false);
+    }
+
+    /**
+     * Constructor.
+     * @param database the database used to search for parties and to add, delete or update parties from.
+     * @param selectioEnabled <code>true</code> if the user should be able to select a party;
+     *         <code>false</code> if the user cannot select a party
+     * @param multiSelectionEnabled indicates that multiple parties can be selected (<code>true</code>) or 
+     *         at most one party (<code>false</code>) 
+     */
+    public PartiesView(Database database, boolean selectionEnabled, boolean multiSelectionEnabled) {
         this.database = database;
         this.selectioEnabled = selectionEnabled;
+        this.multiSelectionEnabled = multiSelectionEnabled;
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
     }
-    
+
     /* (non-Javadoc)
      * @see nl.gogognome.framework.View#getTitle()
      */
@@ -249,6 +273,7 @@ public class PartiesView extends View {
 
         partiesTableModel = new PartiesTableModel();
         table = new JTable(partiesTableModel);
+        table.setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(table);
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(200);
@@ -256,6 +281,30 @@ public class PartiesView extends View {
         table.getColumnModel().getColumn(3).setPreferredWidth(80);
         table.getColumnModel().getColumn(4).setPreferredWidth(100);
         table.getColumnModel().getColumn(5).setPreferredWidth(100);
+        
+        table.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    if (selectioEnabled) {
+                        onSelectParty();
+                    } else {
+                        onEditParty();
+                    }
+                }
+            }
+        });
+        
+        table.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    if (selectioEnabled) {
+                        onSelectParty();
+                    } else {
+                        onEditParty();
+                    }
+                }
+            }
+        });
         
         resultPanel.add(scrollPane, BorderLayout.CENTER);
         
@@ -395,19 +444,20 @@ public class PartiesView extends View {
      * This method is called when the "select party" button is pressed.
      */
     private void onSelectParty() {
-        int row = table.getSelectedRow();
-        if (row != -1) {
-            selectedParty = partiesTableModel.getParty(row);
-            closeAction.actionPerformed(null);
+        int rows[] = table.getSelectedRows();
+        selectedParties = new Party[rows.length];
+        for (int i = 0; i < rows.length; i++) {
+            selectedParties[i] = partiesTableModel.getParty(rows[i]);
         }
+        closeAction.actionPerformed(null);
     }
     
     /**
-     * Gets the party that was selected by the user.
-     * @return the party or <code>null</code> if no party has been selected
+     * Gets the parties that were selected by the user.
+     * @return the parties or <code>null</code> if no party has been selected
      */
-    public Party getSelectedParty() {
-        return selectedParty;
+    public Party[] getSelectedParties() {
+        return selectedParties;
     }
     
     /** The table model that shows information about the parties. */
