@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.2 2007-12-03 20:31:11 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.3 2007-12-13 21:17:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -37,6 +37,8 @@ import nl.gogognome.text.Amount;
 import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
+import cf.engine.DatabaseModificationFailedException;
+import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.Party;
@@ -271,10 +273,14 @@ public class InvoiceGeneratorView extends View {
             return;
         }
 
+        // TODO: Move most of this code to the engine package.
 	    int nrInvoicesCreated = 0;
 	    for (int i=0; i<parties.length; i++) {
     	    // Create journal items from the template
+            Amount amountToBePaid = null;
     	    JournalItem[] items = new JournalItem[templateLines.size()];
+            String[] descriptions = new String[templateLines.size()];
+            Amount[] amounts = new Amount[templateLines.size()];
     	    for (int l=0; l<templateLines.size(); l++) {
     	        TemplateLine line = templateLines.get(l);
     	        Account account = line.cbAccount.getSelectedAccount();
@@ -285,8 +291,14 @@ public class InvoiceGeneratorView extends View {
     	        }
     	        Amount amount = line.tfDebet.getAmount();
     	        boolean debet = amount != null;
+                if (line.rbParty.isSelected()) {
+                    amountToBePaid = amount;
+                }
     	        if (amount == null) {
     	            amount = line.tfCredit.getAmount();
+                    if (line.rbParty.isSelected()) {
+                        amountToBePaid = amount.negate();
+                    }
     	        }
     	        
     	        if (amount == null) {
@@ -294,6 +306,10 @@ public class InvoiceGeneratorView extends View {
                             TextResource.getInstance().getString("invoicegenerator.emptyAmountsFound"));
     	            return;
     	        }
+                
+                descriptions[l] = account.getId() + " - " + account.getName();
+                amounts[l] = debet ? amount.negate() : amount;
+                
     	        Party party = line.rbParty.isSelected() ? parties[i] : null;
     	        items[l] = new JournalItem(amount, account, debet, party);
     	    }
@@ -316,7 +332,13 @@ public class InvoiceGeneratorView extends View {
                 return;
             }
     	    
-    	    Database.getInstance().addJournal(journal);
+            Invoice invoice = new Invoice(id, parties[i], parties[i], amountToBePaid, date, descriptions, amounts);
+            try {
+                database.addInvoice(invoice);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showMessage(this, "gen.titleError", e.getMessage());
+            }
+    	    database.addJournal(journal);
             nrInvoicesCreated++;
 	    }
 	    
