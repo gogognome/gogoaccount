@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.18 2007-11-27 21:14:59 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.19 2007-12-13 21:17:23 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -266,9 +266,9 @@ public class XMLFileReader {
                 
                 Date issueDate;
                 try {
-                    issueDate = DATE_FORMAT.parse(elem.getAttribute("issueDate"));
+                    issueDate = DATE_FORMAT.parse(invoiceElem.getAttribute("issueDate"));
                 } catch (ParseException e2) {
-                    throw new XMLParseException("Invalid date: " + elem.getAttribute("issueDate"));
+                    throw new XMLParseException("Invalid date: " + invoiceElem.getAttribute("issueDate"));
                 }
                 
                 NodeList paymentNodes = invoiceElem.getElementsByTagName("payment");
