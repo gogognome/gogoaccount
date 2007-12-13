@@ -22,10 +22,10 @@
 		<mkdir dir="${classdir}"/>
 
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${srcdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.4" target="1.4" debug="true" />
+		<javac srcdir="${srcdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.5" target="1.5" debug="true" />
 		
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${testdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.4" target="1.4" debug="true" />
+		<javac srcdir="${testdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.5" target="1.5" debug="true" />
 		
 		<copy todir="${classdir}">
 			<fileset dir="${resourcedir}">
