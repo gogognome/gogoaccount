@@ -1,5 +1,5 @@
 /*
- * $Id: Invoice.java,v 1.2 2007-12-03 20:30:53 sanderk Exp $
+ * $Id: Invoice.java,v 1.3 2007-12-13 21:15:34 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -18,7 +18,7 @@ import nl.gogognome.text.Amount;
  * <p>Further an invoice has a list of payments that should sum up to the amount to be paid.
  * Negative payments represent payments to the creditor.
  */
-public class Invoice {
+public class Invoice implements Comparable<Invoice> {
 
     /** The identifier of the invoice. */
     private String id;
@@ -92,6 +92,16 @@ public class Invoice {
      */
     public Invoice(String id, Party payingParty, Party concerningParty, Amount amountToBePaid,
             Date issueDate, String[] descriptions, Amount[] amounts, Payment[] payments) {
+        if (id == null) {
+            throw new IllegalArgumentException("The id must not be null");
+        }
+        if (payingParty == null) {
+            throw new IllegalArgumentException("The paying party must not be null");
+        }
+        if (amountToBePaid == null) {
+            throw new IllegalArgumentException("The amount to be paid must not be null");
+        }
+        
         this.id = id;
         this.payingParty = payingParty;
         this.concerningParty = concerningParty;
@@ -161,5 +171,15 @@ public class Invoice {
         newPayments[payments.length] = payment;
         return new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, 
             descriptions, amounts, newPayments); 
+    }
+
+    /**
+     * Compares another invoice to this invoice.
+     * @param that the other invoice
+     * @return a negative number, zero or a positive number if this invoice is smaller than,
+     *         equal to or larger than the other invoice.
+     */
+    public int compareTo(Invoice that) {
+        return this.id.compareTo(that.id);
     }
 }
