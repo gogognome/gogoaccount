@@ -1,5 +1,5 @@
 /*
- * $Id: PartySearchCriteria.java,v 1.3 2007-11-11 19:49:46 sanderk Exp $
+ * $Id: PartySearchCriteria.java,v 1.4 2007-12-13 21:16:30 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -22,6 +22,7 @@ public class PartySearchCriteria {
     private String zipCode;
     private String city;
     private Date birthDate;
+    private String type;
     
     public String getAddress() {
         return address;
@@ -59,6 +60,12 @@ public class PartySearchCriteria {
     public void setBirthDate(Date birthDate) {
         this.birthDate = birthDate;
     }
+    public String getType() {
+        return type;
+    }
+    public void setType(String type) {
+        this.type = type;
+    }
     
     /**
      * Checks whether the specified <code>Party</code> matches these criteria.
@@ -90,7 +97,9 @@ public class PartySearchCriteria {
                 matches = false;
             }
         }
-        
+        if (type != null) {
+            matches = type.equals(party.getType());
+        }
         return matches;
     }
     

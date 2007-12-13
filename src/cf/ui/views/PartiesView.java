@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.13 2007-12-03 20:31:11 sanderk Exp $
+ * $Id: PartiesView.java,v 1.14 2007-12-13 21:16:30 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -243,7 +243,10 @@ public class PartiesView extends View {
 
         String[] types = database.getPartyTypes();
         if (types.length > 0) {
-            cmbType = new JComboBox(types);
+            String[] typesInclEmptyType = new String[types.length + 1];
+            typesInclEmptyType[0] = "";
+            System.arraycopy(types, 0, typesInclEmptyType, 1, types.length);
+            cmbType = new JComboBox(typesInclEmptyType);
             cmbType.addFocusListener(focusListener);
             criteriaPanel.add(wf.createLabel("partiesView.type", cmbType),
                 SwingUtils.createLabelGBConstraints(0, row));
@@ -358,6 +361,9 @@ public class PartiesView extends View {
         }
         if (birthDateModel.getDate() != null) {
             searchCriteria.setBirthDate(birthDateModel.getDate());
+        }
+        if (cmbType.getSelectedIndex() > 0) {
+            searchCriteria.setType((String)cmbType.getSelectedItem());
         }
         
         partiesTableModel.setParties(database.getParties(searchCriteria));
