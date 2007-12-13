@@ -18,7 +18,7 @@
 </revenues>
 <parties>
 <party id="123" name="Pietje Puk"/>
-<party address="" city="" id="44" name="Frans Bauer" remarks="" type="" zip=""/>
+<party id="44" name="Frans Bauer"/>
 <party address="Delphinus 7" birthdate="1975.11.28" city="Loon op Zand" id="501" name="Kooijmans" remarks="Dit is een test" type="bestuurslid" zip="5175 VB"/>
 </parties>
 <journals>
@@ -27,7 +27,7 @@
 <item amount="EUR 125.00" id="3" side="credit"/>
 </journal>
 <journal date="2006.12.04" description="contributie" id="2">
-<item amount="EUR 75.00" id="90" party="43" side="debet"/>
+<item amount="EUR 75.00" id="90" side="debet"/>
 <item amount="EUR 50.00" id="80" side="credit"/>
 <item amount="EUR 15.00" id="81" side="credit"/>
 <item amount="EUR 10.00" id="82" side="credit"/>
@@ -36,5 +36,23 @@
 <item amount="EUR 20.00" id="1" party="123" side="debet"/>
 <item amount="EUR 20.00" id="4" side="credit"/>
 </journal>
+<journal date="2007.12.03" description="omschrijving voor Pietje Puk" id="0701123">
+<item amount="EUR 10.00" id="2" party="123" side="debet"/>
+<item amount="EUR 10.00" id="4" side="credit"/>
+</journal>
+<journal date="2007.12.03" description="omschrijving voor Frans Bauer" id="070144">
+<item amount="EUR 10.00" id="2" party="44" side="debet"/>
+<item amount="EUR 10.00" id="4" side="credit"/>
+</journal>
 </journals>
+<invoices>
+<invoice amountToBePaid="-/- EUR 10.00" concerningParty="123" id="0701123" issueDate="2007.12.03" payingParty="123">
+<line amount="-/- EUR 10.00" description="2 - kassa"/>
+<line amount="EUR 10.00" description="4 - lening"/>
+</invoice>
+<invoice amountToBePaid="-/- EUR 10.00" concerningParty="44" id="070144" issueDate="2007.12.03" payingParty="44">
+<line amount="-/- EUR 10.00" description="2 - kassa"/>
+<line amount="EUR 10.00" description="4 - lening"/>
+</invoice>
+</invoices>
 </cfbookkeeping>
