@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.14 2007-12-13 21:16:30 sanderk Exp $
+ * $Id: PartiesView.java,v 1.15 2007-12-16 15:40:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -420,6 +420,8 @@ public class PartiesView extends View {
             }
         }
         onSearch();
+        // Select the row that has been edited.
+        table.getSelectionModel().setSelectionInterval(row, row);
     }
 
     /**
