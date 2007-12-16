@@ -1,5 +1,5 @@
 /*
- * $Id: EditPartyView.java,v 1.5 2007-11-11 19:51:34 sanderk Exp $
+ * $Id: EditPartyView.java,v 1.6 2007-12-16 15:39:53 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -85,63 +85,55 @@ public class EditPartyView extends View {
         WidgetFactory wf = WidgetFactory.getInstance();
         
         int row = 0;
-        JLabel label = wf.createLabel("editPartyView.id");
+        tfId = wf.createTextField(30);
+        JLabel label = wf.createLabel("editPartyView.id", tfId);
         textfieldPanel.add(label,
                 SwingUtils.createLabelGBConstraints(0, row));
-        tfId = wf.createTextField(30);
         textfieldPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(tfId);
         row++;
         
-        label = wf.createLabel("editPartyView.name");
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         tfName = wf.createTextField(30);
+        label = wf.createLabel("editPartyView.name", tfName);
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfName, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(tfName);
         row++;
         
-        label = wf.createLabel("editPartyView.address");
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         tfAddress = wf.createTextField(30);
+        label = wf.createLabel("editPartyView.address", tfAddress);
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfAddress, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(tfAddress);
         row++;
 
-        label = wf.createLabel("editPartyView.zipCode");
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         tfZipCode = wf.createTextField(30);
+        label = wf.createLabel("editPartyView.zipCode", tfZipCode);
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfZipCode, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(tfZipCode);
         row++;
         
-        label = wf.createLabel("editPartyView.city");
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         tfCity = wf.createTextField(30);
+        label = wf.createLabel("editPartyView.city", tfCity);
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfCity, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(tfCity);
         row++;
 
-        label = wf.createLabel("editPartyView.type");
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         tfType = wf.createTextField(30);
+        label = wf.createLabel("editPartyView.type", tfType);
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfType, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(tfType);
         row++;
 
-        label = wf.createLabel("editPartyView.remarks");
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         taRemarks = new JTextArea(5, 30);
+        label = wf.createLabel("editPartyView.remarks", taRemarks);
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         JScrollPane remarksPane = new JScrollPane(taRemarks);
         textfieldPanel.add(remarksPane, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(remarksPane);
         row++;
 
-        label = wf.createLabel("editPartyView.birthDate");
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         dateModel = new DateModel();
         DateSelectionBean dsbBirthDate = new DateSelectionBean(dateModel);
+        label = wf.createLabel("editPartyView.birthDate", dsbBirthDate);
+        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
-        label.setLabelFor(dsbBirthDate);
 
         if (initialParty != null) {
             tfId.setText(initialParty.getId());
