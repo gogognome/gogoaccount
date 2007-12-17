@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.15 2007-12-16 15:40:34 sanderk Exp $
+ * $Id: PartiesView.java,v 1.16 2007-12-17 18:35:33 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -27,9 +27,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import nl.gogognome.beans.DateSelectionBean;
@@ -84,6 +87,9 @@ public class PartiesView extends View {
     private DateSelectionBean dsbBirthDate;
     
     private DateModel birthDateModel;
+
+    /** Text area that shows the description in the result details. */
+    private JTextArea taDescription;
     
     private JButton btSearch;
     private JButton btSelect;
@@ -309,7 +315,29 @@ public class PartiesView extends View {
             }
         });
         
+        table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                int row = table.getSelectedRow();
+                if (row != -1) {
+                    taDescription.setText(partiesTableModel.getParty(row).getRemarks());
+                } else {
+                    taDescription.setText("");
+                }
+            }
+        });
+        
         resultPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        // Create details panel
+        JPanel detailPanel = new JPanel(new GridBagLayout());
+        detailPanel.setBorder(new TitledBorder(tr.getString("partiesView.details")));
+        
+        taDescription = new JTextArea();
+        detailPanel.add(wf.createLabel("partiesView.remarks", taDescription),
+            SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0, 
+                GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 12, 0, 12));
+        detailPanel.add(taDescription, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,
+            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, 12, 0, 12, 12));
         
         // Create a panel containing the search criteria and result panels
         JPanel result = new JPanel(new GridBagLayout());
@@ -317,6 +345,8 @@ public class PartiesView extends View {
                 SwingUtils.createTextFieldGBConstraints(0, 0));
         result.add(resultPanel,
                 SwingUtils.createPanelGBConstraints(0, 1));
+        result.add(detailPanel,
+            SwingUtils.createPanelGBConstraints(0, 2));
         
         return result;
     }
