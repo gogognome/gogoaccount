@@ -1,5 +1,5 @@
 /*
- * $Id: TestPartyCsvReader.java,v 1.3 2007-09-15 18:59:21 sanderk Exp $
+ * $Id: TestPartyCsvReader.java,v 1.4 2008-01-10 19:17:01 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
@@ -8,8 +8,8 @@ package nl.gogognome.test.tools;
 import java.awt.print.PrinterException;
 import java.io.IOException;
 
-import nl.gogognome.cf.tool.ui.PartyCsvSettingsView;
 import nl.gogognome.csv.CsvFileParser;
+import nl.gogognome.csv.ui.CsvParseSettingsView;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewContainer;
 import nl.gogognome.framework.ViewFrame;
@@ -27,14 +27,14 @@ public class TestPartyCsvReader {
 
     static ViewFrame frame;
     static ViewContainer viewContainer;
-    static PartyCsvSettingsView pcsView;
+    static CsvParseSettingsView pcsView;
     static SimpleLabelSheetSetupView labelSheetSetupView;
     static TextLabel[] labels;
     
-    public static void main(String[] args) throws IOException, PrinterException {
+    public static void main(String[] args) {
         viewContainer = new ViewContainer("Party label printer");
         frame = new ViewFrame(viewContainer);
-        pcsView = new PartyCsvSettingsView("gen.continue", "gen.cancel");
+        pcsView = new CsvParseSettingsView("gen.continue", "gen.cancel");
         pcsView.addViewListener(new ViewListener() {
             public void onViewClosed(View view) {
                 onClosePartyCsvSettingsView();
