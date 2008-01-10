@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.7 2008-01-10 19:18:08 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.8 2008-01-10 21:18:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -128,10 +128,10 @@ class EditJournalItemDialog extends OkCancelDialog {
         addComponentToGridBag(labelsAndFieldsPanel, cbSide,
                 gridBag, fieldConstraints);
 
-        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.party"), 
+        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.invoice"), 
                 gridBag, labelConstraints);
 
-        invoiceSelector = new InvoiceSelector();
+        invoiceSelector = new InvoiceSelector(database);
         invoiceSelector.setSelectedInvoice(invoice);
         addComponentToGridBag(labelsAndFieldsPanel, invoiceSelector,
                 gridBag, fieldConstraints);

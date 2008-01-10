@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.29 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: Database.java,v 1.30 2008-01-10 21:18:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -322,9 +322,25 @@ public class Database {
         notifyChange();
     }
     
-    public void addJournal(Journal journal)
-    {
+    public void addJournal(Journal journal) {
         journals.add(journal);
+        JournalItem[] items = journal.getItems();
+        for (int i = 0; i < items.length; i++) {
+            Invoice invoice = items[i].getInvoice();
+            if (invoice != null) {
+                Invoice.Payment payment = new Invoice.Payment();
+                if (items[i].isDebet()) {
+                    payment.amount = items[i].getAmount();
+                } else {
+                    payment.amount = items[i].getAmount().negate();
+                }
+                payment.date = journal.getDate();
+                payment.description = items[i].getAccount().getId() + " - " + items[i].getAccount().getName(); 
+                invoices.remove(invoice);
+                invoice = invoice.addPayment(payment);
+                invoices.add(invoice);
+            }
+        }
         notifyChange();
     }
     

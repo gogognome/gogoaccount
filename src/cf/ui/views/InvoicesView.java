@@ -1,5 +1,5 @@
 /*
- * $Id: InvoicesView.java,v 1.1 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: InvoicesView.java,v 1.2 2008-01-10 21:18:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -224,9 +224,6 @@ public class InvoicesView extends View {
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(200);
         table.getColumnModel().getColumn(2).setPreferredWidth(200);
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);
-        table.getColumnModel().getColumn(4).setPreferredWidth(100);
-        table.getColumnModel().getColumn(5).setPreferredWidth(100);
         
         table.addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {

@@ -1,26 +1,27 @@
 /*
- * $Id: InvoiceSelector.java,v 1.1 2008-01-10 19:18:08 sanderk Exp $
+ * $Id: InvoiceSelector.java,v 1.2 2008-01-10 21:18:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
+import cf.engine.Database;
+import cf.engine.Invoice;
+import cf.ui.views.InvoicesView;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
-
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
+import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.swing.ActionWrapper;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
-import cf.engine.Invoice;
 
 /**
  * This class implements a widget for selecting an <code>Invoice</code>. 
@@ -29,6 +30,9 @@ import cf.engine.Invoice;
  */
 public class InvoiceSelector extends JPanel {
 
+    /** The database used to select the invoice from. */
+    private Database database;
+    
     /** Contains a description of the selected invoice. */
     private JTextField tfDescription;
     
@@ -44,7 +48,8 @@ public class InvoiceSelector extends JPanel {
     /**
      * Constructor.
      */
-    public InvoiceSelector() {
+    public InvoiceSelector(Database database) {
+        this.database = database;
         WidgetFactory wf = WidgetFactory.getInstance();
         setLayout(new GridBagLayout());
         
@@ -108,17 +113,16 @@ public class InvoiceSelector extends JPanel {
      */
     public void selectInvoice() {
         Container parent = getParent();
-        while(!(parent instanceof Frame)) {
+        while(!(parent instanceof Window)) {
             parent = parent.getParent();
         }
-        
-        // TODO: Continue here!
-//        PartySelectionDialog dialog = new PartySelectionDialog((Frame)parent, 
-//                PartySelectionDialog.SELECTION_MODE);
-//        dialog.showDialog();
-//        if (dialog.getSelectedParty() != null) {
-//            setSelectedInvoice(dialog.getSelectedParty());
-//        }
+
+        InvoicesView invoicesView = new InvoicesView(database, true);
+        ViewDialog dialog = new ViewDialog((Window)parent, invoicesView);
+        dialog.showDialog();
+        if (invoicesView.getSelectedInvoices() != null) {
+            setSelectedInvoice(invoicesView.getSelectedInvoices()[0]);
+        }
     }
     
 }

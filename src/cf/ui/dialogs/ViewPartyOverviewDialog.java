@@ -1,5 +1,5 @@
 /*
- * $Id: ViewPartyOverviewDialog.java,v 1.4 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: ViewPartyOverviewDialog.java,v 1.5 2008-01-10 21:18:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -55,15 +55,14 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		        setHorizontalAlignment(SwingConstants.RIGHT);
 		    }
 		};
+		columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
 		columnModel.getColumn(3).setCellRenderer(rightAlignedRenderer);
-		columnModel.getColumn(4).setCellRenderer(rightAlignedRenderer);
 		
 		// Set column widths
 		columnModel.getColumn(0).setPreferredWidth(150);
-		columnModel.getColumn(1).setPreferredWidth(150);
-		columnModel.getColumn(2).setPreferredWidth(300);
+		columnModel.getColumn(1).setPreferredWidth(300);
+		columnModel.getColumn(2).setPreferredWidth(150);
 		columnModel.getColumn(3).setPreferredWidth(150);
-		columnModel.getColumn(4).setPreferredWidth(150);
 		
 		// Create panel with date and name of party.
 		JLabel label = new JLabel();

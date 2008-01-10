@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalDialog.java,v 1.12 2007-11-08 20:18:03 sanderk Exp $
+ * $Id: EditJournalDialog.java,v 1.13 2008-01-10 21:18:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -69,7 +69,7 @@ public class EditJournalDialog extends OkCancelDialog
     /**
      * Contains the journals as edited by the user.
      */
-    private Collection enteredJournals = new LinkedList();
+    private Collection<Journal> enteredJournals = new LinkedList<Journal>();
     
     /** Indicates whether the Ok + next button has to be shown. */ 
     private boolean showNextButton;
@@ -337,6 +337,6 @@ public class EditJournalDialog extends OkCancelDialog
      * @return the journals
      */
     public Journal[] getEditedJournals() {
-        return (Journal[])enteredJournals.toArray(TEMPLATE);
+        return enteredJournals.toArray(TEMPLATE);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.4 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.5 2008-01-10 21:18:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -325,7 +325,8 @@ public class InvoiceGeneratorView extends View {
                 }
     	    }
             
-            Invoice invoice = new Invoice(id, parties[i], parties[i], amountToBePaid, date, descriptions, amounts);
+            Invoice invoice = new Invoice(id, parties[i], parties[i], amountToBePaid, date,
+                descriptions, amounts);
             try {
                 database.addInvoice(invoice);
             } catch (DatabaseModificationFailedException e) {
@@ -358,12 +359,6 @@ public class InvoiceGeneratorView extends View {
                     MessageDialog.showMessage(this, "gen.titleError", 
                             TextResource.getInstance().getString("invoicegenerator.emptyAmountsFound"));
                     return;
-                }
-                
-                if (!line.rbParty.isSelected()) {
-                    descriptions[descriptionIndex] = account.getId() + " - " + account.getName();
-                    amounts[descriptionIndex] = debet ? amount.negate() : amount;
-                    descriptionIndex++;
                 }
                 
                 items[l] = new JournalItem(amount, account, debet, 
