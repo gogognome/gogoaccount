@@ -19,7 +19,7 @@
 <parties>
 <party id="123" name="Pietje Puk"/>
 <party id="44" name="Frans Bauer"/>
-<party address="Delphinus 7" birthdate="1975.11.28" city="Loon op Zand" id="501" name="Kooijmans" remarks="Dit is een test" type="bestuurslid" zip="5175 VB"/>
+<party address="Delphinus 7" birthdate="1975.11.28" city="Loon op Zand" id="501" name="Kooijmans" remarks="Dit is een test&#10;Deze opmerkinge bevat meerdere regels.&#10;En nog een regel.&#10;&#9;" type="bestuurslid" zip="5175 VB"/>
 </parties>
 <journals>
 <journal date="2006.12.04" description="lening" id="1">

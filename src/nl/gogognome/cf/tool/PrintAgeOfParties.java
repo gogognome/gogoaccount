@@ -1,5 +1,5 @@
 /*
- * $Id: PrintAgeOfParties.java,v 1.2 2007-11-04 19:26:23 sanderk Exp $
+ * $Id: PrintAgeOfParties.java,v 1.3 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -23,7 +23,7 @@ import cf.engine.XMLFileReader;
 /**
  * This class implements a small application that prints the age of all parties on a specified date.
  * This is useful information when determining the amount of contribution each party has to pay to
- * the club. 
+ * the club.
  */
 public class PrintAgeOfParties {
 

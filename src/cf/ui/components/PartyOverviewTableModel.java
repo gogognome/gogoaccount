@@ -1,12 +1,12 @@
 /*
- * $Id: PartyOverviewTableModel.java,v 1.7 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: PartyOverviewTableModel.java,v 1.8 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -14,17 +14,20 @@ import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
-
 import cf.engine.Database;
+import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.Party;
+import cf.engine.Invoice.Payment;
 
 /**
  * This class implements a model for a <code>JTable</code> that shows an overview 
  * of a party at a specific date.
  *
  * @author Sander Kooijmans
+ * 
+ * TODO: Reimplement this class!
  */
 public class PartyOverviewTableModel extends AbstractTableModel
 {
@@ -61,42 +64,39 @@ public class PartyOverviewTableModel extends AbstractTableModel
         initializeValues();
     }
 
-    private void initializeValues()
-    {
+    private void initializeValues() {
         Database database = Database.getInstance(); 
         totalDebet = Amount.getZero(database.getCurrency());
         totalCredit = totalDebet;
         
-        Vector lineInfoVector = new Vector();
-        Journal[] journals = database.getJournals();
-        for (int i = 0; i < journals.length; i++) 
-        {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(),date) <= 0)
-            {
-	            JournalItem[] items = journals[i].getItems();
-	            for (int j = 0; j < items.length; j++) 
-	            {
-	                if (party.equals(items[j].getParty()))
-	                {
-	                    LineInfo lineInfo = new LineInfo();
-	                    lineInfo.item = items[j];
-	                    lineInfo.journal = journals[i];
-	                    lineInfoVector.addElement(lineInfo);
-	                    if (lineInfo.item.isDebet())
-	                    {
-	                        totalDebet = totalDebet.add(lineInfo.item.getAmount());
-	                    }
-	                    else
-	                    {
-	                        totalCredit = totalCredit.add(lineInfo.item.getAmount());
-	                    }
-	                }
-	            }
+        ArrayList<LineInfo> lineInfoVector = new ArrayList<LineInfo>();
+        Invoice[] invoices = database.getInvoices();
+        for (int i = 0; i < invoices.length; i++) {
+            if (party.equals(invoices[i].getPayingParty())) {
+                if (DateUtil.compareDayOfYear(invoices[i].getIssueDate(),date) <= 0) {
+    	            Payment[] payments = invoices[i].getPayments();
+    	            for (int j = 0; j < payments.length; j++) {
+    	                if (DateUtil.compareDayOfYear(payments[j].date, date) <= 0) {
+//    	                    LineInfo lineInfo = new LineInfo();
+//    	                    lineInfo.item = items[j];
+//    	                    lineInfo.journal = journals[i];
+//    	                    lineInfoVector.addElement(lineInfo);
+//    	                    if (lineInfo.item.isDebet())
+//    	                    {
+//    	                        totalDebet = totalDebet.add(lineInfo.item.getAmount());
+//    	                    }
+//    	                    else
+//    	                    {
+//    	                        totalCredit = totalCredit.add(lineInfo.item.getAmount());
+//    	                    }
+    	                }
+    	            }
+                }
             }
         }
         
         lineInfos = new LineInfo[lineInfoVector.size()];
-        lineInfoVector.copyInto(lineInfos);
+        lineInfoVector.toArray(lineInfos);
     }
     
     /* (non-Javadoc)

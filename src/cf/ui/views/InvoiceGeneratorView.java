@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.3 2007-12-13 21:17:59 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.4 2008-01-10 19:18:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -275,12 +275,23 @@ public class InvoiceGeneratorView extends View {
 
         // TODO: Move most of this code to the engine package.
 	    int nrInvoicesCreated = 0;
+        
 	    for (int i=0; i<parties.length; i++) {
+            String id = replaceKeywords(tfId.getText(), parties[i]);
+            String description = replaceKeywords(tfDescription.getText(), parties[i]);
+            Date date = invoiceGenerationDateModel.getDate();
+            if (date == null) {
+                MessageDialog.showMessage(this, "gen.titleError", 
+                        TextResource.getInstance().getString("gen.invalidDate"));
+                return;
+            }
+            
     	    // Create journal items from the template
             Amount amountToBePaid = null;
-    	    JournalItem[] items = new JournalItem[templateLines.size()];
-            String[] descriptions = new String[templateLines.size()];
-            Amount[] amounts = new Amount[templateLines.size()];
+            String[] descriptions = new String[templateLines.size() - 1];
+            Amount[] amounts = new Amount[templateLines.size() - 1];
+            int descriptionIndex = 0;
+            // First create the invoice instance. It is needed when the journal is created.
     	    for (int l=0; l<templateLines.size(); l++) {
     	        TemplateLine line = templateLines.get(l);
     	        Account account = line.cbAccount.getSelectedAccount();
@@ -307,20 +318,56 @@ public class InvoiceGeneratorView extends View {
     	            return;
     	        }
                 
-                descriptions[l] = account.getId() + " - " + account.getName();
-                amounts[l] = debet ? amount.negate() : amount;
-                
-    	        Party party = line.rbParty.isSelected() ? parties[i] : null;
-    	        items[l] = new JournalItem(amount, account, debet, party);
+                if (!line.rbParty.isSelected()) {
+                    descriptions[descriptionIndex] = account.getId() + " - " + account.getName();
+                    amounts[descriptionIndex] = debet ? amount.negate() : amount;
+                    descriptionIndex++;
+                }
     	    }
             
-    	    String id = replaceKeywords(tfId.getText(), parties[i]);
-    	    String description = replaceKeywords(tfDescription.getText(), parties[i]);
-    	    Date date = invoiceGenerationDateModel.getDate();
-            if (date == null) {
-                MessageDialog.showMessage(this, "gen.titleError", 
-                        TextResource.getInstance().getString("gen.invalidDate"));
-                return;
+            Invoice invoice = new Invoice(id, parties[i], parties[i], amountToBePaid, date, descriptions, amounts);
+            try {
+                database.addInvoice(invoice);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showMessage(this, "gen.titleError", e.getMessage());
+            }
+
+    	    // Create the journal.
+            JournalItem[] items = new JournalItem[templateLines.size()];
+            for (int l=0; l<templateLines.size(); l++) {
+                TemplateLine line = templateLines.get(l);
+                Account account = line.cbAccount.getSelectedAccount();
+                if (account == null) {
+                    MessageDialog.showMessage(this, "gen.titleError", 
+                            TextResource.getInstance().getString("invoicegenerator.emptyAccountFound"));
+                    return;
+                }
+                Amount amount = line.tfDebet.getAmount();
+                boolean debet = amount != null;
+                if (line.rbParty.isSelected()) {
+                    amountToBePaid = amount;
+                }
+                if (amount == null) {
+                    amount = line.tfCredit.getAmount();
+                    if (line.rbParty.isSelected()) {
+                        amountToBePaid = amount.negate();
+                    }
+                }
+                
+                if (amount == null) {
+                    MessageDialog.showMessage(this, "gen.titleError", 
+                            TextResource.getInstance().getString("invoicegenerator.emptyAmountsFound"));
+                    return;
+                }
+                
+                if (!line.rbParty.isSelected()) {
+                    descriptions[descriptionIndex] = account.getId() + " - " + account.getName();
+                    amounts[descriptionIndex] = debet ? amount.negate() : amount;
+                    descriptionIndex++;
+                }
+                
+                items[l] = new JournalItem(amount, account, debet, 
+                    line.rbParty.isSelected() ? invoice : null);
             }
             
             Journal journal;
@@ -332,12 +379,6 @@ public class InvoiceGeneratorView extends View {
                 return;
             }
     	    
-            Invoice invoice = new Invoice(id, parties[i], parties[i], amountToBePaid, date, descriptions, amounts);
-            try {
-                database.addInvoice(invoice);
-            } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(this, "gen.titleError", e.getMessage());
-            }
     	    database.addJournal(journal);
             nrInvoicesCreated++;
 	    }

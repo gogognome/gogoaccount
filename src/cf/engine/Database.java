@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.28 2007-11-27 21:14:59 sanderk Exp $
+ * $Id: Database.java,v 1.29 2008-01-10 19:18:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -12,13 +12,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
+import cf.engine.Invoice.Payment;
 
 /**
  * This class maintains all accounts, journals, debtors and
@@ -526,54 +523,6 @@ public class Database {
     }
     
     /**
-     * Gets the total of debet amounts of a party at the specified date.
-     * @param party the party
-     * @param date the date 
-     * @return the total of debet amounts of the party
-     */
-    public Amount getTotalDebetForParty(Party party, Date date) {
-        Amount result = Amount.getZero(getCurrency());
-        for (Iterator iter = journals.iterator(); iter.hasNext();) {
-            Journal journal = (Journal) iter.next();
-            if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
-	            JournalItem[] items = journal.getItems();
-	            for (int j = 0; j < items.length; j++) {
-	                if (party.equals(items[j].getParty())) {
-	                    if (items[j].isDebet()) {
-	                        result = result.add(items[j].getAmount());
-	                    }
-	                }
-	            }
-            }
-        }
-        return result;
-    }
-    
-    /**
-     * Gets the total of credit amounts of a party at the specified date.
-     * @param party the party
-     * @param date the date 
-     * @return the total of credit amounts of the party
-     */
-    public Amount getTotalCreditForParty(Party party, Date date) {
-        Amount result = Amount.getZero(getCurrency());
-        for (Iterator iter = journals.iterator(); iter.hasNext();) {
-            Journal journal = (Journal) iter.next();
-            if (DateUtil.compareDayOfYear(journal.getDate(), date) <=0) {
-	            JournalItem[] items = journal.getItems();
-	            for (int j = 0; j < items.length; j++) {
-	                if (party.equals(items[j].getParty())) {
-	                    if (items[j].isCredit()) {
-	                        result = result.add(items[j].getAmount());
-	                    }
-	                }
-	            }
-            }
-        }
-        return result;
-    }
-    
-    /**
      * Gets the balance for a party at the specified date. The balance consists
      * of the total debet amount minus the total credit amount of the party.
      * 
@@ -582,7 +531,23 @@ public class Database {
      * @return the balance for the party
      */
     public Amount getBalanceForParty(Party party, Date date) {
-        return getTotalDebetForParty(party, date).subtract(getTotalCreditForParty(party, date));
+        Amount result = Amount.getZero(getCurrency());
+        for (Iterator<Invoice> iter = invoices.iterator(); iter.hasNext();) {
+            Invoice invoice = iter.next();
+            if (invoice.getPayingParty().equals(party)) {
+                if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
+                    result = result.add(invoice.getAmountToBePaid());
+                    
+                    Payment[] payments = invoice.getPayments();
+                    for (int j = 0; j < payments.length; j++) {
+                        if (DateUtil.compareDayOfYear(payments[j].date, date) <= 0) {
+                            result = result.add(payments[j].amount);
+                        }
+                    }
+                }
+            }
+        }
+        return result;
     }
     
     /**
@@ -595,9 +560,7 @@ public class Database {
         ArrayList<Party> debtors = new ArrayList<Party>();
         for (int i=0; i<parties.size(); i++) {
             Party party = parties.get(i);
-            Amount totalDebet = getTotalDebetForParty(party, date);
-            Amount totalCredit = getTotalCreditForParty(party, date);
-            Amount balance = totalDebet.subtract(totalCredit);
+            Amount balance = getBalanceForParty(party, date);
             if (balance.isPositive()) {
                 debtors.add(party);
             }
@@ -616,174 +579,12 @@ public class Database {
         ArrayList<Party> creditors = new ArrayList<Party>();
         for (int i=0; i<parties.size(); i++) {
             Party party = parties.get(i);
-            Amount totalDebet = getTotalDebetForParty(party, date);
-            Amount totalCredit = getTotalCreditForParty(party, date);
-            Amount balance = totalDebet.subtract(totalCredit);
+            Amount balance = getBalanceForParty(party, date);
             if (balance.isNegative()) {
                 creditors.add(party);
             }
         }
         Party[] result = creditors.toArray(new Party[creditors.size()]);
-        return result;
-    }
-    
-    /**
-     * All journals before or at the specified date are replaced by
-     * a single journal. This method will not change the balance at the
-     * specified date or of later dates.
-     * 
-     * <p>Journals with a date before the specified date will only be remained
-     * if they contain references to amounts that are still to be paid to creditors or
-     * received from debtors.
-     * 
-     * <p>This method will remove journals. It should be used carefully. Typically,
-     * it should not be used on a database that contains unsaved changes.
-     * 
-     * @param date the date
-     */
-    public void cleanUpJournalsBefore(Date date) {
-        ArrayList<Journal> journalsToBeDeleted = new ArrayList<Journal>(Arrays.asList(getJournals()));
-        
-        // maps accounts to the amount of the corresponding accounts.
-        HashMap<Account, Amount> accountsToAmountMap = new HashMap<Account, Amount>();
-        
-        // maps parties to the amount to be received from the corresponding party.
-        HashMap<Party, Amount> partiesToAmountMap = new HashMap<Party, Amount>();
-        
-        // maps parties to a List of journals referring to the party
-        HashMap<Party, List<Journal>> partiesToJournalsMap = new HashMap<Party, List<Journal>>();
-        
-        int index = 0;
-        while (index < journalsToBeDeleted.size()) {
-            Journal journal = journalsToBeDeleted.get(index);
-            if (DateUtil.compareDayOfYear(journal.getDate(), date) > 0) {
-                // The journal has a date after the specified date and should
-                // therefore not be replaced.
-                journalsToBeDeleted.remove(index);
-            } else {
-                JournalItem[] items = journal.getItems();
-
-                Party foundParty = null;
-                Amount partyAmount = null;
-                for (int i = 0; i < items.length; i++) {
-                    JournalItem item = items[i];
-                    
-                    Amount amount = getAmountFromMap(accountsToAmountMap, item.getAccount());
-                    if (item.isDebet()) {
-                        amount = amount.add(item.getAmount());
-                    } else {
-                        amount = amount.subtract(item.getAmount());
-                    }
-                    accountsToAmountMap.put(item.getAccount(), amount);
-                    
-                    Party party = item.getParty();
-                    if (party != null) {
-                        if (foundParty != null) {
-                            throw new IllegalStateException("Found a journal with more than 1 item with a party!");
-                        }
-                        
-                        foundParty = party;
-                        partyAmount = getAmountFromMap(partiesToAmountMap, party);
-                        if (item.isDebet()) {
-                            partyAmount = partyAmount.add(item.getAmount());
-                        } else {
-                            partyAmount = partyAmount.subtract(item.getAmount());
-                        }
-                        partiesToAmountMap.put(party, partyAmount);
-                        
-                        List<Journal> list = partiesToJournalsMap.get(party);
-                        if (list == null) {
-                            list = new LinkedList<Journal>();
-                            partiesToJournalsMap.put(party, list);
-                        }
-                        list.add(journal);
-                    }
-                }
-                
-                index++;
-
-                if (foundParty != null && partyAmount != null && partyAmount.isZero()) {
-                    // The party that was found has an amount of zero. The journals
-                    // that refer to the party can be removed.
-                    List<Journal> list = partiesToJournalsMap.get(foundParty);
-                    list.clear();
-                }
-            }
-        }
-
-        // For each of the parties whose balance is not zero, make sure that the
-        // journals referring to that party are not removed.
-        for (Iterator iter = partiesToJournalsMap.entrySet().iterator(); iter.hasNext();) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            Party party = (Party)entry.getKey();
-            List list = (List)entry.getValue();
-            for (Iterator iterator = list.iterator(); iterator.hasNext();) {
-                Journal journal = (Journal) iterator.next();
-                journalsToBeDeleted.remove(journal);
-                
-                // Undo the update of the amounts in accountsToAmountMap.
-                JournalItem[] items = journal.getItems();
-                for (int i = 0; i < items.length; i++) {
-                    JournalItem item = items[i];
-                    
-                    Amount amount = getAmountFromMap(accountsToAmountMap, item.getAccount());
-	                if (!item.isDebet()) {
-	                    amount = amount.add(item.getAmount());
-	                } else {
-	                    amount = amount.subtract(item.getAmount());
-	                }
-	                accountsToAmountMap.put(item.getAccount(), amount);
-	                
-	                if (item.getParty() != null && !party.equals(item.getParty())) {
-	                    throw new InternalError("Journal contains wrong party!");
-	                }
-                }
-            }
-        }
-        
-        
-        // Remove the journals.
-        for (Iterator iter = journalsToBeDeleted.iterator(); iter.hasNext();) {
-            Journal journal = (Journal) iter.next();
-            journals.remove(journal);
-        }
-        
-        // Add a journal that matches the amounts of the removed journals.
-        Set accountToAmountEntries = accountsToAmountMap.entrySet();
-        JournalItem[] items = new JournalItem[accountToAmountEntries.size()];
-        index = 0;
-        for (Iterator iter = accountToAmountEntries.iterator(); iter.hasNext(); ) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            Account account = (Account) entry.getKey();
-            Amount amount = (Amount) entry.getValue();
-            if (!amount.isNegative()) {
-                items[index] = new JournalItem(amount, account, true, null);
-            } else {
-                items[index] = new JournalItem(amount.negate(), account, false, null);
-            }
-            index++;
-        }
-        
-        journals.add(new Journal("reset", "reset", date, items));
-        
-        notifyChange();
-    }
-    
-    /**
-     * Gets an amount from a <code>Map</code>.
-     * 
-     * @param map the map
-     * @param key the key for which the corresponding <code>Amount</code> is
-     *         to be returned
-     * @return the <code>Amount</code> that corresponds to the specified key or
-     *         an amount representing zero if no <code>Amount</code> was associated
-     *         with the key.
-     */
-    private Amount getAmountFromMap(Map map, Object key) {
-        Amount result = (Amount)map.get(key);
-        if (result == null) {
-            result = Amount.getZero(getCurrency()); 
-        }
         return result;
     }
     
@@ -828,6 +629,15 @@ public class Database {
     }
     
     /**
+     * Gets the invoice with the specified id.
+     * @param id the id of the invoice
+     * @return the invoice or <code>null</code> if the invoice was not found
+     */
+    public Invoice getInvoice(String id) {
+        return idsToInvoicesMap.get(id);
+    }
+    
+    /**
      * Gets all invoices, sorted on ID.
      * @return the invoices
      */
@@ -836,4 +646,18 @@ public class Database {
         Arrays.sort(result);
         return result;
     }
+    
+    public Invoice[] getInvoices(InvoiceSearchCriteria searchCriteria) {
+        ArrayList<Invoice> matchingInvoices = new ArrayList<Invoice>();
+        for (Iterator<Invoice> iter = invoices.iterator(); iter.hasNext();) {
+            Invoice invoice = iter.next();
+            if (searchCriteria.matches(invoice)) {
+                matchingInvoices.add(invoice);
+            }
+        }
+        Invoice[] result = new Invoice[matchingInvoices.size()];
+        matchingInvoices.toArray(result);
+        return result;
+    }
+    
 }

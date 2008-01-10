@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.15 2007-09-15 19:00:05 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.16 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -18,7 +18,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -37,33 +36,22 @@ import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
 import cf.engine.Database;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
-import cf.engine.Party;
+import cf.engine.Invoice;
+import cf.engine.Invoice.Payment;
 import cf.pdf.PdfLatex;
 
 /**
  * This class implements the invoice dialog. This dialog can generate
- * invoices for debtors.
+ * invoices (PDF files) for debtors.
+ *
+ * TODO: Change this dialog into a View.
  * 
  * @author Sander Kooijmans
  */
-public class InvoiceDialog extends OkCancelDialog 
-{
-    private static final Amount AMOUNT_TO_BE_IGNORED = 
-        Amount.getZero(Database.getInstance().getCurrency());
-        
-    private static class Invoice {
-        String date;
-        String dueDate;
-        Party party;
-        Vector itemDescriptions = new Vector();
-        Vector itemAmounts = new Vector();
-        Vector itemDates = new Vector();
-        Amount totalAmount;
-        String ourReference;
-        String concerning;
-    }
+public class InvoiceDialog extends OkCancelDialog {
+    
+    /** The database used to determine the invoices. */
+    private Database database;
     
     private JTextField tfTemplateFileName;
     
@@ -80,7 +68,7 @@ public class InvoiceDialog extends OkCancelDialog
     private Frame parentFrame;
     
     /** The contents of the template file. */
-    private ArrayList templateContents;
+    private ArrayList<String> templateContents;
     
     /** 
      * Indicates the start of a single letter in the <code>templateContents</code>.
@@ -103,10 +91,10 @@ public class InvoiceDialog extends OkCancelDialog
      * Constructor.
      * @param frame the parent of this dialog
      */
-    public InvoiceDialog(final Frame frame) 
-    {
+    public InvoiceDialog(final Frame frame, Database database) {
         super(frame, "id.title");
         this.parentFrame = frame;
+        this.database = database;
         
         WidgetFactory wf = WidgetFactory.getInstance();
         JPanel panel = new JPanel(new GridBagLayout());
@@ -225,63 +213,15 @@ public class InvoiceDialog extends OkCancelDialog
             md.showDialog();
             return;
         }
-        
-        Database db = Database.getInstance();
-        Journal[] journals = db.getJournals();
-        Party[] debtors = db.getDebtors(date);
-        for (int i = 0; i < debtors.length; i++) {
-            Amount balance = Amount.getZero(Database.getInstance().getCurrency());
-            Party debtor = debtors[i];
-            Invoice invoice = new Invoice();
-            invoice.party = debtor;
-            invoice.date = tr.formatDate("gen.dateFormatFull", date);
-            invoice.concerning = concerning;
-            invoice.ourReference = ourReference;
-            invoice.dueDate = tr.formatDate("gen.dateFormatFull", dueDate);
-            for (int j=0; j<journals.length; j++) {
-                Journal journal = journals[j];
-                JournalItem[] items = journal.getItems();
-                if (journal.hasItemWithParty(debtor)) {
-                    invoice.itemDescriptions.addElement(journal.getDescription());
-                    invoice.itemDates.addElement(
-                            tr.formatDate("gen.dateFormat", journal.getDate()));
-                    invoice.itemAmounts.addElement(AMOUNT_TO_BE_IGNORED);
-                    
-	                for (int k=0; k<items.length; k++) {
-	                    JournalItem item = items[k];
-	                    if (!debtor.equals(item.getParty())) {
-	                        invoice.itemDescriptions.addElement(item.getAccount().getName());
-	                        invoice.itemDates.addElement(
-	                                tr.formatDate("gen.dateFormat", journal.getDate()));
-	                        if (item.isCredit()) {
-	                            balance = balance.add(item.getAmount());
-	                            invoice.itemAmounts.addElement(item.getAmount());
-	                        } else {
-	                            Amount negAmount = item.getAmount().negate();
-	                            balance = balance.add(negAmount);
-	                            invoice.itemAmounts.addElement(negAmount);
-	                        }
-	                    }
-	                }
-                }
+
+        Invoice[] invoices = database.getInvoices();
+        for (int i = 0; i < invoices.length; i++) {
+            if (!invoices[i].hasBeenPaid()) {
+                writeInvoiceToTexFile(invoices[i], dueDate);
             }
-            invoice.totalAmount = balance;
-            removePaidAmounts(invoice);
-            writeInvoiceToTexFile(invoice);
         }
         
-        try
-        {
-            writeTexTail();
-        }
-        catch (IOException e)
-        {
-            MessageDialog md = new MessageDialog(parentFrame, 
-                "gen.titleError", tr.getString("id.cantCompleteTexFile",
-                new Object[] {texFile.getAbsolutePath()}));
-            md.showDialog();
-            return;
-        }
+        writeTexTail();
 
         templateContents.clear();
         templateContents = null;
@@ -328,44 +268,52 @@ public class InvoiceDialog extends OkCancelDialog
      * Writes an invoice to the tex file.
      * @param invoice the invoice to be written
      */
-    private void writeInvoiceToTexFile(Invoice invoice) {
-        StringBuffer sb = new StringBuffer();
+    private void writeInvoiceToTexFile(Invoice invoice, Date dueDate) {
+        StringBuilder sb;
+        TextResource tr = TextResource.getInstance();
         for (int lineIndex=letterStart; lineIndex<letterEnd; lineIndex++) {
-            String line = (String)templateContents.get(lineIndex);
-            sb.setLength(0);
+            sb = new StringBuilder(1000);
+            String line = templateContents.get(lineIndex);
             sb.append(line);
             
             // apply substitutions
-            replace(sb, "$date$", invoice.date);
-            replace(sb, "$party-name$", invoice.party.getName());
-            replace(sb, "$party-id$", invoice.party.getId());
-            replace(sb, "$party-address$", invoice.party.getAddress());
-            replace(sb, "$party-zip$", invoice.party.getZipCode());
-            replace(sb, "$party-city$", invoice.party.getCity());
-            replace(sb, "$concerning$", invoice.concerning);
-            replace(sb, "$our-reference$", invoice.ourReference);
-            replace(sb, "$due-date$", invoice.dueDate);
-            replace(sb, "$total-amount$", formatAmountForTex(invoice.totalAmount));
+            replace(sb, "$date$", tr.formatDate("gen.dateFormat", invoice.getIssueDate()));
+            replace(sb, "$party-name$", invoice.getConcerningParty().getName());
+            replace(sb, "$party-id$", invoice.getConcerningParty().getId());
+            replace(sb, "$party-address$", invoice.getConcerningParty().getAddress());
+            replace(sb, "$party-zip$", invoice.getConcerningParty().getZipCode());
+            replace(sb, "$party-city$", invoice.getConcerningParty().getCity());
+            replace(sb, "$concerning$", tfConcerning.getText());
+            replace(sb, "$our-reference$", invoice.getId());
+            replace(sb, "$due-date$", tr.formatDate("gen.dateFormat", dueDate));
+            replace(sb, "$total-amount$", formatAmountForTex(invoice.getRemainingAmountToBePaid()));
             int index = sb.indexOf("$item-line$");
             if (index != -1) {
                 sb.delete(index, index + "$item-line$".length());
-                StringBuffer itemLineTemplate = new StringBuffer(sb.toString());
+                StringBuilder itemLineTemplate = new StringBuilder(sb.toString());
                 sb.setLength(0);
-                for (int i=0; i<invoice.itemDescriptions.size(); i++) {
-                    StringBuffer tempBuffer = new StringBuffer();
+                
+                String[] descriptions = invoice.getDescriptions();
+                Amount[] amounts = invoice.getAmounts();
+                for (int i=0; i<invoice.getDescriptions().length; i++) {
+                    StringBuilder tempBuffer = new StringBuilder();
                     tempBuffer.append(itemLineTemplate);
-                    replace(tempBuffer, "$item-description$", 
-                            (String)invoice.itemDescriptions.elementAt(i));
-                    Amount amount = (Amount)invoice.itemAmounts.elementAt(i);
-                    String formattedAmount = formatAmountForTex(amount);
-                    String date = (String)invoice.itemDates.elementAt(i);
-                    if (amount == AMOUNT_TO_BE_IGNORED) {
-                        formattedAmount = "";
-                    } else {
-                        date = "";
-                    }
+                    replace(tempBuffer, "$item-description$", descriptions[i]);
+                    String formattedAmount = amounts[i] != null ? formatAmountForTex(amounts[i]) : "";
                     replace(tempBuffer, "$item-amount$", formattedAmount);
-                    replace(tempBuffer, "$item-date$", date);
+                    replace(tempBuffer, "$item-date$", "");
+                    sb.append(tempBuffer);
+                }
+
+                Payment[] payments = invoice.getPayments();
+                for (int i = 0; i < payments.length; i++) {
+                    StringBuilder tempBuffer = new StringBuilder();
+                    tempBuffer.append(itemLineTemplate);
+                    replace(tempBuffer, "$item-description$", payments[i].description);
+                    String formattedAmount = 
+                        payments[i].amount != null ? formatAmountForTex(payments[i].amount.negate()) : "";
+                    replace(tempBuffer, "$item-amount$", formattedAmount);
+                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", payments[i].date));
                     sb.append(tempBuffer);
                 }
             }
@@ -381,7 +329,7 @@ public class InvoiceDialog extends OkCancelDialog
      * @param oldValue the old value
      * @param newValue the new value
      */
-    private void replace(StringBuffer sb, String oldValue, String newValue) {
+    private void replace(StringBuilder sb, String oldValue, String newValue) {
         if (newValue == null) {
             newValue = "";
         }
@@ -401,7 +349,7 @@ public class InvoiceDialog extends OkCancelDialog
         BufferedReader reader = new BufferedReader(new InputStreamReader(
                 new FileInputStream(templateFileName)));
         
-        templateContents = new ArrayList();
+        templateContents = new ArrayList<String>();
         for (String line = reader.readLine(); line != null; line = reader.readLine()) {
             templateContents.add(line);
             if (line.startsWith("\\begin{brief}")) {
@@ -435,9 +383,8 @@ public class InvoiceDialog extends OkCancelDialog
     /**
      * Writes the tail of the tex file. 
      * <code>texPrintWriter</code> will be closed and set to <code>null</code>.
-     * @throws IOException if an I/O exception occurs.
      */
-    private void writeTexTail() throws IOException
+    private void writeTexTail()
     {
         for (int i=letterEnd; i<templateContents.size(); i++)
         {
@@ -445,30 +392,5 @@ public class InvoiceDialog extends OkCancelDialog
         }
         texPrintWriter.close();
         texPrintWriter = null;
-    }
-    
-    /** 
-     * Removes all paid amounts from an invoice
-     * @param the invoice
-     * @return the invoice without paid amounts  
-     */
-    private void removePaidAmounts(Invoice invoice) {
-        int index = -1;
-        Amount sum = Amount.getZero(Database.getInstance().getCurrency());
-        for (int i=0; i<invoice.itemAmounts.size(); i++) {
-            Amount amount = (Amount)invoice.itemAmounts.get(i);
-            if (amount != AMOUNT_TO_BE_IGNORED) {
-	            sum = sum.add(amount);
-	            if (sum.isZero()) {
-	                index = i;
-	            }
-            }
-        }
-        
-        for (int i=0; i<index+1; i++) {
-            invoice.itemAmounts.remove(0);
-            invoice.itemDates.remove(0);
-            invoice.itemDescriptions.remove(0);
-        }
     }
 }

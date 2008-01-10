@@ -1,11 +1,12 @@
 /*
- * $Id: PartiesView.java,v 1.16 2007-12-17 18:35:33 sanderk Exp $
+ * $Id: PartiesView.java,v 1.17 2008-01-10 19:18:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -50,7 +51,7 @@ import cf.engine.Party;
 import cf.engine.PartySearchCriteria;
 
 /**
- * This class implements a view for adding, removing and editing parties.
+ * This class implements a view for adding, removing, editing and (optionally) selecting parties.
  *
  * @author Sander Kooijmans
  */
@@ -89,7 +90,7 @@ public class PartiesView extends View {
     private DateModel birthDateModel;
 
     /** Text area that shows the description in the result details. */
-    private JTextArea taDescription;
+    private JTextArea taRemarks;
     
     private JButton btSearch;
     private JButton btSelect;
@@ -277,6 +278,7 @@ public class PartiesView extends View {
         
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
+        // TODO: add empty border
         resultPanel.setBorder(new TitledBorder(
                 tr.getString("partiesView.foundParties"))); 
 
@@ -319,9 +321,9 @@ public class PartiesView extends View {
             public void valueChanged(ListSelectionEvent e) {
                 int row = table.getSelectedRow();
                 if (row != -1) {
-                    taDescription.setText(partiesTableModel.getParty(row).getRemarks());
+                    taRemarks.setText(partiesTableModel.getParty(row).getRemarks());
                 } else {
-                    taDescription.setText("");
+                    taRemarks.setText("");
                 }
             }
         });
@@ -330,14 +332,18 @@ public class PartiesView extends View {
         
         // Create details panel
         JPanel detailPanel = new JPanel(new GridBagLayout());
-        detailPanel.setBorder(new TitledBorder(tr.getString("partiesView.details")));
         
-        taDescription = new JTextArea();
-        detailPanel.add(wf.createLabel("partiesView.remarks", taDescription),
+        taRemarks = new JTextArea();
+        scrollPane = new JScrollPane(taRemarks);
+        scrollPane.setPreferredSize(new Dimension(500, 100));
+        
+        detailPanel.add(wf.createLabel("partiesView.remarks", taRemarks),
             SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0, 
-                GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 12, 0, 12));
-        detailPanel.add(taDescription, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,
+                GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 0, 0, 12));
+        detailPanel.add(scrollPane, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,
             GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, 12, 0, 12, 12));
+
+        resultPanel.add(detailPanel, BorderLayout.SOUTH);
         
         // Create a panel containing the search criteria and result panels
         JPanel result = new JPanel(new GridBagLayout());
@@ -345,8 +351,6 @@ public class PartiesView extends View {
                 SwingUtils.createTextFieldGBConstraints(0, 0));
         result.add(resultPanel,
                 SwingUtils.createPanelGBConstraints(0, 1));
-        result.add(detailPanel,
-            SwingUtils.createPanelGBConstraints(0, 2));
         
         return result;
     }

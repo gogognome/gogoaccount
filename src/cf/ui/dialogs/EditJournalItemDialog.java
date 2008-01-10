@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.6 2007-11-08 20:18:03 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.7 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -23,13 +23,12 @@ import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Account;
 import cf.engine.Database;
-import cf.engine.Party;
+import cf.engine.Invoice;
 import cf.engine.JournalItem;
 import cf.ui.components.AccountSelectionBean;
-import cf.ui.components.PartySelector;
+import cf.ui.components.InvoiceSelector;
 
 /**
  * This class implements the Edit Journal Item dialog.
@@ -43,7 +42,7 @@ class EditJournalItemDialog extends OkCancelDialog {
     
     private JComboBox cbSide;
     
-    private PartySelector partySelector;
+    private InvoiceSelector invoiceSelector;
     
     private Frame parent;
     
@@ -82,7 +81,7 @@ class EditJournalItemDialog extends OkCancelDialog {
         this.database = database;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(), 
-                item.isDebet(), item.getParty());
+                item.isDebet(), item.getInvoice());
     }
 
     /**
@@ -92,7 +91,7 @@ class EditJournalItemDialog extends OkCancelDialog {
      * @param debet used to initialize the side combo box
      * @param party used to initialize the party combo box
      */
-    private void initDialog(String amount, Account account, boolean debet, Party party)
+    private void initDialog(String amount, Account account, boolean debet, Invoice invoice)
     {
         JPanel labelsAndFieldsPanel = new JPanel();
         GridBagLayout gridBag = new GridBagLayout();
@@ -132,9 +131,9 @@ class EditJournalItemDialog extends OkCancelDialog {
         addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.party"), 
                 gridBag, labelConstraints);
 
-        partySelector = new PartySelector();
-        partySelector.setSelectedParty(party);
-        addComponentToGridBag(labelsAndFieldsPanel, partySelector,
+        invoiceSelector = new InvoiceSelector();
+        invoiceSelector.setSelectedInvoice(invoice);
+        addComponentToGridBag(labelsAndFieldsPanel, invoiceSelector,
                 gridBag, fieldConstraints);
         
         componentInitialized(labelsAndFieldsPanel);
@@ -158,11 +157,11 @@ class EditJournalItemDialog extends OkCancelDialog {
             return;
         }
         
-        Account account = (Account)sbAccount.getSelectedAccount();
+        Account account = sbAccount.getSelectedAccount();
         boolean debet = cbSide.getSelectedIndex() == 0; 
-        Party party = partySelector.getSelectedParty();
+        Invoice invoice = invoiceSelector.getSelectedInvoice();
         
-        enteredJournalItem = new JournalItem(amount, account, debet, party);
+        enteredJournalItem = new JournalItem(amount, account, debet, invoice);
         hideDialog();
     }
 

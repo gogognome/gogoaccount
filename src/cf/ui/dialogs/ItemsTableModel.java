@@ -1,5 +1,5 @@
 /*
- * $Id: ItemsTableModel.java,v 1.7 2007-07-26 19:06:57 sanderk Exp $
+ * $Id: ItemsTableModel.java,v 1.8 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,7 +7,6 @@ package cf.ui.dialogs;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Vector;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -18,23 +17,21 @@ import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
+import cf.engine.Invoice;
 import cf.engine.JournalItem;
-import cf.engine.Party;
 
 class ItemsTableModel implements TableModel
 {
     /** Contains the items shown in the table. */
-    private Vector items = new Vector();
+    private ArrayList<JournalItem> items = new ArrayList<JournalItem>();
     
     /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
-    private ArrayList itemTableModelListeners = new ArrayList();
+    private ArrayList<TableModelListener> itemTableModelListeners = new ArrayList<TableModelListener>();
     
-    public void setJournalItems(JournalItem[] itemsArray)
-    {
-        items.removeAllElements();
-        for (int i=0; i<itemsArray.length;i++)
-        {
-            items.addElement(itemsArray[i]);
+    public void setJournalItems(JournalItem[] itemsArray) {
+        items.clear();
+        for (int i=0; i<itemsArray.length; i++) {
+            items.add(itemsArray[i]);
         }
         notifyListeners(new TableModelEvent(this));
     }
@@ -71,15 +68,14 @@ class ItemsTableModel implements TableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#isCellEditable(int, int)
      */
-    public boolean isCellEditable(int row, int col) 
-    {
+    public boolean isCellEditable(int row, int col) {
         return false;
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnClass(int)
      */
-    public Class getColumnClass(int col) 
+    public Class<?> getColumnClass(int col) 
     {
         Class result;
         switch(col)
@@ -106,7 +102,7 @@ class ItemsTableModel implements TableModel
     {
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         String result = null;
-        JournalItem item = (JournalItem)items.elementAt(row);
+        JournalItem item = items.get(row);
         switch(col)
         {
         case 0:
@@ -122,56 +118,11 @@ class ItemsTableModel implements TableModel
             break;
             
         case 3:
-            Party party = item.getParty();
-            result = party != null ? party.getId() + " " + party.getName() : "";
+            Invoice invoice = item.getInvoice();
+            result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty() + ")" : "";
             break;
         }
         return result;
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#setValueAt(java.lang.Object, int, int)
-     */
-    public void setValueAt(Object val, int row, int col) 
-    {
-        JournalItem item = (JournalItem)items.elementAt(row);
-        Account account = item.getAccount();
-        Amount amount = item.getAmount();
-        boolean debet = item.isDebet();
-        Party party = item.getParty();
-        
-        switch(col)
-        {
-        case 0:
-            account = (Account)val;
-            break;
-            
-        case 1:
-            amount = (Amount)val;
-            if (!debet)
-            {
-                // Amount moves from credit to debet column. Notify listeners of this change.
-                debet = true;
-                notifyListeners(new TableModelEvent(this, row, row, 2, TableModelEvent.UPDATE));
-            }
-            break;
-            
-        case 2:
-            amount = (Amount)val;
-            if (debet)
-            {
-                // Amount moves from debet to credit column. Notify listeners of this change.
-                debet = false;
-                notifyListeners(new TableModelEvent(this, row, row, 1, TableModelEvent.UPDATE));
-            }
-            break;
-            
-        case 3:
-            party = (Party)val;
-            break;
-        }
-        
-        items.setElementAt(new JournalItem(amount, account, debet, party), row);
     }
 
     /* (non-Javadoc)
@@ -185,7 +136,7 @@ class ItemsTableModel implements TableModel
         case 0: id = "gen.account"; break;
         case 1: id = "gen.debet"; break;
         case 2: id = "gen.credit"; break;
-        case 3: id = "gen.party"; break;
+        case 3: id = "gen.invoice"; break;
         }
         return TextResource.getInstance().getString(id);
     }
@@ -197,7 +148,7 @@ class ItemsTableModel implements TableModel
     public JournalItem[] getItems()
     {
         JournalItem[] result = new JournalItem[items.size()];
-        items.copyInto(result);
+        items.toArray(result);
         return result;
     }
     
@@ -223,7 +174,7 @@ class ItemsTableModel implements TableModel
      */
     public void addItem(JournalItem item)
     {
-        items.addElement(item);
+        items.add(item);
         notifyListeners(new TableModelEvent(this));
     }
     
@@ -238,7 +189,7 @@ class ItemsTableModel implements TableModel
         JournalItem result = null;
         if (0 <= row && row < items.size())
         {
-            result = (JournalItem)items.elementAt(row);
+            result = items.get(row);
         }
         return result;
     }
@@ -253,7 +204,7 @@ class ItemsTableModel implements TableModel
     {
         if (0 <= row && row < items.size())
         {
-            items.setElementAt(item, row);
+            items.set(row, item);
             notifyListeners(new TableModelEvent(this));
         }
         else
@@ -280,7 +231,7 @@ class ItemsTableModel implements TableModel
     {
         if (0 <= row && row < items.size())
         {
-            items.removeElementAt(row);
+            items.remove(row);
             notifyListeners(new TableModelEvent(this));
         }
     }
@@ -289,5 +240,9 @@ class ItemsTableModel implements TableModel
     public void clear() {
         items.clear();
         notifyListeners(new TableModelEvent(this));
+    }
+
+    /** Should never be called since all methods are not editable. */
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     }
 }

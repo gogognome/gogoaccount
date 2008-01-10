@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.19 2007-12-13 21:17:23 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.20 2008-01-10 19:18:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -114,9 +114,9 @@ public class XMLFileReader {
 		                String amountString = itemElem.getAttribute("amount");
 		                Amount amount = AMOUNT_FORMAT.parse(amountString);
 		                String side = itemElem.getAttribute("side");
-		                String partyString = itemElem.getAttribute("party");
+		                String invoiceString = itemElem.getAttribute("invoice");
 		                itemsList.add(new JournalItem(amount, db.getAccount(itemId), 
-	                        "debet".equals(side), db.getParty(partyString)));
+	                        "debet".equals(side), db.getInvoice(invoiceString)));
 		            }
 		            
 		            JournalItem[] items = itemsList.toArray(new JournalItem[itemsList.size()]);

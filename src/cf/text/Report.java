@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.15 2007-12-03 20:28:52 sanderk Exp $
+ * $Id: Report.java,v 1.16 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,6 +20,7 @@ import nl.gogognome.util.DateUtil;
 import cf.engine.Account;
 import cf.engine.Balance;
 import cf.engine.Database;
+import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.OperationalResult;
@@ -293,8 +294,7 @@ public class Report
             
             for (int i=0; i<debtors.length; i++) {
                 values[0] = debtors[i].getId() + " - " + debtors[i].getName();
-                Amount amount = database.getTotalDebetForParty(debtors[i], date).subtract(
-                        database.getTotalCreditForParty(debtors[i], date)); 
+                Amount amount = database.getBalanceForParty(debtors[i], date); 
                 values[1] = textFormat.formatAmount(amount);
                 total = total == null ? amount : total.add(amount);
                 result.append(textFormat.getRow(values));
@@ -334,8 +334,7 @@ public class Report
             
             for (int i=0; i<creditors.length; i++) {
                 values[0] = creditors[i].getId() + " - " + creditors[i].getName();
-                Amount amount = database.getTotalCreditForParty(creditors[i], date).subtract(
-                        database.getTotalDebetForParty(creditors[i], date)); 
+                Amount amount = database.getBalanceForParty(creditors[i], date).negate(); 
                 values[1] = textFormat.formatAmount(amount);
                 total = total == null ? amount : total.add(amount);
                 result.append(textFormat.getRow(values));
@@ -411,8 +410,8 @@ public class Report
                     values[6] = "";
                     values[items[j].isDebet() ? 4 : 6] = 
                         af.formatAmountWithoutCurrency(items[j].getAmount());
-                    Party party = items[j].getParty();
-                    values[8] = party != null ? party.getId() + " - " + party.getName() : ""; 
+                    Invoice invoice = items[j].getInvoice();
+                    values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : ""; 
                     result.append(textFormat.getRow(values));
                 }
                 
@@ -510,8 +509,8 @@ public class Report
 			                    values[6] = af.formatAmountWithoutCurrency(amount);
 			                    totalCreditMutations = totalCreditMutations.add(amount);
 		                    }
-		                    Party party = items[j].getParty();
-		                    values[8] = party != null ? party.getId() + " - " + party.getName() : ""; 
+		                    Invoice invoice = items[j].getInvoice();
+		                    values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : ""; 
 		                    result.append(textFormat.getRow(values));
 	                    }
 	                }

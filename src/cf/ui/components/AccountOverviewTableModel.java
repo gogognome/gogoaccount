@@ -1,5 +1,5 @@
 /*
- * $Id: AccountOverviewTableModel.java,v 1.9 2007-03-04 21:04:36 sanderk Exp $
+ * $Id: AccountOverviewTableModel.java,v 1.10 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -14,12 +14,11 @@ import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
-
 import cf.engine.Account;
 import cf.engine.Database;
+import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
-import cf.engine.Party;
 
 /**
  * This class implements a model for a <code>JTable</code> that shows an overview 
@@ -163,9 +162,9 @@ public class AccountOverviewTableModel extends AbstractTableModel
 	            break;
 	            
 	        case 5:
-	            Party party = lineInfos[row].item.getParty();
-	            if (party != null) {
-	                result = party.getId() + " " + party.getName();
+	            Invoice invoice = lineInfos[row].item.getInvoice();
+	            if (invoice != null) {
+	                result = invoice.getId() + " (" + invoice.getPayingParty().getName() + ")";
 	            } else {
 	                result = null;
 	            }

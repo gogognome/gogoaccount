@@ -1,15 +1,12 @@
 /*
- * $Id: JournalItem.java,v 1.7 2007-03-04 20:47:14 sanderk Exp $
+ * $Id: JournalItem.java,v 1.8 2008-01-10 19:18:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
 
-import java.text.ParseException;
-
 import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.util.ComparatorUtil;
 
 /**
  * This class represents a single item of a journal. 
@@ -22,7 +19,7 @@ public class JournalItem
     
     private Account account;
     
-    private Party party;
+    private Invoice invoice;
     
     /** 
      * Indicates whether the amount in this items is booked on the
@@ -36,45 +33,14 @@ public class JournalItem
      * @param account the account on which the amount is booked 
      * @param debet true if the amount is booked on the debet side; false if
      *              the amount is booked on the credit side 
-     * @param party the party to which the amount is booked;
-     *              <code>null</code> if no party is involved. 
+     * @param invoice the invoice to which the amount is booked;
+     *              <code>null</code> if no invoice is involved. 
      */
-    public JournalItem(Amount amount, Account account, boolean debet, 
-            Party party)
-    {
+    public JournalItem(Amount amount, Account account, boolean debet, Invoice invoice)  {
         this.amount = amount;
         this.account = account;
         this.debet = debet;
-        this.party = party;
-    }
-
-    /**
-     * Constructs a journal item.
-     * @param amount the amount
-     * @param account the account on which the amount is booked 
-     * @param debet true if the amount is booked on the debet side; false if
-     *              the amount is booked on the credit side 
-     * @param party the debtor or creditor to which the amount is booked;
-     *              <code>null</code> if no debtor or creditor is involved.
-     * @deprecated use the constructor with Amount instead of float. 
-     */
-    public JournalItem(float amount, Account account, boolean debet, 
-            Party party)
-    {
-        AmountFormat af = TextResource.getInstance().getAmountFormat();
-        try 
-        {
-            this.amount = af.parse(Float.toString(amount),
-                    Database.getInstance().getCurrency());
-        } 
-        catch (ParseException e) 
-        {
-            // should never occur
-            e.printStackTrace();
-        }
-        this.account = account;
-        this.debet = debet;
-        this.party = party;
+        this.invoice = invoice;
     }
     
     public Account getAccount() 
@@ -87,9 +53,8 @@ public class JournalItem
         return amount;
     }
 
-    public Party getParty() 
-    {
-        return party;
+    public Invoice getInvoice() {
+        return invoice;
     }
     
     public boolean isDebet()
@@ -111,7 +76,7 @@ public class JournalItem
     public boolean equals(Object o) {
         if (o instanceof JournalItem) {
             JournalItem that = (JournalItem) o;
-            boolean equalParties = this.party != null ? this.party.equals(that.party) : that.party != null;
+            boolean equalParties = ComparatorUtil.equals(this.invoice, that.invoice); 
             return this.account.equals(that.account) && this.amount.equals(that.amount) 
             	&& this.debet == that.debet && equalParties;
         } else {

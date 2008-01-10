@@ -1,5 +1,5 @@
 /*
- * $Id: PartySelectionDialog.java,v 1.7 2007-10-15 19:33:48 sanderk Exp $
+ * $Id: PartySelectionDialog.java,v 1.8 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -35,7 +35,7 @@ import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 
 /**
- * This class implements a dialog for selecting parties from a CSV file.
+ * This class implements a dialog for selecting parties.
  *
  * @author Sander Kooijmans
  */

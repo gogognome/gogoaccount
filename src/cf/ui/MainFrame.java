@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.41 2007-12-03 20:31:11 sanderk Exp $
+ * $Id: MainFrame.java,v 1.42 2008-01-10 19:18:08 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -137,7 +137,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		JMenuItem miEditJournals = wf.createMenuItem("mi.editJournals", this);
 		JMenuItem miAddInvoices = wf.createMenuItem("mi.addInvoices", this);
         JMenuItem miEditParties = wf.createMenuItem("mi.editParties", this);
-		JMenuItem miCleanUp = wf.createMenuItem("mi.cleanUp", this);
 
 		// the view menu
 		JMenuItem miViewBalance = wf.createMenuItem("mi.viewBalance", this);
@@ -164,8 +163,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		editMenu.add(miEditJournals);
 		editMenu.add(miAddInvoices);
         editMenu.add(miEditParties);
-		editMenu.addSeparator();
-		editMenu.add(miCleanUp);
 		
 		viewMenu.add(miViewBalance);
 		viewMenu.add(miViewOperationalResult);
@@ -206,7 +203,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.viewPartiesOverview".equals(command)) { handleViewPartiesOverview(); }
 		if ("mi.addJournal".equals(command)) { handleAddJournal(); }
 		if ("mi.editJournals".equals(command)) { handleEditJournals(); }
-		if ("mi.cleanUp".equals(command)) { handleCleanUp(); }
 		if ("mi.addInvoices".equals(command)) { handleAddInvoices(); }
         if ("mi.editParties".equals(command)) { handleEditParties(); }
 		if ("mi.generateInvoices".equals(command)) { handleGenerateInvoices(); }
@@ -562,27 +558,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    }
 	}
 	
-	private void handleCleanUp() {
-	    TextResource tr = TextResource.getInstance();
-		MessageDialog dialog = new MessageDialog(this, "gen.titleWarning",
-			tr.getString("mf.cleanUpWarning"),
-			new String[] {"gen.yes", "gen.no"});
-		if (dialog.getSelectedButton() != 0) {
-		    return; // user does not want to continue
-		}
-
-	    DateSelectionDialog dateSelectionDialog = 
-	        new DateSelectionDialog(this, "mf.selectDateForCleanUp");
-	    dateSelectionDialog.showDialog();
-	    Date date = dateSelectionDialog.getDate();
-	    if (date != null) {
-	        Database.getInstance().cleanUpJournalsBefore(date);
-	    }
-	}
-	
-	private void handleGenerateInvoices()
-	{
-	    InvoiceDialog dialog = new InvoiceDialog(this);
+	private void handleGenerateInvoices() {
+	    InvoiceDialog dialog = new InvoiceDialog(this, Database.getInstance());
 	    dialog.showDialog();
 	}
 

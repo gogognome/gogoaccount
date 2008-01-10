@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.18 2007-12-03 21:00:48 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.19 2008-01-10 19:18:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -96,9 +96,9 @@ public class XMLFileWriter {
                     item.setAttribute("id", items[j].getAccount().getId());
                     item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(items[j].getAmount()));
                     item.setAttribute("side", items[j].isDebet() ? "debet" : "credit");
-                    if (items[j].getParty() != null)
+                    if (items[j].getInvoice() != null)
                     {
-                        item.setAttribute("party", items[j].getParty().getId());
+                        item.setAttribute("invoice", items[j].getInvoice().getId());
                     }
                     journalElem.appendChild(item);
                 }

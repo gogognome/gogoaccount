@@ -1,5 +1,5 @@
 /*
- * $Id: Journal.java,v 1.10 2007-03-04 20:47:00 sanderk Exp $
+ * $Id: Journal.java,v 1.11 2008-01-10 19:18:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -44,14 +44,10 @@ public class Journal implements Comparable {
         this.date = date;
         this.items = items;
         
-        int nrParties = 0;
         Currency currency = Database.getInstance().getCurrency();
         Amount totalDebet = Amount.getZero(currency);
         Amount totalCredit = totalDebet;
         for (int i=0; i<items.length; i++) {
-            if (items[i].getParty() != null) {
-                nrParties++;
-            }
             if (items[i].isDebet()) {
                 totalDebet = totalDebet.add(items[i].getAmount());
             } else {
@@ -65,11 +61,6 @@ public class Journal implements Comparable {
                     "The sum of debet and credit amounts differ for journal " + id 
                     + "! debet: " + af.formatAmount(totalDebet) + 
                     "; credit: " + af.formatAmount(totalCredit));
-        }
-        
-        if (nrParties > 1) {
-            throw new IllegalArgumentException("More than 1 party has been specified" +
-            		" for journal " + id);
         }
     }
     
@@ -107,25 +98,6 @@ public class Journal implements Comparable {
     public JournalItem[] getItems() 
     {
         return items;
-    }
-    
-    /**
-     * Checks whether this journal has an item with the specified party.
-     * @param party the party
-     * @return <code>true</code> if one of the items of this journal has
-     *         the specified party; <code>false</code> otherwise
-     */
-    public boolean hasItemWithParty(Party party)
-    {
-        boolean result = false;
-        for (int i=0; i<items.length; i++)
-        {
-            if (party.equals(items[i].getParty()))
-            {
-                result = true;
-            }
-        }
-        return result;
     }
 
     /* (non-Javadoc)
