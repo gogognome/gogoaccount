@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalDialog.java,v 1.13 2008-01-10 21:18:13 sanderk Exp $
+ * $Id: EditJournalDialog.java,v 1.14 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -145,7 +145,7 @@ public class EditJournalDialog extends OkCancelDialog
         topPanel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, 2));
 
         // Create table of items
-        itemsTableModel = new ItemsTableModel();
+        itemsTableModel = new ItemsTableModel(database);
         itemsTableModel.setJournalItems(new JournalItem[0]);
         itemsTable = new JTable(itemsTableModel);
         itemsTable.setRowSelectionAllowed(true);

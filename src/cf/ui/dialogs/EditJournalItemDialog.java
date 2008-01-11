@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.8 2008-01-10 21:18:13 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.9 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -81,7 +81,7 @@ class EditJournalItemDialog extends OkCancelDialog {
         this.database = database;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(), 
-                item.isDebet(), item.getInvoice());
+                item.isDebet(), database.getInvoice(item.getInvoiceId()));
     }
 
     /**
@@ -161,7 +161,8 @@ class EditJournalItemDialog extends OkCancelDialog {
         boolean debet = cbSide.getSelectedIndex() == 0; 
         Invoice invoice = invoiceSelector.getSelectedInvoice();
         
-        enteredJournalItem = new JournalItem(amount, account, debet, invoice);
+        enteredJournalItem = new JournalItem(amount, account, debet, 
+            invoice != null ? invoice.getId() : null);
         hideDialog();
     }
 

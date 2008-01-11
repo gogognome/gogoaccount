@@ -1,24 +1,22 @@
 /*
- * $Id: AccountOverviewTableModel.java,v 1.10 2008-01-10 19:18:08 sanderk Exp $
+ * $Id: AccountOverviewTableModel.java,v 1.11 2008-01-11 18:56:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
-import java.util.Date;
-import java.util.Vector;
-
-import javax.swing.table.AbstractTableModel;
-
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.DateUtil;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
+import java.util.ArrayList;
+import java.util.Date;
+import javax.swing.table.AbstractTableModel;
+import nl.gogognome.text.Amount;
+import nl.gogognome.text.AmountFormat;
+import nl.gogognome.text.TextResource;
+import nl.gogognome.util.DateUtil;
 
 /**
  * This class implements a model for a <code>JTable</code> that shows an overview 
@@ -26,8 +24,13 @@ import cf.engine.JournalItem;
  *
  * @author Sander Kooijmans
  */
-public class AccountOverviewTableModel extends AbstractTableModel
-{
+public class AccountOverviewTableModel extends AbstractTableModel {
+    
+    private static final long serialVersionUID = 1L;
+
+    /** The database used to obtain the invoices for journal items. */ 
+    private Database database;
+    
     /** The account to be shown. */
     private Account account;
     
@@ -50,12 +53,13 @@ public class AccountOverviewTableModel extends AbstractTableModel
     
     /**
      * Constructs a new <code>AccountOverviewComponent</code>.
+     * @param database the database
      * @param account the account to be shown
      * @param date the date
      */
-    public AccountOverviewTableModel(Account account, Date date) 
-    {
+    public AccountOverviewTableModel(Database database, Account account, Date date) {
         super();
+        this.database = database;
         this.account = account;
         this.date = date;
         initializeValues();
@@ -67,21 +71,17 @@ public class AccountOverviewTableModel extends AbstractTableModel
         totalDebet = Amount.getZero(database.getCurrency());
         totalCredit = totalDebet;
         
-        Vector lineInfoVector = new Vector();
+        ArrayList<LineInfo> lineInfoVector = new ArrayList<LineInfo>();
         Journal[] journals = database.getJournals();
-        for (int i = 0; i < journals.length; i++) 
-        {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), date) <= 0)
-            {
+        for (int i = 0; i < journals.length; i++) {
+            if (DateUtil.compareDayOfYear(journals[i].getDate(), date) <= 0) {
 	            JournalItem[] items = journals[i].getItems();
-	            for (int j = 0; j < items.length; j++) 
-	            {
-	                if (items[j].getAccount().equals(account))
-	                {
+	            for (int j = 0; j < items.length; j++) {
+	                if (items[j].getAccount().equals(account)) {
 	                    LineInfo lineInfo = new LineInfo();
 	                    lineInfo.item = items[j];
 	                    lineInfo.journal = journals[i];
-	                    lineInfoVector.addElement(lineInfo);
+	                    lineInfoVector.add(lineInfo);
 	                    if (lineInfo.item.isDebet())
 	                    {
 	                        totalDebet = totalDebet.add(lineInfo.item.getAmount());
@@ -96,7 +96,7 @@ public class AccountOverviewTableModel extends AbstractTableModel
         }
         
         lineInfos = new LineInfo[lineInfoVector.size()];
-        lineInfoVector.copyInto(lineInfos);
+        lineInfoVector.toArray(lineInfos);
     }
     
     /* (non-Javadoc)
@@ -162,7 +162,7 @@ public class AccountOverviewTableModel extends AbstractTableModel
 	            break;
 	            
 	        case 5:
-	            Invoice invoice = lineInfos[row].item.getInvoice();
+	            Invoice invoice = database.getInvoice(lineInfos[row].item.getInvoiceId());
 	            if (invoice != null) {
 	                result = invoice.getId() + " (" + invoice.getPayingParty().getName() + ")";
 	            } else {

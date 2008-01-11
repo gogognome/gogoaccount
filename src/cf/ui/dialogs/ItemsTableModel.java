@@ -1,5 +1,5 @@
 /*
- * $Id: ItemsTableModel.java,v 1.8 2008-01-10 19:18:08 sanderk Exp $
+ * $Id: ItemsTableModel.java,v 1.9 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,13 +20,23 @@ import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.JournalItem;
 
-class ItemsTableModel implements TableModel
-{
+class ItemsTableModel implements TableModel {
+    
+    private Database database;
+    
     /** Contains the items shown in the table. */
     private ArrayList<JournalItem> items = new ArrayList<JournalItem>();
     
     /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
     private ArrayList<TableModelListener> itemTableModelListeners = new ArrayList<TableModelListener>();
+    
+    /**
+     * Constructor.
+     * @param database the database
+     */
+    public ItemsTableModel(Database database) {
+        this.database = database;        
+    }
     
     public void setJournalItems(JournalItem[] itemsArray) {
         items.clear();
@@ -40,11 +50,9 @@ class ItemsTableModel implements TableModel
      * Notifies the listeners of a change in the table.
      * @param event describes the change.
      */
-    private void notifyListeners(TableModelEvent event)
-    {
-        for (Iterator iter = itemTableModelListeners.iterator(); iter.hasNext();)
-        {
-            TableModelListener listener = (TableModelListener)iter.next();
+    private void notifyListeners(TableModelEvent event) {
+        for (Iterator<TableModelListener> iter = itemTableModelListeners.iterator(); iter.hasNext();) {
+            TableModelListener listener = iter.next();
             listener.tableChanged(event);
         }
     }
@@ -52,16 +60,14 @@ class ItemsTableModel implements TableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
-    public int getColumnCount() 
-    {
+    public int getColumnCount() {
         return 4;
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getRowCount()
      */
-    public int getRowCount() 
-    {
+    public int getRowCount() {
         return items.size();
     }
 
@@ -77,7 +83,7 @@ class ItemsTableModel implements TableModel
      */
     public Class<?> getColumnClass(int col) 
     {
-        Class result;
+        Class<?> result;
         switch(col)
         {
         case 0:
@@ -118,7 +124,7 @@ class ItemsTableModel implements TableModel
             break;
             
         case 3:
-            Invoice invoice = item.getInvoice();
+            Invoice invoice = database.getInvoice(item.getInvoiceId());
             result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty() + ")" : "";
             break;
         }
@@ -219,7 +225,7 @@ class ItemsTableModel implements TableModel
     public void addEmptyItem()
     {
         Account dummyAccount = new Account("???", "???", true, Database.getInstance());
-        addItem(new JournalItem(Amount.getZero(Database.getInstance().getCurrency()), dummyAccount, true, null));
+        addItem(new JournalItem(Amount.getZero(Database.getInstance().getCurrency()), dummyAccount, true, null, false));
     }
     
     /**

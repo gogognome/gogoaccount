@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.42 2008-01-10 19:18:08 sanderk Exp $
+ * $Id: MainFrame.java,v 1.43 2008-01-11 18:56:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -487,7 +487,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             Date date = dateSelectionDialog.getDate();
             if (date != null)
             {
-	            ViewAccountOverviewDialog dialog = new ViewAccountOverviewDialog(this, account, date);
+	            ViewAccountOverviewDialog dialog = new ViewAccountOverviewDialog(this, Database.getInstance(), account, date);
 	            dialog.showDialog();
 	        }
 	    }
@@ -538,7 +538,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		    dialog.showDialog();
 		    Journal[] journals = dialog.getEditedJournals();
 		    for (int i = 0; i < journals.length; i++) {
-		        db.addJournal(journals[i]);
+		        db.addJournal(journals[i], true);
             }
 	    }
 	}

@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.20 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.21 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -23,7 +23,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import cf.engine.Invoice.Payment;
 
 /**
  * This class reads the contents of a <code>Database</code> from an XML file.
@@ -115,12 +114,17 @@ public class XMLFileReader {
 		                Amount amount = AMOUNT_FORMAT.parse(amountString);
 		                String side = itemElem.getAttribute("side");
 		                String invoiceString = itemElem.getAttribute("invoice");
+		                if (invoiceString.length() == 0) {
+		                    invoiceString = null;
+		                }
+		                boolean invoiceCreation = "true".equals(itemElem.getAttribute("invoiceCreation"));
+		                
 		                itemsList.add(new JournalItem(amount, db.getAccount(itemId), 
-	                        "debet".equals(side), db.getInvoice(invoiceString)));
+	                        "debet".equals(side), invoiceString, invoiceCreation));
 		            }
 		            
 		            JournalItem[] items = itemsList.toArray(new JournalItem[itemsList.size()]);
-			        db.addJournal( new Journal(id, description, date, items) );
+			        db.addJournal(new Journal(id, description, date, items), false);
 		        }
 		    }
 		    
@@ -276,20 +280,25 @@ public class XMLFileReader {
                 Payment[] payments = new Payment[numNodes];
                 for (int p=0; p<numNodes; p++) {
                     Element paymentElem = (Element)paymentNodes.item(p);
+                    Amount amount;
+                    Date date;
+                    String description;
                     try {
-                        payments[p].date = DATE_FORMAT.parse(paymentElem.getAttribute("date"));
+                        date = DATE_FORMAT.parse(paymentElem.getAttribute("date"));
                     } catch (ParseException e1) {
                         throw new XMLParseException("Invalid date: " + paymentElem.getAttribute("date"));
                     } 
                     try {
-                        payments[p].amount = AMOUNT_FORMAT.parse(paymentElem.getAttribute("amount"));
+                        amount = AMOUNT_FORMAT.parse(paymentElem.getAttribute("amount"));
                     } catch (ParseException e) {
                         throw new XMLParseException("Invalid amount: " + paymentElem.getAttribute("amount"));
                     } 
-                    payments[p].description = paymentElem.getAttribute("description"); 
+                    description = paymentElem.getAttribute("description"); 
+                    payments[p] = new Payment(amount, date, description);
                 }
                 
-                invoices.add(new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, descriptions, amounts));
+                invoices.add(new Invoice(id, payingParty, concerningParty, amountToBePaid, 
+                    issueDate, descriptions, amounts, payments));
             }
         }
         

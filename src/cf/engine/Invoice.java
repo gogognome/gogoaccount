@@ -1,5 +1,5 @@
 /*
- * $Id: Invoice.java,v 1.3 2007-12-13 21:15:34 sanderk Exp $
+ * $Id: Invoice.java,v 1.4 2008-01-11 18:56:56 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -57,13 +57,6 @@ public class Invoice implements Comparable<Invoice> {
     /** Contains payments of this invoice. */
     private Payment[] payments;
     
-    /** This class specifies a payment. */
-    public static class Payment {
-        public Amount amount;
-        public Date date;
-        public String description;
-    }
-    
     /**
      * Consturctor.
      * @param id
@@ -119,7 +112,7 @@ public class Invoice implements Comparable<Invoice> {
     public Amount getRemainingAmountToBePaid() {
         Amount result = amountToBePaid;
         for (int i=0; i<payments.length; i++) {
-            result = result.subtract(payments[i].amount);
+            result = result.subtract(payments[i].getAmount());
         }
         return result;
     }
@@ -164,13 +157,47 @@ public class Invoice implements Comparable<Invoice> {
     public Payment[] getPayments() {
         return payments;
     }
-    
+
+    /**
+     * Creates a new invoice that consists of this invoice to which the specified
+     * payment has been added.
+     *  
+     * @param payment the payment to be added
+     * @return the new invoice
+     */
     public Invoice addPayment(Payment payment) {
         Payment[] newPayments = new Payment[payments.length + 1];
         System.arraycopy(payments, 0, newPayments, 0, payments.length);
         newPayments[payments.length] = payment;
         return new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, 
             descriptions, amounts, newPayments); 
+    }
+
+    /**
+     * Creates a new invoice that consists of this invoice from which the specified
+     * payment has been removed. If the payment was not present, then this instance
+     * will be returned.
+     *  
+     * @param payment the payment to be removed
+     * @return the new invoice or <code>this</code> (see above)
+     */
+    public Invoice removePayment(Payment payment) {
+        int index = -1;
+        for (int i=0; i<payments.length; i++) {
+            if (payments[i].equals(payment)) {
+                index = i;
+            }
+        }
+        
+        if (index != -1) {
+            Payment[] newPayments = new Payment[payments.length - 1];
+            System.arraycopy(payments, 0, newPayments, 0, index);
+            System.arraycopy(payments, index+1, newPayments, index, payments.length - index - 1);
+            return new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, 
+                descriptions, amounts, newPayments); 
+        } else {
+            return this;
+        }
     }
 
     /**

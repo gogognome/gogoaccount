@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.5 2008-01-10 21:18:13 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.6 2008-01-11 18:56:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -325,6 +325,10 @@ public class InvoiceGeneratorView extends View {
                 }
     	    }
             
+    	    if (database.getInvoice(id) != null) {
+        	    id = database.suggestNewInvoiceId(id);
+    	    }
+    	    
             Invoice invoice = new Invoice(id, parties[i], parties[i], amountToBePaid, date,
                 descriptions, amounts);
             try {
@@ -360,9 +364,10 @@ public class InvoiceGeneratorView extends View {
                             TextResource.getInstance().getString("invoicegenerator.emptyAmountsFound"));
                     return;
                 }
-                
+
+                boolean invoiceCreation = line.rbParty.isSelected(); 
                 items[l] = new JournalItem(amount, account, debet, 
-                    line.rbParty.isSelected() ? invoice : null);
+                    invoiceCreation ? invoice.getId() : null, invoiceCreation);
             }
             
             Journal journal;
@@ -374,7 +379,7 @@ public class InvoiceGeneratorView extends View {
                 return;
             }
     	    
-    	    database.addJournal(journal);
+    	    database.addJournal(journal, true);
             nrInvoicesCreated++;
 	    }
 	    

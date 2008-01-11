@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.16 2008-01-10 19:18:08 sanderk Exp $
+ * $Id: Report.java,v 1.17 2008-01-11 18:56:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -410,7 +410,7 @@ public class Report
                     values[6] = "";
                     values[items[j].isDebet() ? 4 : 6] = 
                         af.formatAmountWithoutCurrency(items[j].getAmount());
-                    Invoice invoice = items[j].getInvoice();
+                    Invoice invoice = database.getInvoice(items[j].getInvoiceId());
                     values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : ""; 
                     result.append(textFormat.getRow(values));
                 }
@@ -509,7 +509,7 @@ public class Report
 			                    values[6] = af.formatAmountWithoutCurrency(amount);
 			                    totalCreditMutations = totalCreditMutations.add(amount);
 		                    }
-		                    Invoice invoice = items[j].getInvoice();
+		                    Invoice invoice = database.getInvoice(items[j].getInvoiceId());
 		                    values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : ""; 
 		                    result.append(textFormat.getRow(values));
 	                    }

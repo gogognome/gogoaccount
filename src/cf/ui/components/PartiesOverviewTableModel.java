@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesOverviewTableModel.java,v 1.9 2007-05-21 15:55:01 sanderk Exp $
+ * $Id: PartiesOverviewTableModel.java,v 1.10 2008-01-11 18:56:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -29,6 +29,8 @@ import cf.engine.Party;
  */
 public class PartiesOverviewTableModel extends AbstractTableModel
 {
+    private static final long serialVersionUID = 1L;
+
     /** The date. */
     private Date date;
 

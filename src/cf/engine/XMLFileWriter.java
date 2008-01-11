@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.19 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.20 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -25,7 +25,6 @@ import nl.gogognome.text.AmountFormat;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import cf.engine.Invoice.Payment;
 
 /**
  * This class writes the contents of a <code>Database</code> to an XML file.
@@ -96,9 +95,11 @@ public class XMLFileWriter {
                     item.setAttribute("id", items[j].getAccount().getId());
                     item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(items[j].getAmount()));
                     item.setAttribute("side", items[j].isDebet() ? "debet" : "credit");
-                    if (items[j].getInvoice() != null)
-                    {
-                        item.setAttribute("invoice", items[j].getInvoice().getId());
+                    if (items[j].getInvoiceId() != null) {
+                        item.setAttribute("invoice", items[j].getInvoiceId());
+                        if (items[j].hasInvoiceCreation()) {
+                            item.setAttribute("invoiceCreation", "true");
+                        }
                     }
                     journalElem.appendChild(item);
                 }
@@ -207,11 +208,10 @@ public class XMLFileWriter {
             Payment[] payments = invoices[i].getPayments();
             for (int p = 0; p < payments.length; p++) {
                 Element paymentElem = doc.createElement("payment");
-                paymentElem.setAttribute("date", DATE_FORMAT.format(payments[p].date));
-                paymentElem.setAttribute("amount", AMOUNT_FORMAT.formatAmount(payments[p].amount));
-                if (payments[p].description != null) {
-                    paymentElem.setAttribute("description", payments[p].description);
-                }
+                paymentElem.setAttribute("date", DATE_FORMAT.format(payments[p].getDate()));
+                paymentElem.setAttribute("amount", AMOUNT_FORMAT.formatAmount(payments[p].getAmount()));
+                paymentElem.setAttribute("description", payments[p].getDescription());
+                elem.appendChild(paymentElem);
             }
             
             groupElem.appendChild(elem);

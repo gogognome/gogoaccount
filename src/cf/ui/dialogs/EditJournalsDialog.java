@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsDialog.java,v 1.10 2007-11-08 20:18:03 sanderk Exp $
+ * $Id: EditJournalsDialog.java,v 1.11 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -55,10 +55,10 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
     private ItemsTableModel itemsTableModel;
     
     /** Contains the journals as shown in the user interface. */
-    private ArrayList journalsInUi = new ArrayList();
+    private ArrayList<Journal> journalsInUi = new ArrayList<Journal>();
     
     /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
-    private ArrayList journalsTableModelListeners = new ArrayList();
+    private ArrayList<TableModelListener> journalsTableModelListeners = new ArrayList<TableModelListener>();
     
     /** The parent frame of this dialog. */
     private Frame parent;
@@ -80,7 +80,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 		
 		WidgetFactory wf = WidgetFactory.getInstance();
 		
-		Journal[] journals = Database.getInstance().getJournals();
+		Journal[] journals = database.getJournals();
 		for (int i=0; i<journals.length; i++)
 		{
 		    journalsInUi.add(journals[i]);
@@ -109,7 +109,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 		//journalsTable.setDefaultEditor(Date.class, new DateEditor());
 
 		// Create table of items
-		itemsTableModel = new ItemsTableModel();
+		itemsTableModel = new ItemsTableModel(database);
 		if (journals.length > 0)
 		{
 		    itemsTableModel.setJournalItems(journals[0].getItems());
@@ -138,7 +138,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 		
 		// Create combo box for parties
 		JComboBox comboBox = new JComboBox();
-		Party[] parties = Database.getInstance().getParties();
+		Party[] parties = database.getParties();
 		for (int i = 0; i < parties.length; i++) 
 		{
 		    comboBox.addItem(parties[i].getId() + " " + parties[i].getName());
@@ -203,7 +203,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 	{
 	    Journal[] journalsArray = new Journal[journalsInUi.size()];
 	    journalsInUi.toArray(journalsArray);
-	    Database.getInstance().setJournals(journalsArray);
+	    database.setJournals(journalsArray, true);
 		hideDialog();
 	}
 
@@ -226,15 +226,14 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#isCellEditable(int, int)
      */
-    public boolean isCellEditable(int row, int column) 
-    {
+    public boolean isCellEditable(int row, int column) {
         return false;
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnClass(int)
      */
-    public Class getColumnClass(int column) 
+    public Class<?> getColumnClass(int column) 
     {
         return column == 0 ? java.util.Date.class : String.class;
     }
@@ -244,7 +243,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
      */
     public Object getValueAt(int row, int col) 
     {
-        Journal journal = (Journal)journalsInUi.get(row);
+        Journal journal = journalsInUi.get(row);
         Object result = null;
         switch(col)
         {
@@ -259,32 +258,6 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
             break;
         }
         return result;
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#setValueAt(java.lang.Object, int, int)
-     */
-    public void setValueAt(Object value, int row, int col) 
-    {
-        Journal journal = (Journal)journalsInUi.get(row);
-        Date date = journal.getDate();
-        String id = journal.getId();
-        String description = journal.getDescription();
-        switch(col)
-        {
-        case 0:
-            date = (Date)value;
-            break;
-        case 1:
-            id = (String)value;
-            break;
-        case 2:
-            description = (String)value;
-            break;
-        }
-        
-        journal = new Journal(id, description, date, journal.getItems());
-        journalsInUi.set(row, journal);
     }
 
     /* (non-Javadoc)
@@ -329,7 +302,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
         int row = journalsTable.getSelectedRow();
         if (row != -1)
         {
-            Journal journal = (Journal)journalsInUi.get(row);
+            Journal journal = journalsInUi.get(row);
             EditJournalDialog dialog = 
                 new EditJournalDialog(parent, database, "ejd.editJournal", journal, false);
             dialog.showDialog();
@@ -373,11 +346,9 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
      * Notifies the listeners of a change in the table.
      * @param event describes the change.
      */
-    private void notifyListeners(TableModelEvent event)
-    {
-        for (Iterator iter = journalsTableModelListeners.iterator(); iter.hasNext();)
-        {
-            TableModelListener listener = (TableModelListener)iter.next();
+    private void notifyListeners(TableModelEvent event) {
+        for (Iterator<TableModelListener> iter = journalsTableModelListeners.iterator(); iter.hasNext();) {
+            TableModelListener listener = iter.next();
             listener.tableChanged(event);
         }
     }
@@ -389,7 +360,6 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
      */
     private void updateJournalItemTable(int row)
     {
-        itemsTableModel.setJournalItems(
-                ((Journal)journalsInUi.get(row)).getItems());
+        itemsTableModel.setJournalItems(journalsInUi.get(row).getItems());
     }
 }

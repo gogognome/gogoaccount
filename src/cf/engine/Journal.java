@@ -1,5 +1,5 @@
 /*
- * $Id: Journal.java,v 1.11 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: Journal.java,v 1.12 2008-01-11 18:56:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -18,7 +18,7 @@ import nl.gogognome.text.AmountFormat;
  *
  * @author Sander Kooijmans
  */
-public class Journal implements Comparable {
+public class Journal implements Comparable<Journal> {
 
     private String id;
     
@@ -103,8 +103,7 @@ public class Journal implements Comparable {
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object o) {
-        Journal that = (Journal)o;
+    public int compareTo(Journal that) {
         return this.date.compareTo(that.date);
     }
     

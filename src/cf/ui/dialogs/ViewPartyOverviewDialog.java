@@ -1,5 +1,5 @@
 /*
- * $Id: ViewPartyOverviewDialog.java,v 1.5 2008-01-10 21:18:13 sanderk Exp $
+ * $Id: ViewPartyOverviewDialog.java,v 1.6 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -60,9 +60,10 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		
 		// Set column widths
 		columnModel.getColumn(0).setPreferredWidth(150);
-		columnModel.getColumn(1).setPreferredWidth(300);
-		columnModel.getColumn(2).setPreferredWidth(150);
+        columnModel.getColumn(1).setPreferredWidth(200);
+		columnModel.getColumn(2).setPreferredWidth(300);
 		columnModel.getColumn(3).setPreferredWidth(150);
+		columnModel.getColumn(4).setPreferredWidth(150);
 		
 		// Create panel with date and name of party.
 		JLabel label = new JLabel();

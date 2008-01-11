@@ -1,5 +1,5 @@
 /*
- * $Id: ViewPartiesOverviewDialog.java,v 1.5 2007-04-17 18:29:22 sanderk Exp $
+ * $Id: ViewPartiesOverviewDialog.java,v 1.6 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -54,6 +54,4 @@ public class ViewPartiesOverviewDialog extends DialogWithButtons
         componentInitialized(panel);
 		setResizable(true);
     }
-
-    
 }

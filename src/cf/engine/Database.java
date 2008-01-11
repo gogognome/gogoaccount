@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.30 2008-01-10 21:18:13 sanderk Exp $
+ * $Id: Database.java,v 1.31 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -12,10 +12,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-
+import java.util.Set;
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
-import cf.engine.Invoice.Payment;
 
 /**
  * This class maintains all accounts, journals, debtors and
@@ -312,34 +311,120 @@ public class Database {
     
     /**
      * Sets the journals in the database.
-     * @param journals the new journals of the database.
+     * 
+     * <p>Optionally, this method can update invoices that are referred to by the journal. 
+     * To each invoice (referred to by the journal) a new payment is added for the
+     * corresponding journal item.
+     * 
+     * @param newJournals the new journals of the database.
+     * @param updateInvoices <code>true</code> if invoices referred to by the journal
+     *        have to be updated; <code>false</code> if the invoices are not to be updated.
      */
-    public void setJournals(Journal[] journals) {
-        this.journals.clear();
-        for (int i=0; i<journals.length; i++) {
-            this.journals.add(journals[i]);
+    public void setJournals(Journal[] newJournals, boolean updateInvoices) {
+        ArrayList<Invoice> invoicesToBeRemoved = new ArrayList<Invoice>();
+        if (updateInvoices) {
+            for (Iterator<Journal> iterator = journals.iterator(); iterator.hasNext();) {
+                Journal journal = iterator.next();
+                removeInvoicePaymentsForJournal(journal);
+                JournalItem[] items = journal.getItems();
+                for (int i = 0; i < items.length; i++) {
+                    if (items[i].getInvoiceId() != null && items[i].hasInvoiceCreation()) {
+                        invoicesToBeRemoved.add(getInvoice(items[i].getInvoiceId()));
+                    }
+                }
+            }
+        }
+        
+        journals.clear();
+        for (int i=0; i<newJournals.length; i++) {
+            journals.add(newJournals[i]);
+            if (updateInvoices) {
+                addInvoicePaymentsForJournal(newJournals[i]);
+            }
         }
         notifyChange();
     }
     
-    public void addJournal(Journal journal) {
-        journals.add(journal);
+    /**
+     * Adds payments to invoices that are referred to by the journal. 
+     * To each invoice (referred to by the journal) a new payment is added for the
+     * corresponding journal item.
+     * 
+     * <p>This method does not notify changes in the database!
+     * 
+     * @param journal the journal
+     */
+    private void addInvoicePaymentsForJournal(Journal journal) {
         JournalItem[] items = journal.getItems();
         for (int i = 0; i < items.length; i++) {
-            Invoice invoice = items[i].getInvoice();
+            Invoice invoice = getInvoice(items[i].getInvoiceId());
             if (invoice != null) {
-                Invoice.Payment payment = new Invoice.Payment();
-                if (items[i].isDebet()) {
-                    payment.amount = items[i].getAmount();
-                } else {
-                    payment.amount = items[i].getAmount().negate();
-                }
-                payment.date = journal.getDate();
-                payment.description = items[i].getAccount().getId() + " - " + items[i].getAccount().getName(); 
+                Payment payment = createPaymentForJournalItem(journal, items[i]);
                 invoices.remove(invoice);
                 invoice = invoice.addPayment(payment);
                 invoices.add(invoice);
+                idsToInvoicesMap.put(invoice.getId(), invoice);
             }
+        }
+    }
+
+    /**
+     * Removes payments from invoices that are referred to by the journal. 
+     * From each invoice (referred to by the journal) a payment is removed for the
+     * corresponding journal item.
+     * 
+     * <p>This method does not notify changes in the database!
+     * 
+     * @param journal the journal
+     */
+    private void removeInvoicePaymentsForJournal(Journal journal) {
+        JournalItem[] items = journal.getItems();
+        for (int i = 0; i < items.length; i++) {
+            Invoice invoice = getInvoice(items[i].getInvoiceId());
+            if (invoice != null) {
+                // Determine which payment to remove
+                Payment paymentToBeRemoved = createPaymentForJournalItem(journal, items[i]);
+                invoices.remove(invoice);
+                invoice = invoice.removePayment(paymentToBeRemoved);
+                invoices.add(invoice);
+                idsToInvoicesMap.put(invoice.getId(), invoice);
+            }
+        }
+    }
+
+    /**
+     * Creates a payment for a journal item.
+     * @param journal the journal that contains the item
+     * @param journalItem the journal item
+     * @return the payment
+     */
+    private static Payment createPaymentForJournalItem(Journal journal, JournalItem journalItem) {
+        Amount amount;
+        if (journalItem.isCredit()) {
+            amount = journalItem.getAmount();
+        } else {
+            amount = journalItem.getAmount().negate();
+        }
+        Date date = journal.getDate();
+        String description = journalItem.getAccount().getId() + " - " + journalItem.getAccount().getName();
+        return new Payment(amount, date, description);
+    }
+    
+    /** 
+     * Adds a journal to the database. 
+     * 
+     * <p>Optionally, this method can update invoices that are referred to by the journal. 
+     * To each invoice (referred to by the journal) a new payment is added for the
+     * corresponding journal item.
+     * 
+     * @param journal the journal to be added
+     * @param updateInvoices <code>true</code> if invoices referred to by the journal
+     *        have to be updated; <code>false</code> if the invoices are not to be updated.
+     */
+    public void addJournal(Journal journal, boolean updateInvoices) {
+        journals.add(journal);
+        if (updateInvoices) {
+            addInvoicePaymentsForJournal(journal);
         }
         notifyChange();
     }
@@ -356,8 +441,8 @@ public class Database {
      */
     public String[] getPartyTypes() {
         HashSet<String> set = new HashSet<String>();
-        for (Iterator iter = parties.iterator(); iter.hasNext();) {
-            Party party = (Party) iter.next();
+        for (Iterator<Party> iter = parties.iterator(); iter.hasNext();) {
+            Party party = iter.next();
             if (party.getType() != null) {
                 set.add(party.getType());
             }
@@ -375,8 +460,8 @@ public class Database {
 
     public Party[] getParties(PartySearchCriteria searchCriteria) {
         ArrayList<Party> matchingParties = new ArrayList<Party>();
-        for (Iterator iter = parties.iterator(); iter.hasNext();) {
-            Party party = (Party) iter.next();
+        for (Iterator<Party> iter = parties.iterator(); iter.hasNext();) {
+            Party party = iter.next();
             if (searchCriteria.matches(party)) {
                 matchingParties.add(party);
             }
@@ -553,12 +638,11 @@ public class Database {
             if (invoice.getPayingParty().equals(party)) {
                 if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
                     result = result.add(invoice.getAmountToBePaid());
-                    
-                    Payment[] payments = invoice.getPayments();
-                    for (int j = 0; j < payments.length; j++) {
-                        if (DateUtil.compareDayOfYear(payments[j].date, date) <= 0) {
-                            result = result.add(payments[j].amount);
-                        }
+                }
+                Payment[] payments = invoice.getPayments();
+                for (int j = 0; j < payments.length; j++) {
+                    if (DateUtil.compareDayOfYear(payments[j].getDate(), date) <= 0) {
+                        result = result.subtract(payments[j].getAmount());
                     }
                 }
             }
@@ -651,6 +735,22 @@ public class Database {
      */
     public Invoice getInvoice(String id) {
         return idsToInvoicesMap.get(id);
+    }
+    
+    /**
+     * Gets a suggestion for an unused invoice id.
+     * @param id a possibly existing invoice id
+     * @return an invoice id that does not exist yet in this database
+     */
+    public String suggestNewInvoiceId(String id) {
+        String newId = id;
+        Set<String> existingInvoiceIds = idsToInvoicesMap.keySet();
+        int serialNumber = 1;
+        do {
+            newId = id + "-" + serialNumber;
+            serialNumber++;
+        } while (existingInvoiceIds.contains(newId));
+        return newId;
     }
     
     /**

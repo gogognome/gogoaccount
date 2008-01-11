@@ -1,5 +1,5 @@
 /*
- * $Id: ViewAccountOverviewDialog.java,v 1.4 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: ViewAccountOverviewDialog.java,v 1.5 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -22,6 +22,7 @@ import nl.gogognome.swing.DialogWithButtons;
 import nl.gogognome.text.TextResource;
 
 import cf.engine.Account;
+import cf.engine.Database;
 import cf.ui.components.AccountOverviewTableModel;
 
 /**
@@ -39,11 +40,11 @@ public class ViewAccountOverviewDialog extends DialogWithButtons
 	 * @param account the account to be shown.
 	 * @param date the date.
      */
-    public ViewAccountOverviewDialog( Frame frame, Account account, Date date ) 
+    public ViewAccountOverviewDialog( Frame frame, Database database, Account account, Date date ) 
     {
 		super(frame, "vao.title", BT_OK);
 		
-		AccountOverviewTableModel model = new AccountOverviewTableModel(account, date); 
+		AccountOverviewTableModel model = new AccountOverviewTableModel(database, account, date); 
 		JTable table = new JTable(model);
 		
 		TableColumnModel columnModel = table.getColumnModel();

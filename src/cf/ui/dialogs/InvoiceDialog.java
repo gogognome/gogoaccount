@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.16 2008-01-10 19:18:08 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.17 2008-01-11 18:56:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -37,7 +37,7 @@ import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.Invoice;
-import cf.engine.Invoice.Payment;
+import cf.engine.Payment;
 import cf.pdf.PdfLatex;
 
 /**
@@ -309,11 +309,10 @@ public class InvoiceDialog extends OkCancelDialog {
                 for (int i = 0; i < payments.length; i++) {
                     StringBuilder tempBuffer = new StringBuilder();
                     tempBuffer.append(itemLineTemplate);
-                    replace(tempBuffer, "$item-description$", payments[i].description);
-                    String formattedAmount = 
-                        payments[i].amount != null ? formatAmountForTex(payments[i].amount.negate()) : "";
+                    replace(tempBuffer, "$item-description$", payments[i].getDescription());
+                    String formattedAmount = formatAmountForTex(payments[i].getAmount().negate());
                     replace(tempBuffer, "$item-amount$", formattedAmount);
-                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", payments[i].date));
+                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", payments[i].getDate()));
                     sb.append(tempBuffer);
                 }
             }
