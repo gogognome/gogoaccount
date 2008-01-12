@@ -1,5 +1,5 @@
 /*
- * $Id: ViewPartyOverviewDialog.java,v 1.6 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: ViewPartyOverviewDialog.java,v 1.7 2008-01-12 13:41:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -55,8 +55,8 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		        setHorizontalAlignment(SwingConstants.RIGHT);
 		    }
 		};
-		columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
 		columnModel.getColumn(3).setCellRenderer(rightAlignedRenderer);
+		columnModel.getColumn(4).setCellRenderer(rightAlignedRenderer);
 		
 		// Set column widths
 		columnModel.getColumn(0).setPreferredWidth(150);

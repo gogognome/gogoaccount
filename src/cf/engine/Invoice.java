@@ -1,5 +1,5 @@
 /*
- * $Id: Invoice.java,v 1.4 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: Invoice.java,v 1.5 2008-01-12 13:41:55 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -201,6 +201,17 @@ public class Invoice implements Comparable<Invoice> {
     }
 
     /**
+     * Creates a new invoice that consists of this invoice from which the amounts to be paid
+     * has been set to zero.
+     * 
+     * @return the new invoice
+     */
+    public Invoice removeAmountToBePaid() {
+        return new Invoice(id, payingParty, concerningParty, amountToBePaid.subtract(amountToBePaid),
+            issueDate, new String[0], new Amount[0], payments);
+    }
+    
+    /**
      * Compares another invoice to this invoice.
      * @param that the other invoice
      * @return a negative number, zero or a positive number if this invoice is smaller than,
@@ -208,5 +219,23 @@ public class Invoice implements Comparable<Invoice> {
      */
     public int compareTo(Invoice that) {
         return this.id.compareTo(that.id);
+    }
+    
+    /**
+     * @see Object#equals(Object)
+     */
+    public boolean equals(Object o) {
+        if (o instanceof Invoice) {
+            Invoice that = (Invoice) o;
+            return this.id.equals(that.id);
+        }
+        return false;
+    }
+    
+    /**
+     * @see Object#hashCode()
+     */
+    public int hashCode() {
+        return id.hashCode();
     }
 }

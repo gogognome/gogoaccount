@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsDialog.java,v 1.11 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: EditJournalsDialog.java,v 1.12 2008-01-12 13:41:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -44,8 +44,8 @@ import cf.engine.Party;
  *
  * @author Sander Kooijmans
  */
-public class EditJournalsDialog extends OkCancelDialog implements TableModel
-{
+public class EditJournalsDialog extends OkCancelDialog implements TableModel {
+    
     /** The table containing journals. */
     private JTable journalsTable;
     
@@ -199,8 +199,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
 	/**
 	 * Handles the OK button.
 	 */
-	protected void handleOk() 
-	{
+	protected void handleOk() {
 	    Journal[] journalsArray = new Journal[journalsInUi.size()];
 	    journalsInUi.toArray(journalsArray);
 	    database.setJournals(journalsArray, true);
@@ -241,8 +240,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getValueAt(int, int)
      */
-    public Object getValueAt(int row, int col) 
-    {
+    public Object getValueAt(int row, int col) {
         Journal journal = journalsInUi.get(row);
         Object result = null;
         switch(col)
@@ -260,6 +258,12 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel
         return result;
     }
 
+    /**
+     * @see javax.swing.table.TableModel#setValueAt(Object, int, int)
+     */
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    }
+    
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnName(int)
      */

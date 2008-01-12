@@ -1,5 +1,5 @@
 /*
- * $Id: ItemsTableModel.java,v 1.9 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: ItemsTableModel.java,v 1.10 2008-01-12 13:41:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -125,7 +125,8 @@ class ItemsTableModel implements TableModel {
             
         case 3:
             Invoice invoice = database.getInvoice(item.getInvoiceId());
-            result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty() + ")" : "";
+            result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getId() 
+                + " - " + invoice.getPayingParty().getName() + ")" : "";
             break;
         }
         return result;

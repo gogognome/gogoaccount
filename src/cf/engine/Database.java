@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.31 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: Database.java,v 1.32 2008-01-12 13:41:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -321,7 +321,8 @@ public class Database {
      *        have to be updated; <code>false</code> if the invoices are not to be updated.
      */
     public void setJournals(Journal[] newJournals, boolean updateInvoices) {
-        ArrayList<Invoice> invoicesToBeRemoved = new ArrayList<Invoice>();
+        // Remove payments from the old journals.
+        HashSet<Invoice> invoicesToBeRemoved = new HashSet<Invoice>();
         if (updateInvoices) {
             for (Iterator<Journal> iterator = journals.iterator(); iterator.hasNext();) {
                 Journal journal = iterator.next();
@@ -339,7 +340,23 @@ public class Database {
         for (int i=0; i<newJournals.length; i++) {
             journals.add(newJournals[i]);
             if (updateInvoices) {
+                // Add payments for the new journals.
                 addInvoicePaymentsForJournal(newJournals[i]);
+                JournalItem[] items = newJournals[i].getItems();
+                for (int j = 0; j < items.length; j++) {
+                    if (items[j].getInvoiceId() != null && items[j].hasInvoiceCreation()) {
+                        invoicesToBeRemoved.remove(getInvoice(items[j].getInvoiceId()));
+                    }
+                }
+            }
+        }
+        
+        if (updateInvoices) {
+            // invoicesToBeRemoved contains the invoices that were removed by setting the new journals.
+            // The amounts to be paid for these invoices have to be cleared.
+            for (Iterator<Invoice> iter = invoicesToBeRemoved.iterator(); iter.hasNext();) {
+                Invoice invoice = iter.next();
+                updateInvoiceWithoutChangeNotification(invoice, invoice.removeAmountToBePaid());
             }
         }
         notifyChange();
@@ -358,12 +375,9 @@ public class Database {
         JournalItem[] items = journal.getItems();
         for (int i = 0; i < items.length; i++) {
             Invoice invoice = getInvoice(items[i].getInvoiceId());
-            if (invoice != null) {
+            if (invoice != null && !items[i].hasInvoiceCreation()) {
                 Payment payment = createPaymentForJournalItem(journal, items[i]);
-                invoices.remove(invoice);
-                invoice = invoice.addPayment(payment);
-                invoices.add(invoice);
-                idsToInvoicesMap.put(invoice.getId(), invoice);
+                updateInvoiceWithoutChangeNotification(invoice, invoice.addPayment(payment));
             }
         }
     }
@@ -381,17 +395,28 @@ public class Database {
         JournalItem[] items = journal.getItems();
         for (int i = 0; i < items.length; i++) {
             Invoice invoice = getInvoice(items[i].getInvoiceId());
-            if (invoice != null) {
+            if (invoice != null && !items[i].hasInvoiceCreation()) {
                 // Determine which payment to remove
                 Payment paymentToBeRemoved = createPaymentForJournalItem(journal, items[i]);
-                invoices.remove(invoice);
-                invoice = invoice.removePayment(paymentToBeRemoved);
-                invoices.add(invoice);
-                idsToInvoicesMap.put(invoice.getId(), invoice);
+                updateInvoiceWithoutChangeNotification(invoice, invoice.removePayment(paymentToBeRemoved));
             }
         }
     }
 
+    /**
+     * Updates an invoice in the database without notifying listeners about this change.
+     * @param oldInvoice the old invoice
+     * @param newInvoice the new invoice
+     */
+    private void updateInvoiceWithoutChangeNotification(Invoice oldInvoice, Invoice newInvoice) {
+        invoices.remove(oldInvoice);
+        invoices.add(newInvoice);
+        idsToInvoicesMap.put(newInvoice.getId(), newInvoice);
+        if (!newInvoice.getId().equals(oldInvoice.getId())) {
+            idsToInvoicesMap.remove(oldInvoice.getId());
+        }
+    }
+    
     /**
      * Creates a payment for a journal item.
      * @param journal the journal that contains the item

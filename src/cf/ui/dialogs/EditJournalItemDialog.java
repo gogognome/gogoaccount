@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.9 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.10 2008-01-12 13:41:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -142,12 +142,10 @@ class EditJournalItemDialog extends OkCancelDialog {
     /* (non-Javadoc)
      * @see cf.ui.OkCancelDialog#handleOk()
      */
-    protected void handleOk() 
-    {
+    protected void handleOk() {
         Amount amount;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
-        try 
-        {
+        try {
             amount = af.parse(tfAmount.getText(), Database.getInstance().getCurrency());
         } 
         catch (ParseException e) 
@@ -162,7 +160,7 @@ class EditJournalItemDialog extends OkCancelDialog {
         Invoice invoice = invoiceSelector.getSelectedInvoice();
         
         enteredJournalItem = new JournalItem(amount, account, debet, 
-            invoice != null ? invoice.getId() : null);
+            invoice != null ? invoice.getId() : null, false);
         hideDialog();
     }
 
