@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.17 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.18 2008-01-13 20:02:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -186,6 +186,13 @@ public class InvoiceDialog extends OkCancelDialog {
         hideDialog();
     }
 
+    /**
+     * TODO: move this functionality to the engine
+     * @param date
+     * @param concerning
+     * @param ourReference
+     * @param dueDate
+     */
     private void generateInvoices(Date date, String concerning, String ourReference,
             Date dueDate) {
         TextResource tr = TextResource.getInstance();
@@ -277,7 +284,7 @@ public class InvoiceDialog extends OkCancelDialog {
             sb.append(line);
             
             // apply substitutions
-            replace(sb, "$date$", tr.formatDate("gen.dateFormat", invoice.getIssueDate()));
+            replace(sb, "$date$", tr.formatDate("gen.dateFormat", new Date()));
             replace(sb, "$party-name$", invoice.getConcerningParty().getName());
             replace(sb, "$party-id$", invoice.getConcerningParty().getId());
             replace(sb, "$party-address$", invoice.getConcerningParty().getAddress());
@@ -301,7 +308,7 @@ public class InvoiceDialog extends OkCancelDialog {
                     replace(tempBuffer, "$item-description$", descriptions[i]);
                     String formattedAmount = amounts[i] != null ? formatAmountForTex(amounts[i]) : "";
                     replace(tempBuffer, "$item-amount$", formattedAmount);
-                    replace(tempBuffer, "$item-date$", "");
+                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", invoice.getIssueDate()));
                     sb.append(tempBuffer);
                 }
 
