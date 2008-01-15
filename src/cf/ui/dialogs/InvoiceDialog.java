@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.18 2008-01-13 20:02:56 sanderk Exp $
+ * $Id: InvoiceDialog.java,v 1.19 2008-01-15 19:45:28 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -26,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import nl.gogognome.beans.DateSelectionBean;
+import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.OkCancelDialog;
@@ -39,6 +40,7 @@ import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Payment;
 import cf.pdf.PdfLatex;
+import cf.ui.views.InvoicesView;
 
 /**
  * This class implements the invoice dialog. This dialog can generate
@@ -181,19 +183,28 @@ public class InvoiceDialog extends OkCancelDialog {
                     TextResource.getInstance().getString("gen.invalidDate"));
             return;
         }
-        
-        generateInvoices(date, tfConcerning.getText(), tfOurReference.getText(), dueDate);
+
         hideDialog();
+
+        // Let the user select the invoices that should be added to the PDF file.
+        InvoicesView invoicesView = new InvoicesView(database, true, true);
+        ViewDialog dialog = new ViewDialog(parentFrame, invoicesView);
+        dialog.showDialog();
+        if (invoicesView.getSelectedInvoices() != null) {
+            generateInvoices(invoicesView.getSelectedInvoices(), date, tfConcerning.getText(), 
+                tfOurReference.getText(), dueDate);
+        }
     }
 
     /**
      * TODO: move this functionality to the engine
+     * @param invoices the invoices to be added to the PDF file 
      * @param date
      * @param concerning
      * @param ourReference
      * @param dueDate
      */
-    private void generateInvoices(Date date, String concerning, String ourReference,
+    private void generateInvoices(Invoice[] invoices, Date date, String concerning, String ourReference,
             Date dueDate) {
         TextResource tr = TextResource.getInstance();
         
@@ -221,7 +232,6 @@ public class InvoiceDialog extends OkCancelDialog {
             return;
         }
 
-        Invoice[] invoices = database.getInvoices();
         for (int i = 0; i < invoices.length; i++) {
             if (!invoices[i].hasBeenPaid()) {
                 writeInvoiceToTexFile(invoices[i], dueDate);
