@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.43 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: MainFrame.java,v 1.44 2008-01-17 20:51:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -44,7 +44,7 @@ import cf.ui.dialogs.AccountSelectionDialog;
 import cf.ui.dialogs.DateSelectionDialog;
 import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.EditJournalsDialog;
-import cf.ui.dialogs.InvoiceDialog;
+import cf.ui.dialogs.InvoiceToPdfDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
@@ -559,7 +559,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 	
 	private void handleGenerateInvoices() {
-	    InvoiceDialog dialog = new InvoiceDialog(this, Database.getInstance());
+	    InvoiceToPdfDialog dialog = new InvoiceToPdfDialog(this, Database.getInstance());
 	    dialog.showDialog();
 	}
 

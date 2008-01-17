@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceSearchCriteria.java,v 1.1 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: InvoiceSearchCriteria.java,v 1.2 2008-01-17 20:51:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -15,6 +15,7 @@ public class InvoiceSearchCriteria {
 
     private String id;
     private String name;
+    private boolean includeClosedInvoices;
     
     public String getId() {
         return id;
@@ -28,7 +29,13 @@ public class InvoiceSearchCriteria {
     public void setName(String name) {
         this.name = name;
     }
-    
+    public boolean areClosedInvoicesIncluded() {
+        return includeClosedInvoices;
+    }
+    public void setIncludeClosedInvoices(boolean includeClosedInvoices) {
+        this.includeClosedInvoices = includeClosedInvoices;
+    }
+
     /**
      * Checks whether the specified <code>Invoice</code> matches these criteria.
      * @param invoice the invoice
@@ -42,6 +49,9 @@ public class InvoiceSearchCriteria {
         }
         if (name != null) {
             matches = matches && matches(name, invoice.getPayingParty().getName());
+        }
+        if (!includeClosedInvoices) {
+            matches = matches && !invoice.hasBeenPaid();
         }
         return matches;
     }

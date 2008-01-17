@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.10 2008-01-12 13:41:55 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.11 2008-01-17 20:51:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -148,8 +148,7 @@ class EditJournalItemDialog extends OkCancelDialog {
         try {
             amount = af.parse(tfAmount.getText(), Database.getInstance().getCurrency());
         } 
-        catch (ParseException e) 
-        {
+        catch (ParseException e) {
             new MessageDialog(parent, "gen.titleError",
                 TextResource.getInstance().getString("ejid.invalidAmount"));            
             return;

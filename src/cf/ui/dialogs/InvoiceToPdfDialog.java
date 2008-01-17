@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceDialog.java,v 1.19 2008-01-15 19:45:28 sanderk Exp $
+ * $Id: InvoiceToPdfDialog.java,v 1.1 2008-01-17 20:51:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -40,7 +40,7 @@ import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Payment;
 import cf.pdf.PdfLatex;
-import cf.ui.views.InvoicesView;
+import cf.ui.views.InvoiceEditAndSelectionView;
 
 /**
  * This class implements the invoice dialog. This dialog can generate
@@ -50,7 +50,7 @@ import cf.ui.views.InvoicesView;
  * 
  * @author Sander Kooijmans
  */
-public class InvoiceDialog extends OkCancelDialog {
+public class InvoiceToPdfDialog extends OkCancelDialog {
     
     /** The database used to determine the invoices. */
     private Database database;
@@ -93,7 +93,7 @@ public class InvoiceDialog extends OkCancelDialog {
      * Constructor.
      * @param frame the parent of this dialog
      */
-    public InvoiceDialog(final Frame frame, Database database) {
+    public InvoiceToPdfDialog(final Frame frame, Database database) {
         super(frame, "id.title");
         this.parentFrame = frame;
         this.database = database;
@@ -187,7 +187,7 @@ public class InvoiceDialog extends OkCancelDialog {
         hideDialog();
 
         // Let the user select the invoices that should be added to the PDF file.
-        InvoicesView invoicesView = new InvoicesView(database, true, true);
+        InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(database, true, true);
         ViewDialog dialog = new ViewDialog(parentFrame, invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {

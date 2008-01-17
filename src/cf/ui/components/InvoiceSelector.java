@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceSelector.java,v 1.2 2008-01-10 21:18:13 sanderk Exp $
+ * $Id: InvoiceSelector.java,v 1.3 2008-01-17 20:51:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,7 +7,7 @@ package cf.ui.components;
 
 import cf.engine.Database;
 import cf.engine.Invoice;
-import cf.ui.views.InvoicesView;
+import cf.ui.views.InvoiceEditAndSelectionView;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -117,7 +117,7 @@ public class InvoiceSelector extends JPanel {
             parent = parent.getParent();
         }
 
-        InvoicesView invoicesView = new InvoicesView(database, true);
+        InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(database, true);
         ViewDialog dialog = new ViewDialog((Window)parent, invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {

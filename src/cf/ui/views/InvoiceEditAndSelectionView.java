@@ -1,5 +1,5 @@
 /*
- * $Id: InvoicesView.java,v 1.2 2008-01-10 21:18:13 sanderk Exp $
+ * $Id: InvoiceEditAndSelectionView.java,v 1.1 2008-01-17 20:51:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -22,12 +22,14 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -42,13 +44,17 @@ import nl.gogognome.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.InvoiceSearchCriteria;
+import com.sun.crypto.provider.JceKeyStore;
 
 /**
- * This class implements a view for selecting invoices.
+ * This class implements a view for selecting and editing invoices.
  *
+ * TODO: implement editing invoices
+ * 
  * @author Sander Kooijmans
  */
-public class InvoicesView extends View {
+@SuppressWarnings("serial")
+public class InvoiceEditAndSelectionView extends View {
 
     private InvoicesTableModel invoicesTableModel;
     
@@ -71,7 +77,8 @@ public class InvoicesView extends View {
     
     private JTextField tfId;
     private JTextField tfName;
-
+    private JCheckBox btIncludeClosedInvoices;
+    
     /** Text area that shows details about the selected invoice */
     private JTextArea taRemarks;
     
@@ -87,7 +94,7 @@ public class InvoicesView extends View {
      * @param selectioEnabled <code>true</code> if the user should be able to select an invoice;
      *         <code>false</code> if the user cannot select an invoice
      */
-    public InvoicesView(Database database, boolean selectionEnabled) {
+    public InvoiceEditAndSelectionView(Database database, boolean selectionEnabled) {
         this(database, selectionEnabled, false);
     }
 
@@ -99,7 +106,7 @@ public class InvoicesView extends View {
      * @param multiSelectionEnabled indicates that multiple invoices can be selected (<code>true</code>) or 
      *         at most one invoice (<code>false</code>) 
      */
-    public InvoicesView(Database database, boolean selectionEnabled, boolean multiSelectionEnabled) {
+    public InvoiceEditAndSelectionView(Database database, boolean selectionEnabled, boolean multiSelectionEnabled) {
         this.database = database;
         this.selectioEnabled = selectionEnabled;
         this.multiSelectionEnabled = multiSelectionEnabled;
@@ -118,18 +125,18 @@ public class InvoicesView extends View {
     public void onInit() {
         // Create button panel
         WidgetFactory wf = WidgetFactory.getInstance();
-//        JButton addButton = wf.createButton("partiesView.addParty", new AbstractAction() {
+//        JButton addButton = wf.createButton("invoicesView.addParty", new AbstractAction() {
 //            public void actionPerformed(ActionEvent evt) {
 //                onAddParty();
 //            }
 //        });
 //        
-//        JButton editButton = wf.createButton("partiesView.editParty", new AbstractAction() {
+//        JButton editButton = wf.createButton("invoicesView.editParty", new AbstractAction() {
 //            public void actionPerformed(ActionEvent evt) {
 //                onEditParty();
 //            }
 //        });
-//        JButton deleteButton = wf.createButton("partiesView.deleteParty", new AbstractAction() {
+//        JButton deleteButton = wf.createButton("invoicesView.deleteParty", new AbstractAction() {
 //            public void actionPerformed(ActionEvent evt) {
 //                onDeleteParty();
 //            }
@@ -182,7 +189,7 @@ public class InvoicesView extends View {
         int row = 0;
         tfId = new JTextField();
         tfId.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.id", tfId), 
+        criteriaPanel.add(wf.createLabel("invoicesView.id", tfId), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfId, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -190,10 +197,16 @@ public class InvoicesView extends View {
         
         tfName = new JTextField();
         tfName.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.name", tfName), 
+        criteriaPanel.add(wf.createLabel("invoicesView.name", tfName), 
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfName, 
                 SwingUtils.createTextFieldGBConstraints(1, row));
+        row++;
+        
+        btIncludeClosedInvoices = new JCheckBox(
+            tr.getString("invoicesView.includeClosedInvoices"), false);
+        criteriaPanel.add(btIncludeClosedInvoices,
+            SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
         
         JPanel buttonPanel = new JPanel(new FlowLayout());
@@ -215,7 +228,7 @@ public class InvoicesView extends View {
         JPanel resultPanel = new JPanel(new BorderLayout());
         // TODO: add empty border
         resultPanel.setBorder(new TitledBorder(
-                tr.getString("partiesView.foundParties"))); 
+                tr.getString("invoicesView.foundParties"))); 
 
         invoicesTableModel = new InvoicesTableModel();
         table = new JTable(invoicesTableModel);
@@ -270,7 +283,7 @@ public class InvoicesView extends View {
         scrollPane = new JScrollPane(taRemarks);
         scrollPane.setPreferredSize(new Dimension(500, 100));
         
-        detailPanel.add(wf.createLabel("partiesView.remarks", taRemarks),
+        detailPanel.add(wf.createLabel("invoicesView.remarks", taRemarks),
             SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0, 
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 0, 0, 12));
         detailPanel.add(scrollPane, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,
@@ -310,6 +323,7 @@ public class InvoicesView extends View {
         if (tfName.getText().length() > 0) {
             searchCriteria.setName(tfName.getText());
         }
+        searchCriteria.setIncludeClosedInvoices(btIncludeClosedInvoices.isSelected());
         
         invoicesTableModel.setInvoices(database.getInvoices(searchCriteria));
         table.getSelectionModel().setSelectionInterval(0, 0);

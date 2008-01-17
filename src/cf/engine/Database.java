@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.32 2008-01-12 13:41:55 sanderk Exp $
+ * $Id: Database.java,v 1.33 2008-01-17 20:51:57 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -425,7 +425,7 @@ public class Database {
      */
     private static Payment createPaymentForJournalItem(Journal journal, JournalItem journalItem) {
         Amount amount;
-        if (journalItem.isCredit()) {
+        if (journalItem.isDebet()) {
             amount = journalItem.getAmount();
         } else {
             amount = journalItem.getAmount().negate();
@@ -788,6 +788,11 @@ public class Database {
         return result;
     }
     
+    /**
+     * Gets the invoices that match the search criteria.
+     * @param searchCriteria the search criteria
+     * @return the matching invoices. Will never return <code>null</code>.
+     */
     public Invoice[] getInvoices(InvoiceSearchCriteria searchCriteria) {
         ArrayList<Invoice> matchingInvoices = new ArrayList<Invoice>();
         for (Iterator<Invoice> iter = invoices.iterator(); iter.hasNext();) {
