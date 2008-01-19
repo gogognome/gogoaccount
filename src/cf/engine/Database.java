@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.33 2008-01-17 20:51:57 sanderk Exp $
+ * $Id: Database.java,v 1.34 2008-01-19 16:45:21 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -483,6 +483,11 @@ public class Database {
         return result;
     }
 
+    /**
+     * Gets parties that match the specified search criteria.
+     * @param searchCriteria the search criteria
+     * @return the matching parties. Never returns <code>null</code>.
+     */
     public Party[] getParties(PartySearchCriteria searchCriteria) {
         ArrayList<Party> matchingParties = new ArrayList<Party>();
         for (Iterator<Party> iter = parties.iterator(); iter.hasNext();) {
