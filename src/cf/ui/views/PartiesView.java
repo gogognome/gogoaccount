@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.17 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: PartiesView.java,v 1.18 2008-01-19 16:45:37 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -31,6 +31,8 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -278,9 +280,8 @@ public class PartiesView extends View {
         
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
-        // TODO: add empty border
-        resultPanel.setBorder(new TitledBorder(
-                tr.getString("partiesView.foundParties"))); 
+        resultPanel.setBorder(new CompoundBorder(new TitledBorder(tr.getString("partiesView.foundParties")),
+            new EmptyBorder(5, 12, 5, 12))); 
 
         partiesTableModel = new PartiesTableModel();
         table = new JTable(partiesTableModel);
@@ -350,7 +351,7 @@ public class PartiesView extends View {
         result.add(criteriaPanel,
                 SwingUtils.createTextFieldGBConstraints(0, 0));
         result.add(resultPanel,
-                SwingUtils.createPanelGBConstraints(0, 1));
+                SwingUtils.createTextFieldGBConstraints(0, 1));
         
         return result;
     }
