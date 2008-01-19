@@ -1,5 +1,5 @@
 /*
- * $Id: PartySearchCriteria.java,v 1.4 2007-12-13 21:16:30 sanderk Exp $
+ * $Id: PartySearchCriteria.java,v 1.5 2008-01-19 16:45:00 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -98,7 +98,7 @@ public class PartySearchCriteria {
             }
         }
         if (type != null) {
-            matches = type.equals(party.getType());
+            matches = matches && type.equals(party.getType());
         }
         return matches;
     }
