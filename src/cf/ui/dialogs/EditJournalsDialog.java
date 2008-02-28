@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsDialog.java,v 1.12 2008-01-12 13:41:55 sanderk Exp $
+ * $Id: EditJournalsDialog.java,v 1.13 2008-02-28 20:40:50 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -32,6 +32,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import nl.gogognome.swing.JSortedTable;
 import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
@@ -47,7 +48,7 @@ import cf.engine.Party;
 public class EditJournalsDialog extends OkCancelDialog implements TableModel {
     
     /** The table containing journals. */
-    private JTable journalsTable;
+    private JSortedTable journalsTable;
     
     /** The table containing journal items. */
     private JTable itemsTable;
@@ -88,9 +89,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 		// Create table of journals
 		// TODO: when table sorter is used, the items table show the wrong items!
 		//       Therefore, the table sorter has been commented out for the time being.
-//		TableSorter sorter = new TableSorter(this);		
-		journalsTable = new JTable(this);
-//		sorter.setTableHeader(journalsTable.getTableHeader());
+		journalsTable = new JSortedTable(this);
 		TableColumnModel columnModel = journalsTable.getColumnModel();
 		journalsTable.setRowSelectionAllowed(true);
 		journalsTable.setColumnSelectionAllowed(false);
@@ -106,7 +105,6 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 		        super.setValue(TextResource.getInstance().formatDate("gen.dateFormat", (Date)date));
 		    }
 		});
-		//journalsTable.setDefaultEditor(Date.class, new DateEditor());
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
@@ -146,15 +144,14 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 		columnModel.getColumn(3).setCellEditor(new DefaultCellEditor(comboBox));
 		
 		// Let items table be updated when another row is selected in the journals table.
-		ListSelectionModel rowSM = journalsTable.getSelectionModel();
+		final ListSelectionModel rowSM = journalsTable.getUnsortedSelectionModel();
 		rowSM.addListSelectionListener(new ListSelectionListener() {
 		    public void valueChanged(ListSelectionEvent e) {
 		        //Ignore extra messages.
 		        if (e.getValueIsAdjusting()) { return; }
 		        
-		        ListSelectionModel lsm = (ListSelectionModel)e.getSource();
-		        if (!lsm.isSelectionEmpty()) {
-		            updateJournalItemTable(lsm.getMinSelectionIndex());
+		        if (!rowSM.isSelectionEmpty()) {
+		            updateJournalItemTable(rowSM.getMinSelectionIndex());
 		        }
 		    }
 		});
