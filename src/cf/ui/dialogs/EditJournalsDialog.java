@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsDialog.java,v 1.13 2008-02-28 20:40:50 sanderk Exp $
+ * $Id: EditJournalsDialog.java,v 1.14 2008-03-03 20:06:37 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -30,10 +30,10 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 
-import nl.gogognome.swing.JSortedTable;
 import nl.gogognome.swing.OkCancelDialog;
+import nl.gogognome.swing.SortedTable;
+import nl.gogognome.swing.SortedTableModel;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
@@ -45,10 +45,10 @@ import cf.engine.Party;
  *
  * @author Sander Kooijmans
  */
-public class EditJournalsDialog extends OkCancelDialog implements TableModel {
+public class EditJournalsDialog extends OkCancelDialog implements SortedTableModel {
     
     /** The table containing journals. */
-    private JSortedTable journalsTable;
+    private SortedTable journalsTable;
     
     /** The table containing journal items. */
     private JTable itemsTable;
@@ -89,23 +89,8 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 		// Create table of journals
 		// TODO: when table sorter is used, the items table show the wrong items!
 		//       Therefore, the table sorter has been commented out for the time being.
-		journalsTable = new JSortedTable(this);
-		TableColumnModel columnModel = journalsTable.getColumnModel();
-		journalsTable.setRowSelectionAllowed(true);
-		journalsTable.setColumnSelectionAllowed(false);
+		journalsTable = WidgetFactory.getInstance().createSortedTable(this);
 		
-		// Set column widths
-		columnModel.getColumn(0).setPreferredWidth(100);
-		columnModel.getColumn(1).setPreferredWidth(100);
-		columnModel.getColumn(2).setPreferredWidth(300);
-		
-		// Set column renderer and editor for dates
-		columnModel.getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
-		    protected void setValue(Object date) {
-		        super.setValue(TextResource.getInstance().formatDate("gen.dateFormat", (Date)date));
-		    }
-		});
-
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
 		if (journals.length > 0)
@@ -117,7 +102,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 		itemsTable.setColumnSelectionAllowed(false);
 
 		// Set column widths
-		columnModel = itemsTable.getColumnModel();
+		TableColumnModel columnModel = itemsTable.getColumnModel();
 		columnModel.getColumn(0).setPreferredWidth(300);
 		columnModel.getColumn(1).setPreferredWidth(100);
 		columnModel.getColumn(2).setPreferredWidth(100);
@@ -144,7 +129,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 		columnModel.getColumn(3).setCellEditor(new DefaultCellEditor(comboBox));
 		
 		// Let items table be updated when another row is selected in the journals table.
-		final ListSelectionModel rowSM = journalsTable.getUnsortedSelectionModel();
+		final ListSelectionModel rowSM = journalsTable.getSelectionModel();
 		rowSM.addListSelectionListener(new ListSelectionListener() {
 		    public void valueChanged(ListSelectionEvent e) {
 		        //Ignore extra messages.
@@ -182,7 +167,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 		
 		// Add components to the dialog.
 		JPanel panel = new JPanel(new GridLayout(1,2));
-		JScrollPane scrollPane = new JScrollPane(journalsTable);
+		JScrollPane scrollPane = new JScrollPane(journalsTable.getComponent());
 		panel.add(scrollPane);
 		scrollPane = new JScrollPane(itemsTable);
 		JPanel itemsPanel = new JPanel(new BorderLayout());
@@ -300,7 +285,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
     
     private void handleEditItem()
     {
-        int row = journalsTable.getSelectedRow();
+        int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1)
         {
             Journal journal = journalsInUi.get(row);
@@ -334,7 +319,7 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
 
     private void handleDeleteItem()
     {
-        int row = journalsTable.getSelectedRow();
+        int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1)
         {
             // TODO: add "are you sure?" dialog.
@@ -362,5 +347,32 @@ public class EditJournalsDialog extends OkCancelDialog implements TableModel {
     private void updateJournalItemTable(int row)
     {
         itemsTableModel.setJournalItems(journalsInUi.get(row).getItems());
+    }
+
+    public int getColumnWidth(int column) {
+        switch (column) {
+        case 0:
+        case 1:
+            return 100;
+            
+        case 2:
+            return 300;
+            
+        default:
+            throw new IllegalStateException("No width specified for column " + column);
+        }
+    }
+
+    public TableCellRenderer getRendererForColumn(int column) {
+        switch (column) {
+        case 0:
+            return new DefaultTableCellRenderer() {
+                protected void setValue(Object date) {
+                    super.setValue(TextResource.getInstance().formatDate("gen.dateFormat", (Date)date));
+                }
+            };
+        default:
+            return null;
+        }
     }
 }
