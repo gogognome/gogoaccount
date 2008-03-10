@@ -1,5 +1,5 @@
 /*
- * $Id: AccountOverviewTableModel.java,v 1.11 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: AccountOverviewTableModel.java,v 1.12 2008-03-10 21:18:23 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -12,6 +12,8 @@ import cf.engine.Journal;
 import cf.engine.JournalItem;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
 import javax.swing.table.AbstractTableModel;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
@@ -72,15 +74,15 @@ public class AccountOverviewTableModel extends AbstractTableModel {
         totalCredit = totalDebet;
         
         ArrayList<LineInfo> lineInfoVector = new ArrayList<LineInfo>();
-        Journal[] journals = database.getJournals();
-        for (int i = 0; i < journals.length; i++) {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), date) <= 0) {
-	            JournalItem[] items = journals[i].getItems();
+        List<Journal> journals = database.getJournals();
+        for (Journal journal : journals) {
+            if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
+	            JournalItem[] items = journal.getItems();
 	            for (int j = 0; j < items.length; j++) {
 	                if (items[j].getAccount().equals(account)) {
 	                    LineInfo lineInfo = new LineInfo();
 	                    lineInfo.item = items[j];
-	                    lineInfo.journal = journals[i];
+	                    lineInfo.journal = journal;
 	                    lineInfoVector.add(lineInfo);
 	                    if (lineInfo.item.isDebet())
 	                    {

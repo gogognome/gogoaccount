@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.34 2008-01-19 16:45:21 sanderk Exp $
+ * $Id: Database.java,v 1.35 2008-03-10 21:18:22 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,11 +7,13 @@ package cf.engine;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
@@ -129,6 +131,7 @@ public class Database {
     /**
      * Gets the singleton instance of this class.
      * @return the singleton instance of this class
+     * @deprecated do not use this anymore
      */
     public static synchronized Database getInstance()
     {
@@ -142,6 +145,7 @@ public class Database {
     /**
      * Sets the singleton instance of this class.
      * @param instance the singleton instance of this class
+     * @deprecated do not use this method anymore
      */
     public static synchronized void setInstance(Database instance)
     {
@@ -303,62 +307,13 @@ public class Database {
         this.currency = currency;
         notifyChange();
     }
-    
+
+    /**
+     * Sets the start date of the period of the bookkeeping.
+     * @param startOfPeriod the start date of the period
+     */
     public void setStartOfPeriod(Date startOfPeriod) {
         this.startOfPeriod = startOfPeriod;
-        notifyChange();
-    }
-    
-    /**
-     * Sets the journals in the database.
-     * 
-     * <p>Optionally, this method can update invoices that are referred to by the journal. 
-     * To each invoice (referred to by the journal) a new payment is added for the
-     * corresponding journal item.
-     * 
-     * @param newJournals the new journals of the database.
-     * @param updateInvoices <code>true</code> if invoices referred to by the journal
-     *        have to be updated; <code>false</code> if the invoices are not to be updated.
-     */
-    public void setJournals(Journal[] newJournals, boolean updateInvoices) {
-        // Remove payments from the old journals.
-        HashSet<Invoice> invoicesToBeRemoved = new HashSet<Invoice>();
-        if (updateInvoices) {
-            for (Iterator<Journal> iterator = journals.iterator(); iterator.hasNext();) {
-                Journal journal = iterator.next();
-                removeInvoicePaymentsForJournal(journal);
-                JournalItem[] items = journal.getItems();
-                for (int i = 0; i < items.length; i++) {
-                    if (items[i].getInvoiceId() != null && items[i].hasInvoiceCreation()) {
-                        invoicesToBeRemoved.add(getInvoice(items[i].getInvoiceId()));
-                    }
-                }
-            }
-        }
-        
-        journals.clear();
-        for (int i=0; i<newJournals.length; i++) {
-            journals.add(newJournals[i]);
-            if (updateInvoices) {
-                // Add payments for the new journals.
-                addInvoicePaymentsForJournal(newJournals[i]);
-                JournalItem[] items = newJournals[i].getItems();
-                for (int j = 0; j < items.length; j++) {
-                    if (items[j].getInvoiceId() != null && items[j].hasInvoiceCreation()) {
-                        invoicesToBeRemoved.remove(getInvoice(items[j].getInvoiceId()));
-                    }
-                }
-            }
-        }
-        
-        if (updateInvoices) {
-            // invoicesToBeRemoved contains the invoices that were removed by setting the new journals.
-            // The amounts to be paid for these invoices have to be cleared.
-            for (Iterator<Invoice> iter = invoicesToBeRemoved.iterator(); iter.hasNext();) {
-                Invoice invoice = iter.next();
-                updateInvoiceWithoutChangeNotification(invoice, invoice.removeAmountToBePaid());
-            }
-        }
         notifyChange();
     }
     
@@ -378,27 +333,6 @@ public class Database {
             if (invoice != null && !items[i].hasInvoiceCreation()) {
                 Payment payment = createPaymentForJournalItem(journal, items[i]);
                 updateInvoiceWithoutChangeNotification(invoice, invoice.addPayment(payment));
-            }
-        }
-    }
-
-    /**
-     * Removes payments from invoices that are referred to by the journal. 
-     * From each invoice (referred to by the journal) a payment is removed for the
-     * corresponding journal item.
-     * 
-     * <p>This method does not notify changes in the database!
-     * 
-     * @param journal the journal
-     */
-    private void removeInvoicePaymentsForJournal(Journal journal) {
-        JournalItem[] items = journal.getItems();
-        for (int i = 0; i < items.length; i++) {
-            Invoice invoice = getInvoice(items[i].getInvoiceId());
-            if (invoice != null && !items[i].hasInvoiceCreation()) {
-                // Determine which payment to remove
-                Payment paymentToBeRemoved = createPaymentForJournalItem(journal, items[i]);
-                updateInvoiceWithoutChangeNotification(invoice, invoice.removePayment(paymentToBeRemoved));
             }
         }
     }
@@ -454,9 +388,36 @@ public class Database {
         notifyChange();
     }
     
-    public Journal[] getJournals() {
-        Journal[] result = journals.toArray(new Journal[journals.size()]);
-        Arrays.sort(result);
+    /**
+     * Removes a journal from the database.
+     * @param journal the journal to be deleted
+     */
+    public void removeJournal(Journal journal) {
+        if (journals.remove(journal)) {
+            notifyChange();
+        }
+    }
+    
+    /**
+     * Updates a journal.
+     * @param oldJournal the journal to be replaced
+     * @param newJournal the journal that replaces <code>oldJournal</code>
+     */
+    public void updateJournal(Journal oldJournal, Journal newJournal) {
+        int index = journals.indexOf(oldJournal);
+        if (index != -1) {
+           journals.set(index, newJournal);
+           notifyChange();
+        }
+    }
+    
+    /**
+     * Gets the journals of the database
+     * @return the journals sorted on date
+     */
+    public List<Journal> getJournals() {
+        List<Journal> result = new ArrayList<Journal>(journals);
+        Collections.sort(result);
         return result;
     }
     
@@ -557,19 +518,16 @@ public class Database {
      * Updates a party in the database.
      * @param oldParty the old party (which must exist in the database)
      * @param newParty the new party (which may not exist yet in the database)
-     * @throws DatabaseModificationFailedException if another party exists with the same id as <code>newParty</code> 
-     *         and if <code>oldParty</code>'s ID is different from <code>newParty</code>'s ID or if
-     *         <code>oldParty</code> does not exist in the database 
+     * @throws DatabaseModificationFailedException if the IDs of the old and new party differ
      */
     public void updateParty(Party oldParty, Party newParty) throws DatabaseModificationFailedException {
         if (idsToPartiesMap.get(oldParty.getId()) == null) {
             throw new DatabaseModificationFailedException("A party with ID " + oldParty.getId() + " does not exist!");
         }
         if (!oldParty.getId().equals(newParty.getId())) {
-            if (idsToPartiesMap.get(newParty.getId()) != null) {
-                throw new DatabaseModificationFailedException("A party with ID " + newParty.getId() + " already exists!");
-            }
+            throw new DatabaseModificationFailedException("The ID of the party cannot be changed!");
         }
+        
         parties.set(parties.indexOf(oldParty), newParty);
         idsToPartiesMap.put(newParty.getId(), newParty);
         notifyChange();

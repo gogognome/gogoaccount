@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.44 2008-01-17 20:51:57 sanderk Exp $
+ * $Id: MainFrame.java,v 1.45 2008-03-10 21:18:23 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -43,13 +43,13 @@ import cf.print.AddressLabelPrinter;
 import cf.ui.dialogs.AccountSelectionDialog;
 import cf.ui.dialogs.DateSelectionDialog;
 import cf.ui.dialogs.EditJournalDialog;
-import cf.ui.dialogs.EditJournalsDialog;
 import cf.ui.dialogs.InvoiceToPdfDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.BalanceView;
+import cf.ui.views.EditJournalsView;
 import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.OperationalResultView;
 import cf.ui.views.PartiesView;
@@ -62,6 +62,9 @@ import cf.ui.views.PartiesView;
 public class MainFrame extends JFrame implements ActionListener, DatabaseListener {
     private static final long serialVersionUID = 1L;
 
+    /** The current database of the application. */
+    private Database database = new Database();
+    
     /** The menu bar of the application. */
 	private JMenuBar menuBar = new JMenuBar();
 
@@ -79,12 +82,15 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
     
     /** The view for invoice generation. */ 
     private InvoiceGeneratorView invoiceGeneratorView;
+
+    /** The view to edit journals. */
+    private EditJournalsView editJournalsView;
     
 	/** Creates the main frame. */
 	public MainFrame() 
 	{
-		super(createTitle());
-		Database.getInstance().addListener(this);
+		super();
+		database.addListener(this);
 		createMenuBar();
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -94,27 +100,28 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) { handleExit(); } }
 		);
+        
+        setTitle(createTitle());
 	}
 	
 	/**
 	 * Creates the title to be shown in the title bar of the main frame.
 	 * @return the title
 	 */
-	private static String createTitle()
-	{
+	private String createTitle() {
 	    String result = TextResource.getInstance().getString("mf.title");
-	    Database db = Database.getInstance();
-	    String description = db.getDescription();
+	    String description = database.getDescription();
 	    if (description != null)
 	    {
 	        result += " - " + description;
-	        if (db.hasUnsavedChanges())
+	        if (database.hasUnsavedChanges())
 	        {
 	            result += "*";
 	        }
 	    }
 	    return result;
 	}
+    
 	/** Creates the menu bar. */
 	private void createMenuBar() {
 		// the menus
@@ -262,7 +269,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private boolean mayCurrentDatabaseBeDestroyed() 
 	{
 		boolean result;
-		if (Database.getInstance().hasUnsavedChanges()) 
+		if (database.hasUnsavedChanges()) 
 		{
 		    TextResource tr = TextResource.getInstance();
 			MessageDialog dialog = new MessageDialog(this, 
@@ -335,7 +342,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** Handles the save bookkeeping event. */
 	private void handleSaveBookkeeping() 
 	{
-		String fileName = Database.getInstance().getFileName(); 
+		String fileName = database.getFileName(); 
 		if (fileName != null) 
 		{
 		    saveBookkeeping(fileName);
@@ -356,7 +363,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 				File compositeName = new File(dir,name);  
 				return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } } 
 			);
-		fileDialog.setFile(Database.getInstance().getFileName());
+		fileDialog.setFile(database.getFileName());
 		fileDialog.setVisible(true);
 		String directory = fileDialog.getDirectory();
 		String filename  = fileDialog.getFile();
@@ -371,28 +378,32 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * Loads a bookkeeping from an XML file.
 	 * @param fileName the name of the file.
 	 */
-	private void loadFile(String fileName) {	
+	private void loadFile(String fileName) {
+        Database newDatabase = null;
 		try {
-			Database db = XMLFileReader.createDatabaseFromFile(fileName);
-//			db.startMultipleUpdates();
-			Database.getInstance().removeListener(this);
-			Database.setInstance(db);
-			db.addListener(this);
-			db.databaseConsistentWithFile();
-//			db.endMultipleUpdates();
-			viewTabbedPane.closeAllViews();
-			balanceView = null;
-			operationalResultView = null;
-            partiesView = null;
-			
-			handleViewBalance();
-			handleViewOperationalResult();
+			newDatabase = XMLFileReader.createDatabaseFromFile(fileName);
 		} catch (XMLParseException e) {
 			new MessageDialog(this, "mf.errorOpeningFile", e);
+            return;
 		} catch (IOException e) {
             new MessageDialog(this, "mf.errorOpeningFile", e);
+            return;
         }
-		databaseChanged(Database.getInstance());
+        database.removeListener(this);
+        database = newDatabase;
+        Database.setInstance(database);
+        database.addListener(this);
+        database.databaseConsistentWithFile();
+        viewTabbedPane.closeAllViews();
+        balanceView = null;
+        operationalResultView = null;
+        partiesView = null;
+        invoiceGeneratorView = null;
+        editJournalsView = null;
+        
+        databaseChanged(database);
+        handleViewOperationalResult();
+        handleViewBalance();
 	}
 	
 	/**
@@ -400,15 +411,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * @param fileName the name of the file.
 	 */
 	private void saveBookkeeping(String fileName) {
-		try 
-		{
-			XMLFileWriter.writeDatabaseToFile(Database.getInstance(), fileName);
-			Database db = Database.getInstance(); 
-			db.setFileName(fileName);
-			db.databaseConsistentWithFile();
-		} 
-		catch (RuntimeException e) 
-		{
+		try {
+			XMLFileWriter.writeDatabaseToFile(database, fileName);
+			database.setFileName(fileName);
+			database.databaseConsistentWithFile();
+		} catch (Exception e) {
 			String message = e.getMessage(); 
 			new MessageDialog(this, "gen.error", 
 				message != null ? message : e.toString());
@@ -416,18 +423,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 	
 	/** Handles the exit event. */
-	private void handleExit() 
-	{
-		if (mayCurrentDatabaseBeDestroyed()) 
-		{
-			Database.getInstance().removeListener(this);
+	private void handleExit() {
+		if (mayCurrentDatabaseBeDestroyed()) {
+			database.removeListener(this);
 			dispose();
 		}
 	}
 
 	private void handleViewBalance() {
 	    if (balanceView == null) {
-	        balanceView = new BalanceView(Database.getInstance());
+	        balanceView = new BalanceView(database);
             balanceView.addViewListener(new ViewListener() {
                 public void onViewClosed(View view) {
                     view.removeViewListener(this);
@@ -443,7 +448,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	
 	private void handleViewOperationalResult() {
 	    if (operationalResultView == null) {
-	        operationalResultView = new OperationalResultView(Database.getInstance());
+	        operationalResultView = new OperationalResultView(database);
             operationalResultView.addViewListener(new ViewListener() {
                 public void onViewClosed(View view) {
                     view.removeViewListener(this);
@@ -459,7 +464,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
     private void handleEditParties() {
         if (partiesView == null) {
-            partiesView = new PartiesView(Database.getInstance(), false);
+            partiesView = new PartiesView(database, false);
             partiesView.addViewListener(new ViewListener() {
                 public void onViewClosed(View view) {
                     view.removeViewListener(this);
@@ -476,7 +481,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private void handleViewAccountOverview()
 	{
         AccountSelectionDialog accountSelectionDialog =
-        	new AccountSelectionDialog(this, Database.getInstance(), "mf.selectAccountForAccountOverview");
+        	new AccountSelectionDialog(this, database, "mf.selectAccountForAccountOverview");
         accountSelectionDialog.showDialog();
         Account account = accountSelectionDialog.getAccount();
         if (account != null)
@@ -487,14 +492,14 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             Date date = dateSelectionDialog.getDate();
             if (date != null)
             {
-	            ViewAccountOverviewDialog dialog = new ViewAccountOverviewDialog(this, Database.getInstance(), account, date);
+	            ViewAccountOverviewDialog dialog = new ViewAccountOverviewDialog(this, database, account, date);
 	            dialog.showDialog();
 	        }
 	    }
 	}
 	
 	private void handleViewPartyOverview() {
-        PartiesView partiesView = new PartiesView(Database.getInstance(), true);
+        PartiesView partiesView = new PartiesView(database, true);
         ViewDialog partyViewDialog = new ViewDialog(this, partiesView);
         partyViewDialog.showDialog();
         
@@ -524,42 +529,43 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         }
 	}
 	
-	private void handleAddJournal()
-	{
-	    Database db = Database.getInstance();
-	    if (!db.hasAccounts())
-	    {
+	private void handleAddJournal() {
+	    if (!database.hasAccounts()) {
 	        MessageDialog.showMessage(this, "gen.warning", 
 	                TextResource.getInstance().getString("mf.noAccountsPresent"));
-	    }
-	    else
-	    {
-		    EditJournalDialog dialog = new EditJournalDialog(this, db, "ajd.title", true);
+	    } else {
+		    EditJournalDialog dialog = new EditJournalDialog(this, database, "ajd.title", true);
 		    dialog.showDialog();
 		    Journal[] journals = dialog.getEditedJournals();
 		    for (int i = 0; i < journals.length; i++) {
-		        db.addJournal(journals[i], true);
+		        database.addJournal(journals[i], true);
             }
 	    }
 	}
 	
-	private void handleEditJournals()
-	{
-	    Database db = Database.getInstance();
-	    if (!db.hasAccounts())
-	    {
+	private void handleEditJournals() {
+	    if (!database.hasAccounts()) {
 	        MessageDialog.showMessage(this, "gen.warning", 
 	                TextResource.getInstance().getString("mf.noAccountsPresent"));
-	    }
-	    else
-	    {
-		    EditJournalsDialog dialog = new EditJournalsDialog(this, db);
-		    dialog.showDialog();
+	    } else {
+            if (editJournalsView == null) {
+                editJournalsView = new EditJournalsView(database);
+                editJournalsView.addViewListener(new ViewListener() {
+                    public void onViewClosed(View view) {
+                        view.removeViewListener(this);
+                        editJournalsView = null;
+                    }
+                });
+                viewTabbedPane.openView(editJournalsView);
+                viewTabbedPane.selectView(editJournalsView);
+            } else {
+                viewTabbedPane.selectView(editJournalsView);
+            }
 	    }
 	}
 	
 	private void handleGenerateInvoices() {
-	    InvoiceToPdfDialog dialog = new InvoiceToPdfDialog(this, Database.getInstance());
+	    InvoiceToPdfDialog dialog = new InvoiceToPdfDialog(this, database);
 	    dialog.showDialog();
 	}
 
@@ -569,7 +575,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 	
 	private void handlePrintAddressLabels() {
-	    AddressLabelPrinter alp = new AddressLabelPrinter(Database.getInstance().getParties());
+	    AddressLabelPrinter alp = new AddressLabelPrinter(database.getParties());
 	    try {
             alp.printAddressLabels();
         } catch (PrinterException e) {
@@ -580,7 +586,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	
 	private void handleAddInvoices() {
         if (invoiceGeneratorView == null) {
-            invoiceGeneratorView = new InvoiceGeneratorView(Database.getInstance());
+            invoiceGeneratorView = new InvoiceGeneratorView(database);
             invoiceGeneratorView.addViewListener(new ViewListener() {
                 public void onViewClosed(View view) {
                     view.removeViewListener(this);
@@ -596,10 +602,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	
     /**
      * This method is called when the database has changed.
-     * @param db the database that has changed
+     * @param database the database that has changed
      */
-    public void databaseChanged(Database db) 
-    {
+    public void databaseChanged(Database database) {
         setTitle(createTitle());
     }
 }

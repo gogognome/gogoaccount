@@ -1,5 +1,5 @@
 /*
- * $Id: Account.java,v 1.11 2007-03-04 20:43:54 sanderk Exp $
+ * $Id: Account.java,v 1.12 2008-03-10 21:18:22 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,6 +7,7 @@ package cf.engine;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
@@ -90,13 +91,13 @@ public class Account implements Comparable
      */
     public Amount getBalance(Date date)
     {
-        Journal[] journals = database.getJournals();
+        List<Journal> journals = database.getJournals();
         Amount result = Amount.getZero(database.getCurrency());
-        for (int i = 0; i < journals.length; i++) 
+        for (Journal journal : journals) 
         {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), date) <= 0)
+            if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0)
             {
-	            JournalItem[] items = journals[i].getItems();
+	            JournalItem[] items = journal.getItems();
 	            for (int j = 0; j < items.length; j++) 
 	            {
 	                if (items[j].getAccount().equals(this))

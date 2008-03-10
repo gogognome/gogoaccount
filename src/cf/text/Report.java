@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.17 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: Report.java,v 1.18 2008-03-10 21:18:23 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import nl.gogognome.text.Amount;
@@ -120,7 +121,7 @@ public class Report
         printDebtors(database.getDebtors(date), date);
         printCreditors(database.getCreditors(date), date);
         
-        Journal[] journals = database.getJournals(); 
+        List<Journal> journals = database.getJournals(); 
         printJournals(journals, database.getStartOfPeriod(), date);
         printLedger(database.getAllAccounts(), journals, database.getStartOfPeriod(), date);
         
@@ -350,16 +351,16 @@ public class Report
         writer.println(result.toString());
     }
  
-    private void printJournals(Journal[] journals, Date startDate, Date endDate) {
+    private void printJournals(List<Journal> journals, Date startDate, Date endDate) {
         TextResource tr = TextResource.getInstance();
         
         int startIndex = 0;
         int endIndex = 0;
-        for (int i=0; i<journals.length; i++) {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), endDate) <= 0) {
+        for (int i=0; i<journals.size(); i++) {
+            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), endDate) <= 0) {
                 endIndex = i+1;
             }
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), startDate) < 0) {
+            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), startDate) < 0) {
                 startIndex = i+1;
             }
         }
@@ -394,14 +395,14 @@ public class Report
             result.append(textFormat.getHorizontalSeparator());
             
             for (int i=startIndex; i<endIndex; i++) {
-                values[0] = tr.formatDate("gen.dateFormat", journals[i].getDate());
-                values[2] = journals[i].getId() + " - " + journals[i].getDescription();
+                values[0] = tr.formatDate("gen.dateFormat", journals.get(i).getDate());
+                values[2] = journals.get(i).getId() + " - " + journals.get(i).getDescription();
                 values[4] = "";
                 values[6] = "";
                 values[8] = "";
                 result.append(textFormat.getRow(values));
                 
-                JournalItem[] items = journals[i].getItems();
+                JournalItem[] items = journals.get(i).getItems();
                 for (int j = 0; j < items.length; j++) {
                     values[0] = "";
                     values[2] = items[j].getAccount().getId() + " - " 
@@ -421,17 +422,17 @@ public class Report
         writer.println(result.toString());
     }
     
-    private void printLedger(Account[] accounts, Journal[] journals, Date startDate, 
+    private void printLedger(Account[] accounts, List<Journal> journals, Date startDate, 
             Date endDate) {
         TextResource tr = TextResource.getInstance();
         
         int startIndex = 0;
         int endIndex = 0;
-        for (int i=0; i<journals.length; i++) {
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), endDate) <= 0) {
+        for (int i=0; i<journals.size(); i++) {
+            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), endDate) <= 0) {
                 endIndex = i+1;
             }
-            if (DateUtil.compareDayOfYear(journals[i].getDate(), startDate) < 0) {
+            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), startDate) < 0) {
                 startIndex = i+1;
             }
         }
@@ -490,13 +491,13 @@ public class Report
                 Amount totalCreditMutations = Amount.getZero(startAmount.getCurrency());
                 
 	            for (int i=startIndex; i<endIndex; i++) {
-	                values[0] = tr.formatDate("gen.dateFormat", journals[i].getDate());
-	                values[2] = journals[i].getId() + " - " + journals[i].getDescription();
+	                values[0] = tr.formatDate("gen.dateFormat", journals.get(i).getDate());
+	                values[2] = journals.get(i).getId() + " - " + journals.get(i).getDescription();
 	                values[4] = "";
 	                values[6] = "";
 	                values[8] = "";
 	                
-	                JournalItem[] items = journals[i].getItems();
+	                JournalItem[] items = journals.get(i).getItems();
 	                for (int j = 0; j < items.length; j++) {
 	                    if (account.equals(items[j].getAccount())) {
 		                    values[4] = "";

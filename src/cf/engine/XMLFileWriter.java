@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.20 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.21 2008-03-10 21:18:22 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,6 +7,7 @@ package cf.engine;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -81,14 +82,14 @@ public class XMLFileWriter {
 
 			// write journals
 			Element journalsElem = doc.createElement("journals");
-			Journal[] journals = db.getJournals();
-			for (int i = 0; i < journals.length; i++) 
+			List<Journal> journals = db.getJournals();
+			for (Journal journal : journals) 
 			{
 			    Element journalElem = doc.createElement("journal");
-			    journalElem.setAttribute("id", journals[i].getId());
-			    journalElem.setAttribute("date", DATE_FORMAT.format(journals[i].getDate()));
-			    journalElem.setAttribute("description", journals[i].getDescription());
-			    JournalItem[] items = journals[i].getItems();
+			    journalElem.setAttribute("id", journal.getId());
+			    journalElem.setAttribute("date", DATE_FORMAT.format(journal.getDate()));
+			    journalElem.setAttribute("description", journal.getDescription());
+			    JournalItem[] items = journal.getItems();
 			    for (int j = 0; j < items.length; j++) 
 			    {
                     Element item = doc.createElement("item");

@@ -1,5 +1,5 @@
 /*
- * $Id: ItemsTableModel.java,v 1.10 2008-01-12 13:41:55 sanderk Exp $
+ * $Id: ItemsTableModel.java,v 1.11 2008-03-10 21:18:22 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,7 +20,7 @@ import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.JournalItem;
 
-class ItemsTableModel implements TableModel {
+public class ItemsTableModel implements TableModel {
     
     private Database database;
     
@@ -225,8 +225,8 @@ class ItemsTableModel implements TableModel {
      */
     public void addEmptyItem()
     {
-        Account dummyAccount = new Account("???", "???", true, Database.getInstance());
-        addItem(new JournalItem(Amount.getZero(Database.getInstance().getCurrency()), dummyAccount, true, null, false));
+        Account dummyAccount = new Account("???", "???", true, database);
+        addItem(new JournalItem(Amount.getZero(database.getCurrency()), dummyAccount, true, null, false));
     }
     
     /**
