@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsView.java,v 1.1 2008-03-10 21:18:22 sanderk Exp $
+ * $Id: EditJournalsView.java,v 1.2 2008-03-16 16:30:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -90,7 +90,7 @@ public class EditJournalsView extends View {
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
 		itemsTable = new JTable(itemsTableModel);
-		itemsTable.setRowSelectionAllowed(true);
+		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
 
 		// Set column widths
@@ -157,17 +157,20 @@ public class EditJournalsView extends View {
 		});
 		buttonsPanel.add(deleteButton);
 		
-		// Add components to the dialog.
-		JPanel panel = new JPanel(new GridBagLayout());
-		panel.add(journalsTable.getComponent(), SwingUtils.createPanelGBConstraints(0, 0));
+		// Add components to the view.
+        JPanel tablesPanel = new JPanel(new GridBagLayout());
+		tablesPanel.add(journalsTable.getComponent(), 
+            SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0, 
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 10, 10, 10, 10));
         
         JScrollPane scrollPane = new JScrollPane(itemsTable);
-        panel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
+        tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
         
-        panel.add(buttonsPanel, SwingUtils.createGBConstraints(0, 2, 1, 1, 1.0, 1.0, 
-            GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
-        
-		add(panel, BorderLayout.CENTER);
+        setLayout(new BorderLayout());
+		add(tablesPanel, BorderLayout.CENTER);
+        add(buttonsPanel, BorderLayout.SOUTH);
+
+        journalsTable.selectFirstRow();
 	}
 
     @Override
@@ -366,10 +369,10 @@ public class EditJournalsView extends View {
             switch (column) {
             case 0:
             case 1:
-                return 100;
+                return 200;
                 
             case 2:
-                return 300;
+                return 500;
                 
             default:
                 throw new IllegalStateException("No width specified for column " + column);
@@ -407,4 +410,17 @@ public class EditJournalsView extends View {
         }
     }
 
+    /**
+     * This method is called when the focus is requested for this view. 
+     */
+    public void requestFocus() {
+        journalsTable.getFocusableComponent().requestFocus();
+    }
+
+    /**
+     * This method is called when the focus is requested for this view.
+     */
+    public boolean requestFocusInWindow() {
+        return journalsTable.getFocusableComponent().requestFocusInWindow();
+    }
 }
