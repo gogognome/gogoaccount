@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.11 2008-01-17 20:51:57 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.12 2008-03-26 21:48:12 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -17,6 +17,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import nl.gogognome.framework.View;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.WidgetFactory;
@@ -35,7 +36,7 @@ import cf.ui.components.InvoiceSelector;
  *
  * @author Sander Kooijmans
  */
-class EditJournalItemDialog extends OkCancelDialog {
+public class EditJournalItemDialog extends OkCancelDialog {
     private AccountSelectionBean sbAccount;
     
     private JTextField tfAmount;
@@ -44,7 +45,11 @@ class EditJournalItemDialog extends OkCancelDialog {
     
     private InvoiceSelector invoiceSelector;
     
-    private Frame parent;
+    /** The parent frame of this dialog. */
+    private Frame parentFrame;
+
+    /** The parent view of this dialog. */
+    private View parentView;
     
     private Database database;
     
@@ -64,7 +69,7 @@ class EditJournalItemDialog extends OkCancelDialog {
     public EditJournalItemDialog(Frame parent, Database database, String titleId) {
         super(parent, titleId);
         this.database = database;
-        this.parent = parent;
+        this.parentFrame = parent;
         initDialog("", null, true, null);
     }
 
@@ -77,13 +82,33 @@ class EditJournalItemDialog extends OkCancelDialog {
      */
     public EditJournalItemDialog(Frame parent, Database database, String titleId, JournalItem item) {
         super(parent, titleId);
-        this.parent = parent;
+        this.parentFrame = parent;
         this.database = database;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(), 
                 item.isDebet(), database.getInvoice(item.getInvoiceId()));
     }
 
+    /**
+     * Constructor.
+     * @param parentFrame the parent dialog of this dialog.
+     * @param database the database
+     * @param titleId the id of this dialog's title.
+     * @param item the item used to fill in the initial values of the fields.
+     */
+    public EditJournalItemDialog(View view, Database database, String titleId, JournalItem item) {
+        super(view, titleId);
+        this.parentView = view;
+        this.database = database;
+        AmountFormat af = TextResource.getInstance().getAmountFormat();
+        if (item != null) {
+            initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(), 
+                    item.isDebet(), database.getInvoice(item.getInvoiceId()));
+        } else {
+            initDialog("", null, true, null);
+        }
+    }
+    
     /**
      * Initializes the dialog. Adds buttons and labels to this dialog.
      * @param amount used to initialize the amount field
@@ -146,11 +171,17 @@ class EditJournalItemDialog extends OkCancelDialog {
         Amount amount;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         try {
-            amount = af.parse(tfAmount.getText(), Database.getInstance().getCurrency());
+            amount = af.parse(tfAmount.getText(), database.getCurrency());
         } 
         catch (ParseException e) {
-            new MessageDialog(parent, "gen.titleError",
-                TextResource.getInstance().getString("ejid.invalidAmount"));            
+            if (parentFrame != null) {
+                MessageDialog.showMessage(parentFrame, "gen.titleError",
+                    TextResource.getInstance().getString("ejid.invalidAmount"));
+            } else {
+                assert parentView != null;
+                MessageDialog.showMessage(parentView, "gen.titleError",
+                    TextResource.getInstance().getString("ejid.invalidAmount"));
+            }
             return;
         }
         
