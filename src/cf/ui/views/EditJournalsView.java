@@ -1,15 +1,17 @@
 /*
- * $Id: EditJournalsView.java,v 1.2 2008-03-16 16:30:34 sanderk Exp $
+ * $Id: EditJournalsView.java,v 1.3 2008-03-26 21:48:39 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -51,6 +53,8 @@ import cf.ui.dialogs.ItemsTableModel;
  * @author Sander Kooijmans
  */
 public class EditJournalsView extends View {
+
+    private final static Color BACKGROUND_COLOR = new Color(255, 230, 230);
     
     /** The table containing journals. */
     private SortedTable journalsTable;
@@ -80,6 +84,7 @@ public class EditJournalsView extends View {
      * @see View#onInit()
      */
     public void onInit() {
+        setBackground(BACKGROUND_COLOR);
 		WidgetFactory wf = WidgetFactory.getInstance();
 		
 		// Create table of journals
@@ -135,6 +140,7 @@ public class EditJournalsView extends View {
 		
 		// Create button panel
 		JPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
+        buttonsPanel.setOpaque(false);
 
 		JButton editButton = wf.createButton("ejd.editJournal", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
@@ -159,6 +165,7 @@ public class EditJournalsView extends View {
 		
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
+        tablesPanel.setOpaque(false);
 		tablesPanel.add(journalsTable.getComponent(), 
             SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0, 
             GridBagConstraints.CENTER, GridBagConstraints.BOTH, 10, 10, 10, 10));
@@ -364,7 +371,7 @@ public class EditJournalsView extends View {
                 listener.tableChanged(event);
             }
         }
-    
+
         public int getColumnWidth(int column) {
             switch (column) {
             case 0:
@@ -392,6 +399,10 @@ public class EditJournalsView extends View {
             }
         }
 
+        public Comparator<Object> getComparator(int column) {
+            return null;
+        }
+        
         /**
          * @see DatabaseListener#databaseChanged(Database)
          */
@@ -408,6 +419,7 @@ public class EditJournalsView extends View {
         public Journal getJournal(int row) {
             return journals.get(row);
         }
+
     }
 
     /**
