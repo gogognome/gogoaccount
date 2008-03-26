@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.45 2008-03-10 21:18:23 sanderk Exp $
+ * $Id: MainFrame.java,v 1.46 2008-03-26 21:48:55 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -34,7 +34,6 @@ import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
-import cf.engine.Journal;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
@@ -42,13 +41,13 @@ import cf.engine.XMLParseException;
 import cf.print.AddressLabelPrinter;
 import cf.ui.dialogs.AccountSelectionDialog;
 import cf.ui.dialogs.DateSelectionDialog;
-import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.InvoiceToPdfDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.BalanceView;
+import cf.ui.views.EditJournalView;
 import cf.ui.views.EditJournalsView;
 import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.OperationalResultView;
@@ -534,12 +533,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	        MessageDialog.showMessage(this, "gen.warning", 
 	                TextResource.getInstance().getString("mf.noAccountsPresent"));
 	    } else {
-		    EditJournalDialog dialog = new EditJournalDialog(this, database, "ajd.title", true);
-		    dialog.showDialog();
-		    Journal[] journals = dialog.getEditedJournals();
-		    for (int i = 0; i < journals.length; i++) {
-		        database.addJournal(journals[i], true);
-            }
+            EditJournalView view = new EditJournalView(database, "ajd.title", null);
+            ViewDialog dialog = new ViewDialog(this, view);
+            dialog.showDialog();
 	    }
 	}
 	
