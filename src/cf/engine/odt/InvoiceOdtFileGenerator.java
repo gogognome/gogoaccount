@@ -7,19 +7,26 @@ package cf.engine.odt;
 
 import cf.engine.Invoice;
 import cf.engine.Payment;
-import java.io.BufferedReader;
-import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 
 /**
@@ -28,6 +35,12 @@ import nl.gogognome.text.TextResource;
  * @author SanderK
  */
 public class InvoiceOdtFileGenerator {
+
+    /** The inputstream of the template. */
+    private ZipInputStream zipInputStream;
+
+    /** The outputstream of the ODT file. */
+    private ZipOutputStream zipOutputStream;
 
     /** The contents of the template file. */
     private ArrayList<String> templateContents;
@@ -65,22 +78,79 @@ public class InvoiceOdtFileGenerator {
             Date dueDate) throws IOException {
         TextResource tr = TextResource.getInstance();
 
+        zipOutputStream = new ZipOutputStream(new BufferedOutputStream(
+            new FileOutputStream(odtFileName)));
         try {
-            readTemplate(templateFileName);
-        } catch (IOException e) {
-            throw new IOException(tr.getString("id.cantReadTemplateFile") + "(" + e.getMessage() + ")");
-        }
-
-        File odtFile = new File(odtFileName);
-        writeOdtHeader(odtFile);
-
-        for (int i = 0; i < invoices.length; i++) {
-            if (!invoices[i].hasBeenPaid()) {
-                writeInvoiceToOdtFile(invoices[i], dueDate, concerning);
+            zipInputStream = new ZipInputStream(new BufferedInputStream(
+                new FileInputStream(templateFileName)));
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+            while (zipEntry != null) {
+                if ("content.xml".equals(zipEntry.getName())) {
+                    copyContentXml(zipEntry, invoices, dueDate, concerning);
+                } else {
+                    copyZipEntry(zipEntry);
+                }
+                zipEntry = zipInputStream.getNextEntry();
+            }
+        } finally {
+            if (zipInputStream != null) {
+                try {
+                    zipInputStream.close();
+                } catch (IOException e) {
+                    // ignore this exception
+                }
+            }
+            if (zipOutputStream != null) {
+                try {
+                    zipOutputStream.close();
+                } catch (IOException e) {
+                    // ignore this exception
+                }
             }
         }
+    }
 
-        writeOdtTail();
+    /**
+     * Copies a zip entry from the input stream to the output stream.
+     * No bytes must have been read from the zip entry in the input stream.
+     * A new zip entry is created in the output stream.
+     * @param zipEntry the zip entry of the input stream
+     * @throws IOException if an I/O problem occurs
+     */
+    private void copyZipEntry(ZipEntry zipEntry) throws IOException {
+        System.out.println("copying " + zipEntry.getName());
+        zipOutputStream.putNextEntry(new ZipEntry(zipEntry));
+        byte[] buffer = new byte[16384];
+        for (int bytesRead = zipInputStream.read(buffer); bytesRead != -1; bytesRead = zipInputStream.read(buffer)) {
+            zipOutputStream.write(buffer, 0, bytesRead);
+        }
+    }
+
+    /**
+     * Copies the content.xml entry from the input stream to the output stream.
+     * No bytes must have been read from the zip entry in the input stream.
+     * A new zip entry is created in the output stream.
+     * The content.xml stream will be modified so that it contains all invoices
+     * @param zipEntry the zip entry of the input stream
+     * @param invoices the invoices
+     * @param dueDate the due date
+     * @param concerning specifies what the invoice is about
+     * @throws IOException if an I/O problem occurs
+     */
+    private void copyContentXml(ZipEntry zipEntry, Invoice[] invoices, Date dueDate,
+            String concerning) throws IOException {
+        DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder;
+        try {
+            docBuilder = docBuilderFac.newDocumentBuilder();
+            Document doc = docBuilder.parse(zipInputStream);
+            Element rootElement = doc.getDocumentElement();
+        } catch (ParserConfigurationException e) {
+            throw new IOException("Could not parse content.xml: " + e.getMessage());
+        } catch (SAXException e) {
+            throw new IOException("Could not parse content.xml: " + e.getMessage());
+        }
+        // TODO Continue here!!
     }
 
     /**
@@ -173,62 +243,4 @@ public class InvoiceOdtFileGenerator {
             sb.replace(index, index + oldValue.length(), newValue);
         }
     }
-
-    /**
-     * Reads the template from the template file.
-     * The result is stored in <code>templateContents</code>.
-     * @param templateFileName
-     * @throws IOException if an I/O exception occurs while reading the template file.
-     */
-    private void readTemplate(String templateFileName) throws IOException
-    {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new FileInputStream(templateFileName)));
-
-        templateContents = new ArrayList<String>();
-        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-            templateContents.add(line);
-            if (line.startsWith("\\begin{brief}")) {
-                letterStart = templateContents.size() - 1;
-            } else if ("\\end{brief}".equals(line)) {
-                letterEnd = templateContents.size();
-            }
-        }
-        reader.close();
-    }
-
-    /**
-     * Writes the header of the Odt file. <code>odtPrintWriter</code> will be
-     * initialised and will stay open so that the letters and the tail can
-     * be written to the file.
-     *
-     * @param OdtFile the Odt file to be created.
-     * @throws IOException if an I/O exception occurs.
-     */
-    private void writeOdtHeader(File OdtFile) throws IOException
-    {
-        // Write header of Odt file.
-        odtPrintWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(OdtFile)));
-
-        for (int i=0; i<letterStart; i++)
-        {
-            odtPrintWriter.println(templateContents.get(i));
-        }
-    }
-
-    /**
-     * Writes the tail of the Odt file.
-     * <code>odtPrintWriter</code> will be closed and set to <code>null</code>.
-     */
-    private void writeOdtTail()
-    {
-        for (int i=letterEnd; i<templateContents.size(); i++)
-        {
-            odtPrintWriter.println(templateContents.get(i));
-        }
-        odtPrintWriter.close();
-        odtPrintWriter = null;
-    }
-
 }
-

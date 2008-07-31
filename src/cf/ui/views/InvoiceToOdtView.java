@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceToOdtView.java,v 1.1 2008-07-30 20:42:11 sanderk Exp $
+ * $Id: InvoiceToOdtView.java,v 1.2 2008-07-31 20:17:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,7 +7,7 @@ package cf.ui.views;
 
 import cf.engine.Database;
 import cf.engine.odt.InvoiceOdtFileGenerator;
-import java.awt.Frame;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -28,6 +28,7 @@ import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
+import nl.gogognome.util.StringUtil;
 
 /**
  * This view allows the user to generate invoices (an ODT file) for debtors.
@@ -41,7 +42,7 @@ public class InvoiceToOdtView extends View {
 
     private JTextField tfTemplateFileName;
 
-    private JTextField tfPdfFileName;
+    private JTextField tfOdtFileName;
 
     private DateModel dateModel;
 
@@ -50,8 +51,6 @@ public class InvoiceToOdtView extends View {
     private JTextField tfOurReference;
 
     private DateModel dueDateModel;
-
-    private Frame parentFrame;
 
     /**
      * Constructor.
@@ -62,30 +61,47 @@ public class InvoiceToOdtView extends View {
         this.database = database;
     }
 
+    /**
+     * Checks wehther the user has entered all necessary information.
+     * If so, then the ODT file will be generated; if not, then an
+     * error message is shown to the user.
+     */
     protected void handleOk() {
         Date date = dateModel.getDate();
         if (date == null) {
-            MessageDialog.showMessage(parentFrame, "gen.error",
-                    TextResource.getInstance().getString("gen.invalidDate"));
+            MessageDialog.showMessage(this, "gen.error",
+                TextResource.getInstance().getString("gen.invalidDate"));
             return;
         }
 
         Date dueDate = dueDateModel.getDate();
         if (dueDate == null) {
-            MessageDialog.showMessage(parentFrame, "gen.error",
-                    TextResource.getInstance().getString("gen.invalidDate"));
+            MessageDialog.showMessage(this, "gen.error",
+                TextResource.getInstance().getString("gen.invalidDate"));
             return;
         }
 
-        // Let the user select the invoices that should be added to the PDF file.
+        if (StringUtil.isNullOrEmpty(tfOdtFileName.getText())) {
+            MessageDialog.showMessage(this, "gen.error",
+                TextResource.getInstance().getString("invoiceToOdtView.noOdtFileNameSpecified"));
+            return;
+        }
+
+        if (StringUtil.isNullOrEmpty(tfTemplateFileName.getText())) {
+            MessageDialog.showMessage(this, "gen.error",
+                TextResource.getInstance().getString("invoiceToOdtView.noTemplateFileNameSpecified"));
+            return;
+        }
+
+        // Let the user select the invoices that should be added to the ODT file.
         InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(database, true, true);
-        ViewDialog dialog = new ViewDialog(parentFrame, invoicesView);
+        ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {
             InvoiceOdtFileGenerator converter = new InvoiceOdtFileGenerator();
             try {
                 converter.generateInvoices(tfTemplateFileName.getText(),
-                    tfPdfFileName.getText(), invoicesView.getSelectedInvoices(), date, tfConcerning.getText(),
+                    tfOdtFileName.getText(), invoicesView.getSelectedInvoices(), date, tfConcerning.getText(),
                     tfOurReference.getText(), dueDate);
             } catch (IOException e) {
                 MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
@@ -101,7 +117,7 @@ public class InvoiceToOdtView extends View {
      */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("id.title");
+        return TextResource.getInstance().getString("invoiceToOdtView.title");
     }
 
     /**
@@ -118,10 +134,11 @@ public class InvoiceToOdtView extends View {
     public void onInit() {
         WidgetFactory wf = WidgetFactory.getInstance();
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(wf.createLabel("id.templateFilename"),
+        panel.add(wf.createLabel("invoiceToOdtView.templateFilename"),
                 SwingUtils.createLabelGBConstraints(0, 0));
 
         tfTemplateFileName = wf.createTextField(30);
+        tfTemplateFileName.setText("c:\\temp\\template.odt"); // TEST CODE
         panel.add(tfTemplateFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
 
@@ -134,47 +151,50 @@ public class InvoiceToOdtView extends View {
 
             }
         });
-        panel.add(button,
-                SwingUtils.createLabelGBConstraints(2, 0));
+        panel.add(button, SwingUtils.createGBConstraints(2, 0, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE,
+            0, 10, 3, 10));
 
-        panel.add(wf.createLabel("id.pdfFileName"),
+        panel.add(wf.createLabel("invoiceToOdtView.odtFileName"),
                 SwingUtils.createLabelGBConstraints(0, 1));
-        tfPdfFileName = wf.createTextField(30);
-        panel.add(tfPdfFileName,
-                SwingUtils.createTextFieldGBConstraints(1, 1));
+        tfOdtFileName = wf.createTextField(30);
+        tfOdtFileName.setText("c:\\temp\\factuur.odt"); // TEST CODE
+        panel.add(tfOdtFileName,
+            SwingUtils.createTextFieldGBConstraints(1, 1));
 
         button = wf.createButton("gen.btSelectFile", new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
-                JFileChooser fileChooser = new JFileChooser(tfPdfFileName.getText());
+                JFileChooser fileChooser = new JFileChooser(tfOdtFileName.getText());
                 if (fileChooser.showOpenDialog(getParentWindow()) == JFileChooser.APPROVE_OPTION) {
-                    tfPdfFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
+                    tfOdtFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
                 }
 
             }
         });
-        panel.add(button,
-                SwingUtils.createLabelGBConstraints(2, 1));
+        panel.add(button, SwingUtils.createGBConstraints(2, 1, 1, 1, 0.0, 0.0,
+            GridBagConstraints.WEST, GridBagConstraints.NONE,
+            0, 10, 3, 10));
 
-        panel.add(wf.createLabel("id.date"),
+        panel.add(wf.createLabel("invoiceToOdtView.date"),
                 SwingUtils.createLabelGBConstraints(0, 2));
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
         panel.add(new DateSelectionBean(dateModel),
                 SwingUtils.createLabelGBConstraints(1, 2));
 
-        panel.add(wf.createLabel("id.concerning"),
+        panel.add(wf.createLabel("invoiceToOdtView.concerning"),
                 SwingUtils.createLabelGBConstraints(0, 3));
         tfConcerning = wf.createTextField(30);
         panel.add(tfConcerning,
                 SwingUtils.createLabelGBConstraints(1, 3));
 
-        panel.add(wf.createLabel("id.ourReference"),
+        panel.add(wf.createLabel("invoiceToOdtView.ourReference"),
                 SwingUtils.createLabelGBConstraints(0, 4));
         tfOurReference = wf.createTextField(30);
         panel.add(tfOurReference,
                 SwingUtils.createLabelGBConstraints(1, 4));
 
-        panel.add(wf.createLabel("id.dueDate"),
+        panel.add(wf.createLabel("invoiceToOdtView.dueDate"),
                 SwingUtils.createLabelGBConstraints(0, 5));
         dueDateModel = new DateModel();
         dueDateModel.setDate(DateUtil.addDays(new Date(), 14), null);
@@ -182,14 +202,14 @@ public class InvoiceToOdtView extends View {
                 SwingUtils.createLabelGBConstraints(1, 5));
 
         // Create button panel
-        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
-        buttonPanel.add(WidgetFactory.getInstance().createButton("gen.ok", new AbstractAction() {
+        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
+        buttonPanel.add(WidgetFactory.getInstance().createButton("invoiceToOdtView.generate", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 handleOk();
             }
         }));
         buttonPanel.add(WidgetFactory.getInstance().createButton("gen.cancel", closeAction));
-        panel.add(buttonPanel, SwingUtils.createPanelGBConstraints(0, 6));
+        panel.add(buttonPanel, SwingUtils.createPanelGBConstraints(1, 6));
 
         add(panel);
     }
