@@ -1,11 +1,12 @@
 /*
- * $Id: EditPartyView.java,v 1.6 2007-12-16 15:39:53 sanderk Exp $
+ * $Id: EditPartyView.java,v 1.7 2008-08-03 09:16:48 sanderk Exp $
  *
  * Copyright (C) 2007 Sander Kooijmans
  */
 package cf.ui.views;
 
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 
@@ -16,6 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
@@ -23,6 +26,7 @@ import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
+import cf.engine.Database;
 import cf.engine.Party;
 
 /**
@@ -41,6 +45,10 @@ public class EditPartyView extends View {
     private JTextField tfType;
     private JTextArea taRemarks;
     private DateModel dateModel;
+    private JTextField lbIdRemark;
+    
+    /** The database to which the party has to be added. */
+    private Database database;
     
     /** 
      * The party that was entered by the user. If the user cancels this dialog,
@@ -58,9 +66,10 @@ public class EditPartyView extends View {
      * Constructor.
      * @param party the party used to initialize the view
      */
-    protected EditPartyView(Party party) {
+    protected EditPartyView(Database database, Party party) {
         super();
-        initialParty = party;
+        this.database = database;
+        this.initialParty = party;
     }
 
     /** This method is called when the view is to be shown. */
@@ -85,48 +94,59 @@ public class EditPartyView extends View {
         WidgetFactory wf = WidgetFactory.getInstance();
         
         int row = 0;
-        tfId = wf.createTextField(30);
+        tfId = wf.createTextField(10);
         JLabel label = wf.createLabel("editPartyView.id", tfId);
         textfieldPanel.add(label,
                 SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
+        lbIdRemark = new JTextField(20);
+        lbIdRemark.setEditable(false);
+        lbIdRemark.setEnabled(false);
+        lbIdRemark.setBorder(null);
+        textfieldPanel.add(lbIdRemark, SwingUtils.createTextFieldGBConstraints(2, row));
         row++;
         
         tfName = wf.createTextField(30);
         label = wf.createLabel("editPartyView.name", tfName);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfName, SwingUtils.createTextFieldGBConstraints(1, row));
+        textfieldPanel.add(tfName, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
         
         tfAddress = wf.createTextField(30);
         label = wf.createLabel("editPartyView.address", tfAddress);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfAddress, SwingUtils.createTextFieldGBConstraints(1, row));
+        textfieldPanel.add(tfAddress, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
         tfZipCode = wf.createTextField(30);
         label = wf.createLabel("editPartyView.zipCode", tfZipCode);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfZipCode, SwingUtils.createTextFieldGBConstraints(1, row));
+        textfieldPanel.add(tfZipCode, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
         
         tfCity = wf.createTextField(30);
         label = wf.createLabel("editPartyView.city", tfCity);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfCity, SwingUtils.createTextFieldGBConstraints(1, row));
+        textfieldPanel.add(tfCity, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
         tfType = wf.createTextField(30);
         label = wf.createLabel("editPartyView.type", tfType);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfType, SwingUtils.createTextFieldGBConstraints(1, row));
+        textfieldPanel.add(tfType, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
         taRemarks = new JTextArea(5, 30);
         label = wf.createLabel("editPartyView.remarks", taRemarks);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         JScrollPane remarksPane = new JScrollPane(taRemarks);
-        textfieldPanel.add(remarksPane, SwingUtils.createTextFieldGBConstraints(1, row));
+        textfieldPanel.add(remarksPane, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
         dateModel = new DateModel();
@@ -137,6 +157,8 @@ public class EditPartyView extends View {
 
         if (initialParty != null) {
             tfId.setText(initialParty.getId());
+            tfId.setEditable(false);
+            tfId.setEnabled (false);
             tfName.setText(initialParty.getName());
             tfAddress.setText(initialParty.getAddress());
             tfZipCode.setText(initialParty.getZipCode());
@@ -144,6 +166,22 @@ public class EditPartyView extends View {
             tfType.setText(initialParty.getType());
             taRemarks.setText(initialParty.getRemarks());
             dateModel.setDate(initialParty.getBirthDate(), null);
+        } else {
+            tfId.setText(suggestNewId());
+            tfId.getDocument().addDocumentListener(new DocumentListener() {
+                public void changedUpdate(DocumentEvent e) {
+                    onIdChange();
+                }
+
+                public void insertUpdate(DocumentEvent e) {
+                    onIdChange();
+                }
+
+                public void removeUpdate(DocumentEvent e) {
+                    onIdChange();
+                }
+            });
+            onIdChange();
         }
         
         // Create panel with buttons
@@ -181,5 +219,67 @@ public class EditPartyView extends View {
      */
     public String getTitle() {
         return TextResource.getInstance().getString(initialParty != null ? "editPartyView.titleEdit" : "editPartyView.titleAdd");
+    }
+    
+    /**
+     * This method is called when the user content of tfId has changed.
+     * If the ID is not valid, then this is shown to the user.
+     */
+    private void onIdChange() {
+        String remark = "";
+        String id = tfId.getText();
+        if (initialParty == null && database.getParty(id) != null ) {
+            remark = TextResource.getInstance().getString("editPartyView.idExistsAlready");
+        } else if (id.length() == 0) {
+            remark = TextResource.getInstance().getString("editPartyView.idIsEmpty");
+        }
+        lbIdRemark.setText(remark);
+    }
+
+    /**
+     * Generates an ID that does not exist yet.
+     * @return the suggested ID
+     */
+    private String suggestNewId() {
+        Party[] parties = database.getParties();
+
+        String suggestion = null;
+        for (Party party : parties) {
+            if (suggestion == null) {
+                suggestion = party.getId();
+            } else {
+                if (suggestion.compareTo(party.getId()) < 0) {
+                    suggestion = party.getId();
+                }
+            }
+        }
+        // If suggestion != null, then it contains the largest ID according to the 
+        // lexicographically order. Increase the ID to get a unique ID.
+        if (suggestion != null) {
+            StringBuilder sb = new StringBuilder(suggestion);
+            int index = sb.length() - 1;
+            boolean done = false;
+            while (!done && index >= 0) {
+                char c = (char) (sb.charAt(index) + 1);
+                if (c == (char)('9' + 1)) {
+                    c = '0';
+                } else if (c == (char)('z' + 1)) {
+                    c = 'a';
+                } else if (c == (char)('Z' + 1)) {
+                    c = 'A';
+                } else {
+                    done = true;
+                }
+                sb.setCharAt(index, c);
+                index--;
+            }
+            if (!done) {
+                sb.insert(0, '1');
+            }
+            suggestion = sb.toString();
+        } else {
+            suggestion = "001";
+        }
+        return suggestion;
     }
 }
