@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.6 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.7 2008-08-03 09:17:24 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -319,7 +319,7 @@ public class InvoiceGeneratorView extends View {
     	        }
                 
                 if (!line.rbParty.isSelected()) {
-                    descriptions[descriptionIndex] = account.getId() + " - " + account.getName();
+                    descriptions[descriptionIndex] = account.getName();
                     amounts[descriptionIndex] = debet ? amount.negate() : amount;
                     descriptionIndex++;
                 }
