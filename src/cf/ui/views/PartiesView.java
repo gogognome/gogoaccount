@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.18 2008-01-19 16:45:37 sanderk Exp $
+ * $Id: PartiesView.java,v 1.19 2008-08-03 09:17:47 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -415,7 +415,7 @@ public class PartiesView extends View {
      * This method is called when the "add party" button is pressed.
      */
     private void onAddParty() {
-        EditPartyView editPartyView = new EditPartyView(null);
+        EditPartyView editPartyView = new EditPartyView(database, null);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
         
@@ -441,7 +441,7 @@ public class PartiesView extends View {
         }
         
         Party oldParty = partiesTableModel.getParty(row);
-        EditPartyView editPartyView = new EditPartyView(oldParty);
+        EditPartyView editPartyView = new EditPartyView(database, oldParty);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
         
