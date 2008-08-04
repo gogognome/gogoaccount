@@ -1,10 +1,14 @@
 /*
- * $Id: PartiesView.java,v 1.19 2008-08-03 09:17:47 sanderk Exp $
+ * $Id: PartiesView.java,v 1.20 2008-08-04 20:43:28 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
+import cf.engine.Database;
+import cf.engine.DatabaseModificationFailedException;
+import cf.engine.Party;
+import cf.engine.PartySearchCriteria;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -20,7 +24,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Date;
-
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -37,7 +40,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
-
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewDialog;
@@ -47,10 +49,6 @@ import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
-import cf.engine.Database;
-import cf.engine.DatabaseModificationFailedException;
-import cf.engine.Party;
-import cf.engine.PartySearchCriteria;
 
 /**
  * This class implements a view for adding, removing, editing and (optionally) selecting parties.
@@ -60,27 +58,27 @@ import cf.engine.PartySearchCriteria;
 public class PartiesView extends View {
 
     private PartiesTableModel partiesTableModel;
-    
+
     private JTable table;
-    
+
     /** The database whose parties are to be shown and changed. */
     private Database database;
-    
-    /** The date model that determines the date for the balance of the parties. */  
+
+    /** The date model that determines the date for the balance of the parties. */
     private DateModel dateModel;
 
     /** Indicates whether this view should also allow the user to select a party. */
     private boolean selectioEnabled;
-    
-    /** 
-     * Indicates that multiple parties can be selected (<code>true</code>) or at most 
-     * one party (<code>false</code>). 
+
+    /**
+     * Indicates that multiple parties can be selected (<code>true</code>) or at most
+     * one party (<code>false</code>).
      */
     private boolean multiSelectionEnabled;
-    
+
     /** The parties selected by the user or <code>null</code> if no party has been selected. */
     private Party[] selectedParties;
-    
+
     private JTextField tfId;
     private JTextField tfName;
     private JTextField tfAddress;
@@ -88,18 +86,18 @@ public class PartiesView extends View {
     private JTextField tfCity;
     private JComboBox cmbType;
     private DateSelectionBean dsbBirthDate;
-    
+
     private DateModel birthDateModel;
 
     /** Text area that shows the description in the result details. */
     private JTextArea taRemarks;
-    
+
     private JButton btSearch;
     private JButton btSelect;
-    
+
     /** Focus listener used to change the deafult button. */
     private FocusListener focusListener;
-    
+
     /**
      * Constructor for a parties view in which at most one party can be selected.
      * @param database the database used to search for parties and to add, delete or update parties from.
@@ -115,8 +113,8 @@ public class PartiesView extends View {
      * @param database the database used to search for parties and to add, delete or update parties from.
      * @param selectioEnabled <code>true</code> if the user should be able to select a party;
      *         <code>false</code> if the user cannot select a party
-     * @param multiSelectionEnabled indicates that multiple parties can be selected (<code>true</code>) or 
-     *         at most one party (<code>false</code>) 
+     * @param multiSelectionEnabled indicates that multiple parties can be selected (<code>true</code>) or
+     *         at most one party (<code>false</code>)
      */
     public PartiesView(Database database, boolean selectionEnabled, boolean multiSelectionEnabled) {
         this.database = database;
@@ -129,6 +127,7 @@ public class PartiesView extends View {
     /* (non-Javadoc)
      * @see nl.gogognome.framework.View#getTitle()
      */
+    @Override
     public String getTitle() {
         return TextResource.getInstance().getString("partiesView.title");
     }
@@ -136,6 +135,7 @@ public class PartiesView extends View {
     /* (non-Javadoc)
      * @see nl.gogognome.framework.View#onInit()
      */
+    @Override
     public void onInit() {
         // Create button panel
         WidgetFactory wf = WidgetFactory.getInstance();
@@ -144,7 +144,7 @@ public class PartiesView extends View {
                 onAddParty();
             }
         });
-        
+
         JButton editButton = wf.createButton("partiesView.editParty", new AbstractAction() {
             public void actionPerformed(ActionEvent evt) {
                 onEditParty();
@@ -160,7 +160,7 @@ public class PartiesView extends View {
                 onSelectParty();
             }
         });
-        
+
         JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 0, 5));
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
@@ -169,79 +169,80 @@ public class PartiesView extends View {
             buttonPanel.add(new JLabel());
             buttonPanel.add(btSelect);
         }
-        
+
         setLayout(new GridBagLayout());
-        add(createPanel(), SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 1.0, 
+        add(createPanel(), SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 1.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH, 12, 12, 12, 12));
-        add(buttonPanel, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0, 
+        add(buttonPanel, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0,
             GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 12, 12, 12));
-        
+
         setDefaultButton(btSearch);
     }
 
     /**
      * Creates the panel with search criteria and the table with
      * found parties.
-     * 
+     *
      * @return the panel
      */
     private JPanel createPanel() {
         WidgetFactory wf = WidgetFactory.getInstance();
         TextResource tr =  TextResource.getInstance();
-        
+
         // Create the criteria panel
         JPanel criteriaPanel = new JPanel(new GridBagLayout());
         criteriaPanel.setBorder(new TitledBorder(
-                tr.getString("partiesView.searchCriteria"))); 
-	   
+                tr.getString("partiesView.searchCriteria")));
+
         focusListener = new FocusAdapter() {
 
+            @Override
             public void focusGained(FocusEvent e) {
                 setDefaultButton(btSearch);
             }
         };
-        
+
         int row = 0;
         tfId = new JTextField();
         tfId.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.id", tfId), 
+        criteriaPanel.add(wf.createLabel("partiesView.id", tfId),
                 SwingUtils.createLabelGBConstraints(0, row));
-        criteriaPanel.add(tfId, 
+        criteriaPanel.add(tfId,
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         tfName = new JTextField();
         tfName.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.name", tfName), 
+        criteriaPanel.add(wf.createLabel("partiesView.name", tfName),
                 SwingUtils.createLabelGBConstraints(0, row));
-        criteriaPanel.add(tfName, 
+        criteriaPanel.add(tfName,
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         tfAddress = new JTextField();
         tfAddress.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.address", tfAddress), 
+        criteriaPanel.add(wf.createLabel("partiesView.address", tfAddress),
                 SwingUtils.createLabelGBConstraints(0, row));
-        criteriaPanel.add(tfAddress, 
+        criteriaPanel.add(tfAddress,
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         tfZipCode = new JTextField();
         tfZipCode.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.zipCode", tfZipCode), 
+        criteriaPanel.add(wf.createLabel("partiesView.zipCode", tfZipCode),
                 SwingUtils.createLabelGBConstraints(0, row));
-        criteriaPanel.add(tfZipCode, 
+        criteriaPanel.add(tfZipCode,
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         tfCity = new JTextField();
         tfCity.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.city", tfCity), 
+        criteriaPanel.add(wf.createLabel("partiesView.city", tfCity),
                 SwingUtils.createLabelGBConstraints(0, row));
-        criteriaPanel.add(tfCity, 
+        criteriaPanel.add(tfCity,
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         birthDateModel = new DateModel();
         dsbBirthDate = new DateSelectionBean(birthDateModel);
         dsbBirthDate.addFocusListener(focusListener);
@@ -262,7 +263,7 @@ public class PartiesView extends View {
             criteriaPanel.add(cmbType, SwingUtils.createTextFieldGBConstraints(1, row));
             row++;
         }
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = wf.createAction("partiesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
@@ -271,30 +272,30 @@ public class PartiesView extends View {
             }
         });
         btSearch = new JButton(actionWrapper);
-        
+
         buttonPanel.add(btSearch);
         criteriaPanel.add(buttonPanel,
-                SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0, 
-                        GridBagConstraints.EAST, GridBagConstraints.NONE, 
+                SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
+                        GridBagConstraints.EAST, GridBagConstraints.NONE,
                         5, 0, 0, 0));
-        
+
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
         resultPanel.setBorder(new CompoundBorder(new TitledBorder(tr.getString("partiesView.foundParties")),
-            new EmptyBorder(5, 12, 5, 12))); 
+            new EmptyBorder(5, 12, 5, 12)));
 
         partiesTableModel = new PartiesTableModel();
         table = new JTable(partiesTableModel);
         table.setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane scrollPane = new JScrollPane(table);
         table.getColumnModel().getColumn(0).setPreferredWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(200);
         table.getColumnModel().getColumn(2).setPreferredWidth(200);
         table.getColumnModel().getColumn(3).setPreferredWidth(80);
         table.getColumnModel().getColumn(4).setPreferredWidth(100);
         table.getColumnModel().getColumn(5).setPreferredWidth(100);
-        
+
         table.addKeyListener(new KeyAdapter() {
+            @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                     if (selectioEnabled) {
@@ -305,8 +306,9 @@ public class PartiesView extends View {
                 }
             }
         });
-        
+
         table.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseReleased(MouseEvent e) {
                 if (e.getClickCount() == 2) {
                     if (selectioEnabled) {
@@ -317,7 +319,7 @@ public class PartiesView extends View {
                 }
             }
         });
-        
+
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
                 int row = table.getSelectedRow();
@@ -328,37 +330,38 @@ public class PartiesView extends View {
                 }
             }
         });
-        
+
+        JScrollPane scrollPane = new JScrollPane(table);
+//        scrollPane.setMinimumSize(new Dimension(500, 100));
         resultPanel.add(scrollPane, BorderLayout.CENTER);
-        
+
         // Create details panel
         JPanel detailPanel = new JPanel(new GridBagLayout());
-        
+
         taRemarks = new JTextArea();
         scrollPane = new JScrollPane(taRemarks);
         scrollPane.setPreferredSize(new Dimension(500, 100));
-        
+
         detailPanel.add(wf.createLabel("partiesView.remarks", taRemarks),
-            SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0, 
+            SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 0, 0, 12));
         detailPanel.add(scrollPane, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,
             GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, 12, 0, 12, 12));
 
         resultPanel.add(detailPanel, BorderLayout.SOUTH);
-        
+
         // Create a panel containing the search criteria and result panels
-        JPanel result = new JPanel(new GridBagLayout());
-        result.add(criteriaPanel,
-                SwingUtils.createTextFieldGBConstraints(0, 0));
-        result.add(resultPanel,
-                SwingUtils.createTextFieldGBConstraints(0, 1));
-        
+        JPanel result = new JPanel(new BorderLayout());
+        result.add(criteriaPanel, BorderLayout.NORTH);
+        result.add(resultPanel, BorderLayout.CENTER);
+
         return result;
     }
 
     /**
      * @see nl.gogognome.framework.View#onClose()
      */
+    @Override
     public void onClose() {
         tfId.removeFocusListener(focusListener);
         tfName.removeFocusListener(focusListener);
@@ -373,8 +376,8 @@ public class PartiesView extends View {
     }
 
     /**
-     * Searches for matching parties. The entered search criteria are used 
-     * to find parties. The matching parties are shown in the table. 
+     * Searches for matching parties. The entered search criteria are used
+     * to find parties. The matching parties are shown in the table.
      */
     private void onSearch() {
         PartySearchCriteria searchCriteria = new PartySearchCriteria();
@@ -400,17 +403,17 @@ public class PartiesView extends View {
         if (cmbType.getSelectedIndex() > 0) {
             searchCriteria.setType((String)cmbType.getSelectedItem());
         }
-        
+
         partiesTableModel.setParties(database.getParties(searchCriteria));
         table.getSelectionModel().setSelectionInterval(0, 0);
         table.requestFocusInWindow();
-        
+
         // Update the default button if the select button is present
         if (btSelect != null) {
             setDefaultButton(btSelect);
         }
     }
-    
+
     /**
      * This method is called when the "add party" button is pressed.
      */
@@ -418,13 +421,13 @@ public class PartiesView extends View {
         EditPartyView editPartyView = new EditPartyView(database, null);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
-        
+
         Party party = editPartyView.getEnteredParty();
         if (party != null) {
             try {
                 database.addParty(party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning", 
+                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning",
                     TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
             }
         }
@@ -439,18 +442,18 @@ public class PartiesView extends View {
         if (row == -1) {
             return;
         }
-        
+
         Party oldParty = partiesTableModel.getParty(row);
         EditPartyView editPartyView = new EditPartyView(database, oldParty);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
-        
+
         Party party = editPartyView.getEnteredParty();
         if (party != null) {
             try {
                 database.updateParty(oldParty, party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning", 
+                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning",
                     TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
             }
         }
@@ -467,16 +470,16 @@ public class PartiesView extends View {
         if (row == -1) {
             return;
         }
-        
+
         Party party = partiesTableModel.getParty(row);
-        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.warning", 
-            TextResource.getInstance().getString("partiesView.areYouSurePartyIsDeleted", party.getName()), 
+        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.warning",
+            TextResource.getInstance().getString("partiesView.areYouSurePartyIsDeleted", party.getName()),
             new String[] { "gen.yes", "gen.no" });
         if (messageDialog.getSelectedButton() == 0) {
             try {
                 database.removeParty(party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning", 
+                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning",
                     TextResource.getInstance().getString("partiesView.partyCouldNotBeDeleted"));
             }
         }
@@ -494,7 +497,7 @@ public class PartiesView extends View {
         }
         closeAction.actionPerformed(null);
     }
-    
+
     /**
      * Gets the parties that were selected by the user.
      * @return the parties or <code>null</code> if no party has been selected
@@ -502,7 +505,7 @@ public class PartiesView extends View {
     public Party[] getSelectedParties() {
         return selectedParties;
     }
-    
+
     /** The table model that shows information about the parties. */
     private static class PartiesTableModel extends AbstractTableModel {
 
@@ -517,7 +520,7 @@ public class PartiesView extends View {
             this.parties = parties;
             fireTableDataChanged();
         }
-        
+
         /**
          * Gets the party for the specified row.
          * @param row the row
@@ -525,9 +528,10 @@ public class PartiesView extends View {
         public Party getParty(int row) {
             return parties[row];
         }
-        
+
+        @Override
         public String getColumnName(int columnIndex) {
-            String id; 
+            String id;
             switch(columnIndex) {
             case 0: id = "gen.id"; break;
             case 1: id = "gen.name"; break;
@@ -537,12 +541,12 @@ public class PartiesView extends View {
             case 5: id = "gen.birthDate"; break;
             case 6: id = "gen.type"; break;
             case 7: id = "gen.remarks"; break;
-            default: 
+            default:
                 id = null;
             }
             return TextResource.getInstance().getString(id);
         }
-        
+
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnCount()
          */
@@ -584,6 +588,6 @@ public class PartiesView extends View {
             default: return null;
             }
         }
-        
+
     }
 }
