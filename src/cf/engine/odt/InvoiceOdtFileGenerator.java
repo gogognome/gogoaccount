@@ -12,20 +12,34 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
+import nl.gogognome.xml.GNodeList;
+import nl.gogognome.xml.XmlUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
 
@@ -76,8 +90,6 @@ public class InvoiceOdtFileGenerator {
     public void generateInvoices(String templateFileName, String odtFileName,
             Invoice[] invoices, Date date, String concerning, String ourReference,
             Date dueDate) throws IOException {
-        TextResource tr = TextResource.getInstance();
-
         zipOutputStream = new ZipOutputStream(new BufferedOutputStream(
             new FileOutputStream(odtFileName)));
         try {
@@ -118,7 +130,6 @@ public class InvoiceOdtFileGenerator {
      * @throws IOException if an I/O problem occurs
      */
     private void copyZipEntry(ZipEntry zipEntry) throws IOException {
-        System.out.println("copying " + zipEntry.getName());
         zipOutputStream.putNextEntry(new ZipEntry(zipEntry));
         byte[] buffer = new byte[16384];
         for (int bytesRead = zipInputStream.read(buffer); bytesRead != -1; bytesRead = zipInputStream.read(buffer)) {
@@ -139,18 +150,194 @@ public class InvoiceOdtFileGenerator {
      */
     private void copyContentXml(ZipEntry zipEntry, Invoice[] invoices, Date dueDate,
             String concerning) throws IOException {
+        zipOutputStream.putNextEntry(new ZipEntry(zipEntry));
+
         DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder;
         try {
             docBuilder = docBuilderFac.newDocumentBuilder();
-            Document doc = docBuilder.parse(zipInputStream);
+            Document doc = docBuilder.parse(new UncloseableInputStream(zipInputStream));
             Element rootElement = doc.getDocumentElement();
+            List<Element> textElements = XmlUtil.getChildElementByTagNames(rootElement, "office:body/office:text");
+            if (textElements.size() != 1) {
+                throw new IOException("Expected 1 text element but found " + textElements.size() + " elements");
+            }
+
+            // Determine the nodes that together form the template of a single invoice.
+            ArrayList<Node> invoiceNodes = new ArrayList<Node>(100);
+            Element textElement = textElements.get(0);
+            for (Node node : new GNodeList(textElement.getChildNodes())) {
+                if (node.getNodeName().startsWith("text:") && !("text:sequence-decls".equals(node.getNodeName()))) {
+                    invoiceNodes.add(node);
+                }
+            }
+
+            for (Node node : invoiceNodes) {
+                textElement.removeChild(node);
+            }
+
+            // Generate the nodes for each invoice.
+            for (Invoice invoice : invoices) {
+                for (Node node : invoiceNodes) {
+                    if (isInvoiceItemnode(node)) {
+                        List<Node> invoiceItemNodes = getInvoiceItemNodes(node, invoice);
+                        for (Node invoiceItemNode : invoiceItemNodes) {
+                            textElement.appendChild(invoiceItemNode);
+                        }
+                    } else {
+                        textElement.appendChild(applySubstitutions(node, invoice, concerning, dueDate));
+                    }
+                }
+            }
+
+            // Write modified XML file to the output stream
+            TransformerFactory tFactory = TransformerFactory.newInstance();
+            Transformer transformer;
+            try {
+                transformer = tFactory.newTransformer();
+            } catch (TransformerConfigurationException e) {
+                throw new IOException("Failed to obtain a transformer: " + e.getMessage());
+            }
+            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(zipOutputStream);
+            try {
+                transformer.transform(source, result);
+            } catch (TransformerException e) {
+                throw new IOException("Failed to write XML file: " + e.getMessage());
+            }
+
         } catch (ParserConfigurationException e) {
             throw new IOException("Could not parse content.xml: " + e.getMessage());
         } catch (SAXException e) {
             throw new IOException("Could not parse content.xml: " + e.getMessage());
         }
-        // TODO Continue here!!
+    }
+
+    /**
+     * Replace keywords in the node's texts by attributes of the specified invoice.
+     * @param node the node
+     * @param invoice the invoice
+     * @param concerning TODO
+     * @param dueDate  TODO
+     * @return the new node that is created by the substition process
+     */
+    private Node applySubstitutions(Node node, Invoice invoice, String concerning, Date dueDate) {
+        TextResource tr = TextResource.getInstance();
+        Node result = node.cloneNode(true);
+        LinkedList<Node> nodesToProcess = new LinkedList<Node>();
+        nodesToProcess.add(result);
+        while (!nodesToProcess.isEmpty()) {
+            Node curNode = nodesToProcess.removeFirst();
+            nodesToProcess.addAll(new GNodeList(curNode.getChildNodes()));
+            if (curNode instanceof Text) {
+                Text textNode = (Text) curNode;
+                String data = textNode.getData();
+
+                StringBuilder sb = new StringBuilder(data.length() * 2);
+                sb.append(data);
+                replace(sb, "$date$", tr.formatDate("gen.dateFormat", new Date()));
+                replace(sb, "$party-name$", invoice.getConcerningParty().getName());
+                replace(sb, "$party-id$", invoice.getConcerningParty().getId());
+                replace(sb, "$party-address$", invoice.getConcerningParty().getAddress());
+                replace(sb, "$party-zip$", invoice.getConcerningParty().getZipCode());
+                replace(sb, "$party-city$", invoice.getConcerningParty().getCity());
+                replace(sb, "$concerning$", concerning);
+                replace(sb, "$our-reference$", invoice.getId());
+                replace(sb, "$due-date$", tr.formatDate("gen.dateFormat", dueDate));
+                replace(sb, "$total-amount$", formatAmountForOdt(invoice.getRemainingAmountToBePaid()));
+
+                String newData = sb.toString();
+                if (!newData.equals(data)) {
+                    textNode.setData(newData);
+                }
+            }
+
+        }
+        return result;
+    }
+
+    /**
+     * Creates a list of nodes. For each item or payment of the invoice a node
+     * is added to the list.
+     * @param invoiceItemNode the template node that is used to create the invoice nodes
+     * @param invoice the invoice
+     * @return the list of nodes
+     */
+    private List<Node> getInvoiceItemNodes(Node invoiceItemNode, Invoice invoice) {
+        TextResource tr = TextResource.getInstance();
+        List<Node> result = new ArrayList<Node>(10);
+
+        String[] descriptions = invoice.getDescriptions();
+        Amount[] amounts = invoice.getAmounts();
+        for (int i=0; i<invoice.getDescriptions().length; i++) {
+            String formattedDate = tr.formatDate("gen.dateFormat", invoice.getIssueDate());
+            String formattedAmount = amounts[i] != null ? formatAmountForOdt(amounts[i]) : "";
+            result.add(applyInvoiceItemSubstitutions(invoiceItemNode, formattedDate, descriptions[i], formattedAmount));
+        }
+
+        Payment[] payments = invoice.getPayments();
+        for (int i = 0; i < payments.length; i++) {
+            String formattedDate = tr.formatDate("gen.dateFormat", payments[i].getDate());
+            String formattedAmount = formatAmountForOdt(payments[i].getAmount().negate());
+            result.add(applyInvoiceItemSubstitutions(invoiceItemNode, formattedDate, payments[i].getDescription(), formattedAmount));
+        }
+        return result;
+    }
+
+    /**
+     * Replace keywords in the node's texts by attributes of the specified invoice item.
+     * @param node the node
+     * @param date the date
+     * @param description the description
+     * @param amount the amount to be paid
+     * @return the new node that is created by the substition process
+     */
+    private Node applyInvoiceItemSubstitutions(Node node, String date, String description, String amount) {
+        Node result = node.cloneNode(true);
+        LinkedList<Node> nodesToProcess = new LinkedList<Node>();
+        nodesToProcess.add(result);
+        while (!nodesToProcess.isEmpty()) {
+            Node curNode = nodesToProcess.removeFirst();
+            nodesToProcess.addAll(new GNodeList(curNode.getChildNodes()));
+            if (curNode instanceof Text) {
+                Text textNode = (Text) curNode;
+                String data = textNode.getData();
+
+                StringBuilder sb = new StringBuilder(data.length() * 2);
+                sb.append(data);
+                replace(sb, "$item-line$", "");
+                replace(sb, "$item-date$", date);
+                replace(sb, "$item-description$", description);
+                replace(sb, "$item-amount$", amount);
+
+                String newData = sb.toString();
+                if (!newData.equals(data)) {
+                    textNode.setData(newData);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Determines whether the specified node is the invoice item node, i.e. whether
+     * the node contains the <code>$item-line$</code> keyword.
+     * @param node the node
+     * @return <code>true</code> if the node is the invoice item node;
+     *         <code>false</code> otherwise
+     */
+    private boolean isInvoiceItemnode(Node node) {
+        boolean result = false;
+        if (node instanceof Text) {
+            result = result || ((Text)node).getData().contains("$item-line$");
+        }
+        for (Node childNode : new GNodeList(node.getChildNodes())) {
+            result = result || isInvoiceItemnode(childNode);
+        }
+        return result;
     }
 
     /**
@@ -170,65 +357,6 @@ public class InvoiceOdtFileGenerator {
     }
 
     /**
-     * Writes an invoice to the Odt file.
-     * @param invoice the invoice to be written
-     * @param dueDate the due date of the invoice
-     * @param concerning describes what the invoice is about
-     */
-    private void writeInvoiceToOdtFile(Invoice invoice, Date dueDate, String concerning) {
-        StringBuilder sb;
-        TextResource tr = TextResource.getInstance();
-        for (int lineIndex=letterStart; lineIndex<letterEnd; lineIndex++) {
-            sb = new StringBuilder(1000);
-            String line = templateContents.get(lineIndex);
-            sb.append(line);
-
-            // apply substitutions
-            replace(sb, "$date$", tr.formatDate("gen.dateFormat", new Date()));
-            replace(sb, "$party-name$", invoice.getConcerningParty().getName());
-            replace(sb, "$party-id$", invoice.getConcerningParty().getId());
-            replace(sb, "$party-address$", invoice.getConcerningParty().getAddress());
-            replace(sb, "$party-zip$", invoice.getConcerningParty().getZipCode());
-            replace(sb, "$party-city$", invoice.getConcerningParty().getCity());
-            replace(sb, "$concerning$", concerning);
-            replace(sb, "$our-reference$", invoice.getId());
-            replace(sb, "$due-date$", tr.formatDate("gen.dateFormat", dueDate));
-            replace(sb, "$total-amount$", formatAmountForOdt(invoice.getRemainingAmountToBePaid()));
-            int index = sb.indexOf("$item-line$");
-            if (index != -1) {
-                sb.delete(index, index + "$item-line$".length());
-                StringBuilder itemLineTemplate = new StringBuilder(sb.toString());
-                sb.setLength(0);
-
-                String[] descriptions = invoice.getDescriptions();
-                Amount[] amounts = invoice.getAmounts();
-                for (int i=0; i<invoice.getDescriptions().length; i++) {
-                    StringBuilder tempBuffer = new StringBuilder();
-                    tempBuffer.append(itemLineTemplate);
-                    replace(tempBuffer, "$item-description$", descriptions[i]);
-                    String formattedAmount = amounts[i] != null ? formatAmountForOdt(amounts[i]) : "";
-                    replace(tempBuffer, "$item-amount$", formattedAmount);
-                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", invoice.getIssueDate()));
-                    sb.append(tempBuffer);
-                }
-
-                Payment[] payments = invoice.getPayments();
-                for (int i = 0; i < payments.length; i++) {
-                    StringBuilder tempBuffer = new StringBuilder();
-                    tempBuffer.append(itemLineTemplate);
-                    replace(tempBuffer, "$item-description$", payments[i].getDescription());
-                    String formattedAmount = formatAmountForOdt(payments[i].getAmount().negate());
-                    replace(tempBuffer, "$item-amount$", formattedAmount);
-                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", payments[i].getDate()));
-                    sb.append(tempBuffer);
-                }
-            }
-
-            odtPrintWriter.println(sb.toString());
-        }
-    }
-
-    /**
      * Replaces all occurrences of <code>oldValue</code> with <code>newValue</code>
      * in the specified string buffer.
      * @param sb the string buffer
@@ -241,6 +369,87 @@ public class InvoiceOdtFileGenerator {
         }
         for (int index = sb.indexOf(oldValue); index != -1; index = sb.indexOf(oldValue)) {
             sb.replace(index, index + oldValue.length(), newValue);
+        }
+    }
+
+    private static class UncloseableInputStream extends InputStream {
+
+        private InputStream wrappedStream;
+
+        public UncloseableInputStream(InputStream wrappedStream) {
+            this.wrappedStream = wrappedStream;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int available() throws IOException {
+            return wrappedStream.available();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void close() throws IOException {
+            // does nothing. This is the reason why this class was created.
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void mark(int readlimit) {
+            wrappedStream.mark(readlimit);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public boolean markSupported() {
+            return wrappedStream.markSupported();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int read() throws IOException {
+            return wrappedStream.read();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int read(byte[] b) throws IOException {
+            return wrappedStream.read(b);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            return wrappedStream.read(b, off, len);
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void reset() throws IOException {
+            wrappedStream.reset();
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public long skip(long n) throws IOException {
+            return wrappedStream.skip(n);
         }
     }
 }
