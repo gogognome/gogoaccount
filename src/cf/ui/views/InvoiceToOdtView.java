@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceToOdtView.java,v 1.2 2008-07-31 20:17:34 sanderk Exp $
+ * $Id: InvoiceToOdtView.java,v 1.3 2008-09-13 11:53:46 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -138,7 +138,6 @@ public class InvoiceToOdtView extends View {
                 SwingUtils.createLabelGBConstraints(0, 0));
 
         tfTemplateFileName = wf.createTextField(30);
-        tfTemplateFileName.setText("c:\\temp\\template.odt"); // TEST CODE
         panel.add(tfTemplateFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
 
@@ -158,7 +157,6 @@ public class InvoiceToOdtView extends View {
         panel.add(wf.createLabel("invoiceToOdtView.odtFileName"),
                 SwingUtils.createLabelGBConstraints(0, 1));
         tfOdtFileName = wf.createTextField(30);
-        tfOdtFileName.setText("c:\\temp\\factuur.odt"); // TEST CODE
         panel.add(tfOdtFileName,
             SwingUtils.createTextFieldGBConstraints(1, 1));
 
