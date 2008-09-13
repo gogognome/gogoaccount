@@ -56,26 +56,6 @@ public class InvoiceOdtFileGenerator {
     /** The outputstream of the ODT file. */
     private ZipOutputStream zipOutputStream;
 
-    /** The contents of the template file. */
-    private ArrayList<String> templateContents;
-
-    /**
-     * Indicates the start of a single letter in the <code>templateContents</code>.
-     * The letter consists of the elements with indices
-     * <code>[letterStart..letterEnd)</code>.
-     */
-    private int letterStart;
-
-    /**
-     * Indicates the end of a single letter in the <code>templateContents</code>.
-     * The letter consists of the elements with indices
-     * <code>[letterStart..letterEnd)</code>.
-     */
-    private int letterEnd;
-
-    /** The <code>PrintWriter</code> used to write the Odt file. */
-    private PrintWriter odtPrintWriter;
-
     /**
      * @param templateFileName the file name of the template
      * @param odtFileName the file name of the ODT file to be created
@@ -351,7 +331,7 @@ public class InvoiceOdtFileGenerator {
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         String currency = amount.getCurrency().getSymbol();
         if (currency.equals("EUR")) {
-            currency = "\\euro";
+            currency = "\u20AC";
         }
         return af.formatAmount(amount, currency);
     }
