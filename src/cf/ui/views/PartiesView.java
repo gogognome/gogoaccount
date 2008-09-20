@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesView.java,v 1.20 2008-08-04 20:43:28 sanderk Exp $
+ * $Id: PartiesView.java,v 1.21 2008-09-20 11:57:05 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -23,6 +23,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Comparator;
 import java.util.Date;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -40,15 +41,20 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
+
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.ActionWrapper;
 import nl.gogognome.swing.MessageDialog;
+import nl.gogognome.swing.SortedTable;
+import nl.gogognome.swing.SortedTableModel;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
+import nl.gogognome.util.DateUtil;
 
 /**
  * This class implements a view for adding, removing, editing and (optionally) selecting parties.
@@ -59,7 +65,7 @@ public class PartiesView extends View {
 
     private PartiesTableModel partiesTableModel;
 
-    private JTable table;
+    private SortedTable table;
 
     /** The database whose parties are to be shown and changed. */
     private Database database;
@@ -285,16 +291,10 @@ public class PartiesView extends View {
             new EmptyBorder(5, 12, 5, 12)));
 
         partiesTableModel = new PartiesTableModel();
-        table = new JTable(partiesTableModel);
-        table.setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-        table.getColumnModel().getColumn(0).setPreferredWidth(40);
-        table.getColumnModel().getColumn(1).setPreferredWidth(200);
-        table.getColumnModel().getColumn(2).setPreferredWidth(200);
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);
-        table.getColumnModel().getColumn(4).setPreferredWidth(100);
-        table.getColumnModel().getColumn(5).setPreferredWidth(100);
+        table = WidgetFactory.getInstance().createSortedTable(partiesTableModel);
+        table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
-        table.addKeyListener(new KeyAdapter() {
+        table.getComponent().addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -307,7 +307,7 @@ public class PartiesView extends View {
             }
         });
 
-        table.addMouseListener(new MouseAdapter() {
+        table.getComponent().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -322,16 +322,16 @@ public class PartiesView extends View {
 
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
-                int row = table.getSelectedRow();
-                if (row != -1) {
-                    taRemarks.setText(partiesTableModel.getParty(row).getRemarks());
+                int[] rows = table.getSelectedRows();
+                if (rows.length == 1) {
+                    taRemarks.setText(partiesTableModel.getParty(rows[0]).getRemarks());
                 } else {
                     taRemarks.setText("");
                 }
             }
         });
 
-        JScrollPane scrollPane = new JScrollPane(table);
+        JScrollPane scrollPane = new JScrollPane(table.getComponent());
 //        scrollPane.setMinimumSize(new Dimension(500, 100));
         resultPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -406,7 +406,7 @@ public class PartiesView extends View {
 
         partiesTableModel.setParties(database.getParties(searchCriteria));
         table.getSelectionModel().setSelectionInterval(0, 0);
-        table.requestFocusInWindow();
+        table.getComponent().requestFocusInWindow();
 
         // Update the default button if the select button is present
         if (btSelect != null) {
@@ -438,12 +438,12 @@ public class PartiesView extends View {
      * This method is called when the "edit party" button is pressed.
      */
     private void onEditParty() {
-        int row = table.getSelectedRow();
-        if (row == -1) {
+        int rows[] = table.getSelectedRows();
+        if (rows.length == 0) {
             return;
         }
 
-        Party oldParty = partiesTableModel.getParty(row);
+        Party oldParty = partiesTableModel.getParty(rows[0]);
         EditPartyView editPartyView = new EditPartyView(database, oldParty);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
@@ -459,19 +459,19 @@ public class PartiesView extends View {
         }
         onSearch();
         // Select the row that has been edited.
-        table.getSelectionModel().setSelectionInterval(row, row);
+        table.getSelectionModel().setSelectionInterval(rows[0], rows[0]);
     }
 
     /**
      * This method is called when the "delete party" button is pressed.
      */
     private void onDeleteParty() {
-        int row = table.getSelectedRow();
-        if (row == -1) {
+        int rows[] = table.getSelectedRows();
+        if (rows.length == 0) {
             return;
         }
 
-        Party party = partiesTableModel.getParty(row);
+        Party party = partiesTableModel.getParty(rows[0]);
         MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.warning",
             TextResource.getInstance().getString("partiesView.areYouSurePartyIsDeleted", party.getName()),
             new String[] { "gen.yes", "gen.no" });
@@ -507,7 +507,7 @@ public class PartiesView extends View {
     }
 
     /** The table model that shows information about the parties. */
-    private static class PartiesTableModel extends AbstractTableModel {
+    private static class PartiesTableModel extends AbstractTableModel implements SortedTableModel {
 
         /** The parties to be shown. */
         private Party[] parties = new Party[0];
@@ -527,6 +527,13 @@ public class PartiesView extends View {
          */
         public Party getParty(int row) {
             return parties[row];
+        }
+
+        public Class<?> getColumnClass(int columnIndex) {
+            switch(columnIndex) {
+            case 5: return Date.class;
+            default: return String.class;
+            }
         }
 
         @Override
@@ -571,12 +578,7 @@ public class PartiesView extends View {
             case 2: return parties[row].getAddress();
             case 3: return parties[row].getZipCode();
             case 4: return parties[row].getCity();
-            case 5: Date birthDate = parties[row].getBirthDate();
-                if (birthDate != null) {
-                    return TextResource.getInstance().formatDate("gen.dateFormat", birthDate);
-                } else {
-                    return null;
-                }
+            case 5: return parties[row].getBirthDate();
             case 6: return parties[row].getType();
             case 7:
                 String remarks = parties[row].getRemarks();
@@ -589,5 +591,35 @@ public class PartiesView extends View {
             }
         }
 
+        public int getColumnWidth(int column) {
+            switch (column) {
+            case 0: return 40;
+            case 1:
+            case 2: return 200;
+            case 3: return 80;
+            default: return 100;
+            }
+        }
+
+        public Comparator<Object> getComparator(int column) {
+            switch (column) {
+            case 5:
+                return new DateComparator();
+            }
+            return null;
+        }
+
+        public TableCellRenderer getRendererForColumn(int column) {
+            return null;
+        }
+
+        private static class DateComparator implements Comparator<Object> {
+            public int compare(Object o1, Object o2) {
+                Date d1 = (Date) o1;
+                Date d2 = (Date) o2;
+                return DateUtil.compareDayOfYear(d1, d2);
+            }
+            
+        }
     }
 }
