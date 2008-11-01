@@ -1,5 +1,5 @@
 /*
- * $Id: AddressPrintTool.java,v 1.1 2008-01-10 19:18:07 sanderk Exp $
+ * $Id: AddressPrintTool.java,v 1.2 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -75,11 +75,12 @@ public class AddressPrintTool {
         }
         
         Book book = new Book();
+        boolean addExtraPage = true;
         PrintableImpl printable = new PrintableImpl(texts, SwingConstants.RIGHT, SwingConstants.TOP,
-            "/var/lib/defoma/fontconfig.d/T/TimesNewRoman-Regular.ttf", 10);
+            "/var/lib/defoma/fontconfig.d/T/TimesNewRoman-Regular.ttf", 10, addExtraPage);
 //        PrintableImpl printable = new PrintableImpl(texts, SwingConstants.CENTER, SwingConstants.BOTTOM,
 //            "/usr/share/fonts/truetype/ttf-lucida/LucidaBrightDemiItalic.ttf", 20);
-        book.append(printable, new PageFormat(), texts.length);
+        book.append(printable, new PageFormat(), addExtraPage ? 2*texts.length : texts.length);
         PrinterJob printerJob = PrinterJob.getPrinterJob();
         printerJob.setPageable(book);
         boolean doPrint = printerJob.printDialog();
@@ -102,22 +103,37 @@ public class AddressPrintTool {
         private int verticalAlignment;
         private String fontName;
         private int fontSize;
+        private boolean addExtraPage;
         
         public PrintableImpl(String[] texts, int horizontalAlignment, int verticalAlignment,
-                String fontName, int fontSize) {
+                String fontName, int fontSize, boolean addExtraPage) {
             this.texts = texts;
             this.horizontalAlignment = horizontalAlignment;
             this.verticalAlignment = verticalAlignment;
             this.fontName = fontName;
             this.fontSize = fontSize;
+            this.addExtraPage = addExtraPage;
         }
         
         /**
          * @see java.awt.print.Printable#print(java.awt.Graphics, java.awt.print.PageFormat, int)
          */
         public int print(Graphics g, PageFormat format, int pageIndex) throws PrinterException {
-            if (pageIndex >= texts.length) {
+            if (addExtraPage) {
+                if (pageIndex / 2 >= texts.length) {
+                    return Printable.NO_SUCH_PAGE;
+                }
+            } else if (pageIndex >= texts.length) {
                 return Printable.NO_SUCH_PAGE;
+            }
+            
+            if (addExtraPage) {
+                if (pageIndex % 2 == 0) {
+                    // Print empty page
+                    return Printable.PAGE_EXISTS;
+                } else {
+                    pageIndex = pageIndex / 2;
+                }
             }
             
             Graphics2D g2d = (Graphics2D) g;
@@ -165,7 +181,7 @@ public class AddressPrintTool {
 
             switch (verticalAlignment) {
             case SwingConstants.TOP:
-                topY = (int)paper.getImageableY();
+                topY = (int)paper.getImageableY() / 2;
                 break;
             case SwingConstants.BOTTOM:
                 topY = (int)(paper.getImageableY() + paper.getImageableHeight() - height);

@@ -1,5 +1,5 @@
 /*
- * $Id: Invoice.java,v 1.5 2008-01-12 13:41:55 sanderk Exp $
+ * $Id: Invoice.java,v 1.6 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -32,7 +32,12 @@ public class Invoice implements Comparable<Invoice> {
      */
     private Party concerningParty;
 
-    /** The amount to be paid. Negative amounts represent amounts to be received. */
+    /** 
+     * The amount to be paid. Negative amounts represent amounts to be received.
+     * 
+     * <p>This is the actual amount to be paid. This amount may differ from the sum
+     * of the {@link #amounts}.
+     */
     private Amount amountToBePaid;
 
     /** The date this invoice was issued. */
@@ -48,9 +53,10 @@ public class Invoice implements Comparable<Invoice> {
      * Contains amounts that belongs to the descriptions. 
      * If an element is <code>null</code>, then the description has no corresponding amount.
      * 
-     * <p>These amounts can be used to explain the total amount to be paid.
+     * <p>These amounts can be used to explain the total amount to be paid. Not necessarily
+     * will the sum of these amounts be equal to {@link #amountToBePaid}. 
      *  
-     * <p>Invariant: <code>amounts.length == descriptions.length</code> 
+     * <p>Invariant: <code>amounts.length == descriptions.length</code>
      */
     private Amount[] amounts;
 
@@ -212,7 +218,7 @@ public class Invoice implements Comparable<Invoice> {
     }
     
     /**
-     * Compares another invoice to this invoice.
+     * Compares another invoice to this invoice. Invoices are ordered by their identifier.
      * @param that the other invoice
      * @return a negative number, zero or a positive number if this invoice is smaller than,
      *         equal to or larger than the other invoice.

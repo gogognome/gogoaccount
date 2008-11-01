@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.35 2008-03-10 21:18:22 sanderk Exp $
+ * $Id: Database.java,v 1.36 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -54,6 +54,9 @@ public class Database {
     
     /** Maps ids of invoices to <code>Invoice</code> instances. */
     private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<String, Invoice>();
+    
+    /** Contains the next payment identifier. */
+    private String nextPaymentId = "p1";
     
     /** 
      * Contains the start date of the account period.
@@ -330,7 +333,7 @@ public class Database {
         JournalItem[] items = journal.getItems();
         for (int i = 0; i < items.length; i++) {
             Invoice invoice = getInvoice(items[i].getInvoiceId());
-            if (invoice != null && !items[i].hasInvoiceCreation()) {
+            if (invoice != null) {
                 Payment payment = createPaymentForJournalItem(journal, items[i]);
                 updateInvoiceWithoutChangeNotification(invoice, invoice.addPayment(payment));
             }
@@ -357,7 +360,7 @@ public class Database {
      * @param journalItem the journal item
      * @return the payment
      */
-    private static Payment createPaymentForJournalItem(Journal journal, JournalItem journalItem) {
+    private Payment createPaymentForJournalItem(Journal journal, JournalItem journalItem) {
         Amount amount;
         if (journalItem.isDebet()) {
             amount = journalItem.getAmount();
@@ -365,8 +368,40 @@ public class Database {
             amount = journalItem.getAmount().negate();
         }
         Date date = journal.getDate();
-        String description = journalItem.getAccount().getId() + " - " + journalItem.getAccount().getName();
-        return new Payment(amount, date, description);
+        String description = journalItem.getAccount().getName();
+        return new Payment(createPaymentId(), amount, date, description);
+    }
+    
+    private String createPaymentId() {
+        String result = nextPaymentId;
+        
+        StringBuilder sb = new StringBuilder(nextPaymentId);
+        char c = sb.charAt(sb.length() - 1);
+        if (c < '0' || c > '9') {
+            sb.append('0');
+        }
+        int index = sb.length() - 1;
+        boolean done;
+        do {
+            c = sb.charAt(index);
+            c++;
+            if (c <= '9') {
+                sb.setCharAt(index, c);
+                done = true;
+            } else {
+                sb.setCharAt(index, '0');
+                if (index > 0 && sb.charAt(index-1) >= '0' && sb.charAt(index-1) <= '9') {
+                    index--;
+                } else {
+                    sb.insert(index, '0');
+                }
+                done = false;
+            }
+        } while (!done);
+        
+        nextPaymentId = sb.toString();
+        
+        return result;
     }
     
     /** 
@@ -691,6 +726,30 @@ public class Database {
         notifyChange();
     }
 
+    /**
+     * Updates an existing invoice.
+     * @param id the id of the existing invoice
+     * @param newInvoice the new invoice
+     * @throws DatabaseModificationFailedException if no invoice with the specified id exists or if
+     *         the id of the new invoice differs from the id
+     */
+    public void updateInvoice(String id, Invoice newInvoice) throws DatabaseModificationFailedException {
+        if (idsToInvoicesMap.get(id) == null) {
+            throw new DatabaseModificationFailedException("An invoice with ID " + id + " does not exist, so it cannot be updated!");
+        }
+        if (!id.equals(newInvoice.getId())) {
+            throw new DatabaseModificationFailedException("The ID of the updated invoice differs from the original ID. Therefore, the invoice cannot be udpated!");
+        }
+        
+        for (int i=0; i<invoices.size(); i++) {
+            if (id.equals(invoices.get(i).getId())) {
+                invoices.set(i, newInvoice);
+                notifyChange();
+                i = invoices.size();
+            }
+        }
+    }
+    
     /**
      * Sets the invoices for the database. Any invoices present in the database
      * are replaced.

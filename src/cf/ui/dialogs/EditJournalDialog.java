@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalDialog.java,v 1.14 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: EditJournalDialog.java,v 1.15 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -9,9 +9,9 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -63,19 +63,19 @@ public class EditJournalDialog extends OkCancelDialog
     /** The date model used to edit the date. */
     private DateModel dateModel;
     
+    /** If not <code>null</code>, then this is the id of the invoice created by this journal. */
+    private String idOfCreatedInvoice;
+    
     /** The database. */
     private Database database;
     
     /**
      * Contains the journals as edited by the user.
      */
-    private Collection<Journal> enteredJournals = new LinkedList<Journal>();
+    private List<Journal> enteredJournals = new LinkedList<Journal>();
     
     /** Indicates whether the Ok + next button has to be shown. */ 
     private boolean showNextButton;
-    
-    /** Template array used by <code>getEditedJournals()</code>. */
-    private final static Journal[] TEMPLATE = new Journal[0];
     
     /**
      * Constructor.
@@ -105,6 +105,7 @@ public class EditJournalDialog extends OkCancelDialog
         this.parent = parent;
         this.database = database;
         this.showNextButton = showNextButton;
+        this.idOfCreatedInvoice = journal.getIdOfCreatedInvoice();
         initializeDialog(journal.getId(), journal.getDate(), journal.getDescription(),
                 journal.getItems());
     }
@@ -290,7 +291,7 @@ public class EditJournalDialog extends OkCancelDialog
         JournalItem[] items = itemsTableModel.getItems();
 
         try {
-            return new Journal(id, description, date, items);
+            return new Journal(id, description, date, items, idOfCreatedInvoice);
         } 
         catch (IllegalArgumentException e) {
             new MessageDialog(parent, "gen.titleError", 
@@ -336,7 +337,7 @@ public class EditJournalDialog extends OkCancelDialog
      * Gets the journals entered by the user.
      * @return the journals
      */
-    public Journal[] getEditedJournals() {
-        return enteredJournals.toArray(TEMPLATE);
+    public List<Journal> getEditedJournals() {
+        return enteredJournals;
     }
 }

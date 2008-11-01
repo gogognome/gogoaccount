@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsView.java,v 1.3 2008-03-26 21:48:39 sanderk Exp $
+ * $Id: EditJournalsView.java,v 1.4 2008-11-01 13:26:01 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -34,7 +34,9 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.swing.ButtonPanel;
+import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SortedTable;
 import nl.gogognome.swing.SortedTableModel;
 import nl.gogognome.swing.SwingUtils;
@@ -42,6 +44,8 @@ import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
+import cf.engine.DatabaseModificationFailedException;
+import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.Party;
 import cf.ui.dialogs.EditJournalDialog;
@@ -208,15 +212,33 @@ public class EditJournalsView extends View {
         if (row != -1) {
             Journal journal = journalsTableModel.getJournal(row);
             EditJournalDialog dialog = 
-                new EditJournalDialog(getParentFrame(), database, "ejd.editJournal", journal, false);
+                new EditJournalDialog(getParentFrame(), database, "ejd.editJournalTitle", journal, false);
             dialog.showDialog();
-            Journal[] journals = dialog.getEditedJournals();
-            if (journals.length > 0) {
-                if (journals.length != 1) {
+            List<Journal> journals = dialog.getEditedJournals();
+            if (!journals.isEmpty()) {
+                if (journals.size() != 1) {
                     throw new IllegalStateException("journals.length must be 1");
                 }
-                database.updateJournal(journal, journals[0]);
-                updateJournalItemTable(row);
+                Journal newJournal = journals.get(0);
+                if (!journal.equals(newJournal)) {
+                    // the journal was modified
+                    if (journal.createsInvoice()) {
+                        EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle", 
+                            database.getInvoice(journal.getIdOfCreatedInvoice()));
+                        ViewDialog editInvoiceDialog = new ViewDialog(getParentWindow(), editInvoiceView);
+                        editInvoiceDialog.showDialog();
+                        Invoice newInvoice = editInvoiceView.getEditedInvoice();
+                        if (newInvoice != null) {
+                            try {
+                                database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
+                            } catch (DatabaseModificationFailedException e) {
+                                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                            }
+                        }
+                    }
+                    database.updateJournal(journal, newJournal);
+                    updateJournalItemTable(row);
+                }
             }
         }
     }
@@ -227,9 +249,9 @@ public class EditJournalsView extends View {
     private void handleAddItem() {
         EditJournalDialog dialog = new EditJournalDialog(getParentFrame(), database, "ajd.title", true);
         dialog.showDialog();
-        Journal[] journals = dialog.getEditedJournals();
-        for (int i = 0; i < journals.length; i++) {
-            database.addJournal(journals[i], true);
+        List<Journal> journals = dialog.getEditedJournals();
+        for (Journal journal : journals) {
+            database.addJournal(journal, true);
         }
     }
 
@@ -278,7 +300,7 @@ public class EditJournalsView extends View {
          * @see javax.swing.table.TableModel#getColumnCount()
          */
         public int getColumnCount() {
-            return 3;
+            return 4;
         }
 
         /* (non-Javadoc)
@@ -318,6 +340,12 @@ public class EditJournalsView extends View {
             case 2:
                 result = journal.getDescription();
                 break;
+            case 3:
+                String id = journal.getIdOfCreatedInvoice();
+                if (id != null) {
+                    Invoice invoice = database.getInvoice(id);
+                    result = invoice.getId() + " (" + invoice.getConcerningParty().getName() + ")";
+                }
             }
             return result;
         }
@@ -343,6 +371,8 @@ public class EditJournalsView extends View {
             case 2:
                 id = "gen.description";
                 break;
+            case 3:
+                id = "gen.invoice";
             }
             return TextResource.getInstance().getString(id);
         }
@@ -381,6 +411,8 @@ public class EditJournalsView extends View {
             case 2:
                 return 500;
                 
+            case 3:
+                return 200;
             default:
                 throw new IllegalStateException("No width specified for column " + column);
             }

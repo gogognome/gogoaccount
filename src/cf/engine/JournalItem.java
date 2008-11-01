@@ -1,5 +1,5 @@
 /*
- * $Id: JournalItem.java,v 1.9 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: JournalItem.java,v 1.10 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -18,15 +18,12 @@ public class JournalItem
     private Amount amount;
     
     private Account account;
-    
-    private String invoiceId;
-    
-    /** 
-     * If <code>invoiceId != null</code>, then this field indicates whether
-     * this item represents invoice creation (<code>true</code>) or a payment
-     * (<code>false</code>).
+
+    /**
+     * The id of the invoice to which the amount is booked as payment;
+     * <code>null</code> if no invoice is involved.
      */
-    private boolean invoiceCreation;
+    private String invoiceId;
     
     /** 
      * Indicates whether the amount in this items is booked on the
@@ -40,19 +37,14 @@ public class JournalItem
      * @param account the account on which the amount is booked 
      * @param debet true if the amount is booked on the debet side; false if
      *              the amount is booked on the credit side 
-     * @param invoiceId the id of the invoice to which the amount is booked;
+     * @param invoiceId the id of the invoice to which the amount is booked as payment;
      *              <code>null</code> if no invoice is involved.
-     * @param invoiceCreation if <code>invoiceId != null</code>, then this parameter 
-     *        indicates whether this item represents invoice creation (<code>true</code>)
-     *        or a payment (<code>false</code>).
      */
-    public JournalItem(Amount amount, Account account, boolean debet, String invoiceId, 
-            boolean invoiceCreation)  {
+    public JournalItem(Amount amount, Account account, boolean debet, String invoiceId)  {
         this.amount = amount;
         this.account = account;
         this.debet = debet;
         this.invoiceId = invoiceId;
-        this.invoiceCreation = invoiceCreation;
     }
     
     public Account getAccount() 
@@ -67,10 +59,6 @@ public class JournalItem
 
     public String getInvoiceId() {
         return invoiceId;
-    }
-    
-    public boolean hasInvoiceCreation() {
-        return invoiceCreation;
     }
     
     public boolean isDebet()

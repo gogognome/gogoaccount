@@ -1,5 +1,5 @@
 /*
- * $Id: PartySelector.java,v 1.2 2007-02-10 16:28:46 sanderk Exp $
+ * $Id: PartySelector.java,v 1.3 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -11,6 +11,8 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -42,6 +44,9 @@ public class PartySelector extends JPanel {
     
     /** The party that is selected in this selector. */
     private Party selectedParty;
+    
+    /** The listeners for this component. */
+    private List<PartySelectorListener> listeners = new LinkedList<PartySelectorListener>();
     
     /**
      * Constructor.
@@ -103,6 +108,11 @@ public class PartySelector extends JPanel {
         } else {
             tfDescription.setText(null);
         }
+        synchronized(listeners) {
+            for (PartySelectorListener listener : listeners) {
+                listener.onSelectedPartyChanged(party);
+            }
+        }
     }
     
     /**
@@ -121,4 +131,15 @@ public class PartySelector extends JPanel {
         }
     }
     
+    public void addListener(PartySelectorListener listener) {
+        synchronized(listeners) {
+            listeners.add(listener);
+        }
+    }
+ 
+    public void removeListener(PartySelectorListener listener) {
+        synchronized(listeners) {
+            listeners.remove(listener);
+        }
+    }
 }

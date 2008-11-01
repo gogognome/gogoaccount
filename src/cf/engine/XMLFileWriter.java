@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.21 2008-03-10 21:18:22 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.22 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -83,24 +83,22 @@ public class XMLFileWriter {
 			// write journals
 			Element journalsElem = doc.createElement("journals");
 			List<Journal> journals = db.getJournals();
-			for (Journal journal : journals) 
-			{
+			for (Journal journal : journals) {
 			    Element journalElem = doc.createElement("journal");
 			    journalElem.setAttribute("id", journal.getId());
 			    journalElem.setAttribute("date", DATE_FORMAT.format(journal.getDate()));
 			    journalElem.setAttribute("description", journal.getDescription());
+			    if (journal.createsInvoice()) {
+			        journalElem.setAttribute("createdInvoice", journal.getIdOfCreatedInvoice());
+			    }
 			    JournalItem[] items = journal.getItems();
-			    for (int j = 0; j < items.length; j++) 
-			    {
+			    for (int j = 0; j < items.length; j++) {
                     Element item = doc.createElement("item");
                     item.setAttribute("id", items[j].getAccount().getId());
                     item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(items[j].getAmount()));
                     item.setAttribute("side", items[j].isDebet() ? "debet" : "credit");
                     if (items[j].getInvoiceId() != null) {
                         item.setAttribute("invoice", items[j].getInvoiceId());
-                        if (items[j].hasInvoiceCreation()) {
-                            item.setAttribute("invoiceCreation", "true");
-                        }
                     }
                     journalElem.appendChild(item);
                 }

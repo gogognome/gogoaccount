@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalView.java,v 1.1 2008-03-26 21:48:55 sanderk Exp $
+ * $Id: EditJournalView.java,v 1.2 2008-11-01 13:26:01 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -59,6 +59,12 @@ public class EditJournalView extends View {
      */
     private Journal initialJournal;
     
+    /** 
+     * The id of the invoice that is created by the edited journal. If <code>null</code>, then
+     * no invoice is created by this journal.
+     */
+    private String idOfCreatedInvoice;
+    
     /** The text field of the id. */
     private JTextField tfId;
 
@@ -99,6 +105,7 @@ public class EditJournalView extends View {
         if (initialJournal == null) {
             initializeDialog("", new Date(), "", new ArrayList<JournalItem>());
         } else {
+            idOfCreatedInvoice = initialJournal.getIdOfCreatedInvoice();
             initializeDialog(initialJournal.getId(), initialJournal.getDate(),
                 initialJournal.getDescription(), Arrays.asList(initialJournal.getItems()));
         }
@@ -289,7 +296,7 @@ public class EditJournalView extends View {
         JournalItem[] items = itemsTableModel.getItems();
 
         try {
-            return new Journal(id, description, date, items);
+            return new Journal(id, description, date, items, idOfCreatedInvoice);
         } 
         catch (IllegalArgumentException e) {
             MessageDialog.showMessage(this, "gen.titleError", tr.getString("gen.itemsNotInBalance"));

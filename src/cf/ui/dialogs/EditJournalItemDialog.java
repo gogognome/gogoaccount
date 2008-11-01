@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.12 2008-03-26 21:48:12 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.13 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -116,8 +116,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
      * @param debet used to initialize the side combo box
      * @param party used to initialize the party combo box
      */
-    private void initDialog(String amount, Account account, boolean debet, Invoice invoice)
-    {
+    private void initDialog(String amount, Account account, boolean debet, Invoice invoice) {
         JPanel labelsAndFieldsPanel = new JPanel();
         GridBagLayout gridBag = new GridBagLayout();
 		GridBagConstraints labelConstraints = new GridBagConstraints();
@@ -190,7 +189,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
         Invoice invoice = invoiceSelector.getSelectedInvoice();
         
         enteredJournalItem = new JournalItem(amount, account, debet, 
-            invoice != null ? invoice.getId() : null, false);
+            invoice != null ? invoice.getId() : null);
         hideDialog();
     }
 

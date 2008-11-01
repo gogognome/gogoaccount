@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.7 2008-08-03 09:17:24 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.8 2008-11-01 13:26:01 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -286,6 +286,8 @@ public class InvoiceGeneratorView extends View {
                 return;
             }
             
+            // TODO: Check of er een relatie is aangevinkt! Als dat zo is moet er een melding getoond worden.
+            
     	    // Create journal items from the template
             Amount amountToBePaid = null;
             String[] descriptions = new String[templateLines.size() - 1];
@@ -367,12 +369,12 @@ public class InvoiceGeneratorView extends View {
 
                 boolean invoiceCreation = line.rbParty.isSelected(); 
                 items[l] = new JournalItem(amount, account, debet, 
-                    invoiceCreation ? invoice.getId() : null, invoiceCreation);
+                    invoiceCreation ? invoice.getId() : null);
             }
             
             Journal journal;
             try {
-                journal = new Journal(id, description, date, items);
+                journal = new Journal(id, description, date, items, invoice.getId());
             } catch (IllegalArgumentException e) {
                 MessageDialog.showMessage(this, "gen.titleError", 
                         TextResource.getInstance().getString("gen.itemsNotInBalance"));

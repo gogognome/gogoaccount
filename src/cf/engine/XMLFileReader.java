@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.21 2008-01-11 18:56:55 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.22 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -18,6 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
+import nl.gogognome.util.StringUtil;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -93,21 +94,22 @@ public class XMLFileReader {
             db.setInvoices(invoices);
             
 		    NodeList journalsNodes = rootElement.getElementsByTagName("journals");
-		    for (int i=0; i<journalsNodes.getLength(); i++)
-		    {
+		    for (int i=0; i<journalsNodes.getLength(); i++) {
 		        Element elem = (Element)journalsNodes.item(i);
 		        NodeList journalNodes = elem.getElementsByTagName("journal");
-		        for (int j=0; j<journalNodes.getLength(); j++)
-		        {
+		        for (int j=0; j<journalNodes.getLength(); j++) {
 		            Element journalElem = (Element)journalNodes.item(j);
 		            String id = journalElem.getAttribute("id");
 		            String dateString = journalElem.getAttribute("date");
 		            Date date = DATE_FORMAT.parse(dateString);
+                    String idOfCreatedInvoice = journalElem.getAttribute("createdInvoice");
+                    if (idOfCreatedInvoice.length() == 0) {
+                        idOfCreatedInvoice = null;
+                    }
 		            description = journalElem.getAttribute("description");
 		            NodeList itemNodes = journalElem.getElementsByTagName("item");
 		            ArrayList<JournalItem> itemsList = new ArrayList<JournalItem>();
-		            for (int k=0; k<itemNodes.getLength(); k++)
-		            {
+		            for (int k=0; k<itemNodes.getLength(); k++) {
 		                Element itemElem = (Element)itemNodes.item(k);
 		                String itemId = itemElem.getAttribute("id");
 		                String amountString = itemElem.getAttribute("amount");
@@ -117,14 +119,19 @@ public class XMLFileReader {
 		                if (invoiceString.length() == 0) {
 		                    invoiceString = null;
 		                }
-		                boolean invoiceCreation = "true".equals(itemElem.getAttribute("invoiceCreation"));
+		             // TODO: old code. remove later
+		                if ("true".equals(itemElem.getAttribute("invoiceCreation"))) {
+	                        idOfCreatedInvoice = invoiceString;
+	                        invoiceString = null;
+		                }
+		                // end of old code
 		                
 		                itemsList.add(new JournalItem(amount, db.getAccount(itemId), 
-	                        "debet".equals(side), invoiceString, invoiceCreation));
+	                        "debet".equals(side), invoiceString));
 		            }
 		            
 		            JournalItem[] items = itemsList.toArray(new JournalItem[itemsList.size()]);
-			        db.addJournal(new Journal(id, description, date, items), false);
+			        db.addJournal(new Journal(id, description, date, items, idOfCreatedInvoice), false);
 		        }
 		    }
 		    
@@ -280,9 +287,15 @@ public class XMLFileReader {
                 Payment[] payments = new Payment[numNodes];
                 for (int p=0; p<numNodes; p++) {
                     Element paymentElem = (Element)paymentNodes.item(p);
+                    String paymentId;
                     Amount amount;
                     Date date;
                     String description;
+                    paymentId = paymentElem.getAttribute("id");
+                    if (StringUtil.isNullOrEmpty(paymentId)) {
+                        paymentId = "p" + id + "-" + p;
+                    }
+                    
                     try {
                         date = DATE_FORMAT.parse(paymentElem.getAttribute("date"));
                     } catch (ParseException e1) {
@@ -294,7 +307,7 @@ public class XMLFileReader {
                         throw new XMLParseException("Invalid amount: " + paymentElem.getAttribute("amount"));
                     } 
                     description = paymentElem.getAttribute("description"); 
-                    payments[p] = new Payment(amount, date, description);
+                    payments[p] = new Payment(paymentId, amount, date, description);
                 }
                 
                 invoices.add(new Invoice(id, payingParty, concerningParty, amountToBePaid, 

@@ -1,5 +1,5 @@
 /*
- * $Id: Journal.java,v 1.12 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: Journal.java,v 1.13 2008-11-01 13:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -28,6 +28,13 @@ public class Journal implements Comparable<Journal> {
     
     private Date date;
 
+    /** 
+     * If not <code>null</code>, then this contains the id of the invoice that is created
+     * by this journal. Journals that create an invoice can only be deleted as long as
+     * no payments have been made to the invoice.
+     */
+    private String idOfCreatedInvoice;
+    
     /**
      * Creates a journal.
      * @param id the id of the jounal
@@ -35,14 +42,17 @@ public class Journal implements Comparable<Journal> {
      * @param date the date of the journal
      * @param items the items of the journal. The sums of the debet 
      *        and credit amounts must be equal!
+     * @param idOfCreatedInvoice if not <code>null</code>, then this contains the id of the invoice 
+     *        that is created by this journal
      * @throws IllegalArgumentException if the sum of debet and credit amounts differ
      *          or if more than one item with a party has been specified.
      */
-    public Journal(String id, String description, Date date, JournalItem[] items) {
+    public Journal(String id, String description, Date date, JournalItem[] items, String idOfCreatedInvoice) {
         this.id = id;
         this.description = description;
         this.date = date;
         this.items = items;
+        this.idOfCreatedInvoice = idOfCreatedInvoice;
         
         Currency currency = Database.getInstance().getCurrency();
         Amount totalDebet = Amount.getZero(currency);
@@ -100,7 +110,24 @@ public class Journal implements Comparable<Journal> {
         return items;
     }
 
-    /* (non-Javadoc)
+    /**
+     * Gets the id of the invoice created by this journal. If no invoice was created, then
+     * <code>null</code> is returned
+     * @return the id or <code>null</code>
+     */
+    public String getIdOfCreatedInvoice() {
+        return idOfCreatedInvoice;
+    }
+    
+    /**
+     * Indicates whether this journal creates an invoice.
+     * @return <code>true</code> if it creates an invoice; otherwise <code>false</code>
+     */
+    public boolean createsInvoice() {
+        return getIdOfCreatedInvoice() != null;
+    }
+
+    /**
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
     public int compareTo(Journal that) {
