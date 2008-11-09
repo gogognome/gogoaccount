@@ -1,5 +1,5 @@
 /*
- * $Id: PartyOverviewTableModel.java,v 1.11 2008-11-09 13:59:13 sanderk Exp $
+ * $Id: PartyOverviewTableModel.java,v 1.12 2008-11-09 19:15:53 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -100,7 +100,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                     if (!invoices[i].getAmountToBePaid().isNegative()) {
                         invoiceInfo.debetAmount = invoices[i].getAmountToBePaid();
                     } else {
-                        invoiceInfo.creditAmount = invoices[i].getAmountToBePaid();
+                        invoiceInfo.creditAmount = invoices[i].getAmountToBePaid().negate();
                     }
                     lineInfoList.add(invoiceInfo);
                     
