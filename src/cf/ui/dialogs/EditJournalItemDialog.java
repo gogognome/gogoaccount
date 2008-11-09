@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.13 2008-11-01 13:26:02 sanderk Exp $
+ * $Id: EditJournalItemDialog.java,v 1.14 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -189,7 +189,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
         Invoice invoice = invoiceSelector.getSelectedInvoice();
         
         enteredJournalItem = new JournalItem(amount, account, debet, 
-            invoice != null ? invoice.getId() : null);
+            invoice != null ? invoice.getId() : null, invoice != null ? database.createPaymentId() : null);
         hideDialog();
     }
 

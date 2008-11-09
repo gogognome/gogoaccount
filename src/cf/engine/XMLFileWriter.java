@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileWriter.java,v 1.22 2008-11-01 13:26:02 sanderk Exp $
+ * $Id: XMLFileWriter.java,v 1.23 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -99,6 +99,9 @@ public class XMLFileWriter {
                     item.setAttribute("side", items[j].isDebet() ? "debet" : "credit");
                     if (items[j].getInvoiceId() != null) {
                         item.setAttribute("invoice", items[j].getInvoiceId());
+                        if (items[j].getPaymentId() != null) {
+                            item.setAttribute("payment", items[j].getPaymentId());
+                        }
                     }
                     journalElem.appendChild(item);
                 }
@@ -204,12 +207,13 @@ public class XMLFileWriter {
             }
             elem.setAttribute("issueDate", DATE_FORMAT.format(invoices[i].getIssueDate()));
             
-            Payment[] payments = invoices[i].getPayments();
-            for (int p = 0; p < payments.length; p++) {
+            List<Payment> payments = invoices[i].getPayments();
+            for (Payment payment : payments) {
                 Element paymentElem = doc.createElement("payment");
-                paymentElem.setAttribute("date", DATE_FORMAT.format(payments[p].getDate()));
-                paymentElem.setAttribute("amount", AMOUNT_FORMAT.formatAmount(payments[p].getAmount()));
-                paymentElem.setAttribute("description", payments[p].getDescription());
+                paymentElem.setAttribute("id", payment.getId());
+                paymentElem.setAttribute("date", DATE_FORMAT.format(payment.getDate()));
+                paymentElem.setAttribute("amount", AMOUNT_FORMAT.formatAmount(payment.getAmount()));
+                paymentElem.setAttribute("description", payment.getDescription());
                 elem.appendChild(paymentElem);
             }
             

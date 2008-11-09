@@ -1,11 +1,12 @@
 /*
- * $Id: ViewPartyOverviewDialog.java,v 1.7 2008-01-12 13:41:55 sanderk Exp $
+ * $Id: ViewPartyOverviewDialog.java,v 1.8 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.dialogs;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.util.Date;
 
@@ -19,8 +20,11 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import nl.gogognome.swing.DialogWithButtons;
+import nl.gogognome.swing.SortedTable;
+import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 
+import cf.engine.Database;
 import cf.engine.Party;
 import cf.ui.components.PartyOverviewTableModel;
 
@@ -39,31 +43,12 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 	 * @param party the party to be shown.
 	 * @param date the date.
      */
-    public ViewPartyOverviewDialog( Frame frame, Party party, Date date ) 
+    public ViewPartyOverviewDialog(Frame frame, Database database, Party party, Date date) 
     {
 		super(frame, "vpo.title", BT_OK);
 		
-		PartyOverviewTableModel model = new PartyOverviewTableModel(party, date); 
-		JTable table = new JTable(model);
-		
-		TableColumnModel columnModel = table.getColumnModel();
-		
-		// Set right-aligned renderers for column 3 and 4.
-		TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
-		    public void setValue(Object value) {
-		        super.setValue(value);
-		        setHorizontalAlignment(SwingConstants.RIGHT);
-		    }
-		};
-		columnModel.getColumn(3).setCellRenderer(rightAlignedRenderer);
-		columnModel.getColumn(4).setCellRenderer(rightAlignedRenderer);
-		
-		// Set column widths
-		columnModel.getColumn(0).setPreferredWidth(150);
-        columnModel.getColumn(1).setPreferredWidth(200);
-		columnModel.getColumn(2).setPreferredWidth(300);
-		columnModel.getColumn(3).setPreferredWidth(150);
-		columnModel.getColumn(4).setPreferredWidth(150);
+		PartyOverviewTableModel model = new PartyOverviewTableModel(database, party, date); 
+		SortedTable table = WidgetFactory.getInstance().createSortedTable(model);
 		
 		// Create panel with date and name of party.
 		JLabel label = new JLabel();
@@ -75,7 +60,8 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		// Create panel with label and table.
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(label, BorderLayout.NORTH);
-		panel.add(new JScrollPane(table), BorderLayout.CENTER);
+		panel.add(table.getComponent(), BorderLayout.CENTER);
+		panel.setPreferredSize(new Dimension(800,600));
 		
 		componentInitialized(panel);
 		setResizable(true);
@@ -100,5 +86,4 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		// release resources
 		hideDialog();
 	}
-
 }

@@ -45,12 +45,16 @@
 <item amount="EUR 10.00" id="4" side="credit"/>
 </journal>
 <journal createdInvoice="co08-501" date="2008.01.10" description="2e helft contributie" id="co08-501">
-<item amount="EUR 105.00" id="1" invoice="co08-501" side="debet"/>
-<item amount="EUR 105.00" id="80" side="credit"/>
+<item amount="EUR 200.00" id="1" side="debet"/>
+<item amount="EUR 200.00" id="80" side="credit"/>
 </journal>
 <journal date="2008.01.11" description="Contributie Sander" id="RBZK">
-<item amount="EUR 75.00" id="1" side="debet"/>
+<item amount="EUR 75.00" id="1" invoice="co08-501" payment="p3" side="debet"/>
 <item amount="EUR 75.00" id="81" side="credit"/>
+</journal>
+<journal date="2008.11.09" description="restant facuur" id="RBZK 2">
+<item amount="EUR 125.00" id="1" invoice="co08-501" payment="p2" side="debet"/>
+<item amount="EUR 125.00" id="4" side="credit"/>
 </journal>
 </journals>
 <invoices>
@@ -60,9 +64,10 @@
 <invoice amountToBePaid="-/- EUR 10.00" concerningParty="44" id="070144" issueDate="2007.12.03" payingParty="44">
 <line amount="EUR 10.00" description="4 - lening"/>
 </invoice>
-<invoice amountToBePaid="EUR 105.00" concerningParty="501" id="co08-501" issueDate="2008.01.10" payingParty="501">
-<line amount="EUR 105.00" description="contributie 2006/2007"/>
-<payment amount="EUR 75.00" date="2008.01.11" description="81 - huur wedstrijdshirts"/>
+<invoice amountToBePaid="EUR 200.00" concerningParty="44" id="co08-501" issueDate="2008.01.10" payingParty="501">
+<line amount="EUR 200.00" description="contributie 2006/2007"/>
+<payment amount="EUR 75.00" date="2008.01.11" description="bank" id="p3"/>
+<payment amount="EUR 125.00" date="2008.11.09" description="bank" id="p2"/>
 </invoice>
 </invoices>
 </cfbookkeeping>

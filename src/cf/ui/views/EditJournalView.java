@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalView.java,v 1.2 2008-11-01 13:26:01 sanderk Exp $
+ * $Id: EditJournalView.java,v 1.3 2008-11-09 13:59:12 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -35,6 +35,7 @@ import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
+import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.ui.dialogs.EditJournalItemDialog;
@@ -258,7 +259,12 @@ public class EditJournalView extends View {
         if (journal != null) {
             if (initialJournal == null) {
                 // Add the new journal to the database
-                database.addJournal(journal, true);
+                try {
+                    database.addJournal(journal, true);
+                } catch (DatabaseModificationFailedException e) {
+                    MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                    return; // do not close the view
+                }
             } else {
                 // Set the edited journal
                 editedJournal = journal;
@@ -271,7 +277,12 @@ public class EditJournalView extends View {
     private void handleOkAndNextButtonPressed() {
         Journal journal = getJournalFromDialog();
         if (journal != null) {
-            database.addJournal(journal, true);
+            try {
+                database.addJournal(journal, true);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                return; // do not clear the table model
+            }
             itemsTableModel.clear();
             tfId.requestFocus();
         }

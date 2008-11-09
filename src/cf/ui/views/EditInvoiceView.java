@@ -1,5 +1,5 @@
 /*
- * $Id: EditInvoiceView.java,v 1.1 2008-11-01 13:26:02 sanderk Exp $
+ * $Id: EditInvoiceView.java,v 1.2 2008-11-09 13:59:12 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -343,12 +343,6 @@ public class EditInvoiceView extends View {
         String[] descriptions = tableModel.getDescriptions();
         Amount[] amounts = tableModel.getAmounts();
         editedInvoice = new Invoice(id, payingParty, concerningParty, amount, issueDate, descriptions, amounts);
-        if (initialInvoice != null) {
-            Payment[] payments = initialInvoice.getPayments();
-            for (Payment p : payments) {
-                editedInvoice = editedInvoice.addPayment(p);
-            }
-        }
         closeAction.actionPerformed(null);
     }
     

@@ -1,5 +1,5 @@
 /*
- * $Id: Invoice.java,v 1.6 2008-11-01 13:26:02 sanderk Exp $
+ * $Id: Invoice.java,v 1.7 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -7,7 +7,9 @@
 
 package cf.engine;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import nl.gogognome.text.Amount;
 
@@ -20,6 +22,9 @@ import nl.gogognome.text.Amount;
  */
 public class Invoice implements Comparable<Invoice> {
 
+    /** The database in which this invoice is registered. */
+    private Database database;
+    
     /** The identifier of the invoice. */
     private String id;
     
@@ -60,9 +65,6 @@ public class Invoice implements Comparable<Invoice> {
      */
     private Amount[] amounts;
 
-    /** Contains payments of this invoice. */
-    private Payment[] payments;
-    
     /**
      * Consturctor.
      * @param id
@@ -75,22 +77,6 @@ public class Invoice implements Comparable<Invoice> {
      */
     public Invoice(String id, Party payingParty, Party concerningParty, Amount amountToBePaid,
             Date issueDate, String[] descriptions, Amount[] amounts) {
-        this(id, payingParty, concerningParty, amountToBePaid, issueDate, descriptions, amounts, 
-            new Payment[0]);
-    }
-
-    /**
-     * Consturctor.
-     * @param id
-     * @param payingParty
-     * @param concerningParty
-     * @param amountToBePaid
-     * @param issueDate
-     * @param descriptions
-     * @param amounts
-     */
-    public Invoice(String id, Party payingParty, Party concerningParty, Amount amountToBePaid,
-            Date issueDate, String[] descriptions, Amount[] amounts, Payment[] payments) {
         if (id == null) {
             throw new IllegalArgumentException("The id must not be null");
         }
@@ -108,17 +94,26 @@ public class Invoice implements Comparable<Invoice> {
         this.issueDate = issueDate;
         this.descriptions = descriptions;
         this.amounts = amounts;
-        this.payments = payments;
     }
 
+    /**
+     * Sets the database in which this invoice is registered. 
+     * @param database the database
+     */
+    void setDatabase(Database database) {
+        this.database = database;
+    }
+    
     /**
      * Gets the amount that has to be paid for this invoice minus the payments that have been made.
      * @return the remainig amount that has to be paid
      */
     public Amount getRemainingAmountToBePaid() {
         Amount result = amountToBePaid;
-        for (int i=0; i<payments.length; i++) {
-            result = result.subtract(payments[i].getAmount());
+        if (database != null) {
+            for (Payment p : database.getPayments(id)) {
+                result = result.subtract(p.getAmount());
+            }
         }
         return result;
     }
@@ -160,49 +155,11 @@ public class Invoice implements Comparable<Invoice> {
         return payingParty;
     }
 
-    public Payment[] getPayments() {
-        return payments;
-    }
-
-    /**
-     * Creates a new invoice that consists of this invoice to which the specified
-     * payment has been added.
-     *  
-     * @param payment the payment to be added
-     * @return the new invoice
-     */
-    public Invoice addPayment(Payment payment) {
-        Payment[] newPayments = new Payment[payments.length + 1];
-        System.arraycopy(payments, 0, newPayments, 0, payments.length);
-        newPayments[payments.length] = payment;
-        return new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, 
-            descriptions, amounts, newPayments); 
-    }
-
-    /**
-     * Creates a new invoice that consists of this invoice from which the specified
-     * payment has been removed. If the payment was not present, then this instance
-     * will be returned.
-     *  
-     * @param payment the payment to be removed
-     * @return the new invoice or <code>this</code> (see above)
-     */
-    public Invoice removePayment(Payment payment) {
-        int index = -1;
-        for (int i=0; i<payments.length; i++) {
-            if (payments[i].equals(payment)) {
-                index = i;
-            }
-        }
-        
-        if (index != -1) {
-            Payment[] newPayments = new Payment[payments.length - 1];
-            System.arraycopy(payments, 0, newPayments, 0, index);
-            System.arraycopy(payments, index+1, newPayments, index, payments.length - index - 1);
-            return new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, 
-                descriptions, amounts, newPayments); 
+    public List<Payment> getPayments() {
+        if (database == null) {
+            return new ArrayList<Payment>();
         } else {
-            return this;
+            return database.getPayments(id);
         }
     }
 
@@ -214,7 +171,7 @@ public class Invoice implements Comparable<Invoice> {
      */
     public Invoice removeAmountToBePaid() {
         return new Invoice(id, payingParty, concerningParty, amountToBePaid.subtract(amountToBePaid),
-            issueDate, new String[0], new Amount[0], payments);
+            issueDate, new String[0], new Amount[0]);
     }
     
     /**

@@ -1,14 +1,10 @@
 /*
- * $Id: PartiesView.java,v 1.21 2008-09-20 11:57:05 sanderk Exp $
+ * $Id: PartiesView.java,v 1.22 2008-11-09 13:59:12 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
-import cf.engine.Database;
-import cf.engine.DatabaseModificationFailedException;
-import cf.engine.Party;
-import cf.engine.PartySearchCriteria;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -25,13 +21,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 import java.util.Date;
+
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -55,6 +51,10 @@ import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
+import cf.engine.Database;
+import cf.engine.DatabaseModificationFailedException;
+import cf.engine.Party;
+import cf.engine.PartySearchCriteria;
 
 /**
  * This class implements a view for adding, removing, editing and (optionally) selecting parties.
@@ -201,7 +201,6 @@ public class PartiesView extends View {
                 tr.getString("partiesView.searchCriteria")));
 
         focusListener = new FocusAdapter() {
-
             @Override
             public void focusGained(FocusEvent e) {
                 setDefaultButton(btSearch);
@@ -406,7 +405,7 @@ public class PartiesView extends View {
 
         partiesTableModel.setParties(database.getParties(searchCriteria));
         table.getSelectionModel().setSelectionInterval(0, 0);
-        table.getComponent().requestFocusInWindow();
+        table.getFocusableComponent().requestFocusInWindow();
 
         // Update the default button if the select button is present
         if (btSelect != null) {

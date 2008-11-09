@@ -1,5 +1,5 @@
 /*
- * $Id: JournalItem.java,v 1.10 2008-11-01 13:26:02 sanderk Exp $
+ * $Id: JournalItem.java,v 1.11 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -21,9 +21,15 @@ public class JournalItem
 
     /**
      * The id of the invoice to which the amount is booked as payment;
-     * <code>null</code> if no invoice is involved.
+     * <code>null</code> if no payment is involved.
      */
     private String invoiceId;
+    
+    /**
+     * The id of the payment within the invoice that corresponds to this item;
+     * <code>null</code> if no payment is involved.
+     */
+    private String paymentId;
     
     /** 
      * Indicates whether the amount in this items is booked on the
@@ -39,21 +45,21 @@ public class JournalItem
      *              the amount is booked on the credit side 
      * @param invoiceId the id of the invoice to which the amount is booked as payment;
      *              <code>null</code> if no invoice is involved.
+     * @param paymentId the id of the payment; <code>null</code> if no payment is involved
      */
-    public JournalItem(Amount amount, Account account, boolean debet, String invoiceId)  {
+    public JournalItem(Amount amount, Account account, boolean debet, String invoiceId, String paymentId)  {
         this.amount = amount;
         this.account = account;
         this.debet = debet;
         this.invoiceId = invoiceId;
+        this.paymentId = paymentId;
     }
     
-    public Account getAccount() 
-    {
+    public Account getAccount() {
         return account;
     }
 
-    public Amount getAmount() 
-    {
+    public Amount getAmount() {
         return amount;
     }
 
@@ -61,13 +67,15 @@ public class JournalItem
         return invoiceId;
     }
     
-    public boolean isDebet()
-    {
+    public String getPaymentId() {
+        return paymentId;
+    }
+    
+    public boolean isDebet() {
         return debet;
     }
     
-    public boolean isCredit()
-    {
+    public boolean isCredit() {
         return !debet;
     }
     
@@ -80,9 +88,10 @@ public class JournalItem
     public boolean equals(Object o) {
         if (o instanceof JournalItem) {
             JournalItem that = (JournalItem) o;
-            boolean equalParties = ComparatorUtil.equals(this.invoiceId, that.invoiceId); 
+            boolean payments = ComparatorUtil.equals(this.invoiceId, that.invoiceId)
+                && ComparatorUtil.equals(this.paymentId, that.paymentId); 
             return this.account.equals(that.account) && this.amount.equals(that.amount) 
-            	&& this.debet == that.debet && equalParties;
+            	&& this.debet == that.debet && payments;
         } else {
             return false;
         }

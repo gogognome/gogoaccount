@@ -1,21 +1,33 @@
 /*
- * $Id: PartyOverviewTableModel.java,v 1.10 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: PartyOverviewTableModel.java,v 1.11 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.Party;
-import cf.engine.Payment;
+import java.awt.Component;
+import java.awt.Font;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+
+import nl.gogognome.swing.SortedTableModel;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
+import cf.engine.Database;
+import cf.engine.Invoice;
+import cf.engine.Party;
+import cf.engine.Payment;
 
 /**
  * This class implements a model for a <code>JTable</code> that shows an overview 
@@ -23,14 +35,20 @@ import nl.gogognome.util.DateUtil;
  *
  * @author Sander Kooijmans
  */
-public class PartyOverviewTableModel extends AbstractTableModel {
-    private static final long serialVersionUID = 1L;
+public class PartyOverviewTableModel extends AbstractTableModel implements SortedTableModel {
 
+    /** The database. */
+    private Database database;
+    
     /** The party to be shown. */
     private Party party;
     
     /** The date. */
     private Date date;
+
+    private Font smallFont;
+    
+    private Font defaultFont;
 
     /** This class contains the information to be shown in a single row of the table. */
     class LineInfo {
@@ -39,6 +57,7 @@ public class PartyOverviewTableModel extends AbstractTableModel {
         String description;
         Amount debetAmount;
         Amount creditAmount;
+        boolean isDescription;
     }
 
     /** The information shown in the table. */
@@ -50,19 +69,22 @@ public class PartyOverviewTableModel extends AbstractTableModel {
     
     /**
      * Constructs a new <code>partyOverviewComponent</code>.
+     * @param database the database
      * @param party the party to be shown
      * @param date the date
      */
-    public PartyOverviewTableModel(Party party, Date date) 
-    {
+    public PartyOverviewTableModel(Database database, Party party, Date date) {
         super();
+        this.database = database;
         this.party = party;
         this.date = date;
         initializeValues();
+        
+        defaultFont = new JLabel().getFont();
+        smallFont = defaultFont.deriveFont(defaultFont.getSize() * 8.0f / 10.0f);
     }
 
     private void initializeValues() {
-        Database database = Database.getInstance(); 
         totalDebet = Amount.getZero(database.getCurrency());
         totalCredit = totalDebet;
         ArrayList<LineInfo> lineInfoList = new ArrayList<LineInfo>();
@@ -70,12 +92,26 @@ public class PartyOverviewTableModel extends AbstractTableModel {
         for (int i = 0; i < invoices.length; i++) {
             if (party.equals(invoices[i].getPayingParty())) {
                 if (DateUtil.compareDayOfYear(invoices[i].getIssueDate(),date) <= 0) {
+                    // Add a line with the total amount to be paid
+                    LineInfo invoiceInfo = new LineInfo();
+                    invoiceInfo.id = invoices[i].getId();
+                    invoiceInfo.date = invoices[i].getIssueDate();
+                    invoiceInfo.description = TextResource.getInstance().getString("partyOverviewTableModel.totalAmount");
+                    if (!invoices[i].getAmountToBePaid().isNegative()) {
+                        invoiceInfo.debetAmount = invoices[i].getAmountToBePaid();
+                    } else {
+                        invoiceInfo.creditAmount = invoices[i].getAmountToBePaid();
+                    }
+                    lineInfoList.add(invoiceInfo);
+                    
+                    // Add a line per description of the invoice
                     String[] descriptions = invoices[i].getDescriptions();
                     Amount[] amounts = invoices[i].getAmounts();
                     for (int l=0; l<descriptions.length; l++) {
                         LineInfo lineInfo = new LineInfo();
-                        lineInfo.id = invoices[i].getId();
-                        lineInfo.date = invoices[i].getIssueDate();
+                        lineInfo.isDescription = true;
+//                        lineInfo.id = invoices[i].getId();
+//                        lineInfo.date = invoices[i].getIssueDate();
                         lineInfo.description = descriptions[l];
                         if (amounts[l] != null) {
                             if (!amounts[l].isNegative()) {
@@ -89,18 +125,18 @@ public class PartyOverviewTableModel extends AbstractTableModel {
                         lineInfoList.add(lineInfo);
                     }
                 }
-	            Payment[] payments = invoices[i].getPayments();
-	            for (int j = 0; j < payments.length; j++) {
-	                if (DateUtil.compareDayOfYear(payments[j].getDate(), date) <= 0) {
+	            List<Payment> payments = invoices[i].getPayments();
+	            for (Payment payment : payments) {
+	                if (DateUtil.compareDayOfYear(payment.getDate(), date) <= 0) {
 	                    LineInfo lineInfo = new LineInfo();
                         lineInfo.id = invoices[i].getId();
-	                    lineInfo.date = payments[j].getDate();
-	                    lineInfo.description = payments[j].getDescription();
-	                    if (!payments[j].getAmount().isNegative()) {
-	                        lineInfo.creditAmount = payments[j].getAmount();
+	                    lineInfo.date = payment.getDate();
+	                    lineInfo.description = payment.getDescription();
+	                    if (!payment.getAmount().isNegative()) {
+	                        lineInfo.creditAmount = payment.getAmount();
 	                        totalCredit = totalCredit.add(lineInfo.creditAmount);
 	                    } else {
-                            lineInfo.debetAmount = payments[j].getAmount().negate();
+                            lineInfo.debetAmount = payment.getAmount().negate();
                             totalDebet = totalDebet.add(lineInfo.debetAmount);
 	                    }
                         lineInfoList.add(lineInfo);
@@ -135,11 +171,14 @@ public class PartyOverviewTableModel extends AbstractTableModel {
         AmountFormat af = tr.getAmountFormat();
         String result;
         if (row < lineInfos.length) {
-	        switch(column)
-	        {
+	        switch(column) {
 	        case 0:
-	            result = tr.formatDate(
-	                    "gen.dateFormat", lineInfos[row].date);
+	            if (lineInfos[row].date != null) {
+    	            result = tr.formatDate(
+    	                    "gen.dateFormat", lineInfos[row].date);
+	            } else {
+	                result = "";
+	            }
 	            break;
 
             case 1:
@@ -147,27 +186,25 @@ public class PartyOverviewTableModel extends AbstractTableModel {
                 break;
 	            
 	        case 2:
-	            result = lineInfos[row].description;
+	            if (lineInfos[row].isDescription) {
+                    result = "   " + lineInfos[row].description;
+	            } else {
+	                result = lineInfos[row].description;
+	            }
 	            break;
 	            
 	        case 3:
-                if (lineInfos[row].debetAmount != null)
-                {
+                if (lineInfos[row].debetAmount != null) {
                     result = af.formatAmountWithoutCurrency(lineInfos[row].debetAmount);
-                }
-                else
-                {
+                } else {
                     result = "";
                 }
                 break;
 	            
 	        case 4:
-                if (lineInfos[row].creditAmount != null)
-                {
+                if (lineInfos[row].creditAmount != null) {
                     result = af.formatAmountWithoutCurrency(lineInfos[row].creditAmount);
-                }
-                else
-                {
+                } else {
                     result = "";
                 }
                 break;
@@ -229,5 +266,44 @@ public class PartyOverviewTableModel extends AbstractTableModel {
             id = null;
         }
         return TextResource.getInstance().getString(id);
+    }
+
+    public int getColumnWidth(int column) {
+        switch(column) {
+        case 0: return 250;
+        case 1: return 250;
+        case 2: return 600;
+        case 3: return 200;
+        case 4: return 200;
+        default: return 0; 
+        }
+    }
+
+    public Comparator<Object> getComparator(int column) {
+        return null;
+    }
+
+    public TableCellRenderer getRendererForColumn(int column) {
+        return new DefaultTableCellRenderer() {
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (row < lineInfos.length && lineInfos[row].isDescription) {
+                    comp.setFont(smallFont);
+                } else {
+                    comp.setFont(defaultFont);
+                }
+                
+                if (comp instanceof JLabel) {
+                    JLabel label = (JLabel) comp;
+                    if (column >= 3) {
+                        label.setHorizontalAlignment(SwingConstants.RIGHT);
+                    } else {
+                        label.setHorizontalAlignment(SwingConstants.LEFT);
+                    }
+                }
+                return comp;
+            }
+        };
     }
 }

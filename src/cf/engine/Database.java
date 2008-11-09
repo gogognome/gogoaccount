@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.36 2008-11-01 13:26:02 sanderk Exp $
+ * $Id: Database.java,v 1.37 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -8,6 +8,7 @@ package cf.engine;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Currency;
 import java.util.Date;
 import java.util.HashMap;
@@ -44,8 +45,6 @@ public class Database {
     
     private ArrayList<Party> parties = new ArrayList<Party>();
 
-    private ArrayList<Invoice> invoices = new ArrayList<Invoice>();
-    
     /** Maps ids of accounts to <code>Account</code>s. */
     private HashMap<String, Account> idsToAccountsMap = new HashMap<String, Account>();
     
@@ -54,7 +53,10 @@ public class Database {
     
     /** Maps ids of invoices to <code>Invoice</code> instances. */
     private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<String, Invoice>();
-    
+
+    /** Maps ids of invoices to a map of payment ids to Payments. */
+    private HashMap<String, HashMap<String, Payment>> idToInvoiceToPaymentMap = new HashMap<String, HashMap<String, Payment>>();
+
     /** Contains the next payment identifier. */
     private String nextPaymentId = "p1";
     
@@ -108,10 +110,8 @@ public class Database {
 	 * This method will make sure that the <tt>DatabaseListener</tt>s get notified
 	 * at the proper moment only if this database is the current database.
 	 */
-	private void notifyChange() 
-	{
-		if (instance == this) 
-		{
+	private void notifyChange() {
+		if (instance == this) {
 			changed = true;
 			notifyListeners();
 		}
@@ -192,7 +192,7 @@ public class Database {
      * @throws DatabaseModificationFailedException if there is an asset for which holds
      *         <code>!asset.isDebet()</code>.
      */
-    public void setAssets(Account[] assets) throws DatabaseModificationFailedException
+    void setAssets(Account[] assets) throws DatabaseModificationFailedException
     {
         for (int i=0; i<assets.length; i++)
         {
@@ -205,7 +205,6 @@ public class Database {
         Arrays.sort(assets);
         this.assets = assets;
         updateIdsToAccountsMap();
-        notifyChange();
     }
     
     public Account[] getExpenses() 
@@ -219,7 +218,7 @@ public class Database {
      * @throws DatabaseModificationFailedException if there is an expense for which holds
      *         <code>!expense.isDebet()</code>
      */
-    public void setExpenses(Account[] expenses) throws DatabaseModificationFailedException 
+    void setExpenses(Account[] expenses) throws DatabaseModificationFailedException 
     {
         for (int i=0; i<expenses.length; i++)
         {
@@ -232,7 +231,6 @@ public class Database {
         Arrays.sort(expenses);
         this.expenses = expenses;
         updateIdsToAccountsMap();
-        notifyChange();
     }
     
     public Account[] getLiabilities() 
@@ -240,7 +238,7 @@ public class Database {
         return liabilities;
     }
     
-    public void setLiabilities(Account[] liabilities) throws DatabaseModificationFailedException
+    void setLiabilities(Account[] liabilities) throws DatabaseModificationFailedException
     {
         for (int i=0; i<liabilities.length; i++)
         {
@@ -253,20 +251,15 @@ public class Database {
         Arrays.sort(liabilities);
         this.liabilities = liabilities;
         updateIdsToAccountsMap();
-        notifyChange();
     }
     
-    public Account[] getRevenues() 
-    {
+    public Account[] getRevenues() {
         return revenues;
     }
     
-    public void setRevenues(Account[] revenues) throws DatabaseModificationFailedException 
-    {
-        for (int i=0; i<revenues.length; i++)
-        {
-            if (revenues[i].isDebet())
-            {
+    void setRevenues(Account[] revenues) throws DatabaseModificationFailedException {
+        for (int i=0; i<revenues.length; i++) {
+            if (revenues[i].isDebet()) {
                 throw new DatabaseModificationFailedException("Revenues must have debet equal to false!");
             }
         }
@@ -274,7 +267,6 @@ public class Database {
         Arrays.sort(revenues);
         this.revenues = revenues;
         updateIdsToAccountsMap();
-        notifyChange();
     }
 
     /**
@@ -328,32 +320,19 @@ public class Database {
      * <p>This method does not notify changes in the database!
      * 
      * @param journal the journal
+     * @throws DatabaseModificationFailedException if creation of payments fails
      */
-    private void addInvoicePaymentsForJournal(Journal journal) {
+    private void createPaymentsForItemsOfJournal(Journal journal) throws DatabaseModificationFailedException {
         JournalItem[] items = journal.getItems();
         for (int i = 0; i < items.length; i++) {
             Invoice invoice = getInvoice(items[i].getInvoiceId());
             if (invoice != null) {
                 Payment payment = createPaymentForJournalItem(journal, items[i]);
-                updateInvoiceWithoutChangeNotification(invoice, invoice.addPayment(payment));
+                addPayment(invoice.getId(), payment);
             }
         }
     }
 
-    /**
-     * Updates an invoice in the database without notifying listeners about this change.
-     * @param oldInvoice the old invoice
-     * @param newInvoice the new invoice
-     */
-    private void updateInvoiceWithoutChangeNotification(Invoice oldInvoice, Invoice newInvoice) {
-        invoices.remove(oldInvoice);
-        invoices.add(newInvoice);
-        idsToInvoicesMap.put(newInvoice.getId(), newInvoice);
-        if (!newInvoice.getId().equals(oldInvoice.getId())) {
-            idsToInvoicesMap.remove(oldInvoice.getId());
-        }
-    }
-    
     /**
      * Creates a payment for a journal item.
      * @param journal the journal that contains the item
@@ -369,10 +348,14 @@ public class Database {
         }
         Date date = journal.getDate();
         String description = journalItem.getAccount().getName();
-        return new Payment(createPaymentId(), amount, date, description);
+        return new Payment(journalItem.getPaymentId(), amount, date, description);
     }
     
-    private String createPaymentId() {
+    /**
+     * Creates a unique payment id.
+     * @return a unique payment id
+     */
+    public String createPaymentId() {
         String result = nextPaymentId;
         
         StringBuilder sb = new StringBuilder(nextPaymentId);
@@ -412,38 +395,91 @@ public class Database {
      * corresponding journal item.
      * 
      * @param journal the journal to be added
-     * @param updateInvoices <code>true</code> if invoices referred to by the journal
-     *        have to be updated; <code>false</code> if the invoices are not to be updated.
+     * @param createPayments <code>true</code> if payments have to be added for invoices referred 
+     *        to by the journal; <code>false</code> if no payments are not to be created.
+     * @throws DatabaseModificationFailedException if a problem occurs while adding the journal
      */
-    public void addJournal(Journal journal, boolean updateInvoices) {
-        journals.add(journal);
-        if (updateInvoices) {
-            addInvoicePaymentsForJournal(journal);
+    public void addJournal(Journal journal, boolean createPayments) throws DatabaseModificationFailedException {
+        if (createPayments) {
+            createPaymentsForItemsOfJournal(journal);
         }
+        journals.add(journal);
         notifyChange();
     }
     
     /**
-     * Removes a journal from the database.
+     * Removes a journal from the database. Payments booked in the journal are also removed.
      * @param journal the journal to be deleted
+     * @throws DatabaseModificationFailedException 
      */
-    public void removeJournal(Journal journal) {
-        if (journals.remove(journal)) {
-            notifyChange();
+    public void removeJournal(Journal journal) throws DatabaseModificationFailedException {
+        if (!journals.contains(journal)) {
+            throw new DatabaseModificationFailedException("The journal to be removed does not exist.");
         }
+
+        // Check for payments without payment ID.
+        for (JournalItem item : journal.getItems()) {
+            if (item.getInvoiceId() != null && item.getPaymentId() == null) {
+                throw new DatabaseModificationFailedException("The journal has a payment without an id. Therefore, it cannot be removed.");
+            }
+        }
+
+        // Remove payments.
+        for (JournalItem item : journal.getItems()) {
+            String invoiceId = item.getInvoiceId();
+            String paymentId = item.getPaymentId();
+            if (invoiceId != null && paymentId != null) {
+                removePayment(invoiceId, paymentId);
+            }
+        }
+        
+        // Remove the journal.
+        journals.remove(journal);
+        
+        notifyChange();
     }
     
     /**
-     * Updates a journal.
+     * Updates a journal. Payments that are modified by the update of the journal
+     * are updated in the corresponding invoice. 
      * @param oldJournal the journal to be replaced
      * @param newJournal the journal that replaces <code>oldJournal</code>
+     * @throws DatabaseModificationFailedException if a problem occurs while updating the journal
      */
-    public void updateJournal(Journal oldJournal, Journal newJournal) {
-        int index = journals.indexOf(oldJournal);
-        if (index != -1) {
-           journals.set(index, newJournal);
-           notifyChange();
+    public void updateJournal(Journal oldJournal, Journal newJournal) throws DatabaseModificationFailedException {
+        // Check for payments without paymentId. These payments can exist in old XML files.
+        JournalItem[] items = oldJournal.getItems();
+        for (int i = 0; i < items.length; i++) {
+            if (items[i].getInvoiceId() != null && items[i].getPaymentId() == null) {
+                throw new DatabaseModificationFailedException("The old journal contains a payment without id. It cannot therefore not be updated.");
+            }
         }
+
+        int index = journals.indexOf(oldJournal);
+        if (index == -1) {
+            throw new DatabaseModificationFailedException("The old journal does not exist in the database.");
+        }
+        
+        journals.set(index, newJournal);
+       
+        // Update payments. Remove payments from old journal and add payments of the new journal.
+        items = oldJournal.getItems();
+        for (int i = 0; i < items.length; i++) {
+            Invoice invoice = getInvoice(items[i].getInvoiceId());
+            if (invoice != null) {
+                removePayment(invoice.getId(), items[i].getPaymentId());
+            }
+        }
+        items = newJournal.getItems();
+        for (int i = 0; i < items.length; i++) {
+            Invoice invoice = getInvoice(items[i].getInvoiceId());
+            if (invoice != null) {
+                Payment payment = createPaymentForJournalItem(newJournal, items[i]);
+                addPayment(invoice.getId(), payment);
+            }
+        }
+
+        notifyChange();
     }
     
     /**
@@ -516,7 +552,7 @@ public class Database {
      * @throws DatabaseModificationFailedException if at least two debtors were present 
      *         with the same id.
      */
-    public void setParties(Party[] parties) throws DatabaseModificationFailedException {
+    void setParties(Party[] parties) throws DatabaseModificationFailedException {
         ArrayList<Party> newParties = new ArrayList<Party>();
         HashMap<String, Party> newIdsToPartiesMap = new HashMap<String, Party>();
 		for (int i = 0; i < parties.length; i++) {
@@ -531,7 +567,6 @@ public class Database {
 		// All parties have a unique id.
 		this.parties = newParties;
 		idsToPartiesMap = newIdsToPartiesMap;
-		notifyChange();
     }
     
     /**
@@ -656,16 +691,15 @@ public class Database {
      */
     public Amount getBalanceForParty(Party party, Date date) {
         Amount result = Amount.getZero(getCurrency());
-        for (Iterator<Invoice> iter = invoices.iterator(); iter.hasNext();) {
-            Invoice invoice = iter.next();
+        for (Invoice invoice : idsToInvoicesMap.values()) {
             if (invoice.getPayingParty().equals(party)) {
                 if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
                     result = result.add(invoice.getAmountToBePaid());
                 }
-                Payment[] payments = invoice.getPayments();
-                for (int j = 0; j < payments.length; j++) {
-                    if (DateUtil.compareDayOfYear(payments[j].getDate(), date) <= 0) {
-                        result = result.subtract(payments[j].getAmount());
+                List<Payment> payments = invoice.getPayments();
+                for (Payment p : payments) {
+                    if (DateUtil.compareDayOfYear(p.getDate(), date) <= 0) {
+                        result = result.subtract(p.getAmount());
                     }
                 }
             }
@@ -712,20 +746,36 @@ public class Database {
     }
     
     /**
-     * Adds an invoice to the database.
+     * Adds an invoice to the database. Does not notify changes.
      * @param invoice the invoice to be added
      * @throws DatabaseModificationFailedException if another invoice exists with the same id. 
      */
-    public void addInvoice(Invoice invoice) throws DatabaseModificationFailedException {
+    void addInvoice(Invoice invoice) throws DatabaseModificationFailedException {
         String id = invoice.getId();
         if (idsToInvoicesMap.get(id) != null) {
             throw new DatabaseModificationFailedException("An invoice with ID " + id + " already exists!");
         }
-        invoices.add(invoice);
         idsToInvoicesMap.put(id, invoice);
-        notifyChange();
+        invoice.setDatabase(this);
     }
 
+    /**
+     * Creates an invoice and adds it to the database.
+     * @param id the id of the invoice 
+     * @param payingParty the party that pays
+     * @param concerningParty the party for whom this invoice is created
+     * @param amountToBePaid the amount to be paid
+     * @param issueDate the date this invoice is issued
+     * @param descriptions the descriptions of the invoice
+     * @param amounts the amounts corresponding to the descriptions
+     * @throws DatabaseModificationFailedException if another invoice exists with the same id. 
+     */
+    public void createInvoice(String id, Party payingParty, Party concerningParty, Amount amountToBePaid,
+            Date issueDate, String[] descriptions, Amount[] amounts) throws DatabaseModificationFailedException {
+        addInvoice(new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, descriptions, amounts));
+        notifyChange();
+    }
+    
     /**
      * Updates an existing invoice.
      * @param id the id of the existing invoice
@@ -741,13 +791,10 @@ public class Database {
             throw new DatabaseModificationFailedException("The ID of the updated invoice differs from the original ID. Therefore, the invoice cannot be udpated!");
         }
         
-        for (int i=0; i<invoices.size(); i++) {
-            if (id.equals(invoices.get(i).getId())) {
-                invoices.set(i, newInvoice);
-                notifyChange();
-                i = invoices.size();
-            }
-        }
+        idsToInvoicesMap.get(id).setDatabase(null);
+        idsToInvoicesMap.put(id, newInvoice);
+        newInvoice.setDatabase(this);
+        notifyChange();
     }
     
     /**
@@ -770,7 +817,14 @@ public class Database {
         }
         
         // All invoices have a unique id.
-        this.invoices = newInvoices;
+        // Remove old invoices.
+        for (Invoice invoice : idsToInvoicesMap.values()) {
+            invoice.setDatabase(null);
+        }
+        // Add new invoices
+        for (Invoice invoice : invoices) {
+            invoice.setDatabase(this);
+        }
         idsToInvoicesMap = newIdsToInvoicesMap;
         notifyChange();
     }
@@ -805,7 +859,7 @@ public class Database {
      * @return the invoices
      */
     public Invoice[] getInvoices() {
-        Invoice[] result = invoices.toArray(new Invoice[invoices.size()]);
+        Invoice[] result = idsToInvoicesMap.values().toArray(new Invoice[idsToInvoicesMap.size()]);
         Arrays.sort(result);
         return result;
     }
@@ -817,8 +871,7 @@ public class Database {
      */
     public Invoice[] getInvoices(InvoiceSearchCriteria searchCriteria) {
         ArrayList<Invoice> matchingInvoices = new ArrayList<Invoice>();
-        for (Iterator<Invoice> iter = invoices.iterator(); iter.hasNext();) {
-            Invoice invoice = iter.next();
+        for (Invoice invoice : idsToInvoicesMap.values()) {
             if (searchCriteria.matches(invoice)) {
                 matchingInvoices.add(invoice);
             }
@@ -826,6 +879,64 @@ public class Database {
         Invoice[] result = new Invoice[matchingInvoices.size()];
         matchingInvoices.toArray(result);
         return result;
+    }
+
+    /**
+     * Adds a payment to an invoice.
+     * @param invoiceId the invoice
+     * @param payment the payment
+     * @throws DatabaseModificationFailedException if a problem occurs while adding the payment
+     */
+    public void addPayment(String invoiceId, Payment payment) throws DatabaseModificationFailedException {
+        if (payment.getId() == null) {
+            throw new DatabaseModificationFailedException("The payment has no id");
+        }
+        HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
+        if (paymentsForInvoice == null) {
+            paymentsForInvoice = new HashMap<String, Payment>();
+            idToInvoiceToPaymentMap.put(invoiceId, paymentsForInvoice);
+        }
+        if (paymentsForInvoice.get(payment.getId()) != null) {
+            throw new DatabaseModificationFailedException("A payment with id " + payment.getId() + " already exists.");
+        }
+        paymentsForInvoice.put(payment.getId(), payment);
+        notifyChange();
+    }
+
+    /**
+     * Removes a payment from an invoice.
+     * @param invoiceId the id of the invoice
+     * @param paymentId the id of the payment
+     * @throws DatabaseModificationFailedException if a problem occurs while deleting the payment
+     */
+    public void removePayment(String invoiceId, String paymentId) throws DatabaseModificationFailedException {
+        HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
+        if (paymentsForInvoice != null) {
+            if (paymentsForInvoice.get(paymentId) == null) {
+                throw new DatabaseModificationFailedException("No payment with the id " + paymentId + " exists for invoice " + invoiceId);
+            }
+            paymentsForInvoice.remove(paymentId);
+            notifyChange();
+        }
+    }
+    
+    /**
+     * Gets all payments for the specified invoice.
+     * @param invoiceId the ID of the invoice
+     * @return the payments
+     */
+    public List<Payment> getPayments(String invoiceId) {
+        HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
+        ArrayList<Payment> payments = new ArrayList<Payment>(10);
+        if (paymentsForInvoice != null) {
+            payments.addAll(paymentsForInvoice.values());
+            Collections.sort(payments, new Comparator<Payment>() {
+                public int compare(Payment o1, Payment o2) {
+                    return DateUtil.compareDayOfYear(o1.getDate(), o2.getDate());
+                }
+            });
+        }
+        return payments;
     }
     
 }

@@ -258,11 +258,11 @@ public class InvoiceOdtFileGenerator {
             result.add(applyInvoiceItemSubstitutions(invoiceItemNode, formattedDate, descriptions[i], formattedAmount));
         }
 
-        Payment[] payments = invoice.getPayments();
-        for (int i = 0; i < payments.length; i++) {
-            String formattedDate = tr.formatDate("gen.dateFormat", payments[i].getDate());
-            String formattedAmount = formatAmountForOdt(payments[i].getAmount().negate());
-            result.add(applyInvoiceItemSubstitutions(invoiceItemNode, formattedDate, payments[i].getDescription(), formattedAmount));
+        List<Payment> payments = invoice.getPayments();
+        for (Payment payment : payments) {
+            String formattedDate = tr.formatDate("gen.dateFormat", payment.getDate());
+            String formattedAmount = formatAmountForOdt(payment.getAmount().negate());
+            result.add(applyInvoiceItemSubstitutions(invoiceItemNode, formattedDate, payment.getDescription(), formattedAmount));
         }
         return result;
     }

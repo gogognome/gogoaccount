@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsView.java,v 1.4 2008-11-01 13:26:01 sanderk Exp $
+ * $Id: EditJournalsView.java,v 1.5 2008-11-09 13:59:12 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -36,6 +36,7 @@ import javax.swing.table.TableColumnModel;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.swing.ButtonPanel;
+import nl.gogognome.swing.DialogWithButtons;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SortedTable;
 import nl.gogognome.swing.SortedTableModel;
@@ -236,7 +237,11 @@ public class EditJournalsView extends View {
                             }
                         }
                     }
-                    database.updateJournal(journal, newJournal);
+                    try {
+                        database.updateJournal(journal, newJournal);
+                    } catch (DatabaseModificationFailedException e) {
+                        MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                    }
                     updateJournalItemTable(row);
                 }
             }
@@ -251,7 +256,11 @@ public class EditJournalsView extends View {
         dialog.showDialog();
         List<Journal> journals = dialog.getEditedJournals();
         for (Journal journal : journals) {
-            database.addJournal(journal, true);
+            try {
+                database.addJournal(journal, true);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+            }
         }
     }
 
@@ -261,8 +270,20 @@ public class EditJournalsView extends View {
     private void handleDeleteItem() {
         int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
+            if (journalsTableModel.getJournal(row).createsInvoice()) {
+                if (!database.getPayments(journalsTableModel.getJournal(row).getIdOfCreatedInvoice()).isEmpty()) {
+                    MessageDialog.showMessage(getParentWindow(), "gen.warning", 
+                        TextResource.getInstance().getString("editJournalsView.journalCreatingInvoiceCannotBeDeleted"));
+                    return;
+                }
+            }
+            
             // TODO: add "are you sure?" dialog.
-            database.removeJournal(journalsTableModel.getJournal(row));
+            try {
+                database.removeJournal(journalsTableModel.getJournal(row));
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+            }
         }
     }
     

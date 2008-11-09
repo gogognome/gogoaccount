@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceToPdfDialog.java,v 1.1 2008-01-17 20:51:57 sanderk Exp $
+ * $Id: InvoiceToPdfDialog.java,v 1.2 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -18,6 +18,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -322,14 +323,14 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
                     sb.append(tempBuffer);
                 }
 
-                Payment[] payments = invoice.getPayments();
-                for (int i = 0; i < payments.length; i++) {
+                List<Payment> payments = invoice.getPayments();
+                for (Payment payment : payments) {
                     StringBuilder tempBuffer = new StringBuilder();
                     tempBuffer.append(itemLineTemplate);
-                    replace(tempBuffer, "$item-description$", payments[i].getDescription());
-                    String formattedAmount = formatAmountForTex(payments[i].getAmount().negate());
+                    replace(tempBuffer, "$item-description$", payment.getDescription());
+                    String formattedAmount = formatAmountForTex(payment.getAmount().negate());
                     replace(tempBuffer, "$item-amount$", formattedAmount);
-                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", payments[i].getDate()));
+                    replace(tempBuffer, "$item-date$", tr.formatDate("gen.dateFormat", payment.getDate()));
                     sb.append(tempBuffer);
                 }
             }

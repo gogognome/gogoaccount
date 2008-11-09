@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.47 2008-07-30 20:42:11 sanderk Exp $
+ * $Id: MainFrame.java,v 1.48 2008-11-09 13:59:13 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -511,7 +511,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	        dateSelectionDialog.showDialog();
 	        Date date = dateSelectionDialog.getDate();
 	        if (date != null) {
-	            ViewPartyOverviewDialog dialog = new ViewPartyOverviewDialog(this, parties[0], date);
+	            ViewPartyOverviewDialog dialog = new ViewPartyOverviewDialog(this, database, parties[0], date);
 	            dialog.showDialog();
 	        }
 	    }

@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.8 2008-11-01 13:26:01 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.9 2008-11-09 13:59:12 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -331,10 +331,9 @@ public class InvoiceGeneratorView extends View {
         	    id = database.suggestNewInvoiceId(id);
     	    }
     	    
-            Invoice invoice = new Invoice(id, parties[i], parties[i], amountToBePaid, date,
-                descriptions, amounts);
             try {
-                database.addInvoice(invoice);
+                database.createInvoice(id, parties[i], parties[i], amountToBePaid, date,
+                    descriptions, amounts);
             } catch (DatabaseModificationFailedException e) {
                 MessageDialog.showMessage(this, "gen.titleError", e.getMessage());
             }
@@ -368,20 +367,23 @@ public class InvoiceGeneratorView extends View {
                 }
 
                 boolean invoiceCreation = line.rbParty.isSelected(); 
-                items[l] = new JournalItem(amount, account, debet, 
-                    invoiceCreation ? invoice.getId() : null);
+                items[l] = new JournalItem(amount, account, debet, null, null);
             }
             
             Journal journal;
             try {
-                journal = new Journal(id, description, date, items, invoice.getId());
+                journal = new Journal(id, description, date, items, id);
             } catch (IllegalArgumentException e) {
                 MessageDialog.showMessage(this, "gen.titleError", 
                         TextResource.getInstance().getString("gen.itemsNotInBalance"));
                 return;
             }
     	    
-    	    database.addJournal(journal, true);
+    	    try {
+                database.addJournal(journal, true);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+            }
             nrInvoicesCreated++;
 	    }
 	    
