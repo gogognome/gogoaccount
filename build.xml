@@ -7,6 +7,7 @@
 	<property name="resourcedir" value="resources" />
 	<property name="generateddir" value="generated" />
 	<property name="classdir" value="${generateddir}/classes" />
+	<property name="libclassesdir" value="${generateddir}/libclasses" />
 	<property name="distdir" value="${generateddir}/dist" />
 	<property name="mainClass" value="cf.ui.MainFrame" />
 	<property name="productname" value="cf" />
@@ -38,8 +39,14 @@
 		<!-- Create the distribution directory -->
 		<mkdir dir="${distdir}"/>
 
+		<!-- Extract libraries -->
+		<mkdir dir="${libclassesdir}"/>
+		<unzip dest="${libclassesdir}" src="${libdir}/gogolib.jar" />
+		
 		<!-- Put everything in ${build} into the jar file -->
-		<jar jarfile="${distdir}/${productname}.jar" basedir="${classdir}">
+		<jar jarfile="${distdir}/${productname}.jar">
+			<fileset dir="${classdir}" />
+			<fileset dir="${libclassesdir}" />
 			<manifest>
 				<attribute name="Main-Class" value="${mainClass}" />
 			</manifest>
