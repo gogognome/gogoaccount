@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsView.java,v 1.5 2008-11-09 13:59:12 sanderk Exp $
+ * $Id: EditJournalsView.java,v 1.6 2008-11-10 20:06:00 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -278,7 +278,14 @@ public class EditJournalsView extends View {
                 }
             }
             
-            // TODO: add "are you sure?" dialog.
+            MessageDialog dialog = MessageDialog.showMessage(this,
+                "gen.titleWarning",
+                TextResource.getInstance().getString("editJournalsView.areYouSureAboutDeletion"),
+                new String[] {"gen.yes", "gen.no"});
+            if (dialog.getSelectedButton() == 1) {
+                return; // do not remove the journal
+            }
+
             try {
                 database.removeJournal(journalsTableModel.getJournal(row));
             } catch (DatabaseModificationFailedException e) {
