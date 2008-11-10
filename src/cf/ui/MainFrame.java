@@ -1,10 +1,36 @@
 /*
- * $Id: MainFrame.java,v 1.48 2008-11-09 13:59:13 sanderk Exp $
+ * $Id: MainFrame.java,v 1.49 2008-11-10 20:12:11 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui;
 
+import java.awt.FileDialog;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.print.PrinterException;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.Date;
+import java.util.Locale;
+
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.WindowConstants;
+
+import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewDialog;
+import nl.gogognome.framework.ViewListener;
+import nl.gogognome.framework.ViewTabbedPane;
+import nl.gogognome.swing.MessageDialog;
+import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.swing.plaf.DefaultLookAndFeel;
+import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
@@ -19,6 +45,7 @@ import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
+import cf.ui.views.BalanceAndOperationResultView;
 import cf.ui.views.BalanceView;
 import cf.ui.views.EditJournalView;
 import cf.ui.views.EditJournalsView;
@@ -26,30 +53,6 @@ import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.InvoiceToOdtView;
 import cf.ui.views.OperationalResultView;
 import cf.ui.views.PartiesView;
-import java.awt.FileDialog;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.print.PrinterException;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.Date;
-import java.util.Locale;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.WindowConstants;
-import nl.gogognome.framework.View;
-import nl.gogognome.framework.ViewDialog;
-import nl.gogognome.framework.ViewListener;
-import nl.gogognome.framework.ViewTabbedPane;
-import nl.gogognome.swing.MessageDialog;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.swing.plaf.DefaultLookAndFeel;
-import nl.gogognome.text.TextResource;
 
 /**
  * This class implements the main frame of the application.
@@ -67,6 +70,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	/** The tabbed pane containing the views. */
 	private ViewTabbedPane viewTabbedPane;
+
+   /** The view containing the balance and operational result. */
+    private BalanceAndOperationResultView balanceAndOperationResultView;
 
 	/** The balance view. */
 	private BalanceView balanceView;
@@ -147,8 +153,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         JMenuItem miEditParties = wf.createMenuItem("mi.editParties", this);
 
 		// the view menu
-		JMenuItem miViewBalance = wf.createMenuItem("mi.viewBalance", this);
-		JMenuItem miViewOperationalResult = wf.createMenuItem("mi.viewOperationalResult", this);
+        JMenuItem miViewBalanceAndOpertaionalResult = wf.createMenuItem("mi.viewBalanceAndOperationalResult", this);
 		JMenuItem miViewAccountOverview = wf.createMenuItem("mi.viewAccountOverview", this);
 		JMenuItem miViewPartyOverview = wf.createMenuItem("mi.viewPartyOverview", this);
 		JMenuItem miViewPartiesOverview = wf.createMenuItem("mi.viewPartiesOverview", this);
@@ -172,8 +177,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		editMenu.add(miAddInvoices);
         editMenu.add(miEditParties);
 
-		viewMenu.add(miViewBalance);
-		viewMenu.add(miViewOperationalResult);
+        viewMenu.add(miViewBalanceAndOpertaionalResult);
 		viewMenu.add(miViewAccountOverview);
 		viewMenu.add(miViewPartyOverview);
 		viewMenu.add(miViewPartiesOverview);
@@ -204,6 +208,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
 		if ("mi.saveBookkeepingAs".equals(command)) { handleSaveBookeepingAs(); }
 		if ("mi.exit".equals(command)) { handleExit(); }
+        if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
 		if ("mi.viewBalance".equals(command)) { handleViewBalance(); }
 		if ("mi.viewOperationalResult".equals(command)) { handleViewOperationalResult(); }
 		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountOverview(); }
@@ -403,8 +408,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         editJournalsView = null;
 
         databaseChanged(database);
-        handleViewOperationalResult();
-        handleViewBalance();
+        handleViewBalanceAndOperationalResult();
 	}
 
 	/**
@@ -430,6 +434,22 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			dispose();
 		}
 	}
+
+	private void handleViewBalanceAndOperationalResult() {
+        if (balanceAndOperationResultView == null) {
+            balanceAndOperationResultView = new BalanceAndOperationResultView(database);
+            balanceAndOperationResultView.addViewListener(new ViewListener() {
+                public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    balanceAndOperationResultView = null;
+                }
+            });
+            viewTabbedPane.openView(balanceAndOperationResultView);
+            viewTabbedPane.selectView(balanceAndOperationResultView);
+        } else {
+            viewTabbedPane.selectView(balanceAndOperationResultView);
+        }
+    }
 
 	private void handleViewBalance() {
 	    if (balanceView == null) {

@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceComponent.java,v 1.15 2007-07-29 12:33:40 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.16 2008-11-10 20:12:11 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,6 +7,7 @@ package cf.ui.components;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Date;
@@ -126,13 +127,12 @@ public class BalanceComponent extends JScrollPane {
 
         // Add label for the date
         int row = 0;
-        JPanel datePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        datePanel.setOpaque(false);
-        datePanel.add(new JLabel(tr.getString("gen.date")));
-
-        datePanel.add(new JLabel(tr.formatDate("gen.dateFormat", balance.getDate())));
         
-        panel.add(datePanel,
+        JLabel titleLabel = new JLabel(tr.getString("balanceComponent.title", balance.getDate()));
+        Font f = titleLabel.getFont();
+        titleLabel.setFont(f.deriveFont(Font.BOLD).deriveFont(f.getSize() * 140.0f / 100.0f));
+        
+        panel.add(titleLabel,
                 SwingUtils.createGBConstraints(0, row, 4, 1, 1.0, 0.0, 
                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                         10, 0, 10, 0));
