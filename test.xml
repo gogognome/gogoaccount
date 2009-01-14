@@ -56,6 +56,18 @@
 <item amount="EUR 125.00" id="1" invoice="co08-501" payment="p2" side="debet"/>
 <item amount="EUR 125.00" id="4" side="credit"/>
 </journal>
+<journal createdInvoice="comp-123" date="2009.01.14" description="2e helft voor Pietje Puk" id="comp-123">
+<item amount="EUR 50.00" id="1" side="debet"/>
+<item amount="EUR 50.00" id="80" side="credit"/>
+</journal>
+<journal createdInvoice="comp-44" date="2009.01.14" description="2e helft voor Frans Bauer" id="comp-44">
+<item amount="EUR 50.00" id="1" side="debet"/>
+<item amount="EUR 50.00" id="80" side="credit"/>
+</journal>
+<journal createdInvoice="comp-501" date="2009.01.14" description="2e helft voor Kooijmans" id="comp-501">
+<item amount="EUR 50.00" id="1" side="debet"/>
+<item amount="EUR 50.00" id="80" side="credit"/>
+</journal>
 </journals>
 <invoices>
 <invoice amountToBePaid="-/- EUR 10.00" concerningParty="123" id="0701123" issueDate="2007.12.03" payingParty="123">
@@ -68,6 +80,18 @@
 <line amount="EUR 200.00" description="contributie 2006/2007"/>
 <payment amount="EUR 75.00" date="2008.01.11" description="bank" id="p3"/>
 <payment amount="EUR 125.00" date="2008.11.09" description="bank" id="p2"/>
+</invoice>
+<invoice amountToBePaid="EUR 50.00" concerningParty="123" id="comp-123" issueDate="2009.01.14" payingParty="123">
+<line description="2e helft voor Pietje Puk"/>
+<line amount="EUR 50.00" description="contributie 2006/2007"/>
+</invoice>
+<invoice amountToBePaid="EUR 50.00" concerningParty="44" id="comp-44" issueDate="2009.01.14" payingParty="44">
+<line description="2e helft voor Frans Bauer"/>
+<line amount="EUR 50.00" description="contributie 2006/2007"/>
+</invoice>
+<invoice amountToBePaid="EUR 50.00" concerningParty="501" id="comp-501" issueDate="2009.01.14" payingParty="501">
+<line description="2e helft voor Kooijmans"/>
+<line amount="EUR 50.00" description="contributie 2006/2007"/>
 </invoice>
 </invoices>
 </cfbookkeeping>

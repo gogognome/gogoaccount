@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.37 2008-11-09 13:59:13 sanderk Exp $
+ * $Id: Database.java,v 1.38 2009-01-14 21:32:15 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -110,7 +110,7 @@ public class Database {
 	 * This method will make sure that the <tt>DatabaseListener</tt>s get notified
 	 * at the proper moment only if this database is the current database.
 	 */
-	private void notifyChange() {
+	public void notifyChange() {
 		if (instance == this) {
 			changed = true;
 			notifyListeners();
@@ -405,6 +405,28 @@ public class Database {
         }
         journals.add(journal);
         notifyChange();
+    }
+
+    /**
+     * Adds an invoice and journal to the database. The invoice is created by the journal.
+     * <p>This method will either completely succeed or completely fail.
+     * @param invoice the invoice
+     * @param journal the journal
+     * @throws DatabaseModificationFailedException if a problem occurs while adding the invoice or journal.
+     *         In this case the database will not have been changed.
+     */
+    public void addInvoicAndJournal(Invoice invoice, Journal journal) throws DatabaseModificationFailedException {
+        String id = invoice.getId();
+        if (!id.equals(journal.getIdOfCreatedInvoice())) {
+            throw new DatabaseModificationFailedException("The journal does not create the invoice with id " + id);
+        }
+        if (idsToInvoicesMap.get(id) != null) {
+            throw new DatabaseModificationFailedException("An invoice with ID " + id + " already exists!");
+        }
+        idsToInvoicesMap.put(id, invoice);
+        invoice.setDatabase(this);
+
+        journals.add(journal);
     }
     
     /**
@@ -750,7 +772,7 @@ public class Database {
      * @param invoice the invoice to be added
      * @throws DatabaseModificationFailedException if another invoice exists with the same id. 
      */
-    void addInvoice(Invoice invoice) throws DatabaseModificationFailedException {
+    public void addInvoice(Invoice invoice) throws DatabaseModificationFailedException {
         String id = invoice.getId();
         if (idsToInvoicesMap.get(id) != null) {
             throw new DatabaseModificationFailedException("An invoice with ID " + id + " already exists!");
@@ -759,23 +781,6 @@ public class Database {
         invoice.setDatabase(this);
     }
 
-    /**
-     * Creates an invoice and adds it to the database.
-     * @param id the id of the invoice 
-     * @param payingParty the party that pays
-     * @param concerningParty the party for whom this invoice is created
-     * @param amountToBePaid the amount to be paid
-     * @param issueDate the date this invoice is issued
-     * @param descriptions the descriptions of the invoice
-     * @param amounts the amounts corresponding to the descriptions
-     * @throws DatabaseModificationFailedException if another invoice exists with the same id. 
-     */
-    public void createInvoice(String id, Party payingParty, Party concerningParty, Amount amountToBePaid,
-            Date issueDate, String[] descriptions, Amount[] amounts) throws DatabaseModificationFailedException {
-        addInvoice(new Invoice(id, payingParty, concerningParty, amountToBePaid, issueDate, descriptions, amounts));
-        notifyChange();
-    }
-    
     /**
      * Updates an existing invoice.
      * @param id the id of the existing invoice
