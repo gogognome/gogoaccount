@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceService.java,v 1.1 2009-01-14 21:32:15 sanderk Exp $
+ * $Id: InvoiceService.java,v 1.2 2009-01-14 21:32:48 sanderk Exp $
  */
 
 package nl.gogognome.cf.services;
@@ -35,11 +35,11 @@ public class InvoiceService {
      * @param parties the parties
      * @param issueDate the date of issue of the invoices
      * @param description an optional description for the invoices 
-     * @param invoiceDefinitions the lines of a single invoice 
+     * @param invoiceLineDefinitions the lines of a single invoice 
      * @throws CreationException if a problem occurs while creating invoices for one or more of the parties
      */
     public static void createInvoiceAndJournalForParties(Database database, String id, List<Party> parties, 
-            Date issueDate, String description, List<InvoiceLineDefinition> invoiceDefinitions) throws CreationException {
+            Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws CreationException {
         // Validate the input.
         if (issueDate == null) {
             throw new CreationException("No date has been specified!"); 
@@ -47,7 +47,7 @@ public class InvoiceService {
 
         boolean amountToBePaidSelected = false;
         boolean changedDatabase = false;
-        for (InvoiceLineDefinition line : invoiceDefinitions) {
+        for (InvoiceLineDefinition line : invoiceLineDefinitions) {
             if (!amountToBePaidSelected) {
                 amountToBePaidSelected = line.isAmountToBePaid();
             } else {
@@ -79,7 +79,7 @@ public class InvoiceService {
                 !StringUtil.isNullOrEmpty(description) ? replaceKeywords(description, party) : null;
             
             // First create the invoice instance. It is needed when the journal is created.
-            int size = invoiceDefinitions.size() - 1;
+            int size = invoiceLineDefinitions.size() - 1;
             if (specificDescription != null) {
                 size++;
             }
@@ -92,7 +92,7 @@ public class InvoiceService {
             }
             
             Amount amountToBePaid = null;
-            for (InvoiceLineDefinition line : invoiceDefinitions) {
+            for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                 Amount amount = line.getDebet();
                 boolean debet = amount != null;
                 if (line.isAmountToBePaid()) {
@@ -122,9 +122,9 @@ public class InvoiceService {
             Invoice invoice = new Invoice(specificId, party, party, amountToBePaid, issueDate, descriptions, amounts);
 
             // Create the journal.
-            JournalItem[] items = new JournalItem[invoiceDefinitions.size()];
+            JournalItem[] items = new JournalItem[invoiceLineDefinitions.size()];
             int n = 0;
-            for (InvoiceLineDefinition line : invoiceDefinitions) {
+            for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                 Account account = line.getAccount();
                 assert account != null; // has been checked before
                 Amount amount = line.getDebet();
