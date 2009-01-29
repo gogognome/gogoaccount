@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.23 2008-11-09 13:59:13 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.24 2009-01-29 20:23:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -49,8 +49,9 @@ public class XMLFileReader {
      * @throws IOException if an I/O problem occurs while reading the file.
 	 */
 	public static Database createDatabaseFromFile(String fileName) throws XMLParseException, IOException {
-		try 
-		{
+		try {
+		    int highestPaymentId = 0;
+		    
 		    Database db = new Database();
 		    db.setFileName(fileName);
 		    
@@ -121,6 +122,11 @@ public class XMLFileReader {
 		                String paymentId = itemElem.getAttribute("payment");
                         if (paymentId.length() == 0) {
                             paymentId = null;
+                        } else {
+                            if (paymentId.matches("p\\d+")) {
+                                int pid = Integer.parseInt(paymentId.substring(1));
+                                highestPaymentId = Math.max(highestPaymentId, pid);
+                            }
                         }
 		                
 		                // TODO: old code. remove later
@@ -139,6 +145,7 @@ public class XMLFileReader {
 		        }
 		    }
 		    
+		    db.setNextPaymentId("p" + (highestPaymentId + 1));
 			return db;
 		} 
 		catch(Exception e) 

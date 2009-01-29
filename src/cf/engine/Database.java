@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.38 2009-01-14 21:32:15 sanderk Exp $
+ * $Id: Database.java,v 1.39 2009-01-29 20:23:56 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -385,6 +385,15 @@ public class Database {
         nextPaymentId = sb.toString();
         
         return result;
+    }
+    
+    /**
+     * Sets the highest payment ID. This method will typically be called when a database is loaded
+     * from file.
+     * @param highestPaymentId the highest payment id in use thus far.
+     */
+    void setNextPaymentId(String highestPaymentId) {
+        nextPaymentId = highestPaymentId;
     }
     
     /** 
