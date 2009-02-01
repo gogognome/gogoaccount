@@ -1,5 +1,5 @@
 /*
- * $Id: PartiesOverviewTableModel.java,v 1.10 2008-01-11 18:56:56 sanderk Exp $
+ * $Id: PartiesOverviewTableModel.java,v 1.11 2009-02-01 19:53:43 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -85,28 +85,22 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	            
 	        case 1:
 	        {
-	            Amount balance = database.getBalanceForParty(parties[row], date);
-	            if (balance.isPositive())
-	            {
-	                result = af.formatAmount(balance);
-	            }
-	            else
-	            {
+	            Amount amount = database.getTotalDebetForParty(parties[row], date);
+	            if (amount.isPositive()) {
+	                result = af.formatAmount(amount);
+	            } else {
 	                result = "";
 	            }
 	            break;
 	        }   
 	        case 2:
 	        {
-	            Amount balance = database.getBalanceForParty(parties[row], date).negate();
-	            if (balance.isPositive())
-	            {
-	                result = af.formatAmount(balance);
-	            }
-	            else
-	            {
-	                result = "";
-	            }
+                Amount amount = database.getTotalCreditForParty(parties[row], date);
+                if (amount.isPositive()) {
+                    result = af.formatAmount(amount);
+                } else {
+                    result = "";
+                }
 	            break;
 	        }   
 	        default:

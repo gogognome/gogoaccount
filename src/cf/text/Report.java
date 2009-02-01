@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.18 2008-03-10 21:18:23 sanderk Exp $
+ * $Id: Report.java,v 1.19 2009-02-01 19:53:43 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -132,7 +132,7 @@ public class Report
         TextResource tr = TextResource.getInstance();
         Date date = balance.getDate();
         
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder(10000);
         
         result.append(textFormat.getNewParagraph());
         
@@ -202,7 +202,7 @@ public class Report
         TextResource tr = TextResource.getInstance();
         Date date = operationalResult.getDate();
         
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder(10000);
         
         result.append(textFormat.getNewParagraph());
 
@@ -274,7 +274,7 @@ public class Report
     private void printDebtors(Party[] debtors, Date date) {
         TextResource tr = TextResource.getInstance();
         
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder(10000);
         
         result.append(textFormat.getNewParagraph());
         
@@ -295,7 +295,7 @@ public class Report
             
             for (int i=0; i<debtors.length; i++) {
                 values[0] = debtors[i].getId() + " - " + debtors[i].getName();
-                Amount amount = database.getBalanceForParty(debtors[i], date); 
+                Amount amount = database.getTotalDebetForParty(debtors[i], date); 
                 values[1] = textFormat.formatAmount(amount);
                 total = total == null ? amount : total.add(amount);
                 result.append(textFormat.getRow(values));
@@ -314,7 +314,7 @@ public class Report
     private void printCreditors(Party[] creditors, Date date) {
         TextResource tr = TextResource.getInstance();
         
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder(10000);
 
         result.append(textFormat.getNewParagraph());
 
@@ -335,7 +335,7 @@ public class Report
             
             for (int i=0; i<creditors.length; i++) {
                 values[0] = creditors[i].getId() + " - " + creditors[i].getName();
-                Amount amount = database.getBalanceForParty(creditors[i], date).negate(); 
+                Amount amount = database.getTotalCreditForParty(creditors[i], date); 
                 values[1] = textFormat.formatAmount(amount);
                 total = total == null ? amount : total.add(amount);
                 result.append(textFormat.getRow(values));
@@ -365,7 +365,7 @@ public class Report
             }
         }
         
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder(10000);
         AmountFormat af = new AmountFormat(locale);
 
         result.append(textFormat.getNewParagraph());
@@ -378,7 +378,7 @@ public class Report
             result.append(textFormat.getNewLine());
         } else {
             result.append(textFormat.getStartOfTable(("l|l|r|r|l"), 
-                    new int[] { 10, 1, 35, 1, 10, 1, 10, 1, 30 }));
+                    new int[] { 10, 1, 45, 1, 10, 1, 10, 1, 40 }));
             
             String[] values = new String[9];
             values[0] = tr.getString("gen.date");
@@ -389,7 +389,7 @@ public class Report
             values[5] = "";
             values[6] = tr.getString("gen.credit");
             values[7] = "";
-            values[8] = tr.getString("gen.party");
+            values[8] = tr.getString("gen.invoice");
             result.append(textFormat.getHeaderRow(values));
             
             result.append(textFormat.getHorizontalSeparator());
@@ -399,7 +399,14 @@ public class Report
                 values[2] = journals.get(i).getId() + " - " + journals.get(i).getDescription();
                 values[4] = "";
                 values[6] = "";
-                values[8] = "";
+                String idOfCreatedInvoice = journals.get(i).getIdOfCreatedInvoice();
+                if (idOfCreatedInvoice != null) {
+                    Invoice invoice = database.getInvoice(idOfCreatedInvoice);
+                    values[8] = af.formatAmount(invoice.getAmountToBePaid())
+                        + " " + invoice.getId() + " (" + invoice.getConcerningParty().getName() + ')';
+                } else {
+                    values[8] = "";
+                }
                 result.append(textFormat.getRow(values));
                 
                 JournalItem[] items = journals.get(i).getItems();
@@ -437,7 +444,7 @@ public class Report
             }
         }
         
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder(10000);
         AmountFormat af = new AmountFormat(locale);
 
         result.append(textFormat.getNewParagraph());
@@ -454,7 +461,7 @@ public class Report
                 result.append(account.getId() + " " + account.getName());
                 result.append(textFormat.getNewLine());
 	            result.append(textFormat.getStartOfTable(("l|l|r|r|l"), 
-	                    new int[] { 10, 1, 35, 1, 10, 1, 10, 1, 30 }));
+	                    new int[] { 10, 1, 45, 1, 10, 1, 10, 1, 40 }));
 	            
 	            String[] values = new String[9];
 	            values[0] = tr.getString("gen.date");
@@ -465,7 +472,7 @@ public class Report
 	            values[5] = "";
 	            values[6] = tr.getString("gen.credit");
 	            values[7] = "";
-	            values[8] = tr.getString("gen.party");
+	            values[8] = tr.getString("gen.invoice");
 	            result.append(textFormat.getHeaderRow(values));
 	            
 	            result.append(textFormat.getHorizontalSeparator());

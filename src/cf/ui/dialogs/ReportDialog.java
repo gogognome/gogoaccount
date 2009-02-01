@@ -1,5 +1,5 @@
 /*
- * $Id: ReportDialog.java,v 1.7 2007-05-21 15:56:20 sanderk Exp $
+ * $Id: ReportDialog.java,v 1.8 2009-02-01 19:53:43 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -25,6 +25,8 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerDateModel;
 import javax.swing.border.TitledBorder;
 
+import nl.gogognome.beans.DateSelectionBean;
+import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.OkCancelDialog;
 import nl.gogognome.swing.SwingUtils;
@@ -43,11 +45,9 @@ import cf.text.Report;
 public class ReportDialog extends OkCancelDialog { 
     
     private JTextField tfFileName;
-    private JSpinner.DateEditor dateEditor;
+    private DateModel dateModel;
     
     private JRadioButton rbTxtFile;
-    private JRadioButton rbPdfFile;
-    private JRadioButton rbHtmlFile;
     
     private Frame parentFrame;
     
@@ -93,12 +93,10 @@ public class ReportDialog extends OkCancelDialog {
         
         SpinnerDateModel model = new SpinnerDateModel();
         model.setCalendarField(Calendar.DAY_OF_YEAR);
-        JSpinner dateSpinner = new JSpinner(model);
-        dateEditor = new JSpinner.DateEditor(dateSpinner, 
-                tr.getString("gen.dateFormat"));
-        dateSpinner.setEditor(dateEditor);
+        dateModel = new DateModel();
+        dateModel.setDate(new Date(), null);
         
-        fileNamePanel.add(dateSpinner,
+        fileNamePanel.add(new DateSelectionBean(dateModel),
                 SwingUtils.createTextFieldGBConstraints(1, 1));
         
         // Create file type panel
@@ -107,16 +105,7 @@ public class ReportDialog extends OkCancelDialog {
         fileTypePanel.setBorder(new TitledBorder(tr.getString("genreport.fileType")));
         
         ButtonGroup buttonGroup = new ButtonGroup();
-        rbHtmlFile = new JRadioButton(wf.createAction("genreport.html"));
-        fileTypePanel.add(rbHtmlFile,
-                SwingUtils.createGBConstraints(0, 0));
-        buttonGroup.add(rbHtmlFile);
         
-        rbPdfFile = new JRadioButton(wf.createAction("genreport.pdf"));
-        fileTypePanel.add(rbPdfFile,
-                SwingUtils.createGBConstraints(0, 1));
-        buttonGroup.add(rbPdfFile);
-
         rbTxtFile = new JRadioButton(wf.createAction("genreport.txt"));
         fileTypePanel.add(rbTxtFile,
                 SwingUtils.createGBConstraints(0, 2));
@@ -139,23 +128,9 @@ public class ReportDialog extends OkCancelDialog {
      * @see cf.ui.dialogs.OkCancelDialog#handleOk()
      */
     protected void handleOk() {
-        int fileType;
-        if (rbHtmlFile.isSelected()) {
-            fileType = Report.RP_HTML;
-        } else if (rbPdfFile.isSelected()) {
-            fileType = Report.RP_PDF;
-        } else {
-            fileType = Report.RP_TXT;
-        }
+        int fileType = Report.RP_TXT;
         
-        Date date;
-        try {
-            dateEditor.commitEdit();
-            date = dateEditor.getModel().getDate();
-        } catch (ParseException ignore) {
-            date = null;
-        }
-        
+        Date date = dateModel.getDate();
         if (date == null) {
             MessageDialog dialog = new MessageDialog(parentFrame, "ds.parseErrorTitle", 
                     TextResource.getInstance().getString("ds.parseErrorMessage"));

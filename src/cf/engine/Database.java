@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.40 2009-02-01 19:00:31 sanderk Exp $
+ * $Id: Database.java,v 1.41 2009-02-01 19:53:43 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -739,6 +739,68 @@ public class Database {
     }
     
     /**
+     * Gets the total of amounts to be paid by a party at the specified date.
+     * If the party has invoices that indicate he/she should receive money, then
+     * those invoices are ignored by this method.
+     * 
+     * @param party the party
+     * @param date the date
+     * @return the total of amounts to be paid
+     */
+    public Amount getTotalDebetForParty(Party party, Date date) {
+        Amount result = Amount.getZero(getCurrency());
+        for (Invoice invoice : idsToInvoicesMap.values()) {
+            Amount invoiceTotal = Amount.getZero(getCurrency());
+            if (invoice.getPayingParty().equals(party)) {
+                if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
+                    invoiceTotal = invoiceTotal.add(invoice.getAmountToBePaid());
+                }
+                List<Payment> payments = invoice.getPayments();
+                for (Payment p : payments) {
+                    if (DateUtil.compareDayOfYear(p.getDate(), date) <= 0) {
+                        invoiceTotal = invoiceTotal.subtract(p.getAmount());
+                    }
+                }
+            }
+            if (invoiceTotal.isPositive()) {
+                result = result.add(invoiceTotal);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets the total of amounts to be paid to a party at the specified date.
+     * If the party has invoices that indicate he/she should pay money, then
+     * those invoices are ignored by this method.
+     * 
+     * @param party the party
+     * @param date the date
+     * @return the total of amounts to be paid to the party
+     */
+    public Amount getTotalCreditForParty(Party party, Date date) {
+        Amount result = Amount.getZero(getCurrency());
+        for (Invoice invoice : idsToInvoicesMap.values()) {
+            Amount invoiceTotal = Amount.getZero(getCurrency());
+            if (invoice.getPayingParty().equals(party)) {
+                if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
+                    invoiceTotal = invoiceTotal.add(invoice.getAmountToBePaid());
+                }
+                List<Payment> payments = invoice.getPayments();
+                for (Payment p : payments) {
+                    if (DateUtil.compareDayOfYear(p.getDate(), date) <= 0) {
+                        invoiceTotal = invoiceTotal.subtract(p.getAmount());
+                    }
+                }
+            }
+            if (invoiceTotal.isNegative()) {
+                result = result.subtract(invoiceTotal);
+            }
+        }
+        return result;
+    }
+
+    /**
      * Gets the debtors at the specified date. Debtors are parties that still have 
      * to pay money to the club.
      * @param date the date
@@ -748,7 +810,7 @@ public class Database {
         ArrayList<Party> debtors = new ArrayList<Party>();
         for (int i=0; i<parties.size(); i++) {
             Party party = parties.get(i);
-            Amount balance = getBalanceForParty(party, date);
+            Amount balance = getTotalDebetForParty(party, date);
             if (balance.isPositive()) {
                 debtors.add(party);
             }
@@ -766,7 +828,7 @@ public class Database {
         Amount total = Amount.getZero(currency);
         for (int i=0; i<parties.size(); i++) {
             Party party = parties.get(i);
-            Amount balance = getBalanceForParty(party, date);
+            Amount balance = getTotalDebetForParty(party, date);
             if (balance.isPositive()) {
                 total = total.add(balance);
             }
@@ -784,8 +846,8 @@ public class Database {
         ArrayList<Party> creditors = new ArrayList<Party>();
         for (int i=0; i<parties.size(); i++) {
             Party party = parties.get(i);
-            Amount balance = getBalanceForParty(party, date);
-            if (balance.isNegative()) {
+            Amount balance = getTotalCreditForParty(party, date);
+            if (balance.isPositive()) {
                 creditors.add(party);
             }
         }
@@ -802,9 +864,9 @@ public class Database {
         Amount total = Amount.getZero(currency);
         for (int i=0; i<parties.size(); i++) {
             Party party = parties.get(i);
-            Amount balance = getBalanceForParty(party, date);
-            if (balance.isNegative()) {
-                total = total.subtract(balance);
+            Amount balance = getTotalCreditForParty(party, date);
+            if (balance.isPositive()) {
+                total = total.add(balance);
             }
         }
         return total;
