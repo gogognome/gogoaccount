@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.39 2009-01-29 20:23:56 sanderk Exp $
+ * $Id: Database.java,v 1.40 2009-02-01 19:00:31 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -758,6 +758,23 @@ public class Database {
     }
     
     /**
+     * Gets the total amount of the debtors at the specified date.
+     * @param date the date
+     * @return the total amount.
+     */
+    public Amount getTotalDebtors(Date date) {
+        Amount total = Amount.getZero(currency);
+        for (int i=0; i<parties.size(); i++) {
+            Party party = parties.get(i);
+            Amount balance = getBalanceForParty(party, date);
+            if (balance.isPositive()) {
+                total = total.add(balance);
+            }
+        }
+        return total;
+    }
+    
+    /**
      * Gets the creditors at the specified date. Creditors are parties to which
      * the club owes money.
      * @param date the date
@@ -775,7 +792,24 @@ public class Database {
         Party[] result = creditors.toArray(new Party[creditors.size()]);
         return result;
     }
-    
+
+    /**
+     * Gets the total amount of the creditors at the specified date.
+     * @param date the date
+     * @return the total amount.
+     */
+    public Amount getTotalCreditors(Date date) {
+        Amount total = Amount.getZero(currency);
+        for (int i=0; i<parties.size(); i++) {
+            Party party = parties.get(i);
+            Amount balance = getBalanceForParty(party, date);
+            if (balance.isNegative()) {
+                total = total.subtract(balance);
+            }
+        }
+        return total;
+    }
+
     /**
      * Adds an invoice to the database. Does not notify changes.
      * @param invoice the invoice to be added

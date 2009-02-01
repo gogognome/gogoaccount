@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceAndOperationResultView.java,v 1.1 2008-11-10 20:12:11 sanderk Exp $
+ * $Id: BalanceAndOperationResultView.java,v 1.2 2009-02-01 19:00:31 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -9,7 +9,6 @@ package cf.ui.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
 import java.awt.GridBagLayout;
 import java.util.Date;
 
@@ -17,14 +16,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import cf.engine.Database;
-import cf.ui.components.BalanceComponent;
-import cf.ui.components.OperationalResultComponent;
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.text.TextResource;
+import cf.engine.Database;
+import cf.ui.components.BalanceComponent;
+import cf.ui.components.OperationalResultComponent;
 
 /**
  * This class implements a view the shows a balance and operation result. 

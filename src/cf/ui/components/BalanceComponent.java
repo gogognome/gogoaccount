@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceComponent.java,v 1.16 2008-11-10 20:12:11 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.17 2009-02-01 19:00:31 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -259,6 +259,21 @@ public class BalanceComponent extends JScrollPane {
                 SwingUtils.createGBConstraints(5, row, 1, 1, 1.0, 1.0, 
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         0, 0, 0, 0));
+        row++;
+        panel.add(new JLabel(tr.getString("balanceComponent.totalDebtors")),
+            SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 1.0,
+                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
+        panel.add(new JLabel(tr.getAmountFormat().formatAmount(database.getTotalDebtors(date))),
+            SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 1.0,
+                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
+        row++;
+        panel.add(new JLabel(tr.getString("balanceComponent.totalCreditors")),
+            SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 1.0,
+                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
+        panel.add(new JLabel(tr.getAmountFormat().formatAmount(database.getTotalCreditors(date))),
+            SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 1.0,
+                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
+        row++;
     }
     
     /**
