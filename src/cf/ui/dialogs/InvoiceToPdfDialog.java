@@ -1,10 +1,15 @@
 /*
- * $Id: InvoiceToPdfDialog.java,v 1.2 2008-11-09 13:59:13 sanderk Exp $
+ * $Id: InvoiceToPdfDialog.java,v 1.3 2009-02-19 21:16:06 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.dialogs;
 
+import cf.engine.Database;
+import cf.engine.Invoice;
+import cf.engine.Payment;
+import cf.pdf.PdfLatex;
+import cf.ui.views.InvoiceEditAndSelectionView;
 import java.awt.Frame;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -19,13 +24,11 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.DateModel;
@@ -37,59 +40,54 @@ import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.Payment;
-import cf.pdf.PdfLatex;
-import cf.ui.views.InvoiceEditAndSelectionView;
 
 /**
  * This class implements the invoice dialog. This dialog can generate
  * invoices (PDF files) for debtors.
  *
  * TODO: Change this dialog into a View.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class InvoiceToPdfDialog extends OkCancelDialog {
-    
+
     /** The database used to determine the invoices. */
     private Database database;
-    
+
     private JTextField tfTemplateFileName;
-    
+
     private JTextField tfPdfFileName;
-    
+
     private DateModel dateModel;
-    
+
     private JTextField tfConcerning;
-    
+
     private JTextField tfOurReference;
 
     private DateModel dueDateModel;
-    
+
     private Frame parentFrame;
-    
+
     /** The contents of the template file. */
     private ArrayList<String> templateContents;
-    
-    /** 
+
+    /**
      * Indicates the start of a single letter in the <code>templateContents</code>.
-     * The letter consists of the elements with indices 
+     * The letter consists of the elements with indices
      * <code>[letterStart..letterEnd)</code>.
      */
     private int letterStart;
-    
+
     /**
      * Indicates the end of a single letter in the <code>templateContents</code>.
-     * The letter consists of the elements with indices 
+     * The letter consists of the elements with indices
      * <code>[letterStart..letterEnd)</code>.
      */
     private int letterEnd;
-    
+
     /** The <code>PrintWriter</code> used to write the tex file. */
     private PrintWriter texPrintWriter;
-    
+
     /**
      * Constructor.
      * @param frame the parent of this dialog
@@ -98,7 +96,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         super(frame, "id.title");
         this.parentFrame = frame;
         this.database = database;
-        
+
         WidgetFactory wf = WidgetFactory.getInstance();
         JPanel panel = new JPanel(new GridBagLayout());
         panel.add(wf.createLabel("id.templateFilename"),
@@ -108,36 +106,36 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         panel.add(tfTemplateFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
 
-        JButton button = wf.createButton("gen.btSelectFile", new AbstractAction() { 
+        JButton button = wf.createButton("gen.btSelectFile", new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfTemplateFileName.getText());
                 if (fileChooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
                     tfTemplateFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
                 }
-                
+
             }
         });
         panel.add(button,
                 SwingUtils.createLabelGBConstraints(2, 0));
-        
+
         panel.add(wf.createLabel("id.pdfFileName"),
                 SwingUtils.createLabelGBConstraints(0, 1));
         tfPdfFileName = wf.createTextField(30);
         panel.add(tfPdfFileName,
                 SwingUtils.createTextFieldGBConstraints(1, 1));
 
-        button = wf.createButton("gen.btSelectFile", new AbstractAction() { 
+        button = wf.createButton("gen.btSelectFile", new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfPdfFileName.getText());
                 if (fileChooser.showOpenDialog(frame) == JFileChooser.APPROVE_OPTION) {
                     tfPdfFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
                 }
-                
+
             }
         });
         panel.add(button,
                 SwingUtils.createLabelGBConstraints(2, 1));
-        
+
         panel.add(wf.createLabel("id.date"),
                 SwingUtils.createLabelGBConstraints(0, 2));
         dateModel = new DateModel();
@@ -150,7 +148,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         tfConcerning = wf.createTextField(30);
         panel.add(tfConcerning,
                 SwingUtils.createLabelGBConstraints(1, 3));
-        
+
         panel.add(wf.createLabel("id.ourReference"),
                 SwingUtils.createLabelGBConstraints(0, 4));
         tfOurReference = wf.createTextField(30);
@@ -163,13 +161,14 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         dueDateModel.setDate(DateUtil.addDays(new Date(), 14), null);
         panel.add(new DateSelectionBean(dueDateModel),
                 SwingUtils.createLabelGBConstraints(1, 5));
-        
+
         componentInitialized(panel);
     }
 
     /* (non-Javadoc)
      * @see cf.ui.dialogs.OkCancelDialog#handleOk()
      */
+    @Override
     protected void handleOk() {
         Date date = dateModel.getDate();
         if (date == null) {
@@ -192,14 +191,14 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         ViewDialog dialog = new ViewDialog(parentFrame, invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {
-            generateInvoices(invoicesView.getSelectedInvoices(), date, tfConcerning.getText(), 
+            generateInvoices(invoicesView.getSelectedInvoices(), date, tfConcerning.getText(),
                 tfOurReference.getText(), dueDate);
         }
     }
 
     /**
      * TODO: move this functionality to the engine
-     * @param invoices the invoices to be added to the PDF file 
+     * @param invoices the invoices to be added to the PDF file
      * @param date
      * @param concerning
      * @param ourReference
@@ -208,17 +207,17 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
     private void generateInvoices(Invoice[] invoices, Date date, String concerning, String ourReference,
             Date dueDate) {
         TextResource tr = TextResource.getInstance();
-        
+
         try {
             readTemplate(tfTemplateFileName.getText());
         }
         catch (IOException e) {
-            MessageDialog.showMessage(parentFrame, "gen.titleError", 
+            MessageDialog.showMessage(parentFrame, "gen.titleError",
                 tr.getString("id.cantReadTemplateFile",
                 new Object[] {tfTemplateFileName.getText()}));
             return;
         }
-        
+
         File pdfFile = new File(tfPdfFileName.getText());
         File pdfFileDirectory = new File(pdfFile.getParent());
         File texFile = new File(PdfLatex.getTexFileName(tfPdfFileName.getText()));
@@ -226,7 +225,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
             writeTexHeader(texFile);
         }
         catch (IOException e) {
-            MessageDialog md = new MessageDialog(parentFrame, 
+            MessageDialog md = new MessageDialog(parentFrame,
                 "gen.titleError", tr.getString("id.cantCreateTexFile",
                 new Object[] {texFile.getAbsolutePath()}));
             md.showDialog();
@@ -234,42 +233,42 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         }
 
         for (int i = 0; i < invoices.length; i++) {
-            if (!invoices[i].hasBeenPaid()) {
+            if (!invoices[i].hasBeenPaid(date)) {
                 writeInvoiceToTexFile(invoices[i], dueDate);
             }
         }
-        
+
         writeTexTail();
 
         templateContents.clear();
         templateContents = null;
-        
+
         try
         {
             PdfLatex.convertTexToPdf(texFile, pdfFileDirectory);
         }
-        catch (IOException e) 
+        catch (IOException e)
         {
             e.printStackTrace();
-            MessageDialog.showMessage(parentFrame, "gen.titleError", 
+            MessageDialog.showMessage(parentFrame, "gen.titleError",
                 tr.getString("id.cantConvertTexToPdf",
                 new Object[] {texFile.getAbsolutePath()}));
             return;
         }
-        catch (InterruptedException e) 
+        catch (InterruptedException e)
         {
             e.printStackTrace();
-            MessageDialog.showMessage(parentFrame, "gen.titleError", 
+            MessageDialog.showMessage(parentFrame, "gen.titleError",
                 tr.getString("id.cantConvertTexToPdf",
                 new Object[] {texFile.getAbsolutePath()}));
             return;
         }
     }
 
-    /** 
+    /**
      * Formats an amount for tex. E.g., EUR is replaced by the
      * euro sign.
-     * 
+     *
      * @param amount the amount
      * @return the amount for tex
      */
@@ -281,7 +280,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         }
         return af.formatAmount(amount, currency);
     }
-    
+
     /**
      * Writes an invoice to the tex file.
      * @param invoice the invoice to be written
@@ -293,7 +292,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
             sb = new StringBuilder(1000);
             String line = templateContents.get(lineIndex);
             sb.append(line);
-            
+
             // apply substitutions
             replace(sb, "$date$", tr.formatDate("gen.dateFormat", new Date()));
             replace(sb, "$party-name$", invoice.getConcerningParty().getName());
@@ -304,13 +303,13 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
             replace(sb, "$concerning$", tfConcerning.getText());
             replace(sb, "$our-reference$", invoice.getId());
             replace(sb, "$due-date$", tr.formatDate("gen.dateFormat", dueDate));
-            replace(sb, "$total-amount$", formatAmountForTex(invoice.getRemainingAmountToBePaid()));
+            replace(sb, "$total-amount$", formatAmountForTex(invoice.getRemainingAmountToBePaid(dateModel.getDate())));
             int index = sb.indexOf("$item-line$");
             if (index != -1) {
                 sb.delete(index, index + "$item-line$".length());
                 StringBuilder itemLineTemplate = new StringBuilder(sb.toString());
                 sb.setLength(0);
-                
+
                 String[] descriptions = invoice.getDescriptions();
                 Amount[] amounts = invoice.getAmounts();
                 for (int i=0; i<invoice.getDescriptions().length; i++) {
@@ -338,10 +337,10 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
             texPrintWriter.println(PdfLatex.convertUnicodeToTex(sb.toString()));
         }
     }
-    
+
     /**
      * Replaces all occurrences of <code>oldValue</code> with <code>newValue</code>
-     * in the specified string buffer. 
+     * in the specified string buffer.
      * @param sb the string buffer
      * @param oldValue the old value
      * @param newValue the new value
@@ -354,7 +353,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
             sb.replace(index, index + oldValue.length(), newValue);
         }
     }
-    
+
     /**
      * Reads the template from the template file.
      * The result is stored in <code>templateContents</code>.
@@ -365,7 +364,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
     {
         BufferedReader reader = new BufferedReader(new InputStreamReader(
                 new FileInputStream(templateFileName)));
-        
+
         templateContents = new ArrayList<String>();
         for (String line = reader.readLine(); line != null; line = reader.readLine()) {
             templateContents.add(line);
@@ -382,7 +381,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
      * Writes the header of the tex file. <code>texPrintWriter</code> will be
      * initialised and will stay open so that the letters and the tail can
      * be written to the file.
-     * 
+     *
      * @param texFile the tex file to be created.
      * @throws IOException if an I/O exception occurs.
      */
@@ -390,15 +389,15 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
     {
         // Write header of tex file.
         texPrintWriter = new PrintWriter(new OutputStreamWriter(new FileOutputStream(texFile)));
-        
+
         for (int i=0; i<letterStart; i++)
         {
             texPrintWriter.println(templateContents.get(i));
         }
     }
-    
+
     /**
-     * Writes the tail of the tex file. 
+     * Writes the tail of the tex file.
      * <code>texPrintWriter</code> will be closed and set to <code>null</code>.
      */
     private void writeTexTail()

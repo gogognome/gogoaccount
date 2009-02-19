@@ -1,17 +1,9 @@
 /*
- * $Id: InvoiceService.java,v 1.2 2009-01-14 21:32:48 sanderk Exp $
+ * $Id: InvoiceService.java,v 1.3 2009-02-19 21:16:07 sanderk Exp $
  */
 
 package nl.gogognome.cf.services;
 
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
-import nl.gogognome.swing.MessageDialog;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.StringUtil;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
@@ -19,30 +11,40 @@ import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.Party;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import nl.gogognome.text.Amount;
+import nl.gogognome.text.TextResource;
+import nl.gogognome.util.StringUtil;
 
 /**
  * This class offers methods for handling invoices.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class InvoiceService {
 
- 
+    /** Private constructor to avoid instantiation. */
+    private InvoiceService() {
+        throw new IllegalStateException();
+    }
+
     /**
      * Creates invoices and journals for a number of parties.
      * @param database the database to which the invoices are to be added.
      * @param id the id of the invoices
      * @param parties the parties
      * @param issueDate the date of issue of the invoices
-     * @param description an optional description for the invoices 
-     * @param invoiceLineDefinitions the lines of a single invoice 
+     * @param description an optional description for the invoices
+     * @param invoiceLineDefinitions the lines of a single invoice
      * @throws CreationException if a problem occurs while creating invoices for one or more of the parties
      */
-    public static void createInvoiceAndJournalForParties(Database database, String id, List<Party> parties, 
+    public static void createInvoiceAndJournalForParties(Database database, String id, List<Party> parties,
             Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws CreationException {
         // Validate the input.
         if (issueDate == null) {
-            throw new CreationException("No date has been specified!"); 
+            throw new CreationException("No date has been specified!");
         }
 
         boolean amountToBePaidSelected = false;
@@ -61,23 +63,23 @@ public class InvoiceService {
             if (line.getDebet() != null && line.getCredit() != null) {
                 throw new CreationException(TextResource.getInstance().getString("A line with two amounts has been found!"));
             }
-            
+
             if (line.getAccount() == null) {
                 throw new CreationException(TextResource.getInstance().getString("A line without an account has been found"));
             }
         }
-        
+
         if (!amountToBePaidSelected) {
             throw new CreationException(TextResource.getInstance().getString("No amount to be paid has been specified"));
         }
 
         List<Party> partiesForWhichCreationFailed = new LinkedList<Party>();
-        
+
         for (Party party : parties) {
             String specificId = replaceKeywords(id, party);
-            String specificDescription = 
+            String specificDescription =
                 !StringUtil.isNullOrEmpty(description) ? replaceKeywords(description, party) : null;
-            
+
             // First create the invoice instance. It is needed when the journal is created.
             int size = invoiceLineDefinitions.size() - 1;
             if (specificDescription != null) {
@@ -90,7 +92,7 @@ public class InvoiceService {
                 descriptions[0] = specificDescription;
                 descriptionIndex++;
             }
-            
+
             Amount amountToBePaid = null;
             for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                 Amount amount = line.getDebet();
@@ -104,16 +106,16 @@ public class InvoiceService {
                         amountToBePaid = amount.negate();
                     }
                 }
-                
+
                 assert amount != null; // has been checked before
-                
+
                 if (!line.isAmountToBePaid()) {
                     descriptions[descriptionIndex] = line.getAccount().getName();
                     amounts[descriptionIndex] = debet ? amount.negate() : amount;
                     descriptionIndex++;
                 }
             }
-            
+
             assert amountToBePaid != null; // has been checked before
 
             if (database.getInvoice(specificId) != null) {
@@ -132,21 +134,21 @@ public class InvoiceService {
                 if (amount == null) {
                     amount = line.getCredit();
                 }
-                
+
 
 
                 assert amount != null; // has been checked before
                 items[n] = new JournalItem(amount, account, debet, null, null);
                 n++;
             }
-            
+
             Journal journal;
             try {
                 journal = new Journal(specificId, specificDescription, issueDate, items, specificId);
             } catch (IllegalArgumentException e) {
                 throw new CreationException("The debet and credit amounts are not in balance!", e);
             }
-            
+
             try {
                 database.addInvoicAndJournal(invoice, journal);
                 changedDatabase = true;
@@ -154,11 +156,11 @@ public class InvoiceService {
                 partiesForWhichCreationFailed.add(party);
             }
         }
-        
+
         if (changedDatabase) {
             database.notifyChange();
         }
-        
+
         if (!partiesForWhichCreationFailed.isEmpty()) {
             if (partiesForWhichCreationFailed.size() == 1) {
                 Party party = partiesForWhichCreationFailed.get(0);
@@ -186,7 +188,7 @@ public class InvoiceService {
         String[] values = new String[] {
                 party.getId(), party.getName()
         };
-        
+
         for (int k=0; k<keywords.length; k++) {
             String keyword = keywords[k];
             String value = values[k];

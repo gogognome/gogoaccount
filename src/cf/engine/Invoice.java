@@ -1,5 +1,5 @@
 /*
- * $Id: Invoice.java,v 1.7 2008-11-09 13:59:13 sanderk Exp $
+ * $Id: Invoice.java,v 1.8 2009-02-19 21:16:07 sanderk Exp $
  *
  * Copyright (C) 2005 Sander Kooijmans
  *
@@ -10,13 +10,13 @@ package cf.engine;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import nl.gogognome.text.Amount;
+import nl.gogognome.util.DateUtil;
 
 /**
- * This class represents an invoice. An invoice consists of an amount that has to be paid 
+ * This class represents an invoice. An invoice consists of an amount that has to be paid
  * by a debitor. A negative amount represents an amount to be paid to a creditor.
- * 
+ *
  * <p>Further an invoice has a list of payments that should sum up to the amount to be paid.
  * Negative payments represent payments to the creditor.
  */
@@ -24,22 +24,22 @@ public class Invoice implements Comparable<Invoice> {
 
     /** The database in which this invoice is registered. */
     private Database database;
-    
+
     /** The identifier of the invoice. */
     private String id;
-    
+
     /** The party that has to pay the invoice. */
     private Party payingParty;
-    
-    /** 
+
+    /**
      * The party to whom this invoice is concerned. If this party is a minor, then typically
-     * the paying party will be the parent of this party. 
+     * the paying party will be the parent of this party.
      */
     private Party concerningParty;
 
-    /** 
+    /**
      * The amount to be paid. Negative amounts represent amounts to be received.
-     * 
+     *
      * <p>This is the actual amount to be paid. This amount may differ from the sum
      * of the {@link #amounts}.
      */
@@ -47,20 +47,20 @@ public class Invoice implements Comparable<Invoice> {
 
     /** The date this invoice was issued. */
     private Date issueDate;
-    
-    /** 
+
+    /**
      * Contains details about this invoice. None of the elements may be <code>null</code>.
-     * Descriptions may be associated to amounts. 
+     * Descriptions may be associated to amounts.
      */
     private String[] descriptions;
-    
-    /** 
-     * Contains amounts that belongs to the descriptions. 
+
+    /**
+     * Contains amounts that belongs to the descriptions.
      * If an element is <code>null</code>, then the description has no corresponding amount.
-     * 
+     *
      * <p>These amounts can be used to explain the total amount to be paid. Not necessarily
-     * will the sum of these amounts be equal to {@link #amountToBePaid}. 
-     *  
+     * will the sum of these amounts be equal to {@link #amountToBePaid}.
+     *
      * <p>Invariant: <code>amounts.length == descriptions.length</code>
      */
     private Amount[] amounts;
@@ -86,7 +86,7 @@ public class Invoice implements Comparable<Invoice> {
         if (amountToBePaid == null) {
             throw new IllegalArgumentException("The amount to be paid must not be null");
         }
-        
+
         this.id = id;
         this.payingParty = payingParty;
         this.concerningParty = concerningParty;
@@ -97,22 +97,25 @@ public class Invoice implements Comparable<Invoice> {
     }
 
     /**
-     * Sets the database in which this invoice is registered. 
+     * Sets the database in which this invoice is registered.
      * @param database the database
      */
     void setDatabase(Database database) {
         this.database = database;
     }
-    
+
     /**
      * Gets the amount that has to be paid for this invoice minus the payments that have been made.
+     * @param date the date for which the amount has to be determined.
      * @return the remainig amount that has to be paid
      */
-    public Amount getRemainingAmountToBePaid() {
+    public Amount getRemainingAmountToBePaid(Date date) {
         Amount result = amountToBePaid;
         if (database != null) {
             for (Payment p : database.getPayments(id)) {
-                result = result.subtract(p.getAmount());
+                if (DateUtil.compareDayOfYear(date, p.getDate()) >= 0) {
+                    result = result.subtract(p.getAmount());
+                }
             }
         }
         return result;
@@ -120,17 +123,18 @@ public class Invoice implements Comparable<Invoice> {
 
     /**
      * Checks whether this invoice has been paid.
+     * @param date the date for which this check has to be performed.
      * @return <code>true</code> if the remaining amount to be paid is zero (no more and no less);
      *         <code>false</code> otherwise
      */
-    public boolean hasBeenPaid() {
-        return getRemainingAmountToBePaid().isZero();
+    public boolean hasBeenPaid(Date date) {
+        return getRemainingAmountToBePaid(date).isZero();
     }
-    
+
     public Amount getAmountToBePaid() {
         return amountToBePaid;
     }
-    
+
     public Amount[] getAmounts() {
         return amounts;
     }
@@ -166,14 +170,14 @@ public class Invoice implements Comparable<Invoice> {
     /**
      * Creates a new invoice that consists of this invoice from which the amounts to be paid
      * has been set to zero.
-     * 
+     *
      * @return the new invoice
      */
     public Invoice removeAmountToBePaid() {
         return new Invoice(id, payingParty, concerningParty, amountToBePaid.subtract(amountToBePaid),
             issueDate, new String[0], new Amount[0]);
     }
-    
+
     /**
      * Compares another invoice to this invoice. Invoices are ordered by their identifier.
      * @param that the other invoice
@@ -183,10 +187,11 @@ public class Invoice implements Comparable<Invoice> {
     public int compareTo(Invoice that) {
         return this.id.compareTo(that.id);
     }
-    
+
     /**
      * @see Object#equals(Object)
      */
+    @Override
     public boolean equals(Object o) {
         if (o instanceof Invoice) {
             Invoice that = (Invoice) o;
@@ -194,10 +199,11 @@ public class Invoice implements Comparable<Invoice> {
         }
         return false;
     }
-    
+
     /**
      * @see Object#hashCode()
      */
+    @Override
     public int hashCode() {
         return id.hashCode();
     }

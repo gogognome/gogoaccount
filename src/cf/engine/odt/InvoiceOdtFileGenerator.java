@@ -13,7 +13,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -227,7 +226,7 @@ public class InvoiceOdtFileGenerator {
                 replace(sb, "$concerning$", concerning);
                 replace(sb, "$our-reference$", invoice.getId());
                 replace(sb, "$due-date$", tr.formatDate("gen.dateFormat", dueDate));
-                replace(sb, "$total-amount$", formatAmountForOdt(invoice.getRemainingAmountToBePaid()));
+                replace(sb, "$total-amount$", formatAmountForOdt(invoice.getRemainingAmountToBePaid(new Date())));
 
                 String newData = sb.toString();
                 if (!newData.equals(data)) {

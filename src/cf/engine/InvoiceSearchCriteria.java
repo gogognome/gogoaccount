@@ -1,13 +1,15 @@
 /*
- * $Id: InvoiceSearchCriteria.java,v 1.2 2008-01-17 20:51:57 sanderk Exp $
+ * $Id: InvoiceSearchCriteria.java,v 1.3 2009-02-19 21:16:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
 
+import java.util.Date;
+
 
 /**
- * This class represents search criteria for invoices. 
+ * This class represents search criteria for invoices.
  *
  * @author Sander Kooijmans
  */
@@ -16,7 +18,7 @@ public class InvoiceSearchCriteria {
     private String id;
     private String name;
     private boolean includeClosedInvoices;
-    
+
     public String getId() {
         return id;
     }
@@ -51,11 +53,11 @@ public class InvoiceSearchCriteria {
             matches = matches && matches(name, invoice.getPayingParty().getName());
         }
         if (!includeClosedInvoices) {
-            matches = matches && !invoice.hasBeenPaid();
+            matches = matches && !invoice.hasBeenPaid(new Date());
         }
         return matches;
     }
-    
+
     /**
      * Checks whether a specified criteria matches a specified value.
      * @param criteria the criteria

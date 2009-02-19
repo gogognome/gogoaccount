@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.41 2009-02-01 19:53:43 sanderk Exp $
+ * $Id: Database.java,v 1.42 2009-02-19 21:16:07 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -29,28 +29,28 @@ public class Database {
 
     /** The singleton instance of this class. */
     private static Database instance;
-    
+
     /** Description of the bookkeeping represented by this database. */
     private String description = "empty bookkeeping";
-    
+
     private Account[] assets = new Account[0];
-    
+
     private Account[] liabilities = new Account[0];
-    
+
     private Account[] revenues = new Account[0];
-    
+
     private Account[] expenses = new Account[0];
-    
+
     private ArrayList<Journal> journals = new ArrayList<Journal>();
-    
+
     private ArrayList<Party> parties = new ArrayList<Party>();
 
     /** Maps ids of accounts to <code>Account</code>s. */
     private HashMap<String, Account> idsToAccountsMap = new HashMap<String, Account>();
-    
+
     /** Maps ids of parties to <code>Party</code> instances. */
     private HashMap<String, Party> idsToPartiesMap = new HashMap<String, Party>();
-    
+
     /** Maps ids of invoices to <code>Invoice</code> instances. */
     private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<String, Invoice>();
 
@@ -59,26 +59,26 @@ public class Database {
 
     /** Contains the next payment identifier. */
     private String nextPaymentId = "p1";
-    
-    /** 
+
+    /**
      * Contains the start date of the account period.
      */
     private Date startOfPeriod;
-    
+
 	/** The currency of all amounts. */
 	private Currency currency = Currency.getInstance("EUR");
-    
+
 	/** Indicates whether this database has unsaved changes. */
 	private boolean changed;
-	
+
 	/** The name of the file from which the database was loaded. */
 	private String fileName;
-	
-	/** 
-	 * Contains the <tt>DatabaseListeners</tt>. 
+
+	/**
+	 * Contains the <tt>DatabaseListeners</tt>.
 	 */
 	private ArrayList<DatabaseListener> listeners = new ArrayList<DatabaseListener>();
-	
+
 	/**
 	 * Adds a database listener.
 	 * @param l the database listener.
@@ -94,18 +94,18 @@ public class Database {
 	public void removeListener( DatabaseListener l ) {
 		listeners.remove(l);
 	}
-	
+
 	/** Notifies the listeners. */
-	private void notifyListeners() 
+	private void notifyListeners()
 	{
-		for (int i=0; i<listeners.size(); i++) 
+		for (int i=0; i<listeners.size(); i++)
 		{
 			DatabaseListener l = listeners.get(i);
 			l.databaseChanged(instance);
 		}
 	}
-	
-	/** 
+
+	/**
 	 * This method is called each time the database changes.
 	 * This method will make sure that the <tt>DatabaseListener</tt>s get notified
 	 * at the proper moment only if this database is the current database.
@@ -116,26 +116,27 @@ public class Database {
 			notifyListeners();
 		}
 	}
-	
-	/** 
+
+	/**
 	 * This method is called to indicate that the database is consistent with the
 	 * file it was last loaded from or saved to.
 	 */
-	public void databaseConsistentWithFile() 
+	public void databaseConsistentWithFile()
 	{
 		changed = false;
 		// This is the only place where an update takes without calling notifyChange().
 		// The reason for this, is that notifyChange() will mark the database as
 		// changed, while this method is called to indicate that the database has
-		// not been changed since the last load or save action. 
+		// not been changed since the last load or save action.
 		notifyListeners();
 	}
-	
+
     /**
      * Gets the singleton instance of this class.
      * @return the singleton instance of this class
      * @deprecated do not use this anymore
      */
+    @Deprecated
     public static synchronized Database getInstance()
     {
         if (instance == null)
@@ -144,33 +145,34 @@ public class Database {
         }
         return instance;
     }
-    
+
     /**
      * Sets the singleton instance of this class.
      * @param instance the singleton instance of this class
      * @deprecated do not use this method anymore
      */
+    @Deprecated
     public static synchronized void setInstance(Database instance)
     {
         Database.instance = instance;
     }
-    
+
     public boolean hasUnsavedChanges()
     {
         return changed;
     }
-    
+
     public String getDescription()
     {
         return description;
     }
-    
+
     public void setDescription(String description)
     {
         this.description = description;
         notifyChange();
     }
-    
+
     /**
      * Gets an account based on its id.
      * @param id the id of the account
@@ -180,19 +182,19 @@ public class Database {
     public Account getAccount(String id) {
         return idsToAccountsMap.get(id);
     }
-    
-    public Account[] getAssets() 
+
+    public Account[] getAssets()
     {
         return assets;
     }
-    
+
     /**
      * Sets the assets.
      * @param assets the assets
      * @throws DatabaseModificationFailedException if there is an asset for which holds
      *         <code>!asset.isDebet()</code>.
      */
-    void setAssets(Account[] assets) throws DatabaseModificationFailedException
+    public void setAssets(Account[] assets) throws DatabaseModificationFailedException
     {
         for (int i=0; i<assets.length; i++)
         {
@@ -201,24 +203,24 @@ public class Database {
                 throw new DatabaseModificationFailedException("Assets must have debet equal to true!");
             }
         }
-        
+
         Arrays.sort(assets);
         this.assets = assets;
         updateIdsToAccountsMap();
     }
-    
-    public Account[] getExpenses() 
+
+    public Account[] getExpenses()
     {
         return expenses;
     }
-    
+
     /**
      * Sets the expenses.
      * @param expenses the expenses
      * @throws DatabaseModificationFailedException if there is an expense for which holds
      *         <code>!expense.isDebet()</code>
      */
-    void setExpenses(Account[] expenses) throws DatabaseModificationFailedException 
+    public void setExpenses(Account[] expenses) throws DatabaseModificationFailedException
     {
         for (int i=0; i<expenses.length; i++)
         {
@@ -227,18 +229,18 @@ public class Database {
                 throw new DatabaseModificationFailedException("Expenses must have debet equal to true!");
             }
         }
-        
+
         Arrays.sort(expenses);
         this.expenses = expenses;
         updateIdsToAccountsMap();
     }
-    
-    public Account[] getLiabilities() 
+
+    public Account[] getLiabilities()
     {
         return liabilities;
     }
-    
-    void setLiabilities(Account[] liabilities) throws DatabaseModificationFailedException
+
+    public void setLiabilities(Account[] liabilities) throws DatabaseModificationFailedException
     {
         for (int i=0; i<liabilities.length; i++)
         {
@@ -247,23 +249,23 @@ public class Database {
                 throw new DatabaseModificationFailedException("Liabilities must have debet equal to false!");
             }
         }
-        
+
         Arrays.sort(liabilities);
         this.liabilities = liabilities;
         updateIdsToAccountsMap();
     }
-    
+
     public Account[] getRevenues() {
         return revenues;
     }
-    
-    void setRevenues(Account[] revenues) throws DatabaseModificationFailedException {
+
+    public void setRevenues(Account[] revenues) throws DatabaseModificationFailedException {
         for (int i=0; i<revenues.length; i++) {
             if (revenues[i].isDebet()) {
                 throw new DatabaseModificationFailedException("Revenues must have debet equal to false!");
             }
         }
-        
+
         Arrays.sort(revenues);
         this.revenues = revenues;
         updateIdsToAccountsMap();
@@ -286,17 +288,17 @@ public class Database {
         System.arraycopy(revenues, 0, accounts, assets.length + liabilities.length + expenses.length, revenues.length);
         return accounts;
     }
-    
-    public Date getStartOfPeriod() 
+
+    public Date getStartOfPeriod()
     {
         return startOfPeriod;
     }
-    
+
     public Currency getCurrency()
     {
         return currency;
     }
-    
+
     public void setCurrency(Currency currency)
     {
         this.currency = currency;
@@ -311,14 +313,14 @@ public class Database {
         this.startOfPeriod = startOfPeriod;
         notifyChange();
     }
-    
+
     /**
-     * Adds payments to invoices that are referred to by the journal. 
+     * Adds payments to invoices that are referred to by the journal.
      * To each invoice (referred to by the journal) a new payment is added for the
      * corresponding journal item.
-     * 
+     *
      * <p>This method does not notify changes in the database!
-     * 
+     *
      * @param journal the journal
      * @throws DatabaseModificationFailedException if creation of payments fails
      */
@@ -350,14 +352,14 @@ public class Database {
         String description = journalItem.getAccount().getName();
         return new Payment(journalItem.getPaymentId(), amount, date, description);
     }
-    
+
     /**
      * Creates a unique payment id.
      * @return a unique payment id
      */
     public String createPaymentId() {
         String result = nextPaymentId;
-        
+
         StringBuilder sb = new StringBuilder(nextPaymentId);
         char c = sb.charAt(sb.length() - 1);
         if (c < '0' || c > '9') {
@@ -381,12 +383,12 @@ public class Database {
                 done = false;
             }
         } while (!done);
-        
+
         nextPaymentId = sb.toString();
-        
+
         return result;
     }
-    
+
     /**
      * Sets the highest payment ID. This method will typically be called when a database is loaded
      * from file.
@@ -395,16 +397,16 @@ public class Database {
     void setNextPaymentId(String highestPaymentId) {
         nextPaymentId = highestPaymentId;
     }
-    
-    /** 
-     * Adds a journal to the database. 
-     * 
-     * <p>Optionally, this method can update invoices that are referred to by the journal. 
+
+    /**
+     * Adds a journal to the database.
+     *
+     * <p>Optionally, this method can update invoices that are referred to by the journal.
      * To each invoice (referred to by the journal) a new payment is added for the
      * corresponding journal item.
-     * 
+     *
      * @param journal the journal to be added
-     * @param createPayments <code>true</code> if payments have to be added for invoices referred 
+     * @param createPayments <code>true</code> if payments have to be added for invoices referred
      *        to by the journal; <code>false</code> if no payments are not to be created.
      * @throws DatabaseModificationFailedException if a problem occurs while adding the journal
      */
@@ -437,11 +439,11 @@ public class Database {
 
         journals.add(journal);
     }
-    
+
     /**
      * Removes a journal from the database. Payments booked in the journal are also removed.
      * @param journal the journal to be deleted
-     * @throws DatabaseModificationFailedException 
+     * @throws DatabaseModificationFailedException
      */
     public void removeJournal(Journal journal) throws DatabaseModificationFailedException {
         if (!journals.contains(journal)) {
@@ -463,16 +465,16 @@ public class Database {
                 removePayment(invoiceId, paymentId);
             }
         }
-        
+
         // Remove the journal.
         journals.remove(journal);
-        
+
         notifyChange();
     }
-    
+
     /**
      * Updates a journal. Payments that are modified by the update of the journal
-     * are updated in the corresponding invoice. 
+     * are updated in the corresponding invoice.
      * @param oldJournal the journal to be replaced
      * @param newJournal the journal that replaces <code>oldJournal</code>
      * @throws DatabaseModificationFailedException if a problem occurs while updating the journal
@@ -490,9 +492,9 @@ public class Database {
         if (index == -1) {
             throw new DatabaseModificationFailedException("The old journal does not exist in the database.");
         }
-        
+
         journals.set(index, newJournal);
-       
+
         // Update payments. Remove payments from old journal and add payments of the new journal.
         items = oldJournal.getItems();
         for (int i = 0; i < items.length; i++) {
@@ -512,7 +514,7 @@ public class Database {
 
         notifyChange();
     }
-    
+
     /**
      * Gets the journals of the database
      * @return the journals sorted on date
@@ -522,7 +524,7 @@ public class Database {
         Collections.sort(result);
         return result;
     }
-    
+
     /**
      * Gets the different types of the parties.
      * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
@@ -539,7 +541,7 @@ public class Database {
         Arrays.sort(result);
         return result;
     }
-    
+
     public Party[] getParties() {
         Party[] result = parties.toArray(new Party[parties.size()]);
         Arrays.sort(result);
@@ -564,10 +566,10 @@ public class Database {
         Arrays.sort(result);
         return result;
     }
-    
+
     /**
      * Gets a party by id.
-     * @param id the id of the party 
+     * @param id the id of the party
      * @return the party or <code>null</code> if none is present
      *         with the specified id.
      */
@@ -575,15 +577,15 @@ public class Database {
     {
         return idsToPartiesMap.get(id);
     }
-    
+
     /**
-     * Sets the debtors in the database. Any debtors present in the database
+     * Sets the parties in the database. Any parties present in the database
      * are replaced.
-     * @param debtors the debtors.
-     * @throws DatabaseModificationFailedException if at least two debtors were present 
+     * @param parties the parties.
+     * @throws DatabaseModificationFailedException if at least two parties were present
      *         with the same id.
      */
-    void setParties(Party[] parties) throws DatabaseModificationFailedException {
+    public void setParties(Party[] parties) throws DatabaseModificationFailedException {
         ArrayList<Party> newParties = new ArrayList<Party>();
         HashMap<String, Party> newIdsToPartiesMap = new HashMap<String, Party>();
 		for (int i = 0; i < parties.length; i++) {
@@ -594,16 +596,16 @@ public class Database {
 		    }
 		    newIdsToPartiesMap.put(id, parties[i]);
 		}
-		
+
 		// All parties have a unique id.
 		this.parties = newParties;
 		idsToPartiesMap = newIdsToPartiesMap;
     }
-    
+
     /**
      * Adds a party to the database.
      * @param party the party to be added
-     * @throws DatabaseModificationFailedException if another party exists with the same id. 
+     * @throws DatabaseModificationFailedException if another party exists with the same id.
      */
     public void addParty(Party party) throws DatabaseModificationFailedException {
         String id = party.getId();
@@ -628,12 +630,12 @@ public class Database {
         if (!oldParty.getId().equals(newParty.getId())) {
             throw new DatabaseModificationFailedException("The ID of the party cannot be changed!");
         }
-        
+
         parties.set(parties.indexOf(oldParty), newParty);
         idsToPartiesMap.put(newParty.getId(), newParty);
         notifyChange();
     }
-    
+
     /**
      * Removes a party from the database.
      * @param party the party to be removed
@@ -647,7 +649,7 @@ public class Database {
         parties.remove(party);
         notifyChange();
     }
-    
+
     /**
      * Updates the map <code>idsToAccountsMap</code> based on all
      * accounts registered at this database.
@@ -672,7 +674,7 @@ public class Database {
             idsToAccountsMap.put(expenses[i].getId(), expenses[i]);
         }
     }
-    
+
     /**
      * Gets the balance for the specified date.
      * @param date the date
@@ -681,7 +683,7 @@ public class Database {
     public Balance getBalance(Date date) {
         return new Balance(this, date);
     }
-    
+
     /**
      * Gets the operation result for the specified date.
      * @param date the date
@@ -690,32 +692,32 @@ public class Database {
     public OperationalResult getOperationalResult(Date date) {
         return new OperationalResult(this, date);
     }
-    
+
     public String getFileName()
     {
         return fileName;
     }
-    
+
     public void setFileName(String fileName)
     {
         this.fileName = fileName;
         notifyChange();
     }
-    
+
     /**
      * Checks whether any accounts are present in this database.
      * @return <code>true</code> if any account is present; otherwise <code>false</code>
-     * 
+     *
      */
     public boolean hasAccounts()
     {
         return assets.length + liabilities.length + expenses.length + revenues.length > 0;
     }
-    
+
     /**
      * Gets the balance for a party at the specified date. The balance consists
      * of the total debet amount minus the total credit amount of the party.
-     * 
+     *
      * @param party the party
      * @param date the date
      * @return the balance for the party
@@ -737,12 +739,12 @@ public class Database {
         }
         return result;
     }
-    
+
     /**
      * Gets the total of amounts to be paid by a party at the specified date.
      * If the party has invoices that indicate he/she should receive money, then
      * those invoices are ignored by this method.
-     * 
+     *
      * @param party the party
      * @param date the date
      * @return the total of amounts to be paid
@@ -773,7 +775,7 @@ public class Database {
      * Gets the total of amounts to be paid to a party at the specified date.
      * If the party has invoices that indicate he/she should pay money, then
      * those invoices are ignored by this method.
-     * 
+     *
      * @param party the party
      * @param date the date
      * @return the total of amounts to be paid to the party
@@ -801,7 +803,7 @@ public class Database {
     }
 
     /**
-     * Gets the debtors at the specified date. Debtors are parties that still have 
+     * Gets the debtors at the specified date. Debtors are parties that still have
      * to pay money to the club.
      * @param date the date
      * @return the debtors
@@ -818,7 +820,7 @@ public class Database {
         Party[] result = debtors.toArray(new Party[debtors.size()]);
         return result;
     }
-    
+
     /**
      * Gets the total amount of the debtors at the specified date.
      * @param date the date
@@ -835,7 +837,7 @@ public class Database {
         }
         return total;
     }
-    
+
     /**
      * Gets the creditors at the specified date. Creditors are parties to which
      * the club owes money.
@@ -875,7 +877,7 @@ public class Database {
     /**
      * Adds an invoice to the database. Does not notify changes.
      * @param invoice the invoice to be added
-     * @throws DatabaseModificationFailedException if another invoice exists with the same id. 
+     * @throws DatabaseModificationFailedException if another invoice exists with the same id.
      */
     public void addInvoice(Invoice invoice) throws DatabaseModificationFailedException {
         String id = invoice.getId();
@@ -900,18 +902,18 @@ public class Database {
         if (!id.equals(newInvoice.getId())) {
             throw new DatabaseModificationFailedException("The ID of the updated invoice differs from the original ID. Therefore, the invoice cannot be udpated!");
         }
-        
+
         idsToInvoicesMap.get(id).setDatabase(null);
         idsToInvoicesMap.put(id, newInvoice);
         newInvoice.setDatabase(this);
         notifyChange();
     }
-    
+
     /**
      * Sets the invoices for the database. Any invoices present in the database
      * are replaced.
      * @param invoices the invoices
-     * @throws DatabaseModificationFailedException if at least two invoices are added 
+     * @throws DatabaseModificationFailedException if at least two invoices are added
      *         with the same id.
      */
     public void setInvoices(Invoice[] invoices) throws DatabaseModificationFailedException {
@@ -925,7 +927,7 @@ public class Database {
             }
             newIdsToInvoicesMap.put(id, invoices[i]);
         }
-        
+
         // All invoices have a unique id.
         // Remove old invoices.
         for (Invoice invoice : idsToInvoicesMap.values()) {
@@ -938,7 +940,7 @@ public class Database {
         idsToInvoicesMap = newIdsToInvoicesMap;
         notifyChange();
     }
-    
+
     /**
      * Gets the invoice with the specified id.
      * @param id the id of the invoice
@@ -947,7 +949,7 @@ public class Database {
     public Invoice getInvoice(String id) {
         return idsToInvoicesMap.get(id);
     }
-    
+
     /**
      * Gets a suggestion for an unused invoice id.
      * @param id a possibly existing invoice id
@@ -963,7 +965,7 @@ public class Database {
         } while (existingInvoiceIds.contains(newId));
         return newId;
     }
-    
+
     /**
      * Gets all invoices, sorted on ID.
      * @return the invoices
@@ -973,7 +975,7 @@ public class Database {
         Arrays.sort(result);
         return result;
     }
-    
+
     /**
      * Gets the invoices that match the search criteria.
      * @param searchCriteria the search criteria
@@ -1029,7 +1031,7 @@ public class Database {
             notifyChange();
         }
     }
-    
+
     /**
      * Gets all payments for the specified invoice.
      * @param invoiceId the ID of the invoice
@@ -1048,5 +1050,5 @@ public class Database {
         }
         return payments;
     }
-    
+
 }
