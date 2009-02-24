@@ -1,13 +1,13 @@
 /*
- * $Id: AccountComboBox.java,v 1.2 2007-01-15 18:32:46 sanderk Exp $
+ * $Id: AccountComboBox.java,v 1.3 2009-02-24 21:30:54 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
-import nl.gogognome.swing.JComboBoxWithKeyboardInput;
 import cf.engine.Account;
 import cf.engine.Database;
+import nl.gogognome.swing.JComboBoxWithKeyboardInput;
 
 /**
  * This class implements a combo box for <code>Account</code>s.
@@ -16,11 +16,12 @@ import cf.engine.Database;
  */
 public class AccountComboBox extends JComboBoxWithKeyboardInput {
 
-    /** Contains the accounts that are shown in the combo box. */ 
+    /** Contains the accounts that are shown in the combo box. */
     private static Account[] accounts;
-    
+
     /**
      * Constructor.
+     * @param database the database from which the accounts are taken.
      */
     public AccountComboBox(Database database) {
         super();
@@ -30,27 +31,27 @@ public class AccountComboBox extends JComboBoxWithKeyboardInput {
 		Account[] revenues = database.getRevenues();
 		accounts = new Account[assets.length + liabilities.length + expenses.length + revenues.length];
 		int index = 0;
-		for (int i = 0; i < assets.length; i++) 
+		for (int i = 0; i < assets.length; i++)
 		{
 		    accounts[index] = assets[i];
 		    index++;
         }
-		for (int i = 0; i < liabilities.length; i++) 
+		for (int i = 0; i < liabilities.length; i++)
 		{
 		    accounts[index] = liabilities[i];
 		    index++;
         }
-		for (int i = 0; i < expenses.length; i++) 
+		for (int i = 0; i < expenses.length; i++)
 		{
 		    accounts[index] = expenses[i];
 		    index++;
         }
-		for (int i = 0; i < revenues.length; i++) 
+		for (int i = 0; i < revenues.length; i++)
 		{
 		    accounts[index] = revenues[i];
 		    index++;
         }
-		
+
 		for (int i=0; i<accounts.length; i++)
 		{
 		    addItem(accounts[i].getId() + " " + accounts[i].getName());
@@ -60,7 +61,7 @@ public class AccountComboBox extends JComboBoxWithKeyboardInput {
     /**
      * Selects the specified account in the combo box.
      * If the account is not found, then no account will be selected.
-     * 
+     *
      * @param account the account
      */
     public void selectAccount(Account account) {

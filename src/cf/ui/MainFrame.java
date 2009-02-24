@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.50 2009-02-19 21:16:07 sanderk Exp $
+ * $Id: MainFrame.java,v 1.51 2009-02-24 21:30:54 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -21,6 +21,7 @@ import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.BalanceAndOperationResultView;
 import cf.ui.views.BalanceView;
+import cf.ui.views.CloseBookkeepingView;
 import cf.ui.views.EditJournalView;
 import cf.ui.views.EditJournalsView;
 import cf.ui.views.InvoiceGeneratorView;
@@ -43,6 +44,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.WindowConstants;
+import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.ViewListener;
@@ -391,8 +394,17 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             return;
         }
 
-        // TODO: implement this
-//        database = BookkeepingService.closeBookkeeping(database, date, eigenVermogen);
+        CloseBookkeepingView cbv = new CloseBookkeepingView(database);
+        new ViewDialog(this, cbv).showDialog();
+        Date date = cbv.getDate();
+        Account accountToAddResultTo = cbv.getAccountToAddResultTo();
+        if (date != null && accountToAddResultTo != null) {
+            try {
+                database = BookkeepingService.closeBookkeeping(database, date, accountToAddResultTo);
+            } catch (CreationException e) {
+                MessageDialog.showMessage(this, "gen.error", e.getMessage());
+            }
+        }
 	}
 
 	/**
