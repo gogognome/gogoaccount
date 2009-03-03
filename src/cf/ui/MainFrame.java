@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.51 2009-02-24 21:30:54 sanderk Exp $
+ * $Id: MainFrame.java,v 1.52 2009-03-03 20:13:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -398,9 +398,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         new ViewDialog(this, cbv).showDialog();
         Date date = cbv.getDate();
         Account accountToAddResultTo = cbv.getAccountToAddResultTo();
+        String description = cbv.getDescription();
         if (date != null && accountToAddResultTo != null) {
             try {
-                database = BookkeepingService.closeBookkeeping(database, date, accountToAddResultTo);
+                Database newDatabase = BookkeepingService.closeBookkeeping(database, description, date, accountToAddResultTo);
+                setDatabase(newDatabase);
             } catch (CreationException e) {
                 MessageDialog.showMessage(this, "gen.error", e.getMessage());
             }
@@ -423,22 +425,31 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             new MessageDialog(this, "mf.errorOpeningFile", e);
             return;
         }
+		newDatabase.databaseConsistentWithFile();
+		setDatabase(newDatabase);
+	}
+
+	/**
+	 * Replaces the old database by the new database.
+	 * @param newDatabase the new database
+	 */
+	private void setDatabase(Database newDatabase) {
         database.removeListener(this);
+        
         database = newDatabase;
         Database.setInstance(database);
         database.addListener(this);
-        database.databaseConsistentWithFile();
         viewTabbedPane.closeAllViews();
         balanceView = null;
         operationalResultView = null;
         partiesView = null;
         invoiceGeneratorView = null;
         editJournalsView = null;
-
+        
         databaseChanged(database);
         handleViewBalanceAndOperationalResult();
 	}
-
+	
 	/**
 	 * Saves the current bookkeeping to an XML file.
 	 * @param fileName the name of the file.

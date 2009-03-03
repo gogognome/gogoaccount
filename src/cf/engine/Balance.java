@@ -1,5 +1,5 @@
 /*
- * $Id: Balance.java,v 1.13 2007-04-14 12:47:18 sanderk Exp $
+ * $Id: Balance.java,v 1.14 2009-03-03 20:13:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -127,9 +127,8 @@ public class Balance
      * Gets the result of operations. 
      * @return the result of operations
      */
-    public Amount getResultOfOperations()
-    {
-        return totalAssets.subtract(totalLiabilities);
+    public Amount getResultOfOperations() {
+        return resultOfOperations;
     }
     
     /**

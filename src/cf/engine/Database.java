@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.42 2009-02-19 21:16:07 sanderk Exp $
+ * $Id: Database.java,v 1.43 2009-03-03 20:13:34 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -111,8 +111,8 @@ public class Database {
 	 * at the proper moment only if this database is the current database.
 	 */
 	public void notifyChange() {
+        changed = true;
 		if (instance == this) {
-			changed = true;
 			notifyListeners();
 		}
 	}
@@ -121,8 +121,7 @@ public class Database {
 	 * This method is called to indicate that the database is consistent with the
 	 * file it was last loaded from or saved to.
 	 */
-	public void databaseConsistentWithFile()
-	{
+	public void databaseConsistentWithFile() {
 		changed = false;
 		// This is the only place where an update takes without calling notifyChange().
 		// The reason for this, is that notifyChange() will mark the database as
@@ -1012,7 +1011,6 @@ public class Database {
             throw new DatabaseModificationFailedException("A payment with id " + payment.getId() + " already exists.");
         }
         paymentsForInvoice.put(payment.getId(), payment);
-        notifyChange();
     }
 
     /**

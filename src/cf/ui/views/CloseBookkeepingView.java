@@ -11,12 +11,14 @@ import cf.engine.Account;
 import cf.engine.Database;
 import cf.ui.components.AccountComboBox;
 import java.awt.event.ActionEvent;
+import java.util.Calendar;
 import java.util.Date;
 import javax.swing.AbstractAction;
 import javax.swing.SwingConstants;
 import nl.gogognome.framework.ValuesEditPanel;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.models.DateModel;
+import nl.gogognome.framework.models.StringModel;
 import nl.gogognome.swing.ButtonPanel;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SwingUtils;
@@ -39,6 +41,9 @@ public class CloseBookkeepingView extends View {
     /** Date model for the closing date. */
     private DateModel dateModel = new DateModel();
 
+    /** String model for the description. */
+    private StringModel descriptionModel = new StringModel();
+    
     /** Combo box for the account to which the result of the bookkeeping is added. */
     private AccountComboBox accountComboBox;
 
@@ -76,8 +81,10 @@ public class CloseBookkeepingView extends View {
         valuesEditPanel = new ValuesEditPanel();
         valuesEditPanel.addField("closeBookkeepingView.date", dateModel);
         accountComboBox = new AccountComboBox(database);
-        valuesEditPanel.addField("closeBookkeepingView.accountForResultOfBookkeeping", accountComboBox);
+        valuesEditPanel.addField("closeBookkeepingView.equityAccount", accountComboBox);
 
+        initDescription();
+        valuesEditPanel.addField("closeBookkeepingView.description", descriptionModel);
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
         WidgetFactory wf = WidgetFactory.getInstance();
         buttonPanel.add(wf.createButton("gen.ok", new AbstractAction() {
@@ -133,5 +140,22 @@ public class CloseBookkeepingView extends View {
         } else {
             return null;
         }
+    }
+
+    /** 
+     * Gets the description of the new bookkeeping.
+     * @return the description
+     */
+    public String getDescription() {
+        return descriptionModel.getString();
+    }
+    
+    /** Initializes the description model with a default value. */
+    private void initDescription() {
+        String description = database.getDescription();
+        int year = DateUtil.getField(database.getStartOfPeriod(), Calendar.YEAR);
+        int nextYear = year+1;
+        description = description.replace(Integer.toString(year), Integer.toString(nextYear));
+        descriptionModel.setString(description, null);
     }
 }
