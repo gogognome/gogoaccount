@@ -1,13 +1,17 @@
 /*
- * $Id: PartyOverviewTableModel.java,v 1.12 2008-11-09 19:15:53 sanderk Exp $
+ * $Id: PartyOverviewTableModel.java,v 1.13 2009-07-15 17:31:44 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -15,6 +19,7 @@ import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
@@ -30,7 +35,7 @@ import cf.engine.Party;
 import cf.engine.Payment;
 
 /**
- * This class implements a model for a <code>JTable</code> that shows an overview 
+ * This class implements a model for a <code>JTable</code> that shows an overview
  * of a party at a specific date.
  *
  * @author Sander Kooijmans
@@ -39,15 +44,15 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
 
     /** The database. */
     private Database database;
-    
+
     /** The party to be shown. */
     private Party party;
-    
+
     /** The date. */
     private Date date;
 
     private Font smallFont;
-    
+
     private Font defaultFont;
 
     /** This class contains the information to be shown in a single row of the table. */
@@ -58,15 +63,16 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         Amount debetAmount;
         Amount creditAmount;
         boolean isDescription;
+        boolean isFirstLine;
     }
 
     /** The information shown in the table. */
     LineInfo[] lineInfos;
-    
+
     private Amount totalDebet;
-    
+
     private Amount totalCredit;
-    
+
     /**
      * Constructs a new <code>partyOverviewComponent</code>.
      * @param database the database
@@ -79,7 +85,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         this.party = party;
         this.date = date;
         initializeValues();
-        
+
         defaultFont = new JLabel().getFont();
         smallFont = defaultFont.deriveFont(defaultFont.getSize() * 8.0f / 10.0f);
     }
@@ -89,6 +95,14 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         totalCredit = totalDebet;
         ArrayList<LineInfo> lineInfoList = new ArrayList<LineInfo>();
         Invoice[] invoices = database.getInvoices();
+
+        // Sort invoices on date
+        Arrays.sort(invoices, new Comparator<Invoice>() {
+            public int compare(Invoice o1, Invoice o2) {
+                return DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate());
+            }
+        });
+
         for (int i = 0; i < invoices.length; i++) {
             if (party.equals(invoices[i].getPayingParty())) {
                 if (DateUtil.compareDayOfYear(invoices[i].getIssueDate(),date) <= 0) {
@@ -97,13 +111,14 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                     invoiceInfo.id = invoices[i].getId();
                     invoiceInfo.date = invoices[i].getIssueDate();
                     invoiceInfo.description = TextResource.getInstance().getString("partyOverviewTableModel.totalAmount");
+                    invoiceInfo.isFirstLine = true;
                     if (!invoices[i].getAmountToBePaid().isNegative()) {
                         invoiceInfo.debetAmount = invoices[i].getAmountToBePaid();
                     } else {
                         invoiceInfo.creditAmount = invoices[i].getAmountToBePaid().negate();
                     }
                     lineInfoList.add(invoiceInfo);
-                    
+
                     // Add a line per description of the invoice
                     String[] descriptions = invoices[i].getDescriptions();
                     Amount[] amounts = invoices[i].getAmounts();
@@ -144,11 +159,11 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
 	            }
             }
         }
-        
+
         lineInfos = new LineInfo[lineInfoList.size()];
         lineInfoList.toArray(lineInfos);
     }
-    
+
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
@@ -184,7 +199,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
             case 1:
                 result = lineInfos[row].id;
                 break;
-	            
+
 	        case 2:
 	            if (lineInfos[row].isDescription) {
                     result = "   " + lineInfos[row].description;
@@ -192,7 +207,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
 	                result = lineInfos[row].description;
 	            }
 	            break;
-	            
+
 	        case 3:
                 if (lineInfos[row].debetAmount != null) {
                     result = af.formatAmountWithoutCurrency(lineInfos[row].debetAmount);
@@ -200,7 +215,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                     result = "";
                 }
                 break;
-	            
+
 	        case 4:
                 if (lineInfos[row].creditAmount != null) {
                     result = af.formatAmountWithoutCurrency(lineInfos[row].creditAmount);
@@ -208,7 +223,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                     result = "";
                 }
                 break;
-	            
+
 	        default:
 	            result = null;
 	        }
@@ -219,26 +234,27 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
 	        case 1:
 	            result = "";
 	            break;
-	            
+
 	        case 2:
 	            result = tr.getString("gen.total");
 	            break;
-	            
+
 	        case 3:
                 result = af.formatAmountWithoutCurrency(totalDebet);
 	            break;
-	
+
 	        case 4:
                 result = af.formatAmountWithoutCurrency(totalCredit);
 	            break;
-	            
+
 	        default:
 	            result = null;
 	        }
         }
         return result;
     }
-    
+
+    @Override
     public String getColumnName(int column) {
         String id = null;
         switch(column) {
@@ -249,11 +265,11 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         case 1:
             id = "gen.id";
             break;
-            
+
         case 2:
             id = "gen.description";
             break;
-            
+
         case 3:
             id = "gen.debet";
             break;
@@ -261,7 +277,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         case 4:
             id = "gen.credit";
             break;
-            
+
         default:
             id = null;
         }
@@ -275,7 +291,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         case 2: return 600;
         case 3: return 200;
         case 4: return 200;
-        default: return 0; 
+        default: return 0;
         }
     }
 
@@ -285,6 +301,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
 
     public TableCellRenderer getRendererForColumn(int column) {
         return new DefaultTableCellRenderer() {
+            @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                     boolean isSelected, boolean hasFocus, int row, int column) {
                 Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -293,7 +310,7 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                 } else {
                     comp.setFont(defaultFont);
                 }
-                
+
                 if (comp instanceof JLabel) {
                     JLabel label = (JLabel) comp;
                     if (column >= 3) {
@@ -301,7 +318,26 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                     } else {
                         label.setHorizontalAlignment(SwingConstants.LEFT);
                     }
+                    if (row < lineInfos.length && lineInfos[row].isFirstLine && row > 0) {
+                        // Add border to the top of the label.
+                        label.setBorder(new Border() {
+                            public Insets getBorderInsets(Component c) {
+                                return new Insets(2, 0, 0, 0);
+                            }
+
+                            public boolean isBorderOpaque() {
+                                return true;
+                            }
+
+                            public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+                                g.setColor(Color.BLACK);
+                                g.drawRect(x, y, width, 1);
+                            }
+
+                        });
+                    }
                 }
+
                 return comp;
             }
         };
