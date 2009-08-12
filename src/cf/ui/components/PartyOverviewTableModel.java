@@ -1,5 +1,5 @@
 /*
- * $Id: PartyOverviewTableModel.java,v 1.13 2009-07-15 17:31:44 sanderk Exp $
+ * $Id: PartyOverviewTableModel.java,v 1.14 2009-08-12 19:32:29 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -114,8 +114,10 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                     invoiceInfo.isFirstLine = true;
                     if (!invoices[i].getAmountToBePaid().isNegative()) {
                         invoiceInfo.debetAmount = invoices[i].getAmountToBePaid();
+                        totalDebet = totalDebet.add(invoiceInfo.debetAmount);
                     } else {
                         invoiceInfo.creditAmount = invoices[i].getAmountToBePaid().negate();
+                        totalCredit = totalCredit.add(invoiceInfo.creditAmount);
                     }
                     lineInfoList.add(invoiceInfo);
 
@@ -131,10 +133,8 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                         if (amounts[l] != null) {
                             if (!amounts[l].isNegative()) {
                                 lineInfo.debetAmount = amounts[l];
-                                totalDebet = totalDebet.add(lineInfo.debetAmount);
                             } else {
                                 lineInfo.creditAmount = amounts[l].negate();
-                                totalCredit = totalCredit.add(lineInfo.creditAmount);
                             }
                         }
                         lineInfoList.add(lineInfo);
