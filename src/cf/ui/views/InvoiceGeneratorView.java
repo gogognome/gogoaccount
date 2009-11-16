@@ -1,5 +1,5 @@
 /*
- * $Id: InvoiceGeneratorView.java,v 1.10 2009-01-14 21:32:15 sanderk Exp $
+ * $Id: InvoiceGeneratorView.java,v 1.11 2009-11-16 21:41:12 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -54,41 +54,41 @@ public class InvoiceGeneratorView extends View {
 
     /** The database used to get data from and to which the generated invoices are added. */
     private Database database;
-    
+
     /** Text field containing the description of the generated invoices. */
     private JTextField tfDescription = new JTextField();
-    
-    /** The date model for the date when the invoices are generated. */ 
+
+    /** The date model for the date when the invoices are generated. */
     private DateModel invoiceGenerationDateModel;
 
-    /** Text field containing the ID of the generated invoices. */ 
+    /** Text field containing the ID of the generated invoices. */
     private JTextField tfId = new JTextField();
-    
+
     /** Instances of this class represent a single line of the invoice template. */
     private class TemplateLine {
         JRadioButton rbAmountToBePaid = new JRadioButton();
         AccountComboBox cbAccount =
             new AccountComboBox(database);
-        AmountTextField tfDebet = 
+        AmountTextField tfDebet =
             new AmountTextField(database.getCurrency());
         AmountTextField tfCredit =
             new AmountTextField(database.getCurrency());
-        
+
         public TemplateLine() {
             radioButtonGroup.add(rbAmountToBePaid);
             cbAccount.selectAccount(null);
         }
     }
-    
+
     /** The button group of the radio buttons. */
     private ButtonGroup radioButtonGroup = new ButtonGroup();
-    
+
     /** Contains the lines of the template. */
     private ArrayList<TemplateLine> templateLines = new ArrayList<TemplateLine>();
-    
+
     /** The panel that contains the template lines. */
     private JPanel templateLinesPanel;
-    
+
     /**
      * Constructor.
      * @param database the database used to get data from and to which the generated invoices are added
@@ -99,26 +99,29 @@ public class InvoiceGeneratorView extends View {
     }
 
     /** Gets the title of this view. */
+    @Override
     public String getTitle() {
         return TextResource.getInstance().getString("invoiceGeneratorView.title");
     }
 
     /** This method is called when the view is closed. */
+    @Override
     public void onClose() {
     }
 
     /**
-     * Initializes the view. 
+     * Initializes the view.
      */
+    @Override
     public void onInit() {
         TextResource tr = TextResource.getInstance();
-        
+
         // Initialize template panel
         JPanel templatePanel = new JPanel(new BorderLayout());
         templatePanel.setBorder(new CompoundBorder(
             new TitledBorder(tr.getString("invoiceGeneratorView.template")),
             new EmptyBorder(10, 10, 10, 10)));
-        
+
         WidgetFactory wf = WidgetFactory.getInstance();
         JPanel panel = new JPanel(new GridBagLayout());
         panel.add(wf.createLabel("invoiceGeneratorView.id", tfId),
@@ -140,9 +143,9 @@ public class InvoiceGeneratorView extends View {
         tfDescription.setToolTipText(tr.getString("invoiceGeneratorView.tooltip"));
 
         panel.setBorder(new EmptyBorder(0, 0, 12, 0));
-        
+
         templateLinesPanel = new JPanel(new GridBagLayout());
-        
+
         // Add two empty lines so the user can start editing the template.
         for (int i=0; i<2; i++) {
             templateLines.add(new TemplateLine());
@@ -161,17 +164,18 @@ public class InvoiceGeneratorView extends View {
         templatePanel.add(panel, BorderLayout.NORTH);
         templatePanel.add(templateLinesPanel, BorderLayout.CENTER);
         templatePanel.add(buttonPanel, BorderLayout.SOUTH);
-        
+
         // Add panels to the view
-        add(templatePanel);
+        setLayout(new BorderLayout());
+        add(templatePanel, BorderLayout.CENTER);
     }
-    
+
     private void updateTemplateLinesPanel() {
         TextResource tr = TextResource.getInstance();
         WidgetFactory wf = WidgetFactory.getInstance();
-        
+
         templateLinesPanel.removeAll();
-        
+
         templateLinesPanel.add(new JLabel(tr.getString("invoiceGeneratorView.amountToBePaid")),
                 SwingUtils.createLabelGBConstraints(0, 0));
         templateLinesPanel.add(new JLabel(tr.getString("gen.account")),
@@ -180,57 +184,57 @@ public class InvoiceGeneratorView extends View {
                 SwingUtils.createLabelGBConstraints(2, 0));
         templateLinesPanel.add(new JLabel(tr.getString("gen.credit")),
                 SwingUtils.createLabelGBConstraints(3, 0));
-        
+
         int row = 1;
         for (int i=0; i<templateLines.size(); i++) {
             TemplateLine line = templateLines.get(i);
             int top = 3;
             int bottom = 3;
             templateLinesPanel.add(line.rbAmountToBePaid,
-                    SwingUtils.createGBConstraints(0, row, 1, 1, 0.0, 0.0, 
+                    SwingUtils.createGBConstraints(0, row, 1, 1, 0.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.NONE,
                             top, 0, bottom, 5));
             templateLinesPanel.add(line.cbAccount,
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 3.0, 0.0, 
+                    SwingUtils.createGBConstraints(1, row, 1, 1, 3.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 0, bottom, 5));
             templateLinesPanel.add(line.tfDebet,
-                    SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 0.0, 
+                    SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 0, bottom, 5));
             templateLinesPanel.add(line.tfCredit,
-                    SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 0.0, 
+                    SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 0, bottom, 5));
-            
+
             JButton deleteButton = wf.createButton("invoiceGeneratorView.delete", null);
             deleteButton.addActionListener(new DeleteActionListener(i));
-            templateLinesPanel.add(deleteButton, 
-                    SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0, 
+            templateLinesPanel.add(deleteButton,
+                    SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 5, bottom, 0));
             row++;
         }
-        
+
         JButton newButton = wf.createButton("invoiceGeneratorView.new", new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 templateLines.add(new TemplateLine());
                 updateTemplateLinesPanel();
             }
         });
-        templateLinesPanel.add(newButton, 
-                SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0, 
+        templateLinesPanel.add(newButton,
+                SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0,
                         GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                         0, 0, 0, 0));
-        
+
         revalidate();
         repaint();
     }
-	
+
 	private class DeleteActionListener implements ActionListener {
 	    /** Index of the line to be deleted by this action. */
 	    private int index;
-	    
+
 	    /**
 	     * Constructor.
 	     * @param index index of the line to be deleted by this action.
@@ -238,14 +242,14 @@ public class InvoiceGeneratorView extends View {
 	    public DeleteActionListener(int index) {
 	        this.index = index;
 	    }
-	    
+
         public void actionPerformed(ActionEvent event) {
             TemplateLine line = templateLines.remove(index);
             radioButtonGroup.remove(line.rbAmountToBePaid);
             updateTemplateLinesPanel();
         }
 	}
-	
+
 	/**
      * This method is called when the "add invoices" button has been pressed.
 	 * The user will be asked to select the parties for which invoices are generated.
@@ -256,7 +260,7 @@ public class InvoiceGeneratorView extends View {
 	    // Validate the input.
         Date date = invoiceGenerationDateModel.getDate();
         if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError", 
+            MessageDialog.showMessage(this, "gen.titleError",
                     TextResource.getInstance().getString("gen.invalidDate"));
             return;
         }
@@ -266,42 +270,42 @@ public class InvoiceGeneratorView extends View {
             invoiceLines.add(new InvoiceLineDefinition(line.tfDebet.getAmount(), line.tfCredit.getAmount(),
                 line.cbAccount.getSelectedAccount(), line.rbAmountToBePaid.isSelected()));
         }
-        
+
         boolean amountToBePaidSelected = false;
         for (InvoiceLineDefinition line : invoiceLines) {
             if (!amountToBePaidSelected) {
                 amountToBePaidSelected = line.isAmountToBePaid();
             } else {
                 if (line.isAmountToBePaid()) {
-                    MessageDialog.showMessage(this, "gen.titleError", 
+                    MessageDialog.showMessage(this, "gen.titleError",
                         TextResource.getInstance().getString("invoiceGeneratorView.moreThanOneAmountToBePaid"));
                     return;
                 }
             }
             if (line.getDebet() == null && line.getCredit() == null) {
-                MessageDialog.showMessage(this, "gen.titleError", 
+                MessageDialog.showMessage(this, "gen.titleError",
                     TextResource.getInstance().getString("invoiceGeneratorView.emptyAmountsFound"));
                 return;
             }
             if (line.getDebet() != null && line.getCredit() != null) {
-                MessageDialog.showMessage(this, "gen.titleError", 
+                MessageDialog.showMessage(this, "gen.titleError",
                     TextResource.getInstance().getString("invoiceGeneratorView.doubleAmountsFound"));
                 return;
             }
-            
+
             if (line.getAccount() == null) {
-                MessageDialog.showMessage(this, "gen.titleError", 
+                MessageDialog.showMessage(this, "gen.titleError",
                     TextResource.getInstance().getString("invoiceGeneratorView.emptyAccountFound"));
                 return;
             }
         }
-        
+
         if (!amountToBePaidSelected) {
-            MessageDialog.showMessage(this, "gen.titleError", 
+            MessageDialog.showMessage(this, "gen.titleError",
                 TextResource.getInstance().getString("invoiceGeneratorView.noAmountToBePaidSelected"));
             return;
         }
-        
+
 	    // Let the user select the parties.
         PartiesView partiesView = new PartiesView(database, true, true);
         ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
@@ -313,7 +317,7 @@ public class InvoiceGeneratorView extends View {
         }
 
         // Ask the user whether he/she is sure to generate the invoices.
-        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.titleWarning", 
+        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.titleWarning",
             TextResource.getInstance().getString("invoiceGeneratorView.areYouSure"),
             new String[] { "gen.yes", "gen.no" });
         if (messageDialog.getSelectedButton() != 0) {
@@ -322,10 +326,10 @@ public class InvoiceGeneratorView extends View {
         }
 
         try {
-            InvoiceService.createInvoiceAndJournalForParties(database, tfId.getText(), Arrays.asList(parties), date, 
+            InvoiceService.createInvoiceAndJournalForParties(database, tfId.getText(), Arrays.asList(parties), date,
                 tfDescription.getText(), invoiceLines);
         } catch (CreationException e) {
-            MessageDialog.showMessage(this, "gen.titleError", 
+            MessageDialog.showMessage(this, "gen.titleError",
                 e.getMessage());
             return;
         }
