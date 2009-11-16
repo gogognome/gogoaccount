@@ -1,10 +1,38 @@
 /*
- * $Id: MainFrame.java,v 1.52 2009-03-03 20:13:34 sanderk Exp $
+ * $Id: MainFrame.java,v 1.53 2009-11-16 21:41:26 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui;
 
+import java.awt.FileDialog;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.print.PrinterException;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.Date;
+import java.util.Locale;
+
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.WindowConstants;
+
+import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.cf.services.CreationException;
+import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewDialog;
+import nl.gogognome.framework.ViewListener;
+import nl.gogognome.framework.ViewTabbedPane;
+import nl.gogognome.swing.MessageDialog;
+import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.swing.plaf.DefaultLookAndFeel;
+import nl.gogognome.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
@@ -19,6 +47,7 @@ import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
+import cf.ui.views.AboutView;
 import cf.ui.views.BalanceAndOperationResultView;
 import cf.ui.views.BalanceView;
 import cf.ui.views.CloseBookkeepingView;
@@ -28,32 +57,6 @@ import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.InvoiceToOdtView;
 import cf.ui.views.OperationalResultView;
 import cf.ui.views.PartiesView;
-import java.awt.FileDialog;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.print.PrinterException;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.Date;
-import java.util.Locale;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.WindowConstants;
-import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.CreationException;
-import nl.gogognome.framework.View;
-import nl.gogognome.framework.ViewDialog;
-import nl.gogognome.framework.ViewListener;
-import nl.gogognome.framework.ViewTabbedPane;
-import nl.gogognome.swing.MessageDialog;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.swing.plaf.DefaultLookAndFeel;
-import nl.gogognome.text.TextResource;
 
 /**
  * This class implements the main frame of the application.
@@ -225,6 +228,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.generateInvoices".equals(command)) { handleGenerateInvoices(); }
 		if ("mi.generateReport".equals(command)) { handleGenerateReport(); }
 		if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
+		if ("mi.about".equals(command)) { handleAbout(); }
 	}
 
 	/**
@@ -435,7 +439,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 */
 	private void setDatabase(Database newDatabase) {
         database.removeListener(this);
-        
+
         database = newDatabase;
         Database.setInstance(database);
         database.addListener(this);
@@ -445,11 +449,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         partiesView = null;
         invoiceGeneratorView = null;
         editJournalsView = null;
-        
+
         databaseChanged(database);
         handleViewBalanceAndOperationalResult();
 	}
-	
+
 	/**
 	 * Saves the current bookkeeping to an XML file.
 	 * @param fileName the name of the file.
@@ -668,6 +672,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         } else {
             viewTabbedPane.selectView(invoiceGeneratorView);
         }
+	}
+
+	/** Shows the about dialog. */
+	private void handleAbout() {
+	    AboutView aboutView = new AboutView();
+	    new ViewDialog(this, aboutView).showDialog();
 	}
 
     /**
