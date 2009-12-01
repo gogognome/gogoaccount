@@ -20,6 +20,7 @@
 <party id="123" name="Pietje Puk"/>
 <party id="44" name="Frans Bauer"/>
 <party address="Delphinus 7" birthdate="1975.11.28" city="Loon op Zand" id="501" name="Kooijmans" remarks="Dit is een test&#10;Deze opmerkinge bevat meerdere regels.&#10;En nog een regel.&#10;&#9;" type="bestuurslid" zip="5175 VB"/>
+<party address="Sesamstraat" id="502" name="Dinges"/>
 </parties>
 <journals>
 <journal date="2006.12.04" description="lening" id="1">
@@ -56,6 +57,15 @@
 <item amount="EUR 125.00" id="1" invoice="co08-501" payment="p2" side="debet"/>
 <item amount="EUR 125.00" id="4" side="credit"/>
 </journal>
+<journal createdInvoice="contr-502" date="2009.01.01" description="contributie" id="contr-502">
+<item amount="EUR 35.00" id="1" side="debet"/>
+<item amount="EUR 35.00" id="81" side="credit"/>
+</journal>
+<journal date="2009.01.05" description="Contributie Dinges" id="bet">
+<item amount="EUR 35.00" id="2" invoice="contr-502" payment="p4" side="debet"/>
+<item amount="EUR 1.25" id="2" invoice="contr-502" payment="p5" side="debet"/>
+<item amount="EUR 36.25" id="1" side="credit"/>
+</journal>
 <journal createdInvoice="comp-123" date="2009.01.14" description="2e helft voor Pietje Puk" id="comp-123">
 <item amount="EUR 50.00" id="1" side="debet"/>
 <item amount="EUR 50.00" id="80" side="credit"/>
@@ -67,6 +77,10 @@
 <journal createdInvoice="comp-501" date="2009.01.14" description="2e helft voor Kooijmans" id="comp-501">
 <item amount="EUR 50.00" id="1" side="debet"/>
 <item amount="EUR 50.00" id="80" side="credit"/>
+</journal>
+<journal createdInvoice="testje" date="2009.06.28" description="Te betalen aan Sander" id="testje">
+<item amount="EUR 12.00" id="90" side="debet"/>
+<item amount="EUR 12.00" id="1" side="credit"/>
 </journal>
 </journals>
 <invoices>
@@ -85,6 +99,11 @@
 <line description="2e helft voor Pietje Puk"/>
 <line amount="EUR 50.00" description="contributie 2006/2007"/>
 </invoice>
+<invoice amountToBePaid="EUR 50.00" concerningParty="501" id="comp-401" issueDate="2007.08.15" payingParty="501">
+<line description="2e helft 2007 voor Kooijmans"/>
+<line amount="EUR 50.00" description="contributie 2006/2007"/>
+<payment amount="EUR 25.00" date="2008.11.09" description="bank" id="p36"/>
+</invoice>
 <invoice amountToBePaid="EUR 50.00" concerningParty="44" id="comp-44" issueDate="2009.01.14" payingParty="44">
 <line description="2e helft voor Frans Bauer"/>
 <line amount="EUR 50.00" description="contributie 2006/2007"/>
@@ -93,10 +112,15 @@
 <line description="2e helft voor Kooijmans"/>
 <line amount="EUR 50.00" description="contributie 2006/2007"/>
 </invoice>
-<invoice amountToBePaid="EUR 50.00" concerningParty="501" id="comp-401" issueDate="2007.08.15" payingParty="501">
-<line description="2e helft 2007 voor Kooijmans"/>
-<line amount="EUR 50.00" description="contributie 2006/2007"/>
-<payment amount="EUR 25.00" date="2008.11.09" description="bank" id="p36"/>
+<invoice amountToBePaid="EUR 35.00" concerningParty="502" id="contr-502" issueDate="2009.01.01" payingParty="502">
+<line description="contributie"/>
+<line amount="EUR 35.00" description="huur wedstrijdshirts"/>
+<payment amount="EUR 35.00" date="2009.01.05" description="kassa" id="p4"/>
+<payment amount="EUR 1.25" date="2009.01.05" description="kassa" id="p5"/>
+</invoice>
+<invoice amountToBePaid="-/- EUR 12.00" concerningParty="501" id="testje" issueDate="2009.06.28" payingParty="501">
+<line description="Te betalen aan Sander"/>
+<line amount="-/- EUR 12.00" description="kosten NeVoBo"/>
 </invoice>
 </invoices>
 </cfbookkeeping>
