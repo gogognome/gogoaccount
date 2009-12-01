@@ -1,5 +1,5 @@
 /*
- * $Id: XMLFileReader.java,v 1.24 2009-01-29 20:23:56 sanderk Exp $
+ * $Id: XMLFileReader.java,v 1.25 2009-12-01 19:23:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -24,6 +24,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import cf.engine.Account.Type;
+
 
 /**
  * This class reads the contents of a <code>Database</code> from an XML file.
@@ -31,18 +33,18 @@ import org.w3c.dom.NodeList;
  * @author Sander Kooijmans
  */
 public class XMLFileReader {
-    
+
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
 
     private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
-    
+
     private XMLFileReader() {
         // should never be called
     }
 
 	/**
 	 * Creates a <tt>Database</tt> from a file.
-	 * 
+	 *
 	 * @param fileName the name of the file.
 	 * @return a <tt>Database</tt> with the contents of the file.
 	 * @throws XMLParseException if a syntax error is found in the file.
@@ -51,19 +53,19 @@ public class XMLFileReader {
 	public static Database createDatabaseFromFile(String fileName) throws XMLParseException, IOException {
 		try {
 		    int highestPaymentId = 0;
-		    
+
 		    Database db = new Database();
 		    db.setFileName(fileName);
-		    
+
 			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-			Document doc = docBuilder.parse(fileName);			
+			Document doc = docBuilder.parse(fileName);
 			Element rootElement = doc.getDocumentElement();
 
 			// parse description
 			String description = rootElement.getAttribute("description");
 			db.setDescription(description);
-			
+
 			// parse currency
 			String currency = rootElement.getAttribute("currency");
 		    db.setCurrency(Currency.getInstance(currency));
@@ -71,28 +73,28 @@ public class XMLFileReader {
 			// parse start date
 		    Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
 		    db.setStartOfPeriod(startDate);
-			
+
 			// parse accounts
-			Account[] assets = 
-			    parseAccounts(rootElement.getElementsByTagName("assets"), true, db); 
+			Account[] assets =
+			    parseAccounts(rootElement.getElementsByTagName("assets"), true, Type.ASSET);
 			db.setAssets(assets);
-			
-			Account[] liabilities = 
-			    parseAccounts(rootElement.getElementsByTagName("liabilities"), false, db); 
+
+			Account[] liabilities =
+			    parseAccounts(rootElement.getElementsByTagName("liabilities"), false, Type.LIABILITY);
 			db.setLiabilities(liabilities);
-			
-			Account[] expenses = 
-			    parseAccounts(rootElement.getElementsByTagName("expenses"), true, db); 
+
+			Account[] expenses =
+			    parseAccounts(rootElement.getElementsByTagName("expenses"), true, Type.EXPENSE);
 			db.setExpenses(expenses);
-			
-			Account[] revenues = parseAccounts(rootElement.getElementsByTagName("revenues"), false, db); 
+
+			Account[] revenues = parseAccounts(rootElement.getElementsByTagName("revenues"), false, Type.REVENUE);
 			db.setRevenues(revenues);
-			
+
 			Party[] parties = parseParties(rootElement.getElementsByTagName("parties"));
 			db.setParties(parties);
-		    
+
             Invoice[] invoices = parseInvoices(db, parties, rootElement.getElementsByTagName("invoices"));
-            
+
 		    NodeList journalsNodes = rootElement.getElementsByTagName("journals");
 		    for (int i=0; i<journalsNodes.getLength(); i++) {
 		        Element elem = (Element)journalsNodes.item(i);
@@ -128,27 +130,27 @@ public class XMLFileReader {
                                 highestPaymentId = Math.max(highestPaymentId, pid);
                             }
                         }
-		                
+
 		                // TODO: old code. remove later
 		                if ("true".equals(itemElem.getAttribute("invoiceCreation"))) {
 	                        idOfCreatedInvoice = invoiceId;
 	                        invoiceId = null;
 		                }
 		                // end of old code
-		                
-		                itemsList.add(new JournalItem(amount, db.getAccount(itemId), 
+
+		                itemsList.add(new JournalItem(amount, db.getAccount(itemId),
 	                        "debet".equals(side), invoiceId, paymentId));
 		            }
-		            
+
 		            JournalItem[] items = itemsList.toArray(new JournalItem[itemsList.size()]);
 			        db.addJournal(new Journal(id, description, date, items, idOfCreatedInvoice), false);
 		        }
 		    }
-		    
+
 		    db.setNextPaymentId("p" + (highestPaymentId + 1));
 			return db;
-		} 
-		catch(Exception e) 
+		}
+		catch(Exception e)
 		{
 			//logger.warn("Exception occurred while parsing XML file.", e);
 			if (e instanceof XMLParseException) {
@@ -160,17 +162,16 @@ public class XMLFileReader {
 			}
 		}
 	}
-	
+
 	/**
 	 * Parses accounts.
-	 * @param nodes a node list containing accounts 
+	 * @param nodes a node list containing accounts
 	 * @param debet indicates whether the accounts in the list are on the
 	 *              debet side (<code>true</code>) or credit side (<code>false</code>).
-	 * @param database the database to which the accounts belong
+	 * @param type the type of the account
 	 * @return the accounts
 	 */
-	private static Account[] parseAccounts(NodeList nodes, boolean debet, Database database)
-	{
+	private static Account[] parseAccounts(NodeList nodes, boolean debet, Account.Type type) {
 	    ArrayList<Account> accounts = new ArrayList<Account>();
 	    for (int i=0; i<nodes.getLength(); i++)
 	    {
@@ -181,15 +182,15 @@ public class XMLFileReader {
 	            Element accountElem = (Element)accountNodes.item(j);
 	            String id = accountElem.getAttribute("id");
 	            String name = accountElem.getAttribute("name");
-	            accounts.add(new Account(id, name, debet, database));
+	            accounts.add(new Account(id, name, debet, type));
 	        }
 	    }
 	    return accounts.toArray(new Account[accounts.size()]);
 	}
-	
+
 	/**
 	 * Parses parties.
-	 * @param nodes a node list containing parties. 
+	 * @param nodes a node list containing parties.
 	 * @return an array of parties found in <code>nodes</code>
      * @throws XMLParseException if a syntax error is found in the nodes
 	 */
@@ -214,7 +215,7 @@ public class XMLFileReader {
 	            if (city.length() == 0) {
 	                city = null;
                 }
-                
+
                 String type = partyElem.getAttribute("type");
                 if (type.length() == 0) {
                     type = null;
@@ -237,18 +238,18 @@ public class XMLFileReader {
 		        parties.add(new Party(id, name, address, zipCode, city, birthDate, type, remarks));
 	        }
 	    }
-        
+
 	    return parties.toArray(new Party[parties.size()]);
 	}
-    
+
     /**
      * Parses invoices and adds them to the database
      * @param database the database to which the invoices are to be added
-     * @param nodes a node list containing invoices. 
+     * @param nodes a node list containing invoices.
      * @return an array of invoices found in <code>nodes</code>
      * @throws XMLParseException if a syntax error is found in the nodes
      */
-    private static Invoice[] parseInvoices(Database database, Party[] parties, NodeList nodes) 
+    private static Invoice[] parseInvoices(Database database, Party[] parties, NodeList nodes)
             throws XMLParseException {
         ArrayList<Invoice> invoices = new ArrayList<Invoice>();
         for (int i=0; i<nodes.getLength(); i++) {
@@ -268,13 +269,13 @@ public class XMLFileReader {
                 if (concerningParty == null) {
                     throw new XMLParseException("No (valid) party specified for the invoice \"" + id + "\"");
                 }
-                
+
                 Party payingParty = findPartyById(parties, invoiceElem.getAttribute("payingParty"));
-                
+
                 NodeList lineNodes = invoiceElem.getElementsByTagName("line");
                 int numNodes = lineNodes.getLength();
                 String[] descriptions = new String[numNodes];
-                Amount[] amounts = new Amount[numNodes]; 
+                Amount[] amounts = new Amount[numNodes];
                 for (int l=0; l<numNodes; l++) {
                     Element lineElem = (Element)lineNodes.item(l);
                     descriptions[l] = lineElem.getAttribute("description");
@@ -287,14 +288,14 @@ public class XMLFileReader {
                         }
                     }
                 }
-                
+
                 Date issueDate;
                 try {
                     issueDate = DATE_FORMAT.parse(invoiceElem.getAttribute("issueDate"));
                 } catch (ParseException e2) {
                     throw new XMLParseException("Invalid date: " + invoiceElem.getAttribute("issueDate"));
                 }
-                
+
                 NodeList paymentNodes = invoiceElem.getElementsByTagName("payment");
                 numNodes = paymentNodes.getLength();
                 Payment[] payments = new Payment[numNodes];
@@ -308,23 +309,23 @@ public class XMLFileReader {
                     if (StringUtil.isNullOrEmpty(paymentId)) {
                         paymentId = "p" + id + "-" + p;
                     }
-                    
+
                     try {
                         date = DATE_FORMAT.parse(paymentElem.getAttribute("date"));
                     } catch (ParseException e1) {
                         throw new XMLParseException("Invalid date: " + paymentElem.getAttribute("date"));
-                    } 
+                    }
                     try {
                         amount = AMOUNT_FORMAT.parse(paymentElem.getAttribute("amount"));
                     } catch (ParseException e) {
                         throw new XMLParseException("Invalid amount: " + paymentElem.getAttribute("amount"));
-                    } 
-                    description = paymentElem.getAttribute("description"); 
+                    }
+                    description = paymentElem.getAttribute("description");
                     payments[p] = new Payment(paymentId, amount, date, description);
                 }
-                
+
                 try {
-                    database.addInvoice(new Invoice(id, payingParty, concerningParty, amountToBePaid, 
+                    database.addInvoice(new Invoice(id, payingParty, concerningParty, amountToBePaid,
                         issueDate, descriptions, amounts));
                     for (Payment p : payments) {
                         database.addPayment(id, p);
@@ -334,7 +335,7 @@ public class XMLFileReader {
                 }
             }
         }
-        
+
         return invoices.toArray(new Invoice[invoices.size()]);
     }
 
@@ -342,7 +343,7 @@ public class XMLFileReader {
      * Finds a party by its id.
      * @param parties the parties to be searched for the id
      * @param id the id
-     * @return the party or <code>null</code> if no party was found with the specified id 
+     * @return the party or <code>null</code> if no party was found with the specified id
      */
     private static Party findPartyById(Party[] parties, String id) {
         for (int i = 0; i < parties.length; i++) {

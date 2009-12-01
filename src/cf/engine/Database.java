@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.43 2009-03-03 20:13:34 sanderk Exp $
+ * $Id: Database.java,v 1.44 2009-12-01 19:23:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
 
@@ -449,26 +450,20 @@ public class Database {
             throw new DatabaseModificationFailedException("The journal to be removed does not exist.");
         }
 
-        // Check for payments without payment ID.
-        for (JournalItem item : journal.getItems()) {
-            if (item.getInvoiceId() != null && item.getPaymentId() == null) {
-                throw new DatabaseModificationFailedException("The journal has a payment without an id. Therefore, it cannot be removed.");
-            }
-        }
-
-        // Remove payments.
-        for (JournalItem item : journal.getItems()) {
-            String invoiceId = item.getInvoiceId();
-            String paymentId = item.getPaymentId();
-            if (invoiceId != null && paymentId != null) {
-                removePayment(invoiceId, paymentId);
-            }
-        }
-
         // Remove the journal.
         journals.remove(journal);
+    }
 
-        notifyChange();
+    /**
+     * Removes an invoice.
+     * @param invoiceId the id of the invoice
+     * @throws DatabaseModificationFailedException if no invoice with the specified ID exists.
+     */
+    public void removeInvoice(String invoiceId) throws DatabaseModificationFailedException {
+        Invoice invoice = idsToInvoicesMap.remove(invoiceId);
+        if (invoice == null) {
+            throw new DatabaseModificationFailedException("No invoice with ID " + invoiceId + " exists.");
+        }
     }
 
     /**

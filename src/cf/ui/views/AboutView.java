@@ -1,17 +1,20 @@
 /*
- * $Id: AboutView.java,v 1.1 2009-11-16 21:41:26 sanderk Exp $
+ * $Id: AboutView.java,v 1.2 2009-12-01 19:23:59 sanderk Exp $
  */
 
 package cf.ui.views;
 
 import java.awt.Font;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import nl.gogognome.framework.View;
 import nl.gogognome.swing.SwingUtils;
+import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 
 /**
@@ -39,7 +42,7 @@ public class AboutView extends View {
         while (n != Integer.MAX_VALUE) {
             String line = tr.getString("aboutView.line" + n);
             if (line == null) {
-                n = Integer.MAX_VALUE; // terminate the loop
+                break;
             } else {
                 JLabel label = new JLabel(line);
                 if (n == 1) {
@@ -50,6 +53,10 @@ public class AboutView extends View {
                 n += 1;
             }
         }
+
+        JButton closeButton = WidgetFactory.getInstance().createButton("gen.ok", closeAction);
+        add(closeButton, SwingUtils.createGBConstraints(0, n, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
+            GridBagConstraints.NONE, 5, 0, 0, 0));
     }
 
 }

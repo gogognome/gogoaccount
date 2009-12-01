@@ -1,5 +1,5 @@
 /*
- * $Id: OperationalResultComponent.java,v 1.10 2008-11-10 20:12:11 sanderk Exp $
+ * $Id: OperationalResultComponent.java,v 1.11 2009-12-01 19:23:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,6 +20,7 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
+import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.framework.models.AbstractModel;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.framework.models.ModelChangeListener;
@@ -42,21 +43,21 @@ public class OperationalResultComponent extends JScrollPane {
     private JPanel panel;
 
     private JPanel tempPanel;
-    
-    /** 
+
+    /**
      * The database used to create the operational result. Changes in this database will
      * lead to updates on this component.
      */
     private Database database;
-    
-    /** 
+
+    /**
      * The date model used to create the operational result. Changes in this model will
      * lead to updates on this component.
      */
     private DateModel dateModel;
-    
+
     /**
-     * Creates a new <code>OperationalResultComponent</code>.  
+     * Creates a new <code>OperationalResultComponent</code>.
      * @param database the datebase used to create the operational result
      * @param dateModel the date model used to determine the date of the operational result
      */
@@ -64,14 +65,14 @@ public class OperationalResultComponent extends JScrollPane {
         super();
         this.database = database;
         this.dateModel = dateModel;
-        
+
         database.addListener(new DatabaseListener() {
             public void databaseChanged(Database db) {
                 initializeValues();
                 validateTree();
             }
         });
-        
+
         dateModel.addModelChangeListener(new ModelChangeListener() {
             public void modelChanged(AbstractModel model) {
                 if (((DateModel)(model)).getDate() != null) {
@@ -80,7 +81,7 @@ public class OperationalResultComponent extends JScrollPane {
                 }
             }
         });
-        
+
         panel = new JPanel(new GridBagLayout());
         panel.setBackground(getBackground());
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -88,7 +89,7 @@ public class OperationalResultComponent extends JScrollPane {
         tempPanel.setBackground(getBackground());
         tempPanel.add(panel);
         setViewportView(tempPanel);
-        
+
         initializeValues();
     }
 
@@ -97,7 +98,7 @@ public class OperationalResultComponent extends JScrollPane {
         if (date == null) {
             return; // do not change the current operational result if the date is invalid
         }
-        
+
         OperationalResult operationalResult = database.getOperationalResult(date);
         TextResource tr = TextResource.getInstance();
         AmountFormat af = tr.getAmountFormat();
@@ -109,83 +110,85 @@ public class OperationalResultComponent extends JScrollPane {
         String[] expenseAmounts = new String[expenses.length];
         for (int i=0; i<expenses.length; i++) {
             expenseNames[i] = expenses[i].getId() + " " + expenses[i].getName();
-            expenseAmounts[i] = af.formatAmount(expenses[i].getBalance(operationalResult.getDate()));
+            expenseAmounts[i] = af.formatAmount(
+                BookkeepingService.getAccountBalance(database, expenses[i], operationalResult.getDate()));
         }
-        
+
         String[] revenueNames = new String[revenues.length];
         String[] revenueAmounts = new String[revenues.length];
         for (int i=0; i<revenues.length; i++) {
             revenueNames[i] = revenues[i].getId() + " " + revenues[i].getName();
-            revenueAmounts[i] = af.formatAmount(revenues[i].getBalance(operationalResult.getDate()));
+            revenueAmounts[i] = af.formatAmount(
+                BookkeepingService.getAccountBalance(database, revenues[i], operationalResult.getDate()));
         }
-        
+
         String totalExpenses = af.formatAmount(operationalResult.getTotalExpenses());
         String totalRevenues = af.formatAmount(operationalResult.getTotalRevenues());
-        
+
         // The component may have been initialized before. Therefore, remove all components.
-        panel.removeAll(); 
+        panel.removeAll();
 
         // Add label for the date
         int row = 0;
         JLabel titleLabel = new JLabel(tr.getString("operationalResultComponent.title", operationalResult.getDate()));
         Font f = titleLabel.getFont();
         titleLabel.setFont(f.deriveFont(Font.BOLD).deriveFont(f.getSize() * 140.0f / 100.0f));
-        
+
         panel.add(titleLabel,
-                SwingUtils.createGBConstraints(0, row, 4, 1, 1.0, 0.0, 
+                SwingUtils.createGBConstraints(0, row, 4, 1, 1.0, 0.0,
                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                         10, 0, 10, 0));
         row++;
-        
+
         // Add labels for the table header
         Border bottomBorder = new LineBorder(LineBorder.LB_BOTTOM, 3);
         JLabel label = new JLabel(tr.getString("gen.expenses"));
         label.setBorder(bottomBorder);
         panel.add(label,
-                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
+                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
                         10, 0, 0, 0));
-        
+
         label = new JLabel();
         label.setBorder(bottomBorder);
         panel.add(label,
-                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
                         10, 0, 0, 0));
-        
+
         label = new JLabel();
         label.setBorder(bottomBorder);
         panel.add(label,
-                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0, 
+                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
                         10, 0, 0, 0));
-        
-        label = new JLabel(tr.getString("gen.revenues"), SwingConstants.RIGHT); 
+
+        label = new JLabel(tr.getString("gen.revenues"), SwingConstants.RIGHT);
         label.setBorder(bottomBorder);
-        panel.add(label, 
-                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0, 
+        panel.add(label,
+                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
                         10, 0, 0, 0));
         row++;
-        
+
         // Add the table rows
         int firstRow = row;
         Border rightBorder = new CompoundBorder(new LineBorder(LineBorder.LB_RIGHT, 1),
                 new EmptyBorder(0, 0, 0, 5));
         for (int i=0; i<expenseNames.length; i++) {
-            panel.add(new JLabel(expenseNames[i]), 
-                    SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
+            panel.add(new JLabel(expenseNames[i]),
+                    SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
                             GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 20));
             label = new JLabel(expenseAmounts[i], SwingConstants.RIGHT);
             label.setBorder(rightBorder);
-            panel.add(label, 
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+            panel.add(label,
+                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
                             GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row++;
         }
-        
+
         Border leftBorder = new CompoundBorder(new LineBorder(LineBorder.LB_LEFT, 1),
                 new EmptyBorder(0, 5, 0, 0));
         int row2 = firstRow;
@@ -193,12 +196,12 @@ public class OperationalResultComponent extends JScrollPane {
         {
             label = new JLabel(revenueNames[i]);
             label.setBorder(leftBorder);
-            panel.add(label, 
-                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0, 
+            panel.add(label,
+                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0,
                             GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 20));
-            panel.add(new JLabel(revenueAmounts[i], SwingConstants.RIGHT), 
-                    SwingUtils.createGBConstraints(3, row2, 1, 1, 1.0, 1.0, 
+            panel.add(new JLabel(revenueAmounts[i], SwingConstants.RIGHT),
+                    SwingUtils.createGBConstraints(3, row2, 1, 1, 1.0, 1.0,
                             GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row2++;
@@ -207,8 +210,8 @@ public class OperationalResultComponent extends JScrollPane {
         while (row < row2) {
             label = new JLabel(" ", SwingConstants.RIGHT);
             label.setBorder(rightBorder);
-            panel.add(label, 
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+            panel.add(label,
+                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
                             GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row++;
@@ -216,54 +219,55 @@ public class OperationalResultComponent extends JScrollPane {
         while (row2 < row) {
             label = new JLabel(" ");
             label.setBorder(leftBorder);
-            panel.add(label, 
-                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0, 
+            panel.add(label,
+                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0,
                             GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                             0, 0, 0, 0));
             row2++;
         }
-        
+
         Border topBorder = new LineBorder(LineBorder.LB_TOP, 1);
         label = new JLabel(tr.getString("gen.total"));
         label.setBorder(topBorder);
-        panel.add(label, 
-                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0, 
+        panel.add(label,
+                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                         0, 0, 10, 0));
 
         label = new JLabel(totalExpenses, SwingConstants.RIGHT);
         label.setBorder(topBorder);
-        panel.add(label, 
-                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0, 
+        panel.add(label,
+                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                         0, 0, 10, 5));
 
         label = new JLabel(tr.getString("gen.total"));
         label.setBorder(topBorder);
-        panel.add(label, 
-                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0, 
+        panel.add(label,
+                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                         0, 5, 10, 0));
 
         label = new JLabel(totalRevenues, SwingConstants.RIGHT);
         label.setBorder(topBorder);
-        panel.add(label, 
-                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0, 
+        panel.add(label,
+                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                         0, 0, 10, 0));
         row++;
-        
+
         // Add label to push other labels to the left and top.
         panel.add(new JLabel(""),
-                SwingUtils.createGBConstraints(5, row, 1, 1, 1.0, 1.0, 
+                SwingUtils.createGBConstraints(5, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                         0, 0, 0, 0));
     }
-    
+
     /**
      * Sets the background color.
      * @param color the background color
      */
+    @Override
     public void setBackground(Color color) {
         super.setBackground(color);
         getViewport().setBackground(color);

@@ -6,6 +6,7 @@
 package nl.gogognome.cf.services;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -66,16 +67,16 @@ public class BookkeepingService {
 
         List<JournalItem> journalItems = new ArrayList<JournalItem>(20);
         for (Account account : database.getAssets()) {
-            JournalItem item = new JournalItem(account.getBalance(dayBeforeStart), 
+            JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
                 newDatabase.getAccount(account.getId()), true, null, null);
             journalItems.add(item);
         }
         for (Account account : database.getLiabilities()) {
-            JournalItem item = new JournalItem(account.getBalance(dayBeforeStart), 
+            JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
                 newDatabase.getAccount(account.getId()), false, null, null);
             journalItems.add(item);
         }
-        
+
         // Add the result of operations to the specified account.
         Amount resultOfOperations = database.getBalance(dayBeforeStart).getResultOfOperations();
         if (resultOfOperations.isPositive()) {
@@ -84,7 +85,7 @@ public class BookkeepingService {
             journalItems.add(new JournalItem(resultOfOperations.negate(), newDatabase.getAccount(equity.getId()), true, null, null));
         }
         try {
-            Journal startBalance = new Journal("start", "start balance", dayBeforeStart, 
+            Journal startBalance = new Journal("start", "start balance", dayBeforeStart,
                 journalItems.toArray(new JournalItem[journalItems.size()]), null);
             newDatabase.addJournal(startBalance, false);
         } catch (IllegalArgumentException e) {
@@ -128,7 +129,7 @@ public class BookkeepingService {
 
         return newDatabase;
     }
-    
+
     /**
      * Copies an array of accounts.
      * @param accounts the accounts to be copied
@@ -138,22 +139,142 @@ public class BookkeepingService {
     private static Account[] copyAccounts(Account[] accounts, Database newDatabase) {
         Account[] newAccounts = new Account[accounts.length];
         for (int i=0; i<accounts.length; i++) {
-            newAccounts[i] = new Account(accounts[i].getId(), accounts[i].getName(), accounts[i].isDebet(), newDatabase);
+            newAccounts[i] = new Account(accounts[i].getId(), accounts[i].getName(),
+                accounts[i].isDebet(), accounts[i].getType());
         }
         return newAccounts;
     }
-    
+
     private static Journal copyJournal(Journal journal, Database newDatabase) {
-        return new Journal(journal.getId(), journal.getDescription(), journal.getDate(), 
+        return new Journal(journal.getId(), journal.getDescription(), journal.getDate(),
             copyJournalItems(journal.getItems(), newDatabase), journal.getIdOfCreatedInvoice());
     }
-    
+
     private static JournalItem[] copyJournalItems(JournalItem[] items, Database newDatabase) {
         JournalItem[] newItems = new JournalItem[items.length];
         for (int i=0; i<items.length; i++) {
-            newItems[i] = new JournalItem(items[i].getAmount(), newDatabase.getAccount(items[i].getAccount().getId()), 
+            newItems[i] = new JournalItem(items[i].getAmount(), newDatabase.getAccount(items[i].getAccount().getId()),
                 items[i].isDebet(), items[i].getInvoiceId(), items[i].getPaymentId());
         }
         return newItems;
+    }
+
+
+    /**
+     * Removes a journal from the database. Payments booked in the journal or invoices created
+     * by the journal are also removed.
+     * @param database the database from which the journal has to be removed
+     * @param journal the journal to be deleted
+     * @throws DeleteException if a problem occurs while deleting the journal
+     */
+    public static void removeJournal(Database database, Journal journal) throws DeleteException {
+        // Check for payments without payment ID.
+        for (JournalItem item : journal.getItems()) {
+            if (item.getInvoiceId() != null && item.getPaymentId() == null) {
+                throw new DeleteException("The journal has a payment without an id. Therefore, it cannot be removed.");
+            }
+        }
+
+        try {
+            // Remove payments.
+            for (JournalItem item : journal.getItems()) {
+                String invoiceId = item.getInvoiceId();
+                String paymentId = item.getPaymentId();
+                if (invoiceId != null && paymentId != null) {
+                    try {
+                        database.removePayment(invoiceId, paymentId);
+                    } catch (DatabaseModificationFailedException e) {
+                        throw new DeleteException("Could not delete payment " + paymentId, e);
+                    }
+                }
+            }
+
+            // Check if the journal created an invoice. If so, remove the invoice too.
+            if (journal.createsInvoice()) {
+                try {
+                    database.removeInvoice(journal.getIdOfCreatedInvoice());
+                } catch (DatabaseModificationFailedException e) {
+                    throw new DeleteException("Could not delete the invoice " + journal.getIdOfCreatedInvoice()
+                        + " created by the journal.", e);
+                }
+            }
+
+            try {
+                database.removeJournal(journal);
+            } catch (DatabaseModificationFailedException e) {
+                throw new DeleteException("Could not delete journal.", e);
+            }
+        } finally {
+            database.notifyChange();
+        }
+    }
+
+    /**
+     * Gets the balance of the specified account at the specified date.
+     * @param database the database from which to take the data
+     * @param account the account
+     * @param date the date
+     * @return the balance of this account at the specified date
+     */
+    public static Amount getAccountBalance(Database database, Account account, Date date) {
+        List<Journal> journals = database.getJournals();
+        Amount result = Amount.getZero(database.getCurrency());
+        for (Journal journal : journals) {
+            if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
+                JournalItem[] items = journal.getItems();
+                for (int j = 0; j < items.length; j++) {
+                    if (items[j].getAccount().equals(account)) {
+                        if (account.isDebet() == items[j].isDebet()) {
+                            result = result.add(items[j].getAmount());
+                        } else {
+                            result = result.subtract(items[j].getAmount());
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Gets the balance of the specified account at start of the bookkeeping.
+     * @param database the database from which to take the data
+     * @param account the account
+     * @return the balance of this account at start of the bookkeeping
+     */
+    public static Amount getStartBalance(Database database, Account account) {
+        Date date = database.getStartOfPeriod();
+
+        // Subtract one day of the period start date, because otherwise the changes
+        // made on that day will be taken into account too.
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.DAY_OF_YEAR, -1);
+        date = cal.getTime();
+
+        return getAccountBalance(database, account, date);
+    }
+
+    /**
+     * Checks whether the specified account is used in the database. An account is considered
+     * "in use" if it has a non-zero start balance or if one or more journals use the account.
+     *
+     * @param database the database
+     * @param account the account
+     * @return <code>true</code> if the account is used; <code>false</code> otherwise
+     */
+    public static boolean inUse(Database database, Account account) {
+        if (!getStartBalance(database, account).isZero()) {
+            return true;
+        }
+
+        for (Journal j : database.getJournals()) {
+            for (JournalItem i : j.getItems()) {
+                if (account.equals(i.getAccount())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

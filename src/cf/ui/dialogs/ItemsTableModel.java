@@ -1,5 +1,5 @@
 /*
- * $Id: ItemsTableModel.java,v 1.13 2008-11-09 13:59:13 sanderk Exp $
+ * $Id: ItemsTableModel.java,v 1.14 2009-12-01 19:23:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -15,29 +15,28 @@ import javax.swing.table.TableModel;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
-import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.JournalItem;
 
 public class ItemsTableModel implements TableModel {
-    
+
     private Database database;
-    
+
     /** Contains the items shown in the table. */
     private ArrayList<JournalItem> items = new ArrayList<JournalItem>();
-    
+
     /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
     private ArrayList<TableModelListener> itemTableModelListeners = new ArrayList<TableModelListener>();
-    
+
     /**
      * Constructor.
      * @param database the database
      */
     public ItemsTableModel(Database database) {
-        this.database = database;        
+        this.database = database;
     }
-    
+
     public void setJournalItems(JournalItem[] itemsArray) {
         items.clear();
         for (int i=0; i<itemsArray.length; i++) {
@@ -56,7 +55,7 @@ public class ItemsTableModel implements TableModel {
             listener.tableChanged(event);
         }
     }
-    
+
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
@@ -81,7 +80,7 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnClass(int)
      */
-    public Class<?> getColumnClass(int col) 
+    public Class<?> getColumnClass(int col)
     {
         Class<?> result;
         switch(col)
@@ -90,7 +89,7 @@ public class ItemsTableModel implements TableModel {
         case 3:
             result = String.class;
             break;
-            
+
         case 1:
         case 2:
             result = Amount.class;
@@ -104,7 +103,7 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getValueAt(int, int)
      */
-    public Object getValueAt(int row, int col) 
+    public Object getValueAt(int row, int col)
     {
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         String result = null;
@@ -114,18 +113,18 @@ public class ItemsTableModel implements TableModel {
         case 0:
             result = item.getAccount().getId() + " " + item.getAccount().getName();
             break;
-            
+
         case 1:
             result = item.isDebet() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
             break;
-            
+
         case 2:
             result = item.isCredit() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
             break;
-            
+
         case 3:
             Invoice invoice = database.getInvoice(item.getInvoiceId());
-            result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getId() 
+            result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getId()
                 + " - " + invoice.getPayingParty().getName() + ")" : "";
             break;
         }
@@ -135,7 +134,7 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnName(int)
      */
-    public String getColumnName(int col) 
+    public String getColumnName(int col)
     {
         String id = null;
         switch(col)
@@ -158,11 +157,11 @@ public class ItemsTableModel implements TableModel {
         items.toArray(result);
         return result;
     }
-    
+
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#addTableModelListener(javax.swing.event.TableModelListener)
      */
-    public void addTableModelListener(TableModelListener listener) 
+    public void addTableModelListener(TableModelListener listener)
     {
         itemTableModelListeners.add(listener);
     }
@@ -170,7 +169,7 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#removeTableModelListener(javax.swing.event.TableModelListener)
      */
-    public void removeTableModelListener(TableModelListener listener) 
+    public void removeTableModelListener(TableModelListener listener)
     {
         itemTableModelListeners.remove(listener);
     }
@@ -184,9 +183,9 @@ public class ItemsTableModel implements TableModel {
         items.add(item);
         notifyListeners(new TableModelEvent(this));
     }
-    
+
     /**
-     * Gets a specified item from the table model.  
+     * Gets a specified item from the table model.
      * @param row the row in which the item is shown
      * @return the specified item or <code>null</code> if the specified row
      *         does not exist.
@@ -202,10 +201,10 @@ public class ItemsTableModel implements TableModel {
     }
 
     /**
-     * Updates the item at the specified row in the table model.  
+     * Updates the item at the specified row in the table model.
      * @param row the row.
      * @param item the new value for the specified row.
-     * @throws IllegalArgumentException if the specified row does not exist. 
+     * @throws IllegalArgumentException if the specified row does not exist.
      */
     public void updateItem(int row, JournalItem item)
     {
@@ -221,15 +220,6 @@ public class ItemsTableModel implements TableModel {
     }
 
     /**
-     * Adds an empty item to the table.
-     */
-    public void addEmptyItem()
-    {
-        Account dummyAccount = new Account("???", "???", true, database);
-        addItem(new JournalItem(Amount.getZero(database.getCurrency()), dummyAccount, true, null, null));
-    }
-    
-    /**
      * Deletes a row from the model.
      * @param row the row to be deleted. If <code>row</code> is not an existing
      *        row number, then this method returns without changing the model.
@@ -242,7 +232,7 @@ public class ItemsTableModel implements TableModel {
             notifyListeners(new TableModelEvent(this));
         }
     }
-    
+
     /** Removes all rows from the model. */
     public void clear() {
         items.clear();

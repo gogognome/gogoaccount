@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalsView.java,v 1.6 2008-11-10 20:06:00 sanderk Exp $
+ * $Id: EditJournalsView.java,v 1.7 2009-12-01 19:23:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -33,10 +33,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
+import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.cf.services.DeleteException;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.swing.ButtonPanel;
-import nl.gogognome.swing.DialogWithButtons;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SortedTable;
 import nl.gogognome.swing.SortedTableModel;
@@ -53,32 +54,32 @@ import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.ItemsTableModel;
 
 /**
- * This class implements the Edit journals view. 
+ * This class implements the Edit journals view.
  *
  * @author Sander Kooijmans
  */
 public class EditJournalsView extends View {
 
     private final static Color BACKGROUND_COLOR = new Color(255, 230, 230);
-    
+
     /** The table containing journals. */
     private SortedTable journalsTable;
-    
+
     /** The table containing journal items. */
     private JTable itemsTable;
-    
+
     /** The table mdoel for the journal items. */
     private ItemsTableModel itemsTableModel;
-    
+
     /** The table model for the journals. */
     private JournalsTableModel journalsTableModel;
-    
+
     /** The database. */
     private Database database;
-    
-	/** 
+
+	/**
 	 * Creates the "Edit journals" view.
-	 * @param database the database whose journals are being edited 
+	 * @param database the database whose journals are being edited
 	 */
 	public EditJournalsView(Database database) {
 		super();
@@ -88,15 +89,16 @@ public class EditJournalsView extends View {
     /**
      * @see View#onInit()
      */
+    @Override
     public void onInit() {
         setBackground(BACKGROUND_COLOR);
 		WidgetFactory wf = WidgetFactory.getInstance();
-		
+
 		// Create table of journals
         journalsTableModel = new JournalsTableModel(database);
 		journalsTable = WidgetFactory.getInstance().createSortedTable(journalsTableModel);
         journalsTable.setTitle(TextResource.getInstance().getString("editJournalsView.journals"));
-		
+
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
 		itemsTable = new JTable(itemsTableModel);
@@ -109,40 +111,41 @@ public class EditJournalsView extends View {
 		columnModel.getColumn(1).setPreferredWidth(100);
 		columnModel.getColumn(2).setPreferredWidth(100);
 		columnModel.getColumn(3).setPreferredWidth(300);
-		
+
 		// Set renderers for column 1 and 2.
 		TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
-		    public void setValue(Object value) {
+		    @Override
+            public void setValue(Object value) {
 		        super.setValue(value);
 		        setHorizontalAlignment(SwingConstants.RIGHT);
 		    }
 		};
-		
+
 		columnModel.getColumn(1).setCellRenderer(rightAlignedRenderer);
 		columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
-		
+
 		// Create combo box for parties
 		JComboBox comboBox = new JComboBox();
 		Party[] parties = database.getParties();
-		for (int i = 0; i < parties.length; i++) 
+		for (int i = 0; i < parties.length; i++)
 		{
 		    comboBox.addItem(parties[i].getId() + " " + parties[i].getName());
         }
 		columnModel.getColumn(3).setCellEditor(new DefaultCellEditor(comboBox));
-		
+
 		// Let items table be updated when another row is selected in the journals table.
 		final ListSelectionModel rowSM = journalsTable.getSelectionModel();
 		rowSM.addListSelectionListener(new ListSelectionListener() {
 		    public void valueChanged(ListSelectionEvent e) {
 		        //Ignore extra messages.
 		        if (e.getValueIsAdjusting()) { return; }
-		        
+
 		        if (!rowSM.isSelectionEmpty()) {
 		            updateJournalItemTable(rowSM.getMinSelectionIndex());
 		        }
 		    }
 		});
-		
+
 		// Create button panel
 		JPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonsPanel.setOpaque(false);
@@ -167,17 +170,17 @@ public class EditJournalsView extends View {
             }
 		});
 		buttonsPanel.add(deleteButton);
-		
+
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
-		tablesPanel.add(journalsTable.getComponent(), 
-            SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0, 
+		tablesPanel.add(journalsTable.getComponent(),
+            SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH, 10, 10, 10, 10));
-        
+
         JScrollPane scrollPane = new JScrollPane(itemsTable);
         tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
-        
+
         setLayout(new BorderLayout());
 		add(tablesPanel, BorderLayout.CENTER);
         add(buttonsPanel, BorderLayout.SOUTH);
@@ -198,13 +201,13 @@ public class EditJournalsView extends View {
 
     /**
      * Updates the journal item table so that it shows the items for the
-     * specified journal. 
+     * specified journal.
      * @param row the row of the journal whose items should be shown.
      */
     private void updateJournalItemTable(int row) {
         itemsTableModel.setJournalItems(journalsTableModel.getJournal(row).getItems());
     }
-    
+
     /**
      * This method lets the user edit the selected journal.
      */
@@ -212,7 +215,7 @@ public class EditJournalsView extends View {
         int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
             Journal journal = journalsTableModel.getJournal(row);
-            EditJournalDialog dialog = 
+            EditJournalDialog dialog =
                 new EditJournalDialog(getParentFrame(), database, "ejd.editJournalTitle", journal, false);
             dialog.showDialog();
             List<Journal> journals = dialog.getEditedJournals();
@@ -224,7 +227,7 @@ public class EditJournalsView extends View {
                 if (!journal.equals(newJournal)) {
                     // the journal was modified
                     if (journal.createsInvoice()) {
-                        EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle", 
+                        EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle",
                             database.getInvoice(journal.getIdOfCreatedInvoice()));
                         ViewDialog editInvoiceDialog = new ViewDialog(getParentWindow(), editInvoiceView);
                         editInvoiceDialog.showDialog();
@@ -247,7 +250,7 @@ public class EditJournalsView extends View {
             }
         }
     }
-    
+
     /**
      * This method lets the user add new journals.
      */
@@ -272,12 +275,12 @@ public class EditJournalsView extends View {
         if (row != -1) {
             if (journalsTableModel.getJournal(row).createsInvoice()) {
                 if (!database.getPayments(journalsTableModel.getJournal(row).getIdOfCreatedInvoice()).isEmpty()) {
-                    MessageDialog.showMessage(getParentWindow(), "gen.warning", 
+                    MessageDialog.showMessage(getParentWindow(), "gen.warning",
                         TextResource.getInstance().getString("editJournalsView.journalCreatingInvoiceCannotBeDeleted"));
                     return;
                 }
             }
-            
+
             MessageDialog dialog = MessageDialog.showMessage(this,
                 "gen.titleWarning",
                 TextResource.getInstance().getString("editJournalsView.areYouSureAboutDeletion"),
@@ -287,25 +290,25 @@ public class EditJournalsView extends View {
             }
 
             try {
-                database.removeJournal(journalsTableModel.getJournal(row));
-            } catch (DatabaseModificationFailedException e) {
+                BookkeepingService.removeJournal(database, journalsTableModel.getJournal(row));
+            } catch (DeleteException e) {
                 MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
             }
         }
     }
-    
+
     /**
      * This class implements a table model for a table containing journals.
      */
     private class JournalsTableModel implements SortedTableModel, DatabaseListener {
-        
+
         /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
         private ArrayList<TableModelListener> journalsTableModelListeners = new ArrayList<TableModelListener>();
 
         private List<Journal> journals;
-        
+
         private Database database;
-        
+
         /**
          * Constructor.
          * @param database the database from which to take the data
@@ -318,12 +321,12 @@ public class EditJournalsView extends View {
 
         /**
          * Disposes this table model. After this method has been called, this table model
-         * should not be used anymore. 
+         * should not be used anymore.
          */
         public void dispose() {
             database.removeListener(this);
         }
-        
+
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnCount()
          */
@@ -383,7 +386,7 @@ public class EditJournalsView extends View {
          */
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         }
-        
+
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnName(int)
          */
@@ -418,7 +421,7 @@ public class EditJournalsView extends View {
         public void removeTableModelListener(TableModelListener listener) {
             journalsTableModelListeners.remove(listener);
         }
-        
+
         /**
          * Notifies the listeners of a change in the table.
          * @param event describes the change.
@@ -435,21 +438,22 @@ public class EditJournalsView extends View {
             case 0:
             case 1:
                 return 200;
-                
+
             case 2:
                 return 500;
-                
+
             case 3:
                 return 200;
             default:
                 throw new IllegalStateException("No width specified for column " + column);
             }
         }
-    
+
         public TableCellRenderer getRendererForColumn(int column) {
             switch (column) {
             case 0:
                 return new DefaultTableCellRenderer() {
+                    @Override
                     protected void setValue(Object date) {
                         super.setValue(TextResource.getInstance().formatDate("gen.dateFormat", (Date)date));
                     }
@@ -462,7 +466,7 @@ public class EditJournalsView extends View {
         public Comparator<Object> getComparator(int column) {
             return null;
         }
-        
+
         /**
          * @see DatabaseListener#databaseChanged(Database)
          */
@@ -470,7 +474,7 @@ public class EditJournalsView extends View {
             journals = database.getJournals();
             notifyListeners(new TableModelEvent(this));
         }
-        
+
         /**
          * Gets the journal at the specified row.
          * @param row the row
@@ -483,8 +487,9 @@ public class EditJournalsView extends View {
     }
 
     /**
-     * This method is called when the focus is requested for this view. 
+     * This method is called when the focus is requested for this view.
      */
+    @Override
     public void requestFocus() {
         journalsTable.getFocusableComponent().requestFocus();
     }
@@ -492,6 +497,7 @@ public class EditJournalsView extends View {
     /**
      * This method is called when the focus is requested for this view.
      */
+    @Override
     public boolean requestFocusInWindow() {
         return journalsTable.getFocusableComponent().requestFocusInWindow();
     }

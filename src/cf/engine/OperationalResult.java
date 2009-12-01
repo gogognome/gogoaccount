@@ -1,5 +1,5 @@
 /*
- * $Id: OperationalResult.java,v 1.9 2007-04-14 12:47:18 sanderk Exp $
+ * $Id: OperationalResult.java,v 1.10 2009-12-01 19:23:59 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -8,6 +8,7 @@ package cf.engine;
 import java.util.Date;
 import java.util.Locale;
 
+import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 
@@ -19,11 +20,11 @@ import nl.gogognome.text.AmountFormat;
 public class OperationalResult {
 
     private Date date;
-    
+
     private Amount totalExpenses;
-    
+
     private Amount totalRevenues;
-    
+
     /**
      * Constructor.
      * @param database the datebase from which the operational result is constructed
@@ -33,18 +34,18 @@ public class OperationalResult {
         this.date = date;
         totalExpenses = Amount.getZero(database.getCurrency());
         totalRevenues = totalExpenses;
-        
+
         Account[] expenses = getExpenses();
-        
-        for (int i = 0; i < expenses.length; i++) 
-        {
-            totalExpenses = totalExpenses.add(expenses[i].getBalance(date));
+
+        for (int i = 0; i < expenses.length; i++) {
+            totalExpenses = totalExpenses.add(
+                BookkeepingService.getAccountBalance(database, expenses[i], date));
         }
-        
+
         Account[] revenues = getRevenues();
-        for (int i = 0; i < revenues.length; i++) 
-        {
-            totalRevenues = totalRevenues.add(revenues[i].getBalance(date));
+        for (int i = 0; i < revenues.length; i++) {
+            totalRevenues = totalRevenues.add(
+                BookkeepingService.getAccountBalance(database, revenues[i], date));
         }
     }
 
@@ -52,17 +53,17 @@ public class OperationalResult {
     {
         return date;
     }
-    
+
     public Amount getTotalExpenses()
     {
         return totalExpenses;
     }
-    
+
     public Amount getTotalRevenues()
     {
         return totalRevenues;
     }
-    
+
     /**
      * Gets the result of operations.
      * @return the result of operations (positive indicates profit, negative
@@ -72,47 +73,49 @@ public class OperationalResult {
     {
         return totalRevenues.subtract(totalExpenses);
     }
-    
+
     public Account[] getExpenses()
     {
         return Database.getInstance().getExpenses();
     }
-    
+
     public Account[] getRevenues()
     {
         return Database.getInstance().getRevenues();
     }
-    
+
     /**
      * Gets a string representation of the operational result.
      * @return a string representation of the operational result
      */
-    public String toString()
-    {
-        StringBuffer result = new StringBuffer();
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
         AmountFormat af = new AmountFormat(Locale.getDefault());
-        
+
         result.append("operation result of ");
         result.append(date);
         result.append('\n');
         int columnWidth = 45;
-        
-        StringBuffer sb = null;
+
+        StringBuilder sb = null;
         Account[] expenses = getExpenses();
         Account[] revenues = getRevenues();
-        
+
+        Database database = Database.getInstance();
         int n = Math.max(expenses.length, revenues.length);
         int index = 0;
         for (int i=0; i<n; i++)
         {
-            sb = new StringBuffer();
+            sb = new StringBuilder();
             if (i < expenses.length)
             {
 	            sb.append(expenses[i].getId());
 	            sb.append(' ');
 	            sb.append(expenses[i].getName());
 	            index = sb.length();
-	            sb.append(af.formatAmount(expenses[i].getBalance(date)));
+	            sb.append(af.formatAmount(
+	                BookkeepingService.getAccountBalance(database, expenses[i], date)));
             }
             else
             {
@@ -124,16 +127,17 @@ public class OperationalResult {
             }
             result.append(sb);
             result.append(" | ");
-            
-            sb = new StringBuffer();
-            
+
+            sb = new StringBuilder();
+
             if (i < revenues.length)
             {
 	            sb.append(revenues[i].getId());
 	            sb.append(' ');
 	            sb.append(revenues[i].getName());
 	            index = sb.length();
-	            sb.append(af.formatAmount(revenues[i].getBalance(date)));
+	            sb.append(af.formatAmount(
+	                BookkeepingService.getAccountBalance(database, revenues[i], date)));
             }
             else
             {
@@ -148,8 +152,8 @@ public class OperationalResult {
         }
 
         result.append('\n');
-        sb = new StringBuffer();
-        
+        sb = new StringBuilder();
+
         sb.append(af.formatAmount(getTotalExpenses()));
         while (sb.length() < columnWidth)
         {
@@ -157,8 +161,8 @@ public class OperationalResult {
         }
         result.append(sb);
         result.append(" | ");
-        
-        sb = new StringBuffer();
+
+        sb = new StringBuilder();
         sb.append(af.formatAmount(getTotalRevenues()));
         while (sb.length() < columnWidth)
         {
@@ -166,7 +170,7 @@ public class OperationalResult {
         }
         result.append(sb);
         result.append('\n');
-        
+
         return result.toString();
     }
 }
