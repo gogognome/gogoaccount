@@ -1,12 +1,14 @@
 /*
- * $Id: Balance.java,v 1.15 2009-12-01 19:23:59 sanderk Exp $
+ * $Id: Balance.java,v 1.16 2009-12-13 21:04:29 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.engine;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.text.Amount;
@@ -19,8 +21,7 @@ import cf.engine.Account.Type;
  *
  * @author Sander Kooijmans
  */
-public class Balance
-{
+public class Balance {
     private Date date;
 
     private Amount totalAssets;
@@ -33,6 +34,9 @@ public class Balance
 
     private Account[] liabilities;
 
+    /** Maps accounts to their amounts at the date of the balance. */
+    private Map<Account, Amount> accountsToAmountsMap = new HashMap<Account, Amount>();
+    
     /**
      * Constructor.
      * @param database the database on which this balance is based.
@@ -45,14 +49,15 @@ public class Balance
 
         assets = database.getAssets();
         for (int i=0; i<assets.length; i++) {
-            totalAssets = totalAssets.add(
-                BookkeepingService.getAccountBalance(database, assets[i], date));
+        	Amount a = BookkeepingService.getAccountBalance(database, assets[i], date);
+        	accountsToAmountsMap.put(assets[i], a);
+            totalAssets = totalAssets.add(a);
         }
         liabilities = database.getLiabilities();
-        for (int i=0; i<liabilities.length; i++)
-        {
-            totalLiabilities = totalLiabilities.add(
-                BookkeepingService.getAccountBalance(database, liabilities[i], date));
+        for (int i=0; i<liabilities.length; i++) {
+        	Amount a = BookkeepingService.getAccountBalance(database, liabilities[i], date); 
+        	accountsToAmountsMap.put(liabilities[i], a);
+            totalLiabilities = totalLiabilities.add(a);
         }
 
         // If this balance has a profit or a loss, then add it to the
@@ -67,8 +72,8 @@ public class Balance
             System.arraycopy(liabilities, 0, newLiabilities, 0, liabilities.length);
             newLiabilities[liabilities.length] = profitAccount;
             liabilities = newLiabilities;
-            totalLiabilities = totalLiabilities.add(
-                BookkeepingService.getAccountBalance(database, profitAccount, date));
+            totalLiabilities = totalLiabilities.add(resultOfOperations);
+            accountsToAmountsMap.put(profitAccount, resultOfOperations);
         } else if (resultOfOperations.isNegative()) {
             // add a loss
             Account lossAccount = new ResultAccount(true,
@@ -77,8 +82,9 @@ public class Balance
             System.arraycopy(assets, 0, newAssets, 0, assets.length);
             newAssets[assets.length] = lossAccount;
             assets = newAssets;
-            totalAssets = totalAssets.add(
-                BookkeepingService.getAccountBalance(database, lossAccount, date));
+            Amount a = resultOfOperations.negate(); // resultOfOperations is negative
+            totalAssets = totalAssets.add(a);
+            accountsToAmountsMap.put(lossAccount, resultOfOperations);
         }
     }
 
@@ -92,8 +98,7 @@ public class Balance
      * Gets the assets of the balance.
      * @return the assets
      */
-    public Account[] getAssets()
-    {
+    public Account[] getAssets() {
         return assets;
     }
 
@@ -104,8 +109,7 @@ public class Balance
      *
      * @return the liabilities
      */
-    public Account[] getLiabilities()
-    {
+    public Account[] getLiabilities() {
         return liabilities;
     }
 
@@ -113,8 +117,7 @@ public class Balance
      * Gets the total of all assets.
      * @return the total of all assets
      */
-    public Amount getTotalAssets()
-    {
+    public Amount getTotalAssets() {
         return totalAssets;
     }
 
@@ -122,8 +125,7 @@ public class Balance
      * Gets the total of all liabilities.
      * @return the total of all liabilities
      */
-    public Amount getTotalLiabilities()
-    {
+    public Amount getTotalLiabilities() {
         return totalLiabilities;
     }
 
@@ -135,6 +137,15 @@ public class Balance
         return resultOfOperations;
     }
 
+    /**
+     * Gets the amount for the specified account at the date of this balance.
+     * @param account the account
+     * @return the amount
+     */
+    public Amount getAmount(Account account) {
+    	return accountsToAmountsMap.get(account);
+    }
+    
     /**
      * Gets a string representation for this balance.
      * Use this method only for testing.
@@ -151,23 +162,17 @@ public class Balance
         result.append('\n');
 
         StringBuilder sb = null;
-        Database database = Database.getInstance();
-        Account[] assets = database.getAssets();
-        Account[] liabilities = database.getLiabilities();
 
         int n = Math.max(assets.length, liabilities.length+1);
         int index = 0;
-        for (int i=0; i<n; i++)
-        {
+        for (int i=0; i<n; i++) {
             sb = new StringBuilder();
-            if (i < assets.length)
-            {
+            if (i < assets.length) {
 	            sb.append(assets[i].getId());
 	            sb.append(' ');
 	            sb.append(assets[i].getName());
 	            index = sb.length();
-	            sb.append(af.formatAmount(
-	                BookkeepingService.getAccountBalance(database, assets[i], date)));
+	            sb.append(getAmount(assets[i]));
             }
             else
             {
@@ -188,8 +193,7 @@ public class Balance
 	            sb.append(' ');
 	            sb.append(liabilities[i].getName());
 	            index = sb.length();
-	            sb.append(af.formatAmount(
-	                BookkeepingService.getAccountBalance(database, liabilities[i], date)));
+	            sb.append(af.formatAmount(getAmount(liabilities[i])));
             }
             else if (i == liabilities.length)
             {

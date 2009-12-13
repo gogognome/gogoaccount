@@ -1,5 +1,5 @@
 /*
- * $Id: BalanceComponent.java,v 1.18 2009-12-01 19:23:59 sanderk Exp $
+ * $Id: BalanceComponent.java,v 1.19 2009-12-13 21:04:29 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -20,7 +20,6 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.framework.models.AbstractModel;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.framework.models.ModelChangeListener;
@@ -110,16 +109,14 @@ public class BalanceComponent extends JScrollPane {
         String[] assetAmounts = new String[assets.length];
         for (int i=0; i<assets.length; i++) {
             assetNames[i] = assets[i].getId() + " " + assets[i].getName();
-            assetAmounts[i] = af.formatAmount(
-                BookkeepingService.getAccountBalance(database, assets[i], balance.getDate()));
+            assetAmounts[i] = af.formatAmount(balance.getAmount(assets[i]));
         }
 
         String[] liabilityNames = new String[liabilities.length];
         String[] liabilityAmounts = new String[liabilities.length];
         for (int i=0; i<liabilities.length; i++) {
             liabilityNames[i] = liabilities[i].getId() + " " + liabilities[i].getName();
-            liabilityAmounts[i] = af.formatAmount(
-                BookkeepingService.getAccountBalance(database, liabilities[i], balance.getDate()));
+            liabilityAmounts[i] = af.formatAmount(balance.getAmount(liabilities[i]));
         }
 
         String totalAssets = af.formatAmount(balance.getTotalAssets());
