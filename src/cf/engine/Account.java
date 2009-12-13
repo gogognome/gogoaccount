@@ -1,5 +1,5 @@
 /*
- * $Id: Account.java,v 1.13 2009-12-01 19:23:59 sanderk Exp $
+ * $Id: Account.java,v 1.14 2009-12-13 21:03:25 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -95,7 +95,7 @@ public class Account implements Comparable<Account> {
     @Override
     public boolean equals(Object o) {
         if (o instanceof Account) {
-            return this.id == ((Account)o).getId();
+            return this.id.equals(((Account)o).getId());
         } else {
             return false;
         }
