@@ -1,12 +1,15 @@
 /*
- * $Id: ReportDialog.java,v 1.8 2009-02-01 19:53:43 sanderk Exp $
+ * $Id: ReportDialog.java,v 1.9 2010-01-10 21:16:42 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.dialogs;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.text.ParseException;
@@ -14,16 +17,22 @@ import java.util.Calendar;
 import java.util.Date;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerDateModel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
+
+import com.sun.org.apache.bcel.internal.classfile.PMGClass;
 
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.models.DateModel;
@@ -34,6 +43,7 @@ import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
 import cf.text.Report;
+import cf.text.ReportProgressListener;
 
 /**
  * This class implements the report dialog. This dialog can generate
@@ -51,14 +61,17 @@ public class ReportDialog extends OkCancelDialog {
     
     private Frame parentFrame;
     
+    private Database database;
+    
     /**
      * Constructor.
      * @param frame the parent of this dialog
+     * @param database the database from which the report is generated
      */
-    public ReportDialog(Frame frame) 
-    {
+    public ReportDialog(Frame frame, Database database) {
         super(frame, "genreport.title");
         this.parentFrame = frame;
+        this.database = database;
         
         WidgetFactory wf = WidgetFactory.getInstance();
         TextResource tr = TextResource.getInstance();
@@ -124,8 +137,9 @@ public class ReportDialog extends OkCancelDialog {
         componentInitialized(topPanel);
     }
 
+    
     /* (non-Javadoc)
-     * @see cf.ui.dialogs.OkCancelDialog#handleOk()
+     * @see nl.gogognome.swing.OkCancelDialog#handleOk()
      */
     protected void handleOk() {
         int fileType = Report.RP_TXT;
@@ -138,22 +152,87 @@ public class ReportDialog extends OkCancelDialog {
             return;
         }
         
-        generateReport(tfFileName.getText(), fileType, date);
         hideDialog();
+        new ReportTask(tfFileName.getText(), fileType, date).execute();
     }
 
-    private void generateReport(String fileName, int fileType, Date date) {
-        Report report = new Report(Database.getInstance(), date);
-        try {
-            report.createReportFile(fileName, fileType);
-        } catch (IOException e) {
-            MessageDialog dialog = new MessageDialog(parentFrame, "gen.titleError", e);
-            dialog.showDialog();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            MessageDialog.showMessage(parentFrame, "gen.titleError", 
-                TextResource.getInstance().getString("genreport.cantConvertTexToPdf",
-                new Object[] {fileName}));
-        }
+    private class ReportTask implements ReportProgressListener {
+	    
+	    private String fileName;
+	    private int fileType;
+	    private Date date;
+	    private JProgressBar progressBar;
+	    private JDialog progressDialog;
+	    
+	    public ReportTask(String fileName, int fileType, Date date) {
+	    	this.fileName = fileName;
+	    	this.fileType = fileType;
+	    	this.date = date;
+	    }
+	    
+	    public void execute() {
+	    	ReportGeneratorThread thread = new ReportGeneratorThread(fileName, fileType, date, this);
+	    	thread.start();
+	    	progressDialog = new JDialog(parentFrame);
+	    	progressBar = new JProgressBar(0, 100);
+	    	JPanel panel = new JPanel(new BorderLayout());
+	    	progressDialog.setLayout(new BorderLayout());
+	    	panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	    	panel.add(new JLabel(TextResource.getInstance().getString("genreport.progress")), BorderLayout.NORTH);
+	    	panel.add(progressBar, BorderLayout.CENTER);
+	    	progressDialog.add(panel);
+	    	progressDialog.pack();
+	    	progressDialog.setModal(true);
+	    	progressDialog.setResizable(false);
+	    	Dimension d = parentFrame.getSize();
+	    	Point location = parentFrame.getLocation();
+	    	location.translate((int)(d.getWidth() / 2), (int)(d.getHeight() / 2));
+	    	progressDialog.setLocation(location);
+	    	progressDialog.setVisible(true);
+	    }
+	    
+	    public void onFinished(final Throwable t) {
+	    	SwingUtilities.invokeLater(new Runnable() {
+	    		public void run() {
+	    			progressDialog.setVisible(false);
+			    	if (t != null) {
+			            MessageDialog dialog = new MessageDialog(parentFrame, "gen.titleError", t);
+			            dialog.showDialog();
+			    	}
+	    		}
+	    	});
+	    }
+	    
+	    public void onProgressUpdate(final int percentageCompleted) {
+	    	SwingUtilities.invokeLater(new Runnable() {
+	    		public void run() {
+	    			progressBar.setValue(percentageCompleted);
+	    		}
+	    	});
+	    }
+    }
+    
+    private class ReportGeneratorThread extends Thread {
+    	private String fileName;
+    	private int fileType;
+    	private Date date;
+    	private ReportProgressListener rpl;
+    	
+		public ReportGeneratorThread(String fileName, int fileType, Date date, ReportProgressListener rpl) {
+			super("report generator");
+			this.fileName = fileName;
+			this.fileType = fileType;
+			this.date = date;
+			this.rpl = rpl;
+		}
+    	
+		public void run() {
+	        Report report = new Report(database, date);
+	        try {
+	            report.createReportFile(fileName, fileType, rpl);
+	        } catch (Throwable t) {
+	        	rpl.onFinished(t);
+	        }
+		}
     }
 }

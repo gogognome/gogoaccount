@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.53 2009-11-16 21:41:26 sanderk Exp $
+ * $Id: MainFrame.java,v 1.54 2010-01-10 21:16:42 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -644,7 +644,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleGenerateReport() {
-	    ReportDialog dialog = new ReportDialog(this);
+	    ReportDialog dialog = new ReportDialog(this, database);
 	    dialog.showDialog();
 	}
 

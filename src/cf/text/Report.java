@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.20 2009-12-01 19:23:59 sanderk Exp $
+ * $Id: Report.java,v 1.21 2010-01-10 21:16:42 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -56,6 +56,9 @@ public class Report
 
     /** Thet <code>TextFormat</code> used to format the report. */
     private TextFormat textFormat;
+    
+    /** A report progress listener that monitors the progress of report creation. */
+    private ReportProgressListener rpl;
 
     /**
      * Constructor.
@@ -71,43 +74,55 @@ public class Report
     /**
      * Writes a report to a file in the specified file type.
      *
+     * Possible exceptions that a {@link ReportProgressListener} might receive are:
+     * <ul>
+     *   <li>IOException if an I/O exception occurs
+     *   <li>InterruptedException if the conversion from LaTeX to PDF fails
+     * </ul>
+     *  
      * @param fileName the name of the file to be generated
      * @param fileType the type of the file (<code>RP_HTML</code>,
      *         <code>RP_PDF</code> or <code>RP_TXT</code>)
-     * @throws IOException if an I/O exception occurs
-     * @throws InterruptedException if the conversion from LaTeX to PDF fails
      */
-    public void createReportFile(String fileName, int fileType)
-    		throws IOException, InterruptedException {
-        try {
-	        switch(fileType) {
-	            case RP_TXT:
-	                textFormat = new PlainTextFormat(TextResource.getInstance());
-	                break;
-	            case RP_PDF:
-	                textFormat = new LatexTextFormat(TextResource.getInstance());
-	                fileName = PdfLatex.getTexFileName(fileName);
-	                break;
-	            case RP_HTML:
-	                textFormat = new HtmlTextFormat(TextResource.getInstance());
-	                break;
-	            default:
-	                throw new IllegalArgumentException(
-	                        "Illegal file type: " + fileType);
+    public void createReportFile(String fileName, int fileType, ReportProgressListener rpl) {
+    	this.rpl = rpl;
+    	try {
+	    	rpl.onProgressUpdate(0);
+	        try {
+		        switch(fileType) {
+		            case RP_TXT:
+		                textFormat = new PlainTextFormat(TextResource.getInstance());
+		                break;
+		            case RP_PDF:
+		                textFormat = new LatexTextFormat(TextResource.getInstance());
+		                fileName = PdfLatex.getTexFileName(fileName);
+		                break;
+		            case RP_HTML:
+		                textFormat = new HtmlTextFormat(TextResource.getInstance());
+		                break;
+		            default:
+		                throw new IllegalArgumentException(
+		                        "Illegal file type: " + fileType);
+		        }
+		        writer = new PrintWriter(new FileWriter(fileName));
+		        printReport();
+		        writer.close();
+	        } catch (IOException e) {
+	            if (writer != null) {
+	                writer.close();
+	            }
+	            throw e;
 	        }
-	        writer = new PrintWriter(new FileWriter(fileName));
-	        printReport();
-	        writer.close();
-        } catch (IOException e) {
-            if (writer != null) {
-                writer.close();
-            }
-            throw e;
-        }
-
-        if (fileType == RP_PDF) {
-            PdfLatex.convertTexToPdf(new File(fileName), (new File(fileName)).getParentFile());
-        }
+	
+	        rpl.onProgressUpdate(90);
+	        if (fileType == RP_PDF) {
+	            PdfLatex.convertTexToPdf(new File(fileName), (new File(fileName)).getParentFile());
+	        }
+	        rpl.onProgressUpdate(100);
+	        rpl.onFinished(null);
+    	} catch (Throwable t) {
+    		rpl.onFinished(t);
+    	}
     }
 
     /**
@@ -115,14 +130,20 @@ public class Report
      */
     private void printReport() {
         writer.println(textFormat.getStartOfDocument());
-
+        rpl.onProgressUpdate(10);
         printBalance(database.getBalance(date));
+        rpl.onProgressUpdate(20);
         printOperationalResult(database.getOperationalResult(date));
+        rpl.onProgressUpdate(30);
         printDebtors(database.getDebtors(date), date);
+        rpl.onProgressUpdate(40);
         printCreditors(database.getCreditors(date), date);
+        rpl.onProgressUpdate(50);
 
         List<Journal> journals = database.getJournals();
+        rpl.onProgressUpdate(65);
         printJournals(journals, database.getStartOfPeriod(), date);
+        rpl.onProgressUpdate(75);
         printLedger(database.getAllAccounts(), journals, database.getStartOfPeriod(), date);
 
         writer.println(textFormat.getEndOfDocument());
@@ -164,8 +185,7 @@ public class Report
         {
             if (i < assets.length) {
                 values[0] = assets[i].getId() + ' ' + assets[i].getName();
-	            values[1] = textFormat.formatAmount(
-	                BookkeepingService.getAccountBalance(database, assets[i], date));
+	            values[1] = textFormat.formatAmount(balance.getAmount(assets[i]));
             } else {
                 values[0] = "";
                 values[1] = "";
@@ -174,8 +194,7 @@ public class Report
             if (i < liabilities.length)
             {
                 values[3] = liabilities[i].getId() + ' ' + liabilities[i].getName();
-                values[4] = textFormat.formatAmount(
-                    BookkeepingService.getAccountBalance(database, liabilities[i], date));
+                values[4] = textFormat.formatAmount(balance.getAmount(liabilities[i]));
             }
             else
             {
