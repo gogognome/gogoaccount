@@ -1,5 +1,5 @@
 /*
- * $Id: Report.java,v 1.21 2010-01-10 21:16:42 sanderk Exp $
+ * $Id: ReportTask.java,v 1.1 2010-01-25 20:22:21 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Locale;
 
 import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.task.Task;
+import nl.gogognome.task.TaskProgressListener;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
@@ -36,8 +38,7 @@ import cf.pdf.PdfLatex;
  *
  * @author Sander Kooijmans
  */
-public class Report
-{
+public class ReportTask implements Task {
     public final static int RP_TXT = 0;
     public final static int RP_PDF = 1;
     public final static int RP_HTML = 2;
@@ -56,73 +57,71 @@ public class Report
 
     /** Thet <code>TextFormat</code> used to format the report. */
     private TextFormat textFormat;
-    
+
+    private String fileName;
+
+    private int fileType;
+
     /** A report progress listener that monitors the progress of report creation. */
-    private ReportProgressListener rpl;
+    private TaskProgressListener progressListener;
 
     /**
      * Constructor.
      * @param locale the locale used to format the report.
      */
-    public Report(Database database, Date date)
-    {
+    public ReportTask(Database database, Date date, String fileName, int fileType) {
         this.database = database;
         this.date = date;
+        this.fileName = fileName;
+        this.fileType = fileType;
         this.locale = TextResource.getInstance().getLocale();
     }
 
     /**
      * Writes a report to a file in the specified file type.
      *
-     * Possible exceptions that a {@link ReportProgressListener} might receive are:
-     * <ul>
-     *   <li>IOException if an I/O exception occurs
-     *   <li>InterruptedException if the conversion from LaTeX to PDF fails
-     * </ul>
-     *  
      * @param fileName the name of the file to be generated
      * @param fileType the type of the file (<code>RP_HTML</code>,
      *         <code>RP_PDF</code> or <code>RP_TXT</code>)
+     * @param progressListener the progress listener for this task
+     * @throws IOException if an I/O exception occurs
+     * @throws InterruptedException if the conversion from LaTeX to PDF fails
      */
-    public void createReportFile(String fileName, int fileType, ReportProgressListener rpl) {
-    	this.rpl = rpl;
-    	try {
-	    	rpl.onProgressUpdate(0);
-	        try {
-		        switch(fileType) {
-		            case RP_TXT:
-		                textFormat = new PlainTextFormat(TextResource.getInstance());
-		                break;
-		            case RP_PDF:
-		                textFormat = new LatexTextFormat(TextResource.getInstance());
-		                fileName = PdfLatex.getTexFileName(fileName);
-		                break;
-		            case RP_HTML:
-		                textFormat = new HtmlTextFormat(TextResource.getInstance());
-		                break;
-		            default:
-		                throw new IllegalArgumentException(
-		                        "Illegal file type: " + fileType);
-		        }
-		        writer = new PrintWriter(new FileWriter(fileName));
-		        printReport();
-		        writer.close();
-	        } catch (IOException e) {
-	            if (writer != null) {
-	                writer.close();
-	            }
-	            throw e;
+    public Object execute(TaskProgressListener progressListener) throws Exception {
+    	this.progressListener = progressListener;
+    	progressListener.onProgressUpdate(0);
+        try {
+	        switch(fileType) {
+	            case RP_TXT:
+	                textFormat = new PlainTextFormat(TextResource.getInstance());
+	                break;
+	            case RP_PDF:
+	                textFormat = new LatexTextFormat(TextResource.getInstance());
+	                fileName = PdfLatex.getTexFileName(fileName);
+	                break;
+	            case RP_HTML:
+	                textFormat = new HtmlTextFormat(TextResource.getInstance());
+	                break;
+	            default:
+	                throw new IllegalArgumentException(
+	                        "Illegal file type: " + fileType);
 	        }
-	
-	        rpl.onProgressUpdate(90);
-	        if (fileType == RP_PDF) {
-	            PdfLatex.convertTexToPdf(new File(fileName), (new File(fileName)).getParentFile());
-	        }
-	        rpl.onProgressUpdate(100);
-	        rpl.onFinished(null);
-    	} catch (Throwable t) {
-    		rpl.onFinished(t);
-    	}
+	        writer = new PrintWriter(new FileWriter(fileName));
+	        printReport();
+	        writer.close();
+        } catch (IOException e) {
+            if (writer != null) {
+                writer.close();
+            }
+            throw e;
+        }
+
+        progressListener.onProgressUpdate(90);
+        if (fileType == RP_PDF) {
+            PdfLatex.convertTexToPdf(new File(fileName), (new File(fileName)).getParentFile());
+        }
+        progressListener.onProgressUpdate(100);
+        return null;
     }
 
     /**
@@ -130,20 +129,20 @@ public class Report
      */
     private void printReport() {
         writer.println(textFormat.getStartOfDocument());
-        rpl.onProgressUpdate(10);
+        progressListener.onProgressUpdate(10);
         printBalance(database.getBalance(date));
-        rpl.onProgressUpdate(20);
+        progressListener.onProgressUpdate(20);
         printOperationalResult(database.getOperationalResult(date));
-        rpl.onProgressUpdate(30);
+        progressListener.onProgressUpdate(30);
         printDebtors(database.getDebtors(date), date);
-        rpl.onProgressUpdate(40);
+        progressListener.onProgressUpdate(40);
         printCreditors(database.getCreditors(date), date);
-        rpl.onProgressUpdate(50);
+        progressListener.onProgressUpdate(50);
 
         List<Journal> journals = database.getJournals();
-        rpl.onProgressUpdate(65);
+        progressListener.onProgressUpdate(65);
         printJournals(journals, database.getStartOfPeriod(), date);
-        rpl.onProgressUpdate(75);
+        progressListener.onProgressUpdate(75);
         printLedger(database.getAllAccounts(), journals, database.getStartOfPeriod(), date);
 
         writer.println(textFormat.getEndOfDocument());

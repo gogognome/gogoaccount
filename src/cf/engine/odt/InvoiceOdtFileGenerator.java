@@ -5,10 +5,9 @@
 
 package cf.engine.odt;
 
-import cf.engine.Invoice;
-import cf.engine.Payment;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -30,16 +30,23 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
+import nl.gogognome.task.Task;
+import nl.gogognome.task.TaskProgressListener;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.xml.GNodeList;
 import nl.gogognome.xml.XmlUtil;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
+
+import cf.engine.Invoice;
+import cf.engine.Payment;
 
 
 /**
@@ -47,7 +54,7 @@ import org.xml.sax.SAXException;
  *
  * @author SanderK
  */
-public class InvoiceOdtFileGenerator {
+public class InvoiceOdtFileGenerator implements Task {
 
     /** The inputstream of the template. */
     private ZipInputStream zipInputStream;
@@ -55,7 +62,16 @@ public class InvoiceOdtFileGenerator {
     /** The outputstream of the ODT file. */
     private ZipOutputStream zipOutputStream;
 
+    private String templateFileName;
+    private String odtFileName;
+    private Invoice[] invoices;
+    private Date date;
+    private String concerning;
+    private String ourReference;
+    private Date dueDate;
+
     /**
+     * Constructor.
      * @param templateFileName the file name of the template
      * @param odtFileName the file name of the ODT file to be created
      * @param invoices the invoices to be added to the PDF file
@@ -63,14 +79,32 @@ public class InvoiceOdtFileGenerator {
      * @param concerning
      * @param ourReference
      * @param dueDate
+     */
+    public InvoiceOdtFileGenerator(String templateFileName, String odtFileName,
+            Invoice[] invoices, Date date, String concerning, String ourReference,
+            Date dueDate) {
+    	this.templateFileName = templateFileName;
+    	this.odtFileName = odtFileName;
+    	this.invoices = invoices;
+    	this.date = date;
+    	this.concerning = concerning;
+    	this.ourReference = ourReference;
+    	this.dueDate = dueDate;
+    }
+
+    /**
+     * Generates invoices.
+     * @param progressListener the progress listener for this task
+     * @return <code>null</code>
      * @throws IOException if a problem occurs while reading the template or
      *         while creating the ODT file
      */
-    public void generateInvoices(String templateFileName, String odtFileName,
-            Invoice[] invoices, Date date, String concerning, String ourReference,
-            Date dueDate) throws IOException {
+	public Object execute(TaskProgressListener progressListener) throws IOException {
         zipOutputStream = new ZipOutputStream(new BufferedOutputStream(
             new FileOutputStream(odtFileName)));
+        progressListener.onProgressUpdate(0);
+        long totalFileSize = new File(templateFileName).length();
+        long bytesHandled = 0;
         try {
             zipInputStream = new ZipInputStream(new BufferedInputStream(
                 new FileInputStream(templateFileName)));
@@ -81,6 +115,8 @@ public class InvoiceOdtFileGenerator {
                 } else {
                     copyZipEntry(zipEntry);
                 }
+                bytesHandled += zipEntry.getCompressedSize();
+                progressListener.onProgressUpdate((int)(100 * bytesHandled / totalFileSize));
                 zipEntry = zipInputStream.getNextEntry();
             }
         } finally {
@@ -99,6 +135,7 @@ public class InvoiceOdtFileGenerator {
                 }
             }
         }
+        return null;
     }
 
     /**

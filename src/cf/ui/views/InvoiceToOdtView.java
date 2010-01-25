@@ -1,23 +1,22 @@
 /*
- * $Id: InvoiceToOdtView.java,v 1.3 2008-09-13 11:53:46 sanderk Exp $
+ * $Id: InvoiceToOdtView.java,v 1.4 2010-01-25 20:22:21 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.views;
 
-import cf.engine.Database;
-import cf.engine.odt.InvoiceOdtFileGenerator;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 import java.util.Date;
+
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.ViewDialog;
@@ -26,9 +25,12 @@ import nl.gogognome.swing.ButtonPanel;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.task.ui.TaskWithProgressDialog;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
 import nl.gogognome.util.StringUtil;
+import cf.engine.Database;
+import cf.engine.odt.InvoiceOdtFileGenerator;
 
 /**
  * This view allows the user to generate invoices (an ODT file) for debtors.
@@ -98,12 +100,14 @@ public class InvoiceToOdtView extends View {
         ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {
-            InvoiceOdtFileGenerator converter = new InvoiceOdtFileGenerator();
-            try {
-                converter.generateInvoices(tfTemplateFileName.getText(),
+            InvoiceOdtFileGenerator converter = new InvoiceOdtFileGenerator(tfTemplateFileName.getText(),
                     tfOdtFileName.getText(), invoicesView.getSelectedInvoices(), date, tfConcerning.getText(),
                     tfOurReference.getText(), dueDate);
-            } catch (IOException e) {
+            try {
+            	TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
+            			TextResource.getInstance().getString("invoiceToOdtView.progressDialogTitle"));
+            	progressDialog.execute(converter);
+            } catch (Exception e) {
                 MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
                 return;
             }
