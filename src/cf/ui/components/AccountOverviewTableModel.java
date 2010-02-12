@@ -1,41 +1,42 @@
 /*
- * $Id: AccountOverviewTableModel.java,v 1.12 2008-03-10 21:18:23 sanderk Exp $
+ * $Id: AccountOverviewTableModel.java,v 1.13 2010-02-12 18:26:02 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.components;
 
-import cf.engine.Account;
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
+
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
+import cf.engine.Account;
+import cf.engine.Database;
+import cf.engine.Invoice;
+import cf.engine.Journal;
+import cf.engine.JournalItem;
 
 /**
- * This class implements a model for a <code>JTable</code> that shows an overview 
+ * This class implements a model for a <code>JTable</code> that shows an overview
  * of an account at a specific date.
  *
  * @author Sander Kooijmans
  */
 public class AccountOverviewTableModel extends AbstractTableModel {
-    
+
     private static final long serialVersionUID = 1L;
 
-    /** The database used to obtain the invoices for journal items. */ 
+    /** The database used to obtain the invoices for journal items. */
     private Database database;
-    
+
     /** The account to be shown. */
     private Account account;
-    
+
     /** The date. */
     private Date date;
 
@@ -48,11 +49,11 @@ public class AccountOverviewTableModel extends AbstractTableModel {
 
     /** The information shown in the table. */
     LineInfo[] lineInfos;
-    
+
     private Amount totalDebet;
-    
+
     private Amount totalCredit;
-    
+
     /**
      * Constructs a new <code>AccountOverviewComponent</code>.
      * @param database the database
@@ -69,10 +70,10 @@ public class AccountOverviewTableModel extends AbstractTableModel {
 
     private void initializeValues()
     {
-        Database database = Database.getInstance(); 
+        Database database = Database.getInstance();
         totalDebet = Amount.getZero(database.getCurrency());
         totalCredit = totalDebet;
-        
+
         ArrayList<LineInfo> lineInfoVector = new ArrayList<LineInfo>();
         List<Journal> journals = database.getJournals();
         for (Journal journal : journals) {
@@ -96,15 +97,15 @@ public class AccountOverviewTableModel extends AbstractTableModel {
 	            }
             }
         }
-        
+
         lineInfos = new LineInfo[lineInfoVector.size()];
         lineInfoVector.toArray(lineInfos);
     }
-    
+
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
-    public int getColumnCount() 
+    public int getColumnCount()
     {
         return 6;
     }
@@ -112,7 +113,7 @@ public class AccountOverviewTableModel extends AbstractTableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getRowCount()
      */
-    public int getRowCount() 
+    public int getRowCount()
     {
         return lineInfos.length + 1;
     }
@@ -120,7 +121,7 @@ public class AccountOverviewTableModel extends AbstractTableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getValueAt(int, int)
      */
-    public Object getValueAt(int row, int column) 
+    public Object getValueAt(int row, int column)
     {
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         String result;
@@ -132,15 +133,15 @@ public class AccountOverviewTableModel extends AbstractTableModel {
 	            result = TextResource.getInstance().formatDate(
 	                    "gen.dateFormat", lineInfos[row].journal.getDate());
 	            break;
-	            
+
 	        case 1:
 	            result = lineInfos[row].journal.getId();
 	            break;
-	            
+
 	        case 2:
 	            result = lineInfos[row].journal.getDescription();
 	            break;
-	            
+
 	        case 3:
 	            if (lineInfos[row].item.isDebet())
 	            {
@@ -151,7 +152,7 @@ public class AccountOverviewTableModel extends AbstractTableModel {
 	                result = "";
 	            }
 	            break;
-	
+
 	        case 4:
 	            if (lineInfos[row].item.isCredit())
 	            {
@@ -162,16 +163,20 @@ public class AccountOverviewTableModel extends AbstractTableModel {
 	                result = "";
 	            }
 	            break;
-	            
+
 	        case 5:
 	            Invoice invoice = database.getInvoice(lineInfos[row].item.getInvoiceId());
+	            Invoice createdInvoice = database.getInvoice(lineInfos[row].journal.getIdOfCreatedInvoice());
 	            if (invoice != null) {
 	                result = invoice.getId() + " (" + invoice.getPayingParty().getName() + ")";
 	            } else {
-	                result = null;
+	                result = "";
+	            }
+	            if (createdInvoice != null) {
+	            	result += "<" + createdInvoice.getId() + " (" + createdInvoice.getPayingParty().getName() + ")>";
 	            }
 	            break;
-	            
+
 	        default:
 	            result = null;
 	        }
@@ -185,27 +190,28 @@ public class AccountOverviewTableModel extends AbstractTableModel {
 	        case 5:
 	            result = "";
 	            break;
-	            
+
 	        case 2:
 	            result = TextResource.getInstance().getString("gen.total");
 	            break;
-	            
+
 	        case 3:
                 result = af.formatAmountWithoutCurrency(totalDebet);
 	            break;
-	
+
 	        case 4:
                 result = af.formatAmountWithoutCurrency(totalCredit);
 	            break;
-	            
+
 	        default:
 	            result = null;
 	        }
         }
         return result;
     }
-    
-    public String getColumnName(int column)
+
+    @Override
+	public String getColumnName(int column)
     {
         String id = null;
         switch(column)
@@ -213,15 +219,15 @@ public class AccountOverviewTableModel extends AbstractTableModel {
         case 0:
             id = "gen.date";
             break;
-            
+
         case 1:
             id = "gen.id";
             break;
-            
+
         case 2:
             id = "gen.description";
             break;
-            
+
         case 3:
             id = "gen.debet";
             break;
@@ -233,7 +239,7 @@ public class AccountOverviewTableModel extends AbstractTableModel {
         case 5:
             id = "gen.party";
             break;
-            
+
         default:
             id = null;
         }
