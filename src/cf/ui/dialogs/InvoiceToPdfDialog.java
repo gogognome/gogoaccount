@@ -1,15 +1,10 @@
 /*
- * $Id: InvoiceToPdfDialog.java,v 1.3 2009-02-19 21:16:06 sanderk Exp $
+ * $Id: InvoiceToPdfDialog.java,v 1.4 2010-02-12 18:26:33 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
 package cf.ui.dialogs;
 
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.Payment;
-import cf.pdf.PdfLatex;
-import cf.ui.views.InvoiceEditAndSelectionView;
 import java.awt.Frame;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -24,11 +19,13 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.DateModel;
@@ -40,6 +37,11 @@ import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
+import cf.engine.Database;
+import cf.engine.Invoice;
+import cf.engine.Payment;
+import cf.pdf.PdfLatex;
+import cf.ui.views.InvoiceEditAndSelectionView;
 
 /**
  * This class implements the invoice dialog. This dialog can generate
@@ -158,7 +160,7 @@ public class InvoiceToPdfDialog extends OkCancelDialog {
         panel.add(wf.createLabel("id.dueDate"),
                 SwingUtils.createLabelGBConstraints(0, 5));
         dueDateModel = new DateModel();
-        dueDateModel.setDate(DateUtil.addDays(new Date(), 14), null);
+        dueDateModel.setDate(DateUtil.addMonths(new Date(), 1), null);
         panel.add(new DateSelectionBean(dueDateModel),
                 SwingUtils.createLabelGBConstraints(1, 5));
 
