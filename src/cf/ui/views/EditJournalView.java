@@ -1,5 +1,5 @@
 /*
- * $Id: EditJournalView.java,v 1.3 2008-11-09 13:59:12 sanderk Exp $
+ * $Id: EditJournalView.java,v 1.4 2010-03-04 21:14:21 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -33,6 +33,7 @@ import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.MessageDialog;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.text.Amount;
 import nl.gogognome.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
@@ -43,29 +44,29 @@ import cf.ui.dialogs.ItemsTableModel;
 
 /**
  * This class implements the dialog for editing a single journal.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class EditJournalView extends View {
-    
+
     /** The database. */
     private Database database;
 
     /** The id of the title. */
     private String titleId;
 
-    /** 
+    /**
      * The journal used to initialize the view. <code>null</code> indicates that a new journal
      * is to be edited.
      */
     private Journal initialJournal;
-    
-    /** 
+
+    /**
      * The id of the invoice that is created by the edited journal. If <code>null</code>, then
      * no invoice is created by this journal.
      */
     private String idOfCreatedInvoice;
-    
+
     /** The text field of the id. */
     private JTextField tfId;
 
@@ -85,11 +86,11 @@ public class EditJournalView extends View {
 
     /** The journal edited by the journal. This will only be filled when the user is editing a journal. */
     private Journal editedJournal;
-    
+
     /**
      * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
      * To add one or more new journals, set <code>journal</code> to <code>null</code>.
-     * 
+     *
      * @param database the database to which the journal must be added
      * @param titleId the id of the title
      * @param journal the journal used to initialize the elements of the view. Must be <code>null</code>
@@ -100,7 +101,7 @@ public class EditJournalView extends View {
         this.titleId = titleId;
         this.initialJournal = journal;
     }
-    
+
     @Override
     public void onInit() {
         if (initialJournal == null) {
@@ -111,10 +112,10 @@ public class EditJournalView extends View {
                 initialJournal.getDescription(), Arrays.asList(initialJournal.getItems()));
         }
     }
-    
+
     /**
      * Initializes the dialog with the specified journal.
-     * 
+     *
      * @param id the id of the journal.
      * @param date the date of the journal.
      * @param description the description of the journal.
@@ -129,21 +130,21 @@ public class EditJournalView extends View {
 
         JLabel label = wf.createLabel("gen.id");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 0));
-        
+
         tfId = wf.createTextField(id);
         topPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, 0));
 
         label = wf.createLabel("gen.date");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 1));
-        
+
         dateModel = new DateModel();
         dateModel.setDate(date, null);
-        sbDate = new DateSelectionBean(dateModel); 
+        sbDate = new DateSelectionBean(dateModel);
         topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, 1));
 
         label = wf.createLabel("gen.description");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 2));
-        
+
         tfDescription = wf.createTextField(description);
         topPanel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, 2));
 
@@ -163,7 +164,8 @@ public class EditJournalView extends View {
 
         // Set renderers for column 1 and 2.
         TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
-            public void setValue(Object value) {
+            @Override
+			public void setValue(Object value) {
                 super.setValue(value);
                 setHorizontalAlignment(SwingConstants.RIGHT);
             }
@@ -184,7 +186,7 @@ public class EditJournalView extends View {
                 handleEditButtonPressed();
             }
         });
-        
+
         JButton deleteButton = wf.createButton("ajd.deleteItem", new AbstractAction() {
             public void actionPerformed(ActionEvent evt) {
                 handleDeleteButtonPressed();
@@ -202,42 +204,42 @@ public class EditJournalView extends View {
                 handleOkAndNextButtonPressed();
             }
         });
-        
+
         gbl = new GridBagLayout();
         JPanel buttonPanel = new JPanel(gbl);
         buttonPanel.add(addButton,
-                SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 0.0, 
-                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+                SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 0.0,
+                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
                         10, 10, 0, 0));
         buttonPanel.add(editButton,
-                SwingUtils.createGBConstraints(0, 1, 1, 1, 1.0, 0.0, 
-                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+                SwingUtils.createGBConstraints(0, 1, 1, 1, 1.0, 0.0,
+                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
                         10, 10, 0, 0));
         buttonPanel.add(deleteButton,
-                SwingUtils.createGBConstraints(0, 2, 1, 1, 1.0, 0.0, 
-                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+                SwingUtils.createGBConstraints(0, 2, 1, 1, 1.0, 0.0,
+                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
                         10, 10, 0, 0));
         buttonPanel.add(okButton,
-            SwingUtils.createGBConstraints(0, 3, 1, 1, 1.0, 0.0, 
-                    GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+            SwingUtils.createGBConstraints(0, 3, 1, 1, 1.0, 0.0,
+                    GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
                     20, 10, 0, 0));
-        
+
         if (initialJournal == null) {
 	        buttonPanel.add(okAndNextButton,
-	                SwingUtils.createGBConstraints(0, 4, 1, 1, 1.0, 0.0, 
-	                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+	                SwingUtils.createGBConstraints(0, 4, 1, 1, 1.0, 0.0,
+	                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
 	                        10, 10, 0, 0));
         }
-        
+
         JScrollPane scrollableTable = new JScrollPane(itemsTable);
-        
+
         gbl = new GridBagLayout();
         JPanel panel = new JPanel(gbl);
         panel.setOpaque(false);
         panel.add(topPanel, SwingUtils.createGBConstraints(0, 0, 2, 1));
         panel.add(scrollableTable,
                 SwingUtils.createGBConstraints(0, 1, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.WEST, GridBagConstraints.BOTH, 
+                        GridBagConstraints.WEST, GridBagConstraints.BOTH,
                         10, 0, 0, 0));
         panel.add(buttonPanel,
                 SwingUtils.createGBConstraints(1, 1, 1, 1, 0.0, 0.0,
@@ -247,7 +249,7 @@ public class EditJournalView extends View {
         for (JournalItem item : items) {
             itemsTableModel.addItem(item);
         }
-        
+
         setLayout(new BorderLayout());
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
         add(panel, BorderLayout.CENTER);
@@ -287,10 +289,10 @@ public class EditJournalView extends View {
             tfId.requestFocus();
         }
     }
-    
+
     /**
      * Gets the journal from the values filled in the dialog.
-     * @return the journal or <code>null</code> if the values are not valid, 
+     * @return the journal or <code>null</code> if the values are not valid,
      *          in which case the user has been notified about the problem with
      *          the input values.
      */
@@ -308,16 +310,31 @@ public class EditJournalView extends View {
 
         try {
             return new Journal(id, description, date, items, idOfCreatedInvoice);
-        } 
+        }
         catch (IllegalArgumentException e) {
             MessageDialog.showMessage(this, "gen.titleError", tr.getString("gen.itemsNotInBalance"));
             return null;
         }
     }
-    
+
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() {
-        EditJournalItemDialog dialog = new EditJournalItemDialog(this, database, "ajd.addJournalItem", null);
+    	JournalItem defaultItem = null;
+        if (itemsTableModel.getRowCount() > 0) {
+        	// Create dialog with default values that make the journal balance.
+        	Amount debetAmount = Amount.getZero(database.getCurrency());
+        	for (JournalItem item : itemsTableModel.getItems()) {
+        		if (item.isDebet()) {
+        			debetAmount = debetAmount.add(item.getAmount());
+        		} else {
+        			debetAmount = debetAmount.subtract(item.getAmount());
+        		}
+        	}
+        	boolean debet = debetAmount.isNegative();
+        	defaultItem = new JournalItem(debet ? debetAmount.negate() : debetAmount,
+        			database.getAllAccounts()[0], debet, null, null);
+        }
+        EditJournalItemDialog dialog = new EditJournalItemDialog(this, database, "ajd.addJournalItem", defaultItem);
         dialog.showDialog();
         JournalItem item = dialog.getEnteredJournalItem();
         if (item != null) {
@@ -330,7 +347,7 @@ public class EditJournalView extends View {
         int row = itemsTable.getSelectedRow();
         JournalItem item = itemsTableModel.getItem(row);
         if (item != null) {
-	        EditJournalItemDialog dialog = 
+	        EditJournalItemDialog dialog =
 	            new EditJournalItemDialog(this, database, "ajd.editJournalItem", item);
 	        dialog.showDialog();
 	        item = dialog.getEnteredJournalItem();
@@ -344,17 +361,17 @@ public class EditJournalView extends View {
     private void handleDeleteButtonPressed() {
         itemsTableModel.deleteItem(itemsTable.getSelectedRow());
     }
-    
+
     /**
      * Gets the journal entered by the user. This method only returns a non-<code>null</code> value
      * if this view was initialized with a journal and the user closed the view by pressing the
-     * Ok button. Otherwise, this method returns <code>null</code>. 
+     * Ok button. Otherwise, this method returns <code>null</code>.
      * @return the journal entered by the user or <code>null</code>
      */
     public Journal getEditedJournal() {
         return editedJournal;
     }
-   
+
     @Override
     public String getTitle() {
         return TextResource.getInstance().getString(titleId);
