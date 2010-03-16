@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.44 2009-12-01 19:23:59 sanderk Exp $
+ * $Id: Database.java,v 1.45 2010-03-16 21:07:42 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -7,10 +7,12 @@ package cf.engine;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Currency;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -64,7 +66,7 @@ public class Database {
     /**
      * Contains the start date of the account period.
      */
-    private Date startOfPeriod;
+    private Date startOfPeriod = getFirstDayOfYear(new Date());
 
 	/** The currency of all amounts. */
 	private Currency currency = Currency.getInstance("EUR");
@@ -1044,4 +1046,32 @@ public class Database {
         return payments;
     }
 
+    /**
+     * Checks whether an account is used in the database. If it is unused, the account
+     * can be removed from the database without destroying its integrity.
+     * @param accountId the ID of the account
+     * @return <code>true</code> if the account is used; <code>false</code> if the account is unused
+     */
+    public boolean isAccountUsed(String accountId) {
+    	for (Journal journal : journals) {
+    		for (JournalItem item : journal.getItems()) {
+    			if (item.getAccount().getId().equals(accountId)) {
+    				return true;
+    			}
+    		}
+    	}
+    	return false;
+    }
+
+    private static Date getFirstDayOfYear(Date date) {
+    	Calendar cal = GregorianCalendar.getInstance();
+    	cal.setTime(date);
+    	cal.set(Calendar.MONTH, Calendar.JANUARY);
+    	cal.set(Calendar.DATE, 1);
+    	cal.set(Calendar.HOUR_OF_DAY, 0);
+    	cal.set(Calendar.MINUTE, 0);
+    	cal.set(Calendar.SECOND, 0);
+    	cal.set(Calendar.MILLISECOND, 0);
+    	return cal.getTime();
+    }
 }

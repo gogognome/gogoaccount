@@ -1,5 +1,5 @@
 /*
- * $Id: MainFrame.java,v 1.54 2010-01-10 21:16:42 sanderk Exp $
+ * $Id: MainFrame.java,v 1.55 2010-03-16 21:07:42 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -51,6 +51,7 @@ import cf.ui.views.AboutView;
 import cf.ui.views.BalanceAndOperationResultView;
 import cf.ui.views.BalanceView;
 import cf.ui.views.CloseBookkeepingView;
+import cf.ui.views.ConfigureBookkeepingView;
 import cf.ui.views.EditJournalView;
 import cf.ui.views.EditJournalsView;
 import cf.ui.views.InvoiceGeneratorView;
@@ -87,6 +88,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
     /** The view for editing parties. */
     private PartiesView partiesView;
 
+    /** The view to configure a bookkeeping. */
+    private ConfigureBookkeepingView configureBookkeepingView;
+
     /** The view for invoice generation. */
     private InvoiceGeneratorView invoiceGeneratorView;
 
@@ -97,8 +101,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
     private InvoiceToOdtView invoiceToOdtView;
 
 	/** Creates the main frame. */
-	public MainFrame()
-	{
+	public MainFrame() {
 		super();
 		database.addListener(this);
 		createMenuBar();
@@ -146,6 +149,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		// the file menu
 		JMenuItem miNewEdition = wf.createMenuItem("mi.newBookkeeping", this);
 		JMenuItem miOpenEdition = wf.createMenuItem("mi.openBookkeeping", this);
+        JMenuItem miConfigureBookkeeping = wf.createMenuItem("mi.configureBookkeeping", this);
 		JMenuItem miSaveEdition = wf.createMenuItem("mi.saveBookkeeping", this);
 		JMenuItem miSaveEditionAs = wf.createMenuItem("mi.saveBookkeepingAs", this);
         JMenuItem miCloseBookkeeping = wf.createMenuItem("mi.closeBookkeeping", this);
@@ -173,6 +177,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 		fileMenu.add(miNewEdition);
 		fileMenu.add(miOpenEdition);
+		fileMenu.add(miConfigureBookkeeping);
 		fileMenu.add(miSaveEdition);
 		fileMenu.add(miSaveEditionAs);
         fileMenu.add(miCloseBookkeeping);
@@ -211,6 +216,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	{
 		String command = e.getActionCommand();
 		if ("mi.openBookkeeping".equals(command)) { handleOpenBookkeeping(); }
+		if ("mi.configureBookkeeping".equals(command)) { handleConfigureBookkeeping(); }
 		if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
 		if ("mi.saveBookkeepingAs".equals(command)) { handleSaveBookeepingAs(); }
         if ("mi.closeBookkeeping".equals(command)) { handleCloseBookkeeping(); }
@@ -329,7 +335,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			handleEditEdition();
 		}
 	}
-
+*/
 	/** Handles the open bookkeeping event. */
 	private void handleOpenBookkeeping()
 	{
@@ -351,6 +357,24 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			}
 			requestFocus();
 		}
+	}
+
+	/** Handles the configure bookkeeping event. */
+	private void handleConfigureBookkeeping()
+	{
+	    if (configureBookkeepingView == null) {
+	    	configureBookkeepingView = new ConfigureBookkeepingView(database);
+	    	configureBookkeepingView.addViewListener(new ViewListener() {
+                public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    configureBookkeepingView = null;
+                }
+            });
+            viewTabbedPane.openView(configureBookkeepingView);
+            viewTabbedPane.selectView(configureBookkeepingView);
+        } else {
+            viewTabbedPane.selectView(configureBookkeepingView);
+	    }
 	}
 
 	/** Handles the save bookkeeping event. */

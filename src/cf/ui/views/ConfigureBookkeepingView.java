@@ -1,17 +1,19 @@
 /*
- * $Id: ConfigureBookkeepingView.java,v 1.1 2009-12-01 19:23:08 sanderk Exp $
+ * $Id: ConfigureBookkeepingView.java,v 1.2 2010-03-16 21:07:42 sanderk Exp $
  */
 
 package cf.ui.views;
 
 import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 
 import nl.gogognome.beans.DateSelectionBean;
@@ -61,7 +63,7 @@ public class ConfigureBookkeepingView extends View {
     /** {@inheritDoc} */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("EditBookkeepingView.title");
+        return TextResource.getInstance().getString("ConfigureBookkeepingView.title");
     }
 
     /** {@inheritDoc} */
@@ -81,8 +83,9 @@ public class ConfigureBookkeepingView extends View {
 
         // Create panel with general settings
         JPanel generalSettingsPanel = new JPanel(new GridBagLayout());
-        generalSettingsPanel.setBorder(BorderFactory.createTitledBorder(
-            tr.getString("ConfigureBookkeepingView.generalSettings")));
+        generalSettingsPanel.setBorder(BorderFactory.createCompoundBorder(
+        		BorderFactory.createTitledBorder(tr.getString("ConfigureBookkeepingView.generalSettings")),
+        		BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         int row = 0;
         tfDescription.setText(database.getDescription());
@@ -109,13 +112,27 @@ public class ConfigureBookkeepingView extends View {
 
         // Create panel with accounts table
         JPanel accountsPanel = new JPanel(new BorderLayout());
-        accountsPanel.setBorder(BorderFactory.createTitledBorder(
-            tr.getString("ConfigureBookkeepingView.accounts")));
-        SortedTable table = wf.createSortedTable(tableModel);
+        accountsPanel.setBorder(BorderFactory.createCompoundBorder(
+        		BorderFactory.createTitledBorder(tr.getString("ConfigureBookkeepingView.accounts")),
+        		BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        tableModel = new AccountTableModel(getAccountDefinitions(database));
+        SortedTable table = wf.createSortedTable(tableModel, JTable.AUTO_RESIZE_OFF);
         accountsPanel.add(table.getComponent(), BorderLayout.CENTER);
 
         // Add panels to view
         add(generalSettingsPanel, SwingUtils.createPanelGBConstraints(0, 0));
+        add(accountsPanel, SwingUtils.createPanelGBConstraints(0, 1));
+    }
+
+    private static List<AccountDefinition> getAccountDefinitions(Database database) {
+    	Account[] accounts = database.getAllAccounts();
+    	List<AccountDefinition> result = new ArrayList<AccountDefinition>(accounts.length);
+    	for (Account account : accounts) {
+    		AccountDefinition accountDefinition = new AccountDefinition();
+    		accountDefinition.account = account;
+    		accountDefinition.used = database.isAccountUsed(account.getId());
+    	}
+    	return result;
     }
 
     private static class AccountDefinition {
@@ -128,13 +145,13 @@ public class ConfigureBookkeepingView extends View {
         private List<AccountDefinition> accountDefinitions;
 
         private final static ColumnDefinition NAME =
-            new ColumnDefinition("ConfigureBookkeepingView.name", String.class, 200, null, null);
+            new ColumnDefinition("ConfigureBookkeepingView.name", String.class, 400, null, null);
 
         private final static ColumnDefinition USED =
-            new ColumnDefinition("ConfigureBookkeepingView.used", Icon.class, 20, null, null);
+            new ColumnDefinition("ConfigureBookkeepingView.used", Icon.class, 50, null, null);
 
         private final static ColumnDefinition TYPE =
-            new ColumnDefinition("ConfigureBookkeepingView.type", String.class, 100, null, null);
+            new ColumnDefinition("ConfigureBookkeepingView.type", String.class, 150, null, null);
 
         private final static List<ColumnDefinition> COLUMN_DEFINITIONS = Arrays.asList(
             NAME, USED, TYPE
