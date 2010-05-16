@@ -1,5 +1,5 @@
 /*
- * $Id: ConfigureBookkeepingView.java,v 1.2 2010-03-16 21:07:42 sanderk Exp $
+ * $Id: ConfigureBookkeepingView.java,v 1.3 2010-05-16 19:37:14 sanderk Exp $
  */
 
 package cf.ui.views;
@@ -131,6 +131,7 @@ public class ConfigureBookkeepingView extends View {
     		AccountDefinition accountDefinition = new AccountDefinition();
     		accountDefinition.account = account;
     		accountDefinition.used = database.isAccountUsed(account.getId());
+    		result.add(accountDefinition);
     	}
     	return result;
     }
@@ -144,6 +145,9 @@ public class ConfigureBookkeepingView extends View {
 
         private List<AccountDefinition> accountDefinitions;
 
+        private final static ColumnDefinition ID =
+            new ColumnDefinition("ConfigureBookkeepingView.id", String.class, 50, null, null);
+
         private final static ColumnDefinition NAME =
             new ColumnDefinition("ConfigureBookkeepingView.name", String.class, 400, null, null);
 
@@ -154,7 +158,7 @@ public class ConfigureBookkeepingView extends View {
             new ColumnDefinition("ConfigureBookkeepingView.type", String.class, 150, null, null);
 
         private final static List<ColumnDefinition> COLUMN_DEFINITIONS = Arrays.asList(
-            NAME, USED, TYPE
+            ID, NAME, USED, TYPE
         );
 
         public AccountTableModel(List<AccountDefinition> accountDefinitions) {
@@ -170,11 +174,13 @@ public class ConfigureBookkeepingView extends View {
         /** {@inheritDoc} */
         public Object getValueAt(int rowIndex, int columnIndex) {
             ColumnDefinition colDef = getColumnDefinition(columnIndex);
-            if (NAME.equals(colDef)) {
+            if (ID.equals(colDef)) {
+                return accountDefinitions.get(rowIndex).account.getId();
+            } else if (NAME.equals(colDef)) {
                 return accountDefinitions.get(rowIndex).account.getName();
             } else if (USED.equals(colDef)) {
                 return accountDefinitions.get(rowIndex).used ?
-                    WidgetFactory.getInstance().createIcon("tick.png") : null;
+                    WidgetFactory.getInstance().createIcon("ConfigureBookkeepingView.tickIcon16") : null;
             } else if (TYPE.equals(colDef)) {
                 return TextResource.getInstance().getString("ConfigureBookkeepingView.TYPE_" +
                     accountDefinitions.get(rowIndex).account.getType().name());
