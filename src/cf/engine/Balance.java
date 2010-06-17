@@ -1,5 +1,5 @@
 /*
- * $Id: Balance.java,v 1.16 2009-12-13 21:04:29 sanderk Exp $
+ * $Id: Balance.java,v 1.17 2010-06-17 12:27:30 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -36,7 +36,7 @@ public class Balance {
 
     /** Maps accounts to their amounts at the date of the balance. */
     private Map<Account, Amount> accountsToAmountsMap = new HashMap<Account, Amount>();
-    
+
     /**
      * Constructor.
      * @param database the database on which this balance is based.
@@ -55,7 +55,7 @@ public class Balance {
         }
         liabilities = database.getLiabilities();
         for (int i=0; i<liabilities.length; i++) {
-        	Amount a = BookkeepingService.getAccountBalance(database, liabilities[i], date); 
+        	Amount a = BookkeepingService.getAccountBalance(database, liabilities[i], date);
         	accountsToAmountsMap.put(liabilities[i], a);
             totalLiabilities = totalLiabilities.add(a);
         }
@@ -84,7 +84,7 @@ public class Balance {
             assets = newAssets;
             Amount a = resultOfOperations.negate(); // resultOfOperations is negative
             totalAssets = totalAssets.add(a);
-            accountsToAmountsMap.put(lossAccount, resultOfOperations);
+            accountsToAmountsMap.put(lossAccount, a);
         }
     }
 
@@ -145,7 +145,7 @@ public class Balance {
     public Amount getAmount(Account account) {
     	return accountsToAmountsMap.get(account);
     }
-    
+
     /**
      * Gets a string representation for this balance.
      * Use this method only for testing.
