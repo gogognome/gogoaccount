@@ -277,4 +277,18 @@ public class BookkeepingService {
         }
         return false;
     }
+
+    /**
+     * Deletes an account from the database. Only unused accounts can be deleted.
+     * @param database the database
+     * @param account the account
+     * @throws DeleteException if a problem occurs while deleting the account
+     */
+    public static void deleteAccount(Database database, Account account) throws DeleteException {
+    	try {
+    		database.removeAccount(account.getId());
+    	} catch (DatabaseModificationFailedException e) {
+    		throw new DeleteException("Could not delete account " + account.getId() + " from the database", e);
+    	}
+    }
 }

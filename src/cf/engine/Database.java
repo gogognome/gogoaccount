@@ -1,5 +1,5 @@
 /*
- * $Id: Database.java,v 1.45 2010-03-16 21:07:42 sanderk Exp $
+ * $Id: Database.java,v 1.46 2010-07-11 14:57:36 sanderk Exp $
  *
  * Copyright (C) 2006 Sander Kooijmans
  */
@@ -1061,6 +1061,42 @@ public class Database {
     		}
     	}
     	return false;
+    }
+
+    /**
+     * Removes an account from the database. The account may not be in use.
+     * @param accountId the id of the account
+     * @throws DatabaseModificationFailedException if a problem occurs
+     */
+    public void removeAccount(String accountId) throws DatabaseModificationFailedException {
+    	if (isAccountUsed(accountId)) {
+    		throw new DatabaseModificationFailedException("The account " + accountId + " is in use and can therefore not be deleted!");
+    	}
+    	assets = removeAccountFromArray(assets, accountId);
+    	liabilities = removeAccountFromArray(liabilities, accountId);
+    	expenses = removeAccountFromArray(expenses, accountId);
+    	revenues = removeAccountFromArray(revenues, accountId);
+    	notifyChange();
+    }
+
+    /**
+     * Removes an account from an array
+     * @param accounts the account array
+     * @param accountId the id of the account to be removed
+     * @return the accounts without the account with the specified id
+     */
+    private static Account[] removeAccountFromArray(Account[] accounts, String accountId) {
+    	List<Account> accountList = new ArrayList<Account>(accounts.length);
+    	boolean changed = false;
+    	for (Account account : accounts) {
+    		if (account.getId().equals(accountId)) {
+    			changed = true;
+    		} else {
+    			accountList.add(account);
+    		}
+    	}
+
+    	return changed ? accountList.toArray(new Account[accountList.size()]) : accounts;
     }
 
     private static Date getFirstDayOfYear(Date date) {
