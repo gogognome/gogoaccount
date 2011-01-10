@@ -69,12 +69,16 @@ public class BookkeepingService {
         for (Account account : database.getAssets()) {
             JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
                 newDatabase.getAccount(account.getId()), true, null, null);
-            journalItems.add(item);
+            if (!item.getAmount().isZero()) {
+            	journalItems.add(item);
+            }
         }
         for (Account account : database.getLiabilities()) {
             JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
                 newDatabase.getAccount(account.getId()), false, null, null);
-            journalItems.add(item);
+            if (!item.getAmount().isZero()) {
+            	journalItems.add(item);
+            }
         }
 
         // Add the result of operations to the specified account.
