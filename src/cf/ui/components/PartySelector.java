@@ -1,8 +1,19 @@
 /*
- * $Id: PartySelector.java,v 1.3 2008-11-01 13:26:02 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.components;
 
 import java.awt.Container;
@@ -19,15 +30,14 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import cf.engine.Party;
-import cf.ui.dialogs.PartySelectionDialog;
-
 import nl.gogognome.swing.ActionWrapper;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
+import cf.engine.Party;
+import cf.ui.dialogs.PartySelectionDialog;
 
 /**
- * This class implements a widget for selecting a <code>Party</code>. 
+ * This class implements a widget for selecting a <code>Party</code>.
  *
  * @author Sander Kooijmans
  */
@@ -35,30 +45,30 @@ public class PartySelector extends JPanel {
 
     /** Contains a description of the selected party. */
     private JTextField tfDescription;
-    
+
     /** The button to select a party from a dialog. */
     private JButton btSelect;
-    
+
     /** The button to clear the selected party. */
     private JButton btClear;
-    
+
     /** The party that is selected in this selector. */
     private Party selectedParty;
-    
+
     /** The listeners for this component. */
     private List<PartySelectorListener> listeners = new LinkedList<PartySelectorListener>();
-    
+
     /**
      * Constructor.
      */
     public PartySelector() {
         WidgetFactory wf = WidgetFactory.getInstance();
         setLayout(new GridBagLayout());
-        
+
         tfDescription = new JTextField();
         tfDescription.setEditable(false);
         tfDescription.setFocusable(false);
-        
+
         Dimension dimension = new Dimension(21, 21);
         ActionWrapper actionWrapper = wf.createAction("gen.btSelectParty");
         btSelect = new JButton(actionWrapper);
@@ -79,16 +89,16 @@ public class PartySelector extends JPanel {
                 setSelectedParty(null);
             }
         });
-        
+
         add(tfDescription, SwingUtils.createTextFieldGBConstraints(0, 0));
-        add(btSelect, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0, 
+        add(btSelect, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0,
                         GridBagConstraints.WEST, GridBagConstraints.NONE,
                         0, 5, 0, 0));
-        add(btClear, SwingUtils.createGBConstraints(2, 0, 1, 1, 0.0, 0.0, 
+        add(btClear, SwingUtils.createGBConstraints(2, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.NONE,
                 0, 2, 0, 0));
     }
-    
+
     /**
      * Gets the selected party.
      * @return the selected party or <code>null</code> if no party is selected.
@@ -96,7 +106,7 @@ public class PartySelector extends JPanel {
     public Party getSelectedParty() {
         return selectedParty;
     }
-    
+
     /**
      * Selecs a party.
      * @param party the party
@@ -114,7 +124,7 @@ public class PartySelector extends JPanel {
             }
         }
     }
-    
+
     /**
      * Lets the user select a party in a dialog.
      */
@@ -123,20 +133,20 @@ public class PartySelector extends JPanel {
         while(!(parent instanceof Frame)) {
             parent = parent.getParent();
         }
-        PartySelectionDialog dialog = new PartySelectionDialog((Frame)parent, 
+        PartySelectionDialog dialog = new PartySelectionDialog((Frame)parent,
                 PartySelectionDialog.SELECTION_MODE);
         dialog.showDialog();
         if (dialog.getSelectedParty() != null) {
             setSelectedParty(dialog.getSelectedParty());
         }
     }
-    
+
     public void addListener(PartySelectorListener listener) {
         synchronized(listeners) {
             listeners.add(listener);
         }
     }
- 
+
     public void removeListener(PartySelectorListener listener) {
         synchronized(listeners) {
             listeners.remove(listener);

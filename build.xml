@@ -1,4 +1,20 @@
-<project name="Club Finance" default="compile" basedir=".">
+<!--
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<project name="gogo account" default="dist" basedir=".">
 
 	<!-- set global properties for this build -->
 	<property name="srcdir" value="src" />
@@ -10,7 +26,7 @@
 	<property name="libclassesdir" value="${generateddir}/libclasses" />
 	<property name="distdir" value="${generateddir}/dist" />
 	<property name="mainClass" value="cf.ui.MainFrame" />
-	<property name="productname" value="cf" />
+	<property name="productname" value="gogoaccount" />
 	
 	<target name="init" description="initialisation used by other targets">
 		<!-- Create the time stamp -->
@@ -34,7 +50,7 @@
 		</copy>
 	</target>
 
-	<target name="dist" depends="compile"
+	<target name="dist" depends="clean,compile"
 		description="creates a distribution of the project">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${distdir}"/>
@@ -49,15 +65,14 @@
 			<fileset dir="${libclassesdir}" />
 			<manifest>
 				<attribute name="Main-Class" value="${mainClass}" />
+				<attribute name="SplashScreen-Image" value="splash.png" />
 			</manifest>
 		</jar>
 
 		<!-- Create a zip file containing all sources, build.xml and the jar file -->
 		<zip destfile="${distdir}/${productname}.zip">
 			<fileset dir="${distdir}" includes="${productname}.jar" />
-			<fileset dir="${libdir}" includes="gogolib.jar" />
-			<fileset dir="." includes="${srcdir}/**" />
-			<fileset dir="." includes="build.xml" />
+			<fileset dir="." excludes="${generateddir}/**" />
         </zip>
 	</target>
 

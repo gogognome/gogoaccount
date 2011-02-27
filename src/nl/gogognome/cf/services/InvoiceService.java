@@ -1,9 +1,28 @@
 /*
- * $Id: InvoiceService.java,v 1.3 2009-02-19 21:16:07 sanderk Exp $
- */
+    This file is part of gogo account.
 
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.cf.services;
 
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+
+import nl.gogognome.text.Amount;
+import nl.gogognome.text.TextResource;
+import nl.gogognome.util.StringUtil;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
@@ -11,12 +30,6 @@ import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.Party;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.StringUtil;
 
 /**
  * This class offers methods for handling invoices.

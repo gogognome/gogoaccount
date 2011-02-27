@@ -1,8 +1,19 @@
 /*
- * $Id: Journal.java,v 1.13 2008-11-01 13:26:02 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.engine;
 
 import java.util.Arrays;
@@ -14,35 +25,35 @@ import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 
 /**
- * This class represents a journal. 
+ * This class represents a journal.
  *
  * @author Sander Kooijmans
  */
 public class Journal implements Comparable<Journal> {
 
     private String id;
-    
+
     private String description;
-    
+
     private JournalItem[] items;
-    
+
     private Date date;
 
-    /** 
+    /**
      * If not <code>null</code>, then this contains the id of the invoice that is created
      * by this journal. Journals that create an invoice can only be deleted as long as
      * no payments have been made to the invoice.
      */
     private String idOfCreatedInvoice;
-    
+
     /**
      * Creates a journal.
      * @param id the id of the jounal
      * @param description the description of the journal
      * @param date the date of the journal
-     * @param items the items of the journal. The sums of the debet 
+     * @param items the items of the journal. The sums of the debet
      *        and credit amounts must be equal!
-     * @param idOfCreatedInvoice if not <code>null</code>, then this contains the id of the invoice 
+     * @param idOfCreatedInvoice if not <code>null</code>, then this contains the id of the invoice
      *        that is created by this journal
      * @throws IllegalArgumentException if the sum of debet and credit amounts differ
      *          or if more than one item with a party has been specified.
@@ -53,7 +64,7 @@ public class Journal implements Comparable<Journal> {
         this.date = date;
         this.items = items;
         this.idOfCreatedInvoice = idOfCreatedInvoice;
-        
+
         Currency currency = Database.getInstance().getCurrency();
         Amount totalDebet = Amount.getZero(currency);
         Amount totalCredit = totalDebet;
@@ -64,48 +75,48 @@ public class Journal implements Comparable<Journal> {
                 totalCredit = totalCredit.add(items[i].getAmount());
             }
         }
-        
+
         if (totalDebet.compareTo(totalCredit) != 0) {
             AmountFormat af = new AmountFormat(Locale.getDefault());
             throw new IllegalArgumentException(
-                    "The sum of debet and credit amounts differ for journal " + id 
-                    + "! debet: " + af.formatAmount(totalDebet) + 
+                    "The sum of debet and credit amounts differ for journal " + id
+                    + "! debet: " + af.formatAmount(totalDebet) +
                     "; credit: " + af.formatAmount(totalCredit));
         }
     }
-    
+
     /**
      * Gets the date of this journal.
      * @return the date of this journal.
      */
-    public Date getDate() 
+    public Date getDate()
     {
         return date;
     }
-    
+
     /**
      * Gets the description of this journal
      * @return the description of this journal.
      */
-    public String getDescription() 
+    public String getDescription()
     {
         return description;
     }
-    
+
     /**
      * Gets the id of this journal.
      * @return the id of this journal.
      */
-    public String getId() 
+    public String getId()
     {
         return id;
     }
-    
+
     /**
      * Gets the items of this journal.
      * @return the items of this journal.
      */
-    public JournalItem[] getItems() 
+    public JournalItem[] getItems()
     {
         return items;
     }
@@ -118,7 +129,7 @@ public class Journal implements Comparable<Journal> {
     public String getIdOfCreatedInvoice() {
         return idOfCreatedInvoice;
     }
-    
+
     /**
      * Indicates whether this journal creates an invoice.
      * @return <code>true</code> if it creates an invoice; otherwise <code>false</code>
@@ -133,14 +144,15 @@ public class Journal implements Comparable<Journal> {
     public int compareTo(Journal that) {
         return this.date.compareTo(that.date);
     }
-    
+
     /**
      * Checks whether this instance is equal to another instance.
      * @param o the other instance
      * @return <code>true</code> if this instance is equal to <code>o</code>;
      *          <code>false</code> otherwise
      */
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         if (o instanceof Journal) {
             Journal that = (Journal) o;
             return this.id.equals(that.id) && this.date.equals(that.date) &&
@@ -150,9 +162,10 @@ public class Journal implements Comparable<Journal> {
             return false;
         }
     }
-    
-    public int hashCode() {
+
+    @Override
+	public int hashCode() {
         return id.hashCode() + date.hashCode() + description.hashCode();
     }
-    
+
 }

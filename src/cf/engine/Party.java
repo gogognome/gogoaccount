@@ -1,8 +1,19 @@
 /*
- * $Id: Party.java,v 1.14 2007-10-15 19:33:48 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.engine;
 
 import java.util.Date;
@@ -16,28 +27,28 @@ import java.util.Date;
 public class Party implements Comparable {
     /**  The id of the party. The id must be unique for all parties. */
     private String id;
-    
+
     /** The name of this party. */
     private String name;
-    
+
     /** The address of this party. */
     private String address;
-    
+
     /** The zip code of this party. */
     private String zipCode;
-    
+
     /** The city of this party. */
     private String city;
-    
+
     /** The birth date of this party. */
     private Date birthDate;
-    
+
     /** THe type of this party. */
     private String type;
-    
+
     /** Contains remarks about this party. */
     private String remarks;
-    
+
     /**
      * Constructs a party.
      * @param name the name of the party.
@@ -69,7 +80,7 @@ public class Party implements Comparable {
         this.type = type;
         this.remarks = remarks;
     }
-    
+
     /**
      * Gets the id of this party.
      * @return the id of this party
@@ -78,7 +89,7 @@ public class Party implements Comparable {
     {
         return id;
     }
-    
+
     /**
      * Gets the name of this party.
      * @return the name of this party
@@ -87,7 +98,7 @@ public class Party implements Comparable {
     {
         return name;
     }
-    
+
     /**
      * Gets the address of this party.
      * @return the address of this party
@@ -96,7 +107,7 @@ public class Party implements Comparable {
     {
         return address;
     }
-    
+
     /**
      * Gets the zip code of this party.
      * @return the zip code of this party
@@ -105,7 +116,7 @@ public class Party implements Comparable {
     {
         return zipCode;
     }
-    
+
     /**
      * Gets the city of this party.
      * @return the city of this party
@@ -114,15 +125,16 @@ public class Party implements Comparable {
     {
         return city;
     }
-    
+
     /**
      * Gets the hash code for this instance.
      * @return the hash code
      */
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return id.hashCode();
     }
-    
+
     /**
      * Gets the birth date of this party.
      * @return the birth date of this party
@@ -130,7 +142,7 @@ public class Party implements Comparable {
     public Date getBirthDate() {
         return birthDate;
     }
-    
+
     /**
      * Gets the type of this party.
      * @return the type of this party
@@ -153,21 +165,23 @@ public class Party implements Comparable {
      * @return <code>true</code> if this instance equals <code>that</code>;
      *         <code>false</code> otherwise.
      */
-    public boolean equals(Object that)
+    @Override
+	public boolean equals(Object that)
     {
         boolean result = false;
         if (that instanceof Party)
         {
             Party thatParty = (Party)that;
-            result = this.id.equals(thatParty.id) && this.name.equals(thatParty.name); 
+            result = this.id.equals(thatParty.id) && this.name.equals(thatParty.name);
         }
         return result;
     }
-    
-    public String toString() {
+
+    @Override
+	public String toString() {
         return id + " " + name + " " + address + " "  + zipCode + " " + city + " " + birthDate + " ";
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */

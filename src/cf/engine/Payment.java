@@ -1,29 +1,46 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.engine;
 
 import java.util.Calendar;
 import java.util.Date;
+
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
 import nl.gogognome.util.StringUtil;
 
-/** 
+/**
  * This class specifies a payment.
- *  
+ *
  *  @author Sander Kooijmans
  */
 public class Payment {
     /** The id of this payment. Ids must be unique within an invoice. */
     private String id;
-    
+
     /** The amount that has been paid. */
     private Amount amount;
-    
+
     /** The date of the payment. */
     private Date date;
-    
+
     /** A description of the payment. */
     private String description;
-    
+
     /**
      * Constructor.
      * None of the arguments can be <code>null</code>
@@ -54,40 +71,42 @@ public class Payment {
     public String getId() {
         return id;
     }
-    
+
     public Amount getAmount() {
         return amount;
     }
 
-    
+
     public Date getDate() {
         return date;
     }
 
-    
+
     public String getDescription() {
         return description;
     }
-    
+
     /**
      * @see java.lang.Object#equals(java.lang.Object)
      */
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         if (o instanceof Payment) {
             Payment that = (Payment)o;
             return this.id.equals(that.id)
-                && this.amount.equals(that.amount) 
+                && this.amount.equals(that.amount)
                 && DateUtil.compareDayOfYear(this.date, that.date) == 0
                 && this.description.equals(that.description);
-                
+
         }
         return false;
     }
-    
+
     /**
      * @see java.lang.Object#hashCode()
      */
-    public int hashCode() {
+    @Override
+	public int hashCode() {
         return id.hashCode() * 51 + amount.hashCode() + DateUtil.getField(date, Calendar.YEAR) * 23
             + DateUtil.getField(date, Calendar.DAY_OF_YEAR) + description.hashCode();
     }

@@ -1,8 +1,19 @@
 /*
- * $Id: TextFormat.java,v 1.1 2006-12-11 18:56:47 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.text;
 
 import nl.gogognome.text.Amount;
@@ -11,7 +22,7 @@ import nl.gogognome.text.TextResource;
 /**
  * This class offers functionality to format texts. Specific subclasses
  * are available to create texts in specific formats like plain text,
- * HTML or LaTeX. 
+ * HTML or LaTeX.
  *
  * @author Sander Kooijmans
  */
@@ -19,31 +30,31 @@ public abstract class TextFormat {
 
     protected TextResource textResource;
 
-    /** 
+    /**
      * Contains the table columns of the current table.
      * <code>null</code> indicates that currently no table is formatted.
      */
     protected String tableColumns;
-    
+
     /**
      * Contains the widths of all columns of the table.
      * <code>null</code> indicates that currently no table is formatted.
      */
     protected int[] columnWidths;
-    
+
     public TextFormat(TextResource textResource) {
         this.textResource = textResource;
     }
-    
+
     public abstract String getNewLine();
-    
+
     public abstract String getStartOfDocument();
-    
+
     public abstract String getEndOfDocument();
-    
+
     /**
      * Gets the string for the start of a table.
-     * @param columns specifies the columns of the table. Each column is represented 
+     * @param columns specifies the columns of the table. Each column is represented
      *                 by one character.
      *         <ul>
      *           <li>'l' for a left-algined column
@@ -63,7 +74,7 @@ public abstract class TextFormat {
         this.columnWidths = columnWidths;
         return "";
     }
-    
+
     /**
      * Gets the string that represents a single row in the table.
      * @param values the values of the cells in the row. The length
@@ -111,31 +122,31 @@ public abstract class TextFormat {
      * @return the string that represents a single row in the table
      */
     public abstract String getHeaderRow(String[] values);
-    
+
     public abstract String getEndOfTable();
-    
+
     public abstract String getStartOfRow();
 
     public abstract String getEndOfRow();
-    
+
     public abstract String getCellLeftAligned(String value, int width);
 
     public abstract String getCellRightAligned(String value, int width);
-    
+
     public abstract String getCellCentered(String value, int width);
-    
+
     public String getCellSeparator() {
         return "";
     }
-    
+
     public abstract String getColumnSeparator();
 
     public abstract String getInvisibleColumnSeparator();
-    
+
     public abstract String getHorizontalSeparator();
 
     public abstract String getNewParagraph();
-    
+
     public String getEmptyRow() {
         String[] values = new String[columnWidths.length];
         for (int i = 0; i < values.length; i++) {
@@ -143,9 +154,9 @@ public abstract class TextFormat {
         }
         return getRow(values);
     }
-    
+
     public String formatAmount(Amount amount) {
         return textResource.getAmountFormat().formatAmount(amount);
     }
-    
+
 }

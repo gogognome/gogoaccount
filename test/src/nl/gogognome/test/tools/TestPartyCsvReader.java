@@ -1,8 +1,19 @@
 /*
- * $Id: TestPartyCsvReader.java,v 1.4 2008-01-10 19:17:01 sanderk Exp $
- *
- * Copyright (C) 2007 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.test.tools;
 
 import java.awt.print.PrinterException;
@@ -30,7 +41,7 @@ public class TestPartyCsvReader {
     static CsvParseSettingsView pcsView;
     static SimpleLabelSheetSetupView labelSheetSetupView;
     static TextLabel[] labels;
-    
+
     public static void main(String[] args) {
         viewContainer = new ViewContainer("Party label printer");
         frame = new ViewFrame(viewContainer);
@@ -43,13 +54,13 @@ public class TestPartyCsvReader {
         viewContainer.setView(pcsView);
         frame.showFrame();
     }
-    
+
     private static void onClosePartyCsvSettingsView() {
         if ("gen.cancel".equals(pcsView.getIdPressedButton())) {
             frame.dispose();
             return;
         }
-        
+
         CsvFileParser parser = pcsView.getParser();
         String[] labelTexts;
         try {
@@ -58,7 +69,7 @@ public class TestPartyCsvReader {
             e.printStackTrace();
             return;
         }
-        
+
         labels = new TextLabel[labelTexts.length];
         for (int i = 0; i < labels.length; i++) {
             labels[i] = new TextLabel(labelTexts[i]);
@@ -72,7 +83,7 @@ public class TestPartyCsvReader {
         });
         viewContainer.setView(labelSheetSetupView);
     }
-    
+
     private static void onCloseLabelSheetSetupView() {
         frame.dispose();
         if ("gen.cancel".equals(labelSheetSetupView.getIdPressedButton())) {

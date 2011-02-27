@@ -1,10 +1,19 @@
 /*
- * $Id: EditInvoiceView.java,v 1.2 2008-11-09 13:59:12 sanderk Exp $
- *
- * Copyright (C) 2005 Sander Kooijmans
- *
- */
+    This file is part of gogo account.
 
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.views;
 
 import java.awt.BorderLayout;
@@ -40,12 +49,11 @@ import nl.gogognome.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Party;
-import cf.engine.Payment;
 import cf.ui.components.PartySelector;
 import cf.ui.components.PartySelectorListener;
 
 /**
- * This class lets the user edit an existing invoice. 
+ * This class lets the user edit an existing invoice.
  */
 public class EditInvoiceView extends View {
 
@@ -57,16 +65,16 @@ public class EditInvoiceView extends View {
 
     /** The innvoice from which the initial values are taken. */
     private Invoice initialInvoice;
-    
+
     /** Text field for the id. */
     private JTextField tfId;
-    
+
     /** The date mdoel for the issue date. */
     private DateModel dateModel;
 
-    /** The party selector for the party for whom the invoice is created. */ 
+    /** The party selector for the party for whom the invoice is created. */
     private PartySelector psConcerningParty;
-    
+
     /** The party selector for the  party that has to pay the invoice. */
     private PartySelector psPayingParty;
 
@@ -78,17 +86,17 @@ public class EditInvoiceView extends View {
 
     /** The table with descriptions and amounts. */
     private JTable table;
-    
+
     /** The table model for the descriptions and amounts. */
     private DescriptionAndAmountTableModel tableModel;
-    
+
     /** The invoice as entered by the user or <code>null</code> if the user cancelled the view. */
     private Invoice editedInvoice;
-    
+
     /**
      * Constructor. To edit an existing invoice, give <code>invoice</code> a non-<code>null</code> value.
      * To create a new journal, set <code>invoice</code> to <code>null</code>.
-     * 
+     *
      * @param database the database to which the journal must be added
      * @param titleId the id of the title
      * @param invoice the invoice used to initialize the elements of the view. Must be <code>null</code>
@@ -99,7 +107,7 @@ public class EditInvoiceView extends View {
         this.titleId = titleId;
         this.initialInvoice = invoice;
     }
-    
+
     @Override
     public String getTitle() {
         return TextResource.getInstance().getString(titleId);
@@ -153,19 +161,19 @@ public class EditInvoiceView extends View {
 
         dateModel = new DateModel();
         dateModel.setDate(date, null);
-        DateSelectionBean sbDate = new DateSelectionBean(dateModel); 
+        DateSelectionBean sbDate = new DateSelectionBean(dateModel);
         label = wf.createLabel("editInvoiceView.issueDate", sbDate);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         psConcerningParty = new PartySelector();
         psConcerningParty.setSelectedParty(concerningParty);
         label = wf.createLabel("editInvoiceView.concerningParty", psConcerningParty);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(psConcerningParty, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         psPayingParty = new PartySelector();
         psPayingParty.setSelectedParty(payingParty);
         label = wf.createLabel("editInvoiceView.payingParty", psPayingParty);
@@ -178,7 +186,7 @@ public class EditInvoiceView extends View {
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(tfAmount, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
-        
+
         // Create panel with descriptions and amounts table.
         JPanel middlePanel = new JPanel(new BorderLayout());
         List<String> descriptions = new LinkedList<String>();
@@ -199,7 +207,7 @@ public class EditInvoiceView extends View {
             }
         });
         buttonPanel.add(button);
-        
+
         button = wf.createButton("editInvoiceView.editRow", new AbstractAction() {
             public void actionPerformed(ActionEvent e) {
                 onEditRow();
@@ -213,9 +221,9 @@ public class EditInvoiceView extends View {
             }
         });
         buttonPanel.add(button);
-        
+
         middlePanel.add(buttonPanel, BorderLayout.EAST);
-        
+
         // Create button panel with ok and cancel buttons.
         buttonPanel = new ButtonPanel(SwingConstants.CENTER);
         button = wf.createButton("gen.ok", new AbstractAction() {
@@ -226,13 +234,13 @@ public class EditInvoiceView extends View {
         buttonPanel.add(button);
         button = wf.createButton("gen.cancel", closeAction);
         buttonPanel.add(button);
-        
+
         // Put all panels on the view.
         setLayout(new BorderLayout());
         add(topPanel, BorderLayout.NORTH);
         add(middlePanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
-        
+
         // Add listener that copies the concerning party to the paying party if the paying
         // party has not been selected yet.
         concerningPartyListener = new PartySelectorListener() {
@@ -262,7 +270,7 @@ public class EditInvoiceView extends View {
         ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
         dialog.showDialog();
         if (editDescriptionAndAmountView.getEditedDescription() != null) {
-            tableModel.addRow(editDescriptionAndAmountView.getEditedDescription(), 
+            tableModel.addRow(editDescriptionAndAmountView.getEditedDescription(),
                 editDescriptionAndAmountView.getEditedAmount());
         }
     }
@@ -273,21 +281,21 @@ public class EditInvoiceView extends View {
     private void onEditRow() {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
-            MessageDialog.showMessage(this, "gen.titleWarning", 
+            MessageDialog.showMessage(this, "gen.titleWarning",
                 TextResource.getInstance().getString("editInvoiceView.noRowsSelectedToEdit"));
         } else if (rows.length == 0) {
-            MessageDialog.showMessage(this, "gen.titleWarning", 
+            MessageDialog.showMessage(this, "gen.titleWarning",
                 TextResource.getInstance().getString("editInvoiceView.multipleRowsSelectedToEdit"));
         } else {
             EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
-                "editInvoiceView.editRowTileId", 
+                "editInvoiceView.editRowTileId",
                 tableModel.getDescription(rows[0]),
                 tableModel.getAmount(rows[0]),
                 database.getCurrency());
             ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
             dialog.showDialog();
             if (editDescriptionAndAmountView.getEditedDescription() != null) {
-                tableModel.updateRow(rows[0], editDescriptionAndAmountView.getEditedDescription(), 
+                tableModel.updateRow(rows[0], editDescriptionAndAmountView.getEditedDescription(),
                     editDescriptionAndAmountView.getEditedAmount());
             }
         }
@@ -299,7 +307,7 @@ public class EditInvoiceView extends View {
     private void onDeleteRow() {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
-            MessageDialog.showMessage(this, "gen.titleWarning", 
+            MessageDialog.showMessage(this, "gen.titleWarning",
                 TextResource.getInstance().getString("editInvoiceView.noRowsSelectedForDeletion"));
         } else {
             tableModel.deleteRows(rows);
@@ -315,12 +323,12 @@ public class EditInvoiceView extends View {
             MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noIdEntered");
             return;
         }
-        Date issueDate = dateModel.getDate(); 
+        Date issueDate = dateModel.getDate();
         if (issueDate == null) {
             MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noDateEntered");
             return;
         }
-        
+
         Party concerningParty = psConcerningParty.getSelectedParty();
         if (concerningParty == null) {
             MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noConcerningPartyEntered");
@@ -345,26 +353,26 @@ public class EditInvoiceView extends View {
         editedInvoice = new Invoice(id, payingParty, concerningParty, amount, issueDate, descriptions, amounts);
         closeAction.actionPerformed(null);
     }
-    
+
     /**
      * Table model for the table containing descriptions and models.
      */
     private static class DescriptionAndAmountTableModel extends AbstractTableModel {
 
         private List<String> descriptions;
-        
+
         private List<Amount> amounts;
-        
+
         /**
          * Constructor. Precondition: <code>descriptions.size() == amounts.size()</code>.
          * @param descriptions the descriptions
-         * @param amounts the amounts. 
+         * @param amounts the amounts.
          */
         public DescriptionAndAmountTableModel(List<String> descriptions, List<Amount> amounts) {
             this.descriptions = new ArrayList<String>(descriptions);
             this.amounts = new ArrayList<Amount>(amounts);
         }
-       
+
         /**
          * Gets the description of the specified row.
          * @param row the row index
@@ -377,7 +385,7 @@ public class EditInvoiceView extends View {
         public String[] getDescriptions() {
             return descriptions.toArray(new String[descriptions.size()]);
         }
-        
+
         /**
          * Gets the amount of the specified row.
          * @param row the row index
@@ -401,7 +409,7 @@ public class EditInvoiceView extends View {
             amounts.add(amount);
             fireTableRowsInserted(descriptions.size()-1, descriptions.size()-1);
         }
-        
+
         /**
          * Updates a row.
          * @param index the index of the row
@@ -413,7 +421,7 @@ public class EditInvoiceView extends View {
             amounts.set(index, amount);
             fireTableRowsUpdated(index, index);
         }
-       
+
         /**
          * Deletes a number of rows.
          * @param indexes the indexes of the rows to be deleted
@@ -426,26 +434,26 @@ public class EditInvoiceView extends View {
             }
             fireTableDataChanged();
         }
-        
+
         @Override
         public String getColumnName(int columnIndex) {
             String result;
             switch(columnIndex) {
-            case 0: 
+            case 0:
                 result = TextResource.getInstance().getString("editInvoiceView.tableHeader.descriptions");
                 break;
-                
+
             case 1:
                 result = TextResource.getInstance().getString("editInvoiceView.tableHeader.amounts");
                 break;
-                
+
             default:
                 result = "???";
             }
             return result;
-            
+
         }
-        
+
         public int getColumnCount() {
             return 2;
         }
@@ -457,10 +465,10 @@ public class EditInvoiceView extends View {
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object result;
             switch(columnIndex) {
-            case 0: 
+            case 0:
                 result = descriptions.get(rowIndex);
                 break;
-                
+
             case 1:
                 Amount a = amounts.get(rowIndex);
                 if (a != null) {
@@ -469,12 +477,12 @@ public class EditInvoiceView extends View {
                     result = "";
                 }
                 break;
-                
+
             default:
                 result = "???";
             }
             return result;
         }
-        
+
     }
 }

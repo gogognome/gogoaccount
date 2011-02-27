@@ -1,11 +1,24 @@
 /*
- * $Id: MainFrame.java,v 1.55 2010-03-16 21:07:42 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui;
 
 import java.awt.FileDialog;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -14,6 +27,7 @@ import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Date;
 import java.util.Locale;
 
@@ -116,6 +130,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		);
 
         setTitle(createTitle());
+
+        // Set icon
+        URL url = ClassLoader.getSystemResource("icon-32x32.png");
+        Image image = Toolkit.getDefaultToolkit().createImage(url);
+        setIconImage(image);
 	}
 
 	/**

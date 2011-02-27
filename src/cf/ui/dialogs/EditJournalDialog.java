@@ -1,8 +1,19 @@
 /*
- * $Id: EditJournalDialog.java,v 1.15 2008-11-01 13:26:02 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.dialogs;
 
 import java.awt.Frame;
@@ -38,7 +49,7 @@ import cf.engine.JournalItem;
 
 /**
  * This class implements the dialog for editing a journal.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class EditJournalDialog extends OkCancelDialog
@@ -62,24 +73,24 @@ public class EditJournalDialog extends OkCancelDialog
 
     /** The date model used to edit the date. */
     private DateModel dateModel;
-    
+
     /** If not <code>null</code>, then this is the id of the invoice created by this journal. */
     private String idOfCreatedInvoice;
-    
+
     /** The database. */
     private Database database;
-    
+
     /**
      * Contains the journals as edited by the user.
      */
     private List<Journal> enteredJournals = new LinkedList<Journal>();
-    
-    /** Indicates whether the Ok + next button has to be shown. */ 
+
+    /** Indicates whether the Ok + next button has to be shown. */
     private boolean showNextButton;
-    
+
     /**
      * Constructor.
-     * 
+     *
      * @param parent the paren frame
      * @param database the database
      * @param id the id of the title
@@ -94,7 +105,7 @@ public class EditJournalDialog extends OkCancelDialog
 
     /**
      * Constructor.
-     * 
+     *
      * @param parent the paren frame
      * @param database the database
      * @param id the id of the title
@@ -109,10 +120,10 @@ public class EditJournalDialog extends OkCancelDialog
         initializeDialog(journal.getId(), journal.getDate(), journal.getDescription(),
                 journal.getItems());
     }
-    
+
     /**
      * Initializes the dialog with the specified journal.
-     * 
+     *
      * @param id the id of the journal.
      * @param date the date of the journal.
      * @param description the description of the journal.
@@ -127,21 +138,21 @@ public class EditJournalDialog extends OkCancelDialog
 
         JLabel label = wf.createLabel("gen.id");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 0));
-        
+
         tfId = wf.createTextField(id);
         topPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, 0));
 
         label = wf.createLabel("gen.date");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 1));
-        
+
         dateModel = new DateModel();
         dateModel.setDate(date, null);
-        sbDate = new DateSelectionBean(dateModel); 
+        sbDate = new DateSelectionBean(dateModel);
         topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, 1));
 
         label = wf.createLabel("gen.description");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 2));
-        
+
         tfDescription = wf.createTextField(description);
         topPanel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, 2));
 
@@ -161,7 +172,8 @@ public class EditJournalDialog extends OkCancelDialog
 
         // Set renderers for column 1 and 2.
         TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
-            public void setValue(Object value) {
+            @Override
+			public void setValue(Object value) {
                 super.setValue(value);
                 setHorizontalAlignment(SwingConstants.RIGHT);
             }
@@ -182,7 +194,7 @@ public class EditJournalDialog extends OkCancelDialog
                 handleEditButtonPressed(evt);
             }
         });
-        
+
         JButton deleteButton = wf.createButton("ajd.deleteItem", new AbstractAction() {
             public void actionPerformed(ActionEvent evt) {
                 handleDeleteButtonPressed(evt);
@@ -194,37 +206,37 @@ public class EditJournalDialog extends OkCancelDialog
                 handleOkAndNextButtonPressed();
             }
         });
-        
+
         gbl = new GridBagLayout();
         JPanel buttonPanel = new JPanel(gbl);
         buttonPanel.add(addButton,
-                SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 0.0, 
-                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+                SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 0.0,
+                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
                         10, 10, 0, 0));
         buttonPanel.add(editButton,
-                SwingUtils.createGBConstraints(0, 1, 1, 1, 1.0, 0.0, 
-                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+                SwingUtils.createGBConstraints(0, 1, 1, 1, 1.0, 0.0,
+                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
                         10, 10, 0, 0));
         buttonPanel.add(deleteButton,
-                SwingUtils.createGBConstraints(0, 2, 1, 1, 1.0, 0.0, 
-                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+                SwingUtils.createGBConstraints(0, 2, 1, 1, 1.0, 0.0,
+                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
                         10, 10, 0, 0));
 
         if (showNextButton) {
 	        buttonPanel.add(okAndNextButton,
-	                SwingUtils.createGBConstraints(0, 3, 1, 1, 1.0, 0.0, 
-	                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL, 
+	                SwingUtils.createGBConstraints(0, 3, 1, 1, 1.0, 0.0,
+	                        GridBagConstraints.NORTHEAST, GridBagConstraints.HORIZONTAL,
 	                        10, 10, 0, 0));
         }
-        
+
         JScrollPane scrollableTable = new JScrollPane(itemsTable);
-        
+
         gbl = new GridBagLayout();
         JPanel panel = new JPanel(gbl);
         panel.add(topPanel, SwingUtils.createGBConstraints(0, 0, 2, 1));
         panel.add(scrollableTable,
                 SwingUtils.createGBConstraints(0, 1, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.WEST, GridBagConstraints.BOTH, 
+                        GridBagConstraints.WEST, GridBagConstraints.BOTH,
                         10, 0, 0, 0));
         panel.add(buttonPanel,
                 SwingUtils.createGBConstraints(1, 1, 1, 1, 0.0, 0.0,
@@ -235,25 +247,27 @@ public class EditJournalDialog extends OkCancelDialog
         {
             itemsTableModel.addItem(items[i]);
         }
-        
+
         componentInitialized(panel);
     }
 
 	/**
 	 * Handles the cancel event. In this particular implementation, this method is
 	 * called when the dialog is closed not by pressing one of the buttons.
-	 */	
+	 */
+	@Override
 	protected void handleCancel() {
 	    enteredJournals.clear(); // remove all entred journals
 		hideDialog();
 	}
-    
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see cf.ui.OkCancelDialog#handleOk()
      */
-    protected void handleOk() {
+    @Override
+	protected void handleOk() {
         Journal journal = getJournalFromDialog();
         if (journal != null) {
             enteredJournals.add(journal);
@@ -266,15 +280,15 @@ public class EditJournalDialog extends OkCancelDialog
         Journal journal = getJournalFromDialog();
         if (journal != null) {
             enteredJournals.add(journal);
-            
+
             itemsTableModel.clear();
             tfId.requestFocus();
         }
     }
-    
+
     /**
      * Gets the journal from the values filled in the dialog.
-     * @return the journal or <code>null</code> if the values are not valid, 
+     * @return the journal or <code>null</code> if the values are not valid,
      *          in which case the user has been notified about the problem with
      *          the input values.
      */
@@ -292,15 +306,15 @@ public class EditJournalDialog extends OkCancelDialog
 
         try {
             return new Journal(id, description, date, items, idOfCreatedInvoice);
-        } 
+        }
         catch (IllegalArgumentException e) {
-            new MessageDialog(parent, "gen.titleError", 
+            new MessageDialog(parent, "gen.titleError",
                     tr.getString("gen.itemsNotInBalance"));
             return null;
         }
     }
-    
-    private void handleAddButtonPressed(ActionEvent e) 
+
+    private void handleAddButtonPressed(ActionEvent e)
     {
         EditJournalItemDialog dialog = new EditJournalItemDialog(parent, database, "ajd.addJournalItem");
         dialog.showDialog();
@@ -317,7 +331,7 @@ public class EditJournalDialog extends OkCancelDialog
         JournalItem item = itemsTableModel.getItem(row);
         if (item != null)
         {
-	        EditJournalItemDialog dialog = 
+	        EditJournalItemDialog dialog =
 	            new EditJournalItemDialog(parent, database, "ajd.editJournalItem", item);
 	        dialog.showDialog();
 	        item = dialog.getEnteredJournalItem();
@@ -327,8 +341,8 @@ public class EditJournalDialog extends OkCancelDialog
 	        }
         }
     }
-    
-    private void handleDeleteButtonPressed(ActionEvent e) 
+
+    private void handleDeleteButtonPressed(ActionEvent e)
     {
         itemsTableModel.deleteItem(itemsTable.getSelectedRow());
     }

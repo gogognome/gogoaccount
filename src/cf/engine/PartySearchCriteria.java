@@ -1,8 +1,19 @@
 /*
- * $Id: PartySearchCriteria.java,v 1.5 2008-01-19 16:45:00 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.engine;
 
 import java.util.Date;
@@ -10,7 +21,7 @@ import java.util.Date;
 import nl.gogognome.util.DateUtil;
 
 /**
- * This class represents search criteria for parties. 
+ * This class represents search criteria for parties.
  *
  * @author Sander Kooijmans
  */
@@ -23,7 +34,7 @@ public class PartySearchCriteria {
     private String city;
     private Date birthDate;
     private String type;
-    
+
     public String getAddress() {
         return address;
     }
@@ -66,7 +77,7 @@ public class PartySearchCriteria {
     public void setType(String type) {
         this.type = type;
     }
-    
+
     /**
      * Checks whether the specified <code>Party</code> matches these criteria.
      * @param party the party
@@ -102,7 +113,7 @@ public class PartySearchCriteria {
         }
         return matches;
     }
-    
+
     /**
      * Checks whether a specified criteria matches a specified value.
      * @param criteria the criteria

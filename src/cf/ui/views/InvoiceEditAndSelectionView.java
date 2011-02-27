@@ -1,13 +1,21 @@
 /*
- * $Id: InvoiceEditAndSelectionView.java,v 1.3 2009-02-19 21:16:07 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.views;
 
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.InvoiceSearchCriteria;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -20,6 +28,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Comparator;
 import java.util.Date;
+
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -33,6 +42,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
+
 import nl.gogognome.framework.View;
 import nl.gogognome.swing.ActionWrapper;
 import nl.gogognome.swing.SortedTable;
@@ -41,6 +51,9 @@ import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
+import cf.engine.Database;
+import cf.engine.Invoice;
+import cf.engine.InvoiceSearchCriteria;
 
 /**
  * This class implements a view for selecting and editing invoices.

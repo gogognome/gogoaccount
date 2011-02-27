@@ -1,8 +1,19 @@
 /*
- * $Id: AddressLabelPrinter.java,v 1.2 2007-05-21 15:54:29 sanderk Exp $
- *
- * Copyright (C) 2007 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.print;
 
 import java.awt.Color;
@@ -30,7 +41,7 @@ import cf.engine.Party;
  * are supported.
  *
  * <p>The addresses are taken from an array of parties.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class AddressLabelPrinter implements Printable {
@@ -45,7 +56,7 @@ public class AddressLabelPrinter implements Printable {
     public AddressLabelPrinter(Party[] parties) {
         this.parties = parties;
     }
-    
+
     /**
      * Prints the labels.
      * @throws PrinterException if a problem occurs while printing
@@ -54,9 +65,9 @@ public class AddressLabelPrinter implements Printable {
     	PrintRequestAttributeSet pras = new HashPrintRequestAttributeSet();
 		pras.add(MediaSizeName.ISO_A4);
 		pras.add(new MediaPrintableArea(5, 10, 210 - 2*5, 297 - 2*10, MediaPrintableArea.MM));
-		
+
         PrinterJob printerJob = PrinterJob.getPrinterJob();
-        
+
         Book book = new Book();
         book.append(this, new PageFormat(), (parties.length + getNrPartiesPerPage() - 1) / getNrPartiesPerPage());
         printerJob.setPageable(book);
@@ -73,7 +84,7 @@ public class AddressLabelPrinter implements Printable {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setPaint(Color.black);
         g2d.setClip(null);
-        
+
         Paper paper = format.getPaper();
         double paperWidth = paper.getWidth();
         double paperHeight = paper.getHeight();
@@ -81,11 +92,11 @@ public class AddressLabelPrinter implements Printable {
         // This is a workaround:
         paperWidth = (210.0 / 25.4) * 72.0;
         paperHeight = (297.0 / 25.4) * 72.0;
-        
+
         Font font = new Font("Serif", Font.PLAIN, 10);
         g2d.setFont(font);
         FontMetrics fm = g2d.getFontMetrics();
-        
+
         int partyIndex = pageIndex * getNrPartiesPerPage();
         double labelWidth = paperWidth / getNrColumnsPerPage();
         double labelHeight = paperHeight / (getNrRowsPerPage() + (isTypeOfPaperOverruled() ? 1 : 0));
@@ -96,7 +107,7 @@ public class AddressLabelPrinter implements Printable {
             double labelX = labelWidth * x;
             double labelY = labelHeight* y;
 //            g2d.drawRect((int)labelX, (int)labelY, (int)labelWidth, (int)labelHeight);
-            
+
             Party party = parties[i];
             String name = StringUtil.nullToEmptyString(party.getName());
             String address = StringUtil.nullToEmptyString(party.getAddress());
@@ -107,17 +118,17 @@ public class AddressLabelPrinter implements Printable {
                 zipAndCity += "  ";
             }
             zipAndCity += StringUtil.nullToEmptyString(party.getCity()).toUpperCase();
-            
+
             int maxWidth = Math.max(fm.stringWidth(name), fm.stringWidth(address));
             maxWidth = Math.max(maxWidth, fm.stringWidth(zipAndCity));
             int height = 3 * fontHeight;
-            
-            float textX = (float)labelX + ((float)labelWidth - (float)maxWidth) / 2.0f;
-            float textY = (float)labelY + ((float)labelHeight - (float)height) / 2.0f + fontHeight;
+
+            float textX = (float)labelX + ((float)labelWidth - maxWidth) / 2.0f;
+            float textY = (float)labelY + ((float)labelHeight - height) / 2.0f + fontHeight;
             g2d.drawString(name, textX, textY);
             g2d.drawString(address, textX, textY + fontHeight);
             g2d.drawString(zipAndCity, textX, textY + 2 * fontHeight);
-            
+
             x++;
             if (x == getNrColumnsPerPage()) {
                 x = 0;
@@ -126,22 +137,22 @@ public class AddressLabelPrinter implements Printable {
         }
         return Printable.PAGE_EXISTS;
     }
-    
+
     public int getNrColumnsPerPage() {
         return 3;
     }
-    
+
     public int getNrRowsPerPage() {
         if (isTypeOfPaperOverruled()) {
             return 7;
         }
         return 8;
     }
-    
+
     public int getNrPartiesPerPage() {
         return getNrColumnsPerPage() * getNrRowsPerPage();
     }
-    
+
     private boolean isTypeOfPaperOverruled() {
         return "A4".equals(System.getProperty("forcePaper"));
     }

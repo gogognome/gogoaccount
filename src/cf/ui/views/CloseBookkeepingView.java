@@ -1,20 +1,29 @@
 /*
- * $RCSfile: CloseBookkeepingView.java,v $
- * Copyright (c) PharmaPartners BV
- */
+    This file is part of gogo account.
 
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.views;
 
 import java.awt.GridBagLayout;
-
-import cf.engine.Account;
-import cf.engine.Database;
-import cf.ui.components.AccountComboBox;
 import java.awt.event.ActionEvent;
 import java.util.Calendar;
 import java.util.Date;
+
 import javax.swing.AbstractAction;
 import javax.swing.SwingConstants;
+
 import nl.gogognome.framework.ValuesEditPanel;
 import nl.gogognome.framework.View;
 import nl.gogognome.framework.models.DateModel;
@@ -25,6 +34,9 @@ import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
+import cf.engine.Account;
+import cf.engine.Database;
+import cf.ui.components.AccountComboBox;
 
 
 /**
@@ -43,7 +55,7 @@ public class CloseBookkeepingView extends View {
 
     /** String model for the description. */
     private StringModel descriptionModel = new StringModel();
-    
+
     /** Combo box for the account to which the result of the bookkeeping is added. */
     private AccountComboBox accountComboBox;
 
@@ -142,14 +154,14 @@ public class CloseBookkeepingView extends View {
         }
     }
 
-    /** 
+    /**
      * Gets the description of the new bookkeeping.
      * @return the description
      */
     public String getDescription() {
         return descriptionModel.getString();
     }
-    
+
     /** Initializes the description model with a default value. */
     private void initDescription() {
         String description = database.getDescription();

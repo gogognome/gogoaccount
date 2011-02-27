@@ -1,10 +1,19 @@
 /*
- * $Id: BalanceAndOperationResultView.java,v 1.2 2009-02-01 19:00:31 sanderk Exp $
- *
- * Copyright (C) 2005 Sander Kooijmans
- *
- */
+    This file is part of gogo account.
 
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.views;
 
 import java.awt.BorderLayout;
@@ -26,65 +35,67 @@ import cf.ui.components.BalanceComponent;
 import cf.ui.components.OperationalResultComponent;
 
 /**
- * This class implements a view the shows a balance and operation result. 
+ * This class implements a view the shows a balance and operation result.
  *
  * @author Sander Kooijmans
  */
 public class BalanceAndOperationResultView extends View {
 
     private final static Color BACKGROUND_COLOR = new Color(255, 255, 209);
-    
+
     private DateSelectionBean dateSelectionBean;
 
     private Database database;
-    
+
     private DateModel dateModel;
-    
+
     public BalanceAndOperationResultView(Database database) {
         this.database = database;
     }
-    
+
     /* (non-Javadoc)
      * @see nl.gogognome.framework.View#getTitle()
      */
-    public String getTitle() {
+    @Override
+	public String getTitle() {
         return TextResource.getInstance().getString("balanceAndOperationalResultView.title");
     }
 
     /* (non-Javadoc)
      * @see nl.gogognome.framework.View#onInit()
      */
-    public void onInit() {
+    @Override
+	public void onInit() {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
-        
+
         TextResource tr = TextResource.getInstance();
-        
+
         JPanel datePanel = new JPanel(new GridBagLayout());
         datePanel.setOpaque(false);
         datePanel.setBorder(new EmptyBorder(5, 10, 5, 5));
         datePanel.add(new JLabel(tr.getString("balanceAndOperationalResultView.selectDate")),
                 SwingUtils.createLabelGBConstraints(0, 0));
-        
+
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
-                
+
         dateSelectionBean = new DateSelectionBean(dateModel);
         datePanel.add(dateSelectionBean,
                 SwingUtils.createLabelGBConstraints(1, 0));
-        
-        datePanel.add(new JLabel(), 
+
+        datePanel.add(new JLabel(),
                 SwingUtils.createTextFieldGBConstraints(2, 0));
         add(datePanel, BorderLayout.NORTH);
-        
+
         JPanel balanceAndOperationResultPanel = new JPanel(new GridBagLayout());
         balanceAndOperationResultPanel.setBackground(BACKGROUND_COLOR);
         BalanceComponent balanceComponent = new BalanceComponent(database, dateModel);
         balanceComponent.setBackground(BACKGROUND_COLOR);
-        balanceAndOperationResultPanel.add(balanceComponent, 
+        balanceAndOperationResultPanel.add(balanceComponent,
             SwingUtils.createPanelGBConstraints(0, 0));
-        
-        OperationalResultComponent operationalResultComponent = 
+
+        OperationalResultComponent operationalResultComponent =
             new OperationalResultComponent(database, dateModel);
         operationalResultComponent.setBackground(BACKGROUND_COLOR);
         balanceAndOperationResultPanel.add(operationalResultComponent,
@@ -96,7 +107,8 @@ public class BalanceAndOperationResultView extends View {
     /* (non-Javadoc)
      * @see nl.gogognome.framework.View#onClose()
      */
-    public void onClose() {
+    @Override
+	public void onClose() {
         dateSelectionBean = null;
         database = null;
     }

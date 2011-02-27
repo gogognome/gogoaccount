@@ -1,10 +1,19 @@
 /*
- * $Id: EditDescriptionAndAmountView.java,v 1.1 2008-11-01 13:26:01 sanderk Exp $
- *
- * Copyright (C) 2005 Sander Kooijmans
- *
- */
+    This file is part of gogo account.
 
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.views;
 
 import java.awt.BorderLayout;
@@ -30,7 +39,7 @@ import nl.gogognome.text.TextResource;
 
 /**
  * This view allows the user to edit a description and amount. It is typically used
- * for creating or updating invoices. 
+ * for creating or updating invoices.
  */
 public class EditDescriptionAndAmountView extends View {
 
@@ -38,36 +47,36 @@ public class EditDescriptionAndAmountView extends View {
     private String titleId;
 
     private String initialDescription;
-    
+
     private Amount initialAmount;
 
     private Currency currency;
-    
+
     private JTextField tfDescription;
-    
+
     private JTextField tfAmount;
-    
-    /** The description as entered by the user or <code>null</code> if the user cancelled the view. */ 
+
+    /** The description as entered by the user or <code>null</code> if the user cancelled the view. */
     private String editedDescription;
-    
+
     /**
      * The amount as entered by the user; <code>null</code> if the user cancelled the view or
      * if the user did not enter an amount.
      */
     private Amount editedAmount;
-    
+
     public EditDescriptionAndAmountView(String titleId, Currency currency) {
         this(titleId, null, null, currency);
     }
-    
-    public EditDescriptionAndAmountView(String titleId, String initialDescription, Amount initialAmount, 
+
+    public EditDescriptionAndAmountView(String titleId, String initialDescription, Amount initialAmount,
             Currency currency) {
         this.titleId = titleId;
         this.initialDescription = initialDescription;
         this.initialAmount = initialAmount;
         this.currency = currency;
     }
-    
+
     @Override
     public String getTitle() {
         return TextResource.getInstance().getString(titleId);
@@ -113,14 +122,14 @@ public class EditDescriptionAndAmountView extends View {
         buttonPanel.add(button);
         button = wf.createButton("gen.cancel", closeAction);
         buttonPanel.add(button);
-        
+
         setLayout(new BorderLayout());
         add(topPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
     /**
-     * This method is called when the user selects the Ok action. 
+     * This method is called when the user selects the Ok action.
      */
     private void onOk() {
         TextResource tr = TextResource.getInstance();
@@ -129,15 +138,15 @@ public class EditDescriptionAndAmountView extends View {
         } catch (ParseException e) {
             MessageDialog.showMessage(this, "gen.warning", tr.getString("ejid.invalidAmount"));
             return;
-        } 
+        }
         editedDescription = tfDescription.getText();
         closeAction.actionPerformed(null);
     }
 
-    /** 
+    /**
      * Gets the description as entered by the user.
      * @return the description as entered by the user or <code>null</code> if the user cancelled the view.
-     */ 
+     */
     public String getEditedDescription() {
         return editedDescription;
     }

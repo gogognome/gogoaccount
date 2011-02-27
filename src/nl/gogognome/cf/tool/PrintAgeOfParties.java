@@ -1,10 +1,19 @@
 /*
- * $Id: PrintAgeOfParties.java,v 1.3 2008-01-10 19:18:08 sanderk Exp $
- *
- * Copyright (C) 2005 Sander Kooijmans
- *
- */
+    This file is part of gogo account.
 
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.cf.tool;
 
 import java.io.IOException;
@@ -14,11 +23,10 @@ import java.util.Locale;
 
 import nl.gogognome.text.TextResource;
 import nl.gogognome.util.DateUtil;
-
 import cf.engine.Database;
-import cf.engine.XMLParseException;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;
+import cf.engine.XMLParseException;
 
 /**
  * This class implements a small application that prints the age of all parties on a specified date.
@@ -34,16 +42,16 @@ public class PrintAgeOfParties {
     public static void main(String[] args) {
         String xmlFileName = null;
         String dateString = null;
-        
+
         // First set the language so that the error messages caused by parsing the other
         // arguments are shown in the specified language.
         TextResource tr = TextResource.getInstance();
         for (int i=0; i<args.length; i++) {
-            if (args[i].startsWith("-lang=")) { 
+            if (args[i].startsWith("-lang=")) {
                 tr.setLocale(new Locale(args[i].substring(6)));
             }
         }
-        
+
         for (int i=0; i<args.length; i++) {
             if (args[i].startsWith("-xml-file=")) {
                 if (xmlFileName != null) {
@@ -70,7 +78,7 @@ public class PrintAgeOfParties {
             System.out.println(tr.getString("printAge.noDate"));
             printUsage();
         }
-        
+
         SimpleDateFormat sdf = new SimpleDateFormat(TextResource.getInstance().getString("gen.dateFormat"));
         Date date;
         try {
@@ -80,7 +88,7 @@ public class PrintAgeOfParties {
             printUsage();
             return;
         }
-        
+
         try {
             Database db = XMLFileReader.createDatabaseFromFile(xmlFileName);
             Party[] parties = db.getParties();
@@ -97,7 +105,7 @@ public class PrintAgeOfParties {
             System.out.println(tr.getString("printAge.syntaxError", e.getMessage()));
         } catch (IOException e) {
             System.out.println(tr.getString("printAge.ioError", e.getMessage()));
-        } 
+        }
     }
 
     private static void printUsage() {

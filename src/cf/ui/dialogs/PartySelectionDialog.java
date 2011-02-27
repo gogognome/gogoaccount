@@ -1,8 +1,19 @@
 /*
- * $Id: PartySelectionDialog.java,v 1.8 2008-01-10 19:18:08 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.dialogs;
 
 import java.awt.BorderLayout;
@@ -24,16 +35,14 @@ import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
-import cf.engine.Database;
-import cf.engine.Party;
-import cf.engine.PartySearchCriteria;
-
 import nl.gogognome.swing.ActionWrapper;
 import nl.gogognome.swing.DialogWithButtons;
 import nl.gogognome.swing.SwingUtils;
 import nl.gogognome.swing.WidgetFactory;
 import nl.gogognome.text.TextResource;
-
+import cf.engine.Database;
+import cf.engine.Party;
+import cf.engine.PartySearchCriteria;
 /**
  * This class implements a dialog for selecting parties.
  *
@@ -46,54 +55,54 @@ public class PartySelectionDialog extends DialogWithButtons {
 
     /** The mode of this dialog. */
     private int mode;
-    
+
     private final static String[] TITLE_IDS = new String[] {
             "psd.titleSelectionMode", "psd.titleEditMode"
     };
-    
+
     private final static String[][] BUTTON_IDS = new String[][] {
             { "psd.btnSelect", "gen.cancel" }, { "psd.btnDone" }
     };
-    
+
     private JTextField tfId;
     private JTextField tfName;
     private JTextField tfAddress;
     private JTextField tfZipCode;
     private JTextField tfCity;
-    
+
     private JTable table;
     private PartyTableModel tableModel;
     private JButton btSearch;
 
     private Party selectedParty;
-    
+
     private JButton defaultButton;
-    
+
     /**
      * Constructor.
-     * 
+     *
      * @param frame the parent of this dialog
      * @param mode the mode of this dialog
      */
     public PartySelectionDialog(Frame frame, int mode) {
         this(frame, TITLE_IDS[mode], mode);
     }
-    
+
     /**
      * Constructor.
-     * 
+     *
      * @param frame the parent of this dialog
      * @param mode the mode of this dialog
      */
     public PartySelectionDialog(Frame frame, String titleId, int mode) {
         super(frame, titleId, BUTTON_IDS[mode]);
         this.mode = mode;
-        
+
         componentInitialized(createPanel());
         defaultButton = getDefaultButton();
         setDefaultButton(btSearch);
     }
-    
+
     /**
      * Gets the party that is selected by the user.
      * @return the party that is selected by the user
@@ -101,88 +110,90 @@ public class PartySelectionDialog extends DialogWithButtons {
     public Party getSelectedParty() {
         return selectedParty;
     }
-    
+
     /**
      * Handles the button-pressed event. This method is called when one of the buttons
      * has been pressed by the user.
      * @param index the index of the button (as specified by the <tt>buttonIds</tt>
-     *        passed to the constructor. 
+     *        passed to the constructor.
      */
-    protected void handleButton(int index) {
+    @Override
+	protected void handleButton(int index) {
         switch(mode) {
         case SELECTION_MODE:
             if (index == 0) {
                 int row = table.getSelectedRow();
                 if (row != -1 && row < tableModel.getParties().length) {
                     selectedParty = tableModel.getParties()[row];
-                    hideDialog(); 
+                    hideDialog();
                 }
             } else {
-                hideDialog(); 
+                hideDialog();
             }
             break;
-            
+
         case EDIT_MODE:
             break;
         }
     }
-    
+
     /**
      * Creates the panel with search criteria and the table with
      * found parties.
-     * 
+     *
      * @return the panel
      */
     private JPanel createPanel() {
         WidgetFactory wf = WidgetFactory.getInstance();
         TextResource tr =  TextResource.getInstance();
-        
+
         // Create the criteria panel
         JPanel criteriaPanel = new JPanel(new GridBagLayout());
         criteriaPanel.setBorder(new TitledBorder(
-                tr.getString("psd.searchCriteria"))); 
-       
+                tr.getString("psd.searchCriteria")));
+
         FocusListener focusListener = new FocusAdapter() {
-            public void focusGained(FocusEvent e) {
+            @Override
+			public void focusGained(FocusEvent e) {
                 setDefaultButton(btSearch);
             }
         };
-        
+
         tfId = new JTextField();
         tfId.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("gen.id"), 
+        criteriaPanel.add(wf.createLabel("gen.id"),
                 SwingUtils.createLabelGBConstraints(0, 0));
-        criteriaPanel.add(tfId, 
+        criteriaPanel.add(tfId,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
-        
+
         tfName = new JTextField();
         tfName.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("gen.name"), 
+        criteriaPanel.add(wf.createLabel("gen.name"),
                 SwingUtils.createLabelGBConstraints(0, 1));
-        criteriaPanel.add(tfName, 
+        criteriaPanel.add(tfName,
                 SwingUtils.createTextFieldGBConstraints(1, 1));
-        
+
         tfAddress = new JTextField();
         tfAddress.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("gen.address"), 
+        criteriaPanel.add(wf.createLabel("gen.address"),
                 SwingUtils.createLabelGBConstraints(0, 2));
-        criteriaPanel.add(tfAddress, 
+        criteriaPanel.add(tfAddress,
                 SwingUtils.createTextFieldGBConstraints(1, 2));
-        
+
         tfZipCode = new JTextField();
         tfZipCode.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("gen.zipCode"), 
+        criteriaPanel.add(wf.createLabel("gen.zipCode"),
                 SwingUtils.createLabelGBConstraints(0, 3));
-        criteriaPanel.add(tfZipCode, 
+        criteriaPanel.add(tfZipCode,
                 SwingUtils.createTextFieldGBConstraints(1, 3));
-        
+
         tfCity = new JTextField();
         tfCity.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("gen.city"), 
+        criteriaPanel.add(wf.createLabel("gen.city"),
                 SwingUtils.createLabelGBConstraints(0, 4));
-        criteriaPanel.add(tfCity, 
+        criteriaPanel.add(tfCity,
                 SwingUtils.createTextFieldGBConstraints(1, 4));
-        
+
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = wf.createAction("psd.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
@@ -191,37 +202,37 @@ public class PartySelectionDialog extends DialogWithButtons {
             }
         });
         btSearch = new JButton(actionWrapper);
-        
+
         buttonPanel.add(btSearch);
         criteriaPanel.add(buttonPanel,
-                SwingUtils.createGBConstraints(0, 5, 2, 1, 0.0, 0.0, 
-                        GridBagConstraints.EAST, GridBagConstraints.NONE, 
+                SwingUtils.createGBConstraints(0, 5, 2, 1, 0.0, 0.0,
+                        GridBagConstraints.EAST, GridBagConstraints.NONE,
                         5, 0, 0, 0));
-        
+
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
         resultPanel.setBorder(new TitledBorder(
-                tr.getString("psd.foundParties"))); 
+                tr.getString("psd.foundParties")));
 
         tableModel = new PartyTableModel();
         table = new JTable(tableModel);
         JScrollPane scrollableTable = new JScrollPane(table);
-        
+
         resultPanel.add(scrollableTable, BorderLayout.CENTER);
-        
+
         // Create a panel containing the search criteria and result panels
         JPanel result = new JPanel(new GridBagLayout());
         result.add(criteriaPanel,
                 SwingUtils.createTextFieldGBConstraints(0, 0));
         result.add(resultPanel,
                 SwingUtils.createTextFieldGBConstraints(0, 1));
-        
+
         return result;
     }
-    
+
     /**
-     * Searches for matching parties. The entered search criteria are used 
-     * to find parties. The matching parties are shown in the table. 
+     * Searches for matching parties. The entered search criteria are used
+     * to find parties. The matching parties are shown in the table.
      */
     private void handleSearch() {
         PartySearchCriteria searchCriteria = new PartySearchCriteria();
@@ -248,12 +259,12 @@ public class PartySelectionDialog extends DialogWithButtons {
         setDefaultButton(defaultButton);
         table.requestFocusInWindow();
     }
-    
+
     private static class PartyTableModel extends AbstractTableModel {
 
         /** The parties to be shown in the table. */
         private Party[] parties = new Party[0];
-        
+
         /**
          * Sets the parties to be shwon in the table.
          * @param parties the parties
@@ -262,7 +273,7 @@ public class PartySelectionDialog extends DialogWithButtons {
             this.parties = parties;
             fireTableStructureChanged();
         }
-        
+
         /**
          * Gets the parties that are shown in the table.
          * @return the parties
@@ -270,11 +281,12 @@ public class PartySelectionDialog extends DialogWithButtons {
         public synchronized Party[] getParties() {
             return parties;
         }
-        
+
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnName(int)
          */
-        public synchronized String getColumnName(int col) 
+        @Override
+		public synchronized String getColumnName(int col)
         {
             String id = null;
             switch(col) {
@@ -286,7 +298,7 @@ public class PartySelectionDialog extends DialogWithButtons {
             }
             return TextResource.getInstance().getString(id);
         }
-        
+
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnCount()
          */
@@ -316,6 +328,6 @@ public class PartySelectionDialog extends DialogWithButtons {
             }
             return result;
         }
-        
+
     }
 }

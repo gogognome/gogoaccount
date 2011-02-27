@@ -1,8 +1,19 @@
 /*
- * $Id: XMLFileWriter.java,v 1.23 2008-11-09 13:59:13 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.engine;
 
 import java.io.File;
@@ -37,37 +48,37 @@ public class XMLFileWriter {
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
 
     private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
-    
+
     private XMLFileWriter() {
         // should never be called
     }
-    
+
 	/**
 	 * Writes a <tt>Database</tt> to a file.
-	 * 
+	 *
 	 * @param fileName the name of the file.
 	 */
-	public static void writeDatabaseToFile( Database db, String fileName ) 
+	public static void writeDatabaseToFile( Database db, String fileName )
 	{
-		try 
+		try
 		{
 			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-			Document doc = docBuilder.newDocument();			
+			Document doc = docBuilder.newDocument();
 			Element rootElement = doc.createElement("cfbookkeeping");
-			doc.appendChild(rootElement); 
-			
+			doc.appendChild(rootElement);
+
 			// write description
 			rootElement.setAttribute("description", db.getDescription());
-			
+
 			// write currency
 			rootElement.setAttribute("currency", db.getCurrency().getCurrencyCode());
-			
+
 			// write start date
 			rootElement.setAttribute("startdate", DATE_FORMAT.format(db.getStartOfPeriod()));
-			
+
 			// write accounts
-			rootElement.appendChild(createElementForAccounts(doc, db, "assets", 
+			rootElement.appendChild(createElementForAccounts(doc, db, "assets",
 			        db.getAssets()));
 			rootElement.appendChild(createElementForAccounts(doc, db, "liabilities",
 			        db.getLiabilities()));
@@ -75,9 +86,9 @@ public class XMLFileWriter {
 			        db.getExpenses()));
 			rootElement.appendChild(createElementForAccounts(doc, db, "revenues",
 			        db.getRevenues()));
-			
+
 			// write debtors and creditors
-			rootElement.appendChild(createElementForParties(doc, db, 
+			rootElement.appendChild(createElementForParties(doc, db,
 			        "parties", db.getParties()));
 
 			// write journals
@@ -119,28 +130,28 @@ public class XMLFileWriter {
 			transformer.setOutputProperty(OutputKeys.METHOD, "xml");
 			transformer.setOutputProperty( OutputKeys.INDENT, "yes");
 			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-			
+
 			DOMSource source = new DOMSource(doc);
 			StreamResult result = new StreamResult( new File(fileName) );
 			transformer.transform(source, result);
-		} 
-		catch( ParserConfigurationException e ) 
+		}
+		catch( ParserConfigurationException e )
 		{
 		    //logger.error("An exception occurred that should never have occurred: ", e);
 		    throw new RuntimeException(e);
-		} 
-		catch( TransformerException e ) 
+		}
+		catch( TransformerException e )
 		{
 			//logger.error("An exception occurred: ", e);
 			throw new RuntimeException(e);
-		}		
+		}
 	}
-	
-	private static Element createElementForAccounts(Document doc, Database db, 
+
+	private static Element createElementForAccounts(Document doc, Database db,
 	        String groupName, Account[] accounts)
 	{
 		Element groupElem = doc.createElement(groupName);
-		for (int i=0; i<accounts.length; i++) 
+		for (int i=0; i<accounts.length; i++)
 		{
 		    Element elem = doc.createElement("account");
 		    elem.setAttribute("id", accounts[i].getId());
@@ -149,8 +160,8 @@ public class XMLFileWriter {
 		}
 		return groupElem;
 	}
-	
-	private static Element createElementForParties(Document doc, Database db, 
+
+	private static Element createElementForParties(Document doc, Database db,
 	        String groupName, Party[] parties) {
 		Element groupElem = doc.createElement(groupName);
 		for (int i=0; i<parties.length; i++) {
@@ -179,8 +190,8 @@ public class XMLFileWriter {
 		}
 		return groupElem;
 	}
-    
-    private static Element createElementForInvoices(Document doc, Database db, 
+
+    private static Element createElementForInvoices(Document doc, Database db,
             String groupName, Invoice[] invoices) {
         Element groupElem = doc.createElement(groupName);
         for (int i=0; i<invoices.length; i++) {
@@ -188,12 +199,12 @@ public class XMLFileWriter {
             elem.setAttribute("id", invoices[i].getId());
             elem.setAttribute("amountToBePaid", AMOUNT_FORMAT.formatAmount(invoices[i].getAmountToBePaid()));
             elem.setAttribute("concerningParty", invoices[i].getConcerningParty().getId());
-            
+
             Party payingParty = invoices[i].getPayingParty();
             if (payingParty != null) {
                 elem.setAttribute("payingParty", payingParty.getId());
             }
-            
+
             String[] descriptions = invoices[i].getDescriptions();
             Amount[] amounts = invoices[i].getAmounts();
             assert descriptions.length == amounts.length;
@@ -206,7 +217,7 @@ public class XMLFileWriter {
                 elem.appendChild(lineElem);
             }
             elem.setAttribute("issueDate", DATE_FORMAT.format(invoices[i].getIssueDate()));
-            
+
             List<Payment> payments = invoices[i].getPayments();
             for (Payment payment : payments) {
                 Element paymentElem = doc.createElement("payment");
@@ -216,10 +227,10 @@ public class XMLFileWriter {
                 paymentElem.setAttribute("description", payment.getDescription());
                 elem.appendChild(paymentElem);
             }
-            
+
             groupElem.appendChild(elem);
         }
         return groupElem;
     }
-        
+
 }

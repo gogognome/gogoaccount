@@ -1,8 +1,19 @@
 /*
- * $Id: HtmlTextFormat.java,v 1.1 2007-03-04 20:43:02 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.text;
 
 import nl.gogognome.text.TextResource;
@@ -24,41 +35,47 @@ public class HtmlTextFormat extends TextFormat {
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getNewLine()
      */
-    public String getNewLine() {
+    @Override
+	public String getNewLine() {
         return "<br>\n";
     }
 
 
-    public String getStartOfTable(String columns, int[] columnWidths) {
+    @Override
+	public String getStartOfTable(String columns, int[] columnWidths) {
         this.tableColumns = columns;
         this.columnWidths = columnWidths;
 
         return "<table border=\"1\">\n";
     }
-    
+
     /* (non-Javadoc)
      * @see cf.text.TextFormat#endOfTable()
      */
-    public String getEndOfTable() {
+    @Override
+	public String getEndOfTable() {
         return "</table>\n";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getStartOfRow()
      */
-    public String getStartOfRow() {
+    @Override
+	public String getStartOfRow() {
         return "<tr>";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getEndOfRow()
      */
-    public String getEndOfRow() {
+    @Override
+	public String getEndOfRow() {
         return "</tr>\n";
     }
 
-    
-    public String getRow(String[] values) {
+
+    @Override
+	public String getRow(String[] values) {
         StringBuffer sb = new StringBuffer("<tr>");
         for (int i = 0; i < values.length; i++) {
             char type = tableColumns.charAt(i);
@@ -79,8 +96,9 @@ public class HtmlTextFormat extends TextFormat {
         sb.append("</tr>");
         return sb.toString();
     }
-    
-    public String getHeaderRow(String[] values) {
+
+    @Override
+	public String getHeaderRow(String[] values) {
         StringBuffer sb = new StringBuffer("<tr>");
         for (int i = 0; i < values.length; i++) {
             char type = tableColumns.charAt(i);
@@ -101,66 +119,74 @@ public class HtmlTextFormat extends TextFormat {
         sb.append("</tr>");
         return sb.toString();
     }
-    
+
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getCellLeftAligned(java.lang.String, int)
      */
-    public String getCellLeftAligned(String value, int width) {
+    @Override
+	public String getCellLeftAligned(String value, int width) {
         return "<td>" + value + "</td>";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getCellRightAligned(java.lang.String, int)
      */
-    public String getCellRightAligned(String value, int width) {
+    @Override
+	public String getCellRightAligned(String value, int width) {
         return "<td halign=\"RIGHT\">" + value + "</td>";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getCellCentered(java.lang.String, int)
      */
-    public String getCellCentered(String value, int width) {
+    @Override
+	public String getCellCentered(String value, int width) {
         return "<td halign=\"CENTER\">" + value + "</td>";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getColumnSeparator()
      */
-    public String getColumnSeparator() {
+    @Override
+	public String getColumnSeparator() {
         return "";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getInvisibleColumnSeparator()
      */
-    public String getInvisibleColumnSeparator() {
+    @Override
+	public String getInvisibleColumnSeparator() {
         return "";
     }
-    
+
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getHorizontalSeparator()
      */
-    public String getHorizontalSeparator() {
+    @Override
+	public String getHorizontalSeparator() {
         return "";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getStartOfDocument()
      */
-    public String getStartOfDocument() {
+    @Override
+	public String getStartOfDocument() {
         return "<html>\n\t<head></head>\n\t<body>\n";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getEndOfDocument()
      */
-    public String getEndOfDocument() {
+    @Override
+	public String getEndOfDocument() {
         return "\t</body>\n</html>\n";
     }
 
-    public String getNewParagraph() {
+    @Override
+	public String getNewParagraph() {
         return "<p>";
     }
-    
+
 }
- 

@@ -1,7 +1,19 @@
 /*
- * $Id: ConfigureBookkeepingView.java,v 1.4 2010-07-11 14:57:36 sanderk Exp $
- */
+    This file is part of gogo account.
 
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.views;
 
 import java.awt.BorderLayout;
@@ -9,6 +21,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Currency;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -20,6 +33,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -27,7 +42,9 @@ import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.cf.services.DeleteException;
 import nl.gogognome.framework.View;
+import nl.gogognome.framework.models.AbstractModel;
 import nl.gogognome.framework.models.DateModel;
+import nl.gogognome.framework.models.ModelChangeListener;
 import nl.gogognome.swing.AbstractListSortedTableModel;
 import nl.gogognome.swing.ButtonPanel;
 import nl.gogognome.swing.ColumnDefinition;
@@ -54,9 +71,7 @@ public class ConfigureBookkeepingView extends View {
 
     private Database database;
 
-    private String enteredDescription;
     private DateModel startDateModel = new DateModel();
-    private String enteredCurrency;
     private AccountTableModel tableModel;
     private SortedTable table;
 
@@ -84,7 +99,6 @@ public class ConfigureBookkeepingView extends View {
     /** {@inheritDoc} */
     @Override
     public void onClose() {
-        enteredDescription = tfDescription.getText();
     }
 
     /** {@inheritDoc} */
@@ -107,6 +121,11 @@ public class ConfigureBookkeepingView extends View {
             SwingUtils.createLabelGBConstraints(0, row));
         generalSettingsPanel.add(tfDescription,
             SwingUtils.createTextFieldGBConstraints(1, row));
+        tfDescription.getDocument().addDocumentListener(new DocumentListener() {
+			public void removeUpdate(DocumentEvent e) { onDescriptionChanged(); }
+			public void insertUpdate(DocumentEvent e) { onDescriptionChanged(); }
+			public void changedUpdate(DocumentEvent e) { onDescriptionChanged(); }
+		});
         row++;
 
         startDateModel.setDate(database.getStartOfPeriod(), null);
@@ -114,6 +133,11 @@ public class ConfigureBookkeepingView extends View {
             SwingUtils.createLabelGBConstraints(0, row));
         generalSettingsPanel.add(dsbStartDate,
             SwingUtils.createTextFieldGBConstraints(1, row));
+        startDateModel.addModelChangeListener(new ModelChangeListener() {
+			public void modelChanged(AbstractModel model) {
+				onStartDateChanged();
+			}
+		});
         row++;
 
         tfCurrency.setText(database.getCurrency().getCurrencyCode());
@@ -122,6 +146,11 @@ public class ConfigureBookkeepingView extends View {
             SwingUtils.createLabelGBConstraints(0, row));
         generalSettingsPanel.add(tfCurrency,
             SwingUtils.createLabelGBConstraints(1, row));
+        tfCurrency.getDocument().addDocumentListener(new DocumentListener() {
+			public void removeUpdate(DocumentEvent e) { onCurrencyChanged(); }
+			public void insertUpdate(DocumentEvent e) { onCurrencyChanged(); }
+			public void changedUpdate(DocumentEvent e) { onCurrencyChanged(); }
+		});
         row++;
 
         // Create panel with accounts table
@@ -166,7 +195,26 @@ public class ConfigureBookkeepingView extends View {
         updateButtonState();
     }
 
-    private void updateButtonState() {
+    private void onDescriptionChanged() {
+		database.setDescription(tfDescription.getText());
+	}
+
+    private void onStartDateChanged() {
+    	if (startDateModel.getDate() != null) {
+    		database.setStartOfPeriod(startDateModel.getDate());
+    	}
+    }
+
+    private void onCurrencyChanged() {
+    	try {
+	    	Currency currency = Currency.getInstance(tfCurrency.getText());
+	    	database.setCurrency(currency);
+    	} catch (Exception e) {
+    		// Probably an invalid currency was entered
+    	}
+    }
+
+	private void updateButtonState() {
     	AccountDefinition accountDefinition = getSelectedAccountDefinition();
     	deleteAccountButton.setEnabled(accountDefinition != null && !accountDefinition.used);
     	editAccountButton.setEnabled(accountDefinition != null);

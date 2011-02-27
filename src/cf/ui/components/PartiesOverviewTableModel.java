@@ -1,8 +1,19 @@
 /*
- * $Id: PartiesOverviewTableModel.java,v 1.11 2009-02-01 19:53:43 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.components;
 
 import java.util.Date;
@@ -13,18 +24,17 @@ import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Database;
 import cf.engine.Party;
 
 /**
- * This class implements a model for a <code>JTable</code> that shows an overview 
+ * This class implements a model for a <code>JTable</code> that shows an overview
  * of all parties at a specific date.
  *
  * The number of parties can be much bigger than the number of visible rows in the table.
  * Therefore the contents of the table are calculated when they are shown instead of
  * calculating all contents in the constructor.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class PartiesOverviewTableModel extends AbstractTableModel
@@ -36,10 +46,10 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 
     /** The parties to be shown in the table. */
     private Party[] parties;
-    
+
     /** The database from which the amounts of the parties are obtained. */
     private Database database;
-    
+
     /**
      * Constructs a new <code>partyOverviewComponent</code>.
      * @param party the party to be shown
@@ -55,7 +65,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
-    public int getColumnCount() 
+    public int getColumnCount()
     {
         return 3;
     }
@@ -63,7 +73,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getRowCount()
      */
-    public int getRowCount() 
+    public int getRowCount()
     {
         return parties.length + 1;
     }
@@ -71,7 +81,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getValueAt(int, int)
      */
-    public Object getValueAt(int row, int column) 
+    public Object getValueAt(int row, int column)
     {
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         String result;
@@ -82,7 +92,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	        case 0:
 	            result = parties[row].getId() + " - " + parties[row].getName();
 	            break;
-	            
+
 	        case 1:
 	        {
 	            Amount amount = database.getTotalDebetForParty(parties[row], date);
@@ -92,7 +102,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	                result = "";
 	            }
 	            break;
-	        }   
+	        }
 	        case 2:
 	        {
                 Amount amount = database.getTotalCreditForParty(parties[row], date);
@@ -102,7 +112,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
                     result = "";
                 }
 	            break;
-	        }   
+	        }
 	        default:
 	            result = null;
 	        }
@@ -114,10 +124,10 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	        case 0:
 	            result = TextResource.getInstance().getString("gen.total");
 	            break;
-	            
+
 	        case 1:
 	            Amount totalDebet = Amount.getZero(Database.getInstance().getCurrency());
-	            for (int i = 0; i < parties.length; i++) 
+	            for (int i = 0; i < parties.length; i++)
 	            {
 		            Amount balance = database.getBalanceForParty(parties[i], date);
 		            if (!balance.isNegative())
@@ -127,10 +137,10 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	            }
 	            result = af.formatAmount(totalDebet);
 	            break;
-	            
+
 	        case 2:
 	            Amount totalCredit = Amount.getZero(Database.getInstance().getCurrency());
-	            for (int i = 0; i < parties.length; i++) 
+	            for (int i = 0; i < parties.length; i++)
 	            {
 		            Amount balance = database.getBalanceForParty(parties[i], date);
 		            if (balance.isNegative())
@@ -140,15 +150,16 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	            }
 	            result = af.formatAmount(totalCredit);
 	            break;
-	            
+
 	        default:
 	            result = null;
 	        }
         }
         return result;
     }
-    
-    public String getColumnName(int column)
+
+    @Override
+	public String getColumnName(int column)
     {
         String id = null;
         switch(column)
@@ -156,15 +167,15 @@ public class PartiesOverviewTableModel extends AbstractTableModel
         case 0:
             id = "gen.party";
             break;
-            
+
         case 1:
             id = "gen.debet";
             break;
-            
+
         case 2:
             id = "gen.credit";
             break;
-            
+
         default:
             id = null;
         }

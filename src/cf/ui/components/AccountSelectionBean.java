@@ -1,8 +1,19 @@
 /*
- * $Id: AccountSelectionBean.java,v 1.1 2007-11-08 20:18:03 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.components;
 
 import nl.gogognome.swing.JComboBoxWithKeyboardInput;
@@ -14,16 +25,16 @@ import cf.engine.Database;
  *
  * @author Sander Kooijmans
  */
-public class AccountSelectionBean extends JComboBoxWithKeyboardInput 
+public class AccountSelectionBean extends JComboBoxWithKeyboardInput
 {
-    /** Contains the accounts that are shown in the combo box. */ 
+    /** Contains the accounts that are shown in the combo box. */
     private static Account[] accounts;
-    
+
     /**
      * Creates an <code>AccountCellEditor</code>.
      * @param database the database to get the accounts from
-     * @param account the initial value shown in the editor; 
-     *        <code>null</code> indicates that no account is shown initially. 
+     * @param account the initial value shown in the editor;
+     *        <code>null</code> indicates that no account is shown initially.
      */
     public AccountSelectionBean(Database database, Account account) {
         super();
@@ -49,11 +60,11 @@ public class AccountSelectionBean extends JComboBoxWithKeyboardInput
 		    accounts[index] = revenues[i];
 		    index++;
         }
-		
+
 		for (int i=0; i<accounts.length; i++) {
 		    addItem(accounts[i].getId() + " " + accounts[i].getName());
 		}
-		
+
 		// Select initial account
 		index = -1;
 		if (account != null) {
@@ -65,8 +76,8 @@ public class AccountSelectionBean extends JComboBoxWithKeyboardInput
 		}
 		setSelectedIndex(index);
     }
-    
-    /** 
+
+    /**
      * Gets the selected account.
      * @return the selected account or <code>null</code> if no account is selected
      */

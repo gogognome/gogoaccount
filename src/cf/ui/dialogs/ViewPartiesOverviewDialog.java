@@ -1,8 +1,19 @@
 /*
- * $Id: ViewPartiesOverviewDialog.java,v 1.6 2008-01-11 18:56:55 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.dialogs;
 
 import java.awt.BorderLayout;
@@ -17,31 +28,30 @@ import javax.swing.JTable;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.swing.DialogWithButtons;
 import nl.gogognome.text.TextResource;
-
 import cf.engine.Database;
 import cf.ui.components.PartiesOverviewTableModel;
 
 /**
- * This class implements a dialog which shows the overview of all parties 
+ * This class implements a dialog which shows the overview of all parties
  * at a specified date.
  *
  * @author Sander Kooijmans
  */
-public class ViewPartiesOverviewDialog extends DialogWithButtons 
+public class ViewPartiesOverviewDialog extends DialogWithButtons
 {
 
     /**
      * Constructor.
      * @param parent the parent frame of this dialog
      */
-    public ViewPartiesOverviewDialog(Frame parent, Date date) 
+    public ViewPartiesOverviewDialog(Frame parent, Date date)
     {
         super(parent, "vpos.title", DialogWithButtons.BT_OK);
-        
+
         JPanel panel = new JPanel(new BorderLayout());
-        
+
         TextResource tr = TextResource.getInstance();
-        String s = tr.getString("vpos.overviewOfPartiesAt", 
+        String s = tr.getString("vpos.overviewOfPartiesAt",
                 new Object[] {tr.formatDate("gen.dateFormat", date)});
         panel.add(new JLabel(s), BorderLayout.NORTH);
 
@@ -50,7 +60,7 @@ public class ViewPartiesOverviewDialog extends DialogWithButtons
         dateModel.setDate(date, null);
         JTable table = new JTable(new PartiesOverviewTableModel(Database.getInstance(), dateModel));
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        
+
         componentInitialized(panel);
 		setResizable(true);
     }

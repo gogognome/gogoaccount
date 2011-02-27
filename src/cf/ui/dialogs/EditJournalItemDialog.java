@@ -1,9 +1,19 @@
 /*
- * $Id: EditJournalItemDialog.java,v 1.14 2008-11-09 13:59:13 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
-package cf.ui.dialogs;
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/package cf.ui.dialogs;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -38,28 +48,28 @@ import cf.ui.components.InvoiceSelector;
  */
 public class EditJournalItemDialog extends OkCancelDialog {
     private AccountSelectionBean sbAccount;
-    
+
     private JTextField tfAmount;
-    
+
     private JComboBox cbSide;
-    
+
     private InvoiceSelector invoiceSelector;
-    
+
     /** The parent frame of this dialog. */
     private Frame parentFrame;
 
     /** The parent view of this dialog. */
     private View parentView;
-    
+
     private Database database;
-    
-    /** 
+
+    /**
      * Contains the journal item thas has been entered.
      * Its value will be set when the user presses the Ok button and the input fields
      * are correct. Otherwise, this variable will be <code>null</code>.Object
      */
     private JournalItem enteredJournalItem;
-    
+
     /**
      * Constructor.
      * @param parent the parent frame of this dialog.
@@ -85,7 +95,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
         this.parentFrame = parent;
         this.database = database;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
-        initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(), 
+        initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(),
                 item.isDebet(), database.getInvoice(item.getInvoiceId()));
     }
 
@@ -102,13 +112,13 @@ public class EditJournalItemDialog extends OkCancelDialog {
         this.database = database;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         if (item != null) {
-            initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(), 
+            initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(),
                     item.isDebet(), database.getInvoice(item.getInvoiceId()));
         } else {
             initDialog("", null, true, null);
         }
     }
-    
+
     /**
      * Initializes the dialog. Adds buttons and labels to this dialog.
      * @param amount used to initialize the amount field
@@ -130,21 +140,21 @@ public class EditJournalItemDialog extends OkCancelDialog {
 		fieldConstraints.gridwidth = GridBagConstraints.REMAINDER;
 		fieldConstraints.fill = GridBagConstraints.HORIZONTAL;
 		fieldConstraints.anchor = GridBagConstraints.WEST;
-        
+
         WidgetFactory wf = WidgetFactory.getInstance();
-        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.account"), 
+        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.account"),
                 gridBag, labelConstraints);
         sbAccount = new AccountSelectionBean(database, account);
         addComponentToGridBag(labelsAndFieldsPanel, sbAccount,
                 gridBag, fieldConstraints);
-        
-        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.amount"), 
+
+        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.amount"),
                 gridBag, labelConstraints);
         tfAmount = wf.createTextField(amount);
         addComponentToGridBag(labelsAndFieldsPanel, tfAmount,
                 gridBag, fieldConstraints);
-        
-        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.side"), 
+
+        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.side"),
                 gridBag, labelConstraints);
 
         cbSide = wf.createComboBox(new String[] { "gen.debet", "gen.credit" });
@@ -152,26 +162,27 @@ public class EditJournalItemDialog extends OkCancelDialog {
         addComponentToGridBag(labelsAndFieldsPanel, cbSide,
                 gridBag, fieldConstraints);
 
-        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.invoice"), 
+        addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.invoice"),
                 gridBag, labelConstraints);
 
         invoiceSelector = new InvoiceSelector(database);
         invoiceSelector.setSelectedInvoice(invoice);
         addComponentToGridBag(labelsAndFieldsPanel, invoiceSelector,
                 gridBag, fieldConstraints);
-        
+
         componentInitialized(labelsAndFieldsPanel);
     }
 
     /* (non-Javadoc)
      * @see cf.ui.OkCancelDialog#handleOk()
      */
-    protected void handleOk() {
+    @Override
+	protected void handleOk() {
         Amount amount;
         AmountFormat af = TextResource.getInstance().getAmountFormat();
         try {
             amount = af.parse(tfAmount.getText(), database.getCurrency());
-        } 
+        }
         catch (ParseException e) {
             if (parentFrame != null) {
                 MessageDialog.showMessage(parentFrame, "gen.titleError",
@@ -183,17 +194,17 @@ public class EditJournalItemDialog extends OkCancelDialog {
             }
             return;
         }
-        
+
         Account account = sbAccount.getSelectedAccount();
-        boolean debet = cbSide.getSelectedIndex() == 0; 
+        boolean debet = cbSide.getSelectedIndex() == 0;
         Invoice invoice = invoiceSelector.getSelectedInvoice();
-        
-        enteredJournalItem = new JournalItem(amount, account, debet, 
+
+        enteredJournalItem = new JournalItem(amount, account, debet,
             invoice != null ? invoice.getId() : null, invoice != null ? database.createPaymentId() : null);
         hideDialog();
     }
 
-    /** 
+    /**
      * Gets the journal item thas has been entered.
      * Its value will be set when the user presses the Ok button and the input fields
      * are correct. Otherwise, this variable will be <code>null</code>.
@@ -202,21 +213,21 @@ public class EditJournalItemDialog extends OkCancelDialog {
     {
         return enteredJournalItem;
     }
-    
+
 	/**
 	 * Adds a component to a container with a grid bag layout manager.
-	 *  
+	 *
 	 * @param container the container
 	 * @param comp the component
 	 * @param gridBag the grid bag layout manager, which must be the layout manager
 	 *                for <tt>container</tt>
 	 * @param c the constraints for the component
 	 */
-	private static void addComponentToGridBag( Container container, Component comp, 
-		GridBagLayout gridBag, GridBagConstraints c) 
+	private static void addComponentToGridBag( Container container, Component comp,
+		GridBagLayout gridBag, GridBagConstraints c)
 	{
 		gridBag.setConstraints( comp, c );
-		container.add(comp);		
+		container.add(comp);
 	}
-    
+
 }

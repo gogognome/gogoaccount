@@ -1,8 +1,19 @@
 /*
- * $Id: EditPartyView.java,v 1.7 2008-08-03 09:16:48 sanderk Exp $
- *
- * Copyright (C) 2007 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.ui.views;
 
 import java.awt.FlowLayout;
@@ -30,7 +41,7 @@ import cf.engine.Database;
 import cf.engine.Party;
 
 /**
- * This class implements a view to edit a party. Either an existing party or 
+ * This class implements a view to edit a party. Either an existing party or
  * a new party can be edited.
  *
  * @author Sander Kooijmans
@@ -46,11 +57,11 @@ public class EditPartyView extends View {
     private JTextArea taRemarks;
     private DateModel dateModel;
     private JTextField lbIdRemark;
-    
+
     /** The database to which the party has to be added. */
     private Database database;
-    
-    /** 
+
+    /**
      * The party that was entered by the user. If the user cancels this dialog,
      * then <code>resultParty</code> is <code>null</code>.
      */
@@ -58,10 +69,10 @@ public class EditPartyView extends View {
 
     /** The party used to initialize the view. */
     private Party initialParty;
-    
+
     /** The ok button. */
     private JButton okButton;
-    
+
     /**
      * Constructor.
      * @param party the party used to initialize the view
@@ -73,16 +84,18 @@ public class EditPartyView extends View {
     }
 
     /** This method is called when the view is to be shown. */
-    public void onInit() {
+    @Override
+	public void onInit() {
         add(createPanel());
         setDefaultButton(okButton);
     }
-    
+
     /** This method is called when the view is to be closed. */
-    public void onClose() {
-        
+    @Override
+	public void onClose() {
+
     }
-    
+
     /**
      * Gets the panel for editing a party.
      * @return the panel
@@ -90,9 +103,9 @@ public class EditPartyView extends View {
     private JPanel createPanel() {
         // Create the panel with labels and text fields
         JPanel textfieldPanel = new JPanel(new GridBagLayout());
-        
+
         WidgetFactory wf = WidgetFactory.getInstance();
-        
+
         int row = 0;
         tfId = wf.createTextField(10);
         JLabel label = wf.createLabel("editPartyView.id", tfId);
@@ -105,39 +118,39 @@ public class EditPartyView extends View {
         lbIdRemark.setBorder(null);
         textfieldPanel.add(lbIdRemark, SwingUtils.createTextFieldGBConstraints(2, row));
         row++;
-        
+
         tfName = wf.createTextField(30);
         label = wf.createLabel("editPartyView.name", tfName);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfName, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+        textfieldPanel.add(tfName, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
-        
+
         tfAddress = wf.createTextField(30);
         label = wf.createLabel("editPartyView.address", tfAddress);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfAddress, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+        textfieldPanel.add(tfAddress, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
         tfZipCode = wf.createTextField(30);
         label = wf.createLabel("editPartyView.zipCode", tfZipCode);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfZipCode, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+        textfieldPanel.add(tfZipCode, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
-        
+
         tfCity = wf.createTextField(30);
         label = wf.createLabel("editPartyView.city", tfCity);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfCity, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+        textfieldPanel.add(tfCity, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
         tfType = wf.createTextField(30);
         label = wf.createLabel("editPartyView.type", tfType);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfType, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+        textfieldPanel.add(tfType, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
@@ -145,7 +158,7 @@ public class EditPartyView extends View {
         label = wf.createLabel("editPartyView.remarks", taRemarks);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         JScrollPane remarksPane = new JScrollPane(taRemarks);
-        textfieldPanel.add(remarksPane, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0, 
+        textfieldPanel.add(remarksPane, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
@@ -183,31 +196,31 @@ public class EditPartyView extends View {
             });
             onIdChange();
         }
-        
+
         // Create panel with buttons
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        okButton = wf.createButton("gen.ok", new AbstractAction() { 
+        okButton = wf.createButton("gen.ok", new AbstractAction() {
             public void actionPerformed(ActionEvent event) {
                 resultParty = new Party(tfId.getText(), tfName.getText(),
                     tfAddress.getText(), tfZipCode.getText(), tfCity.getText(), dateModel.getDate(),
                     tfType.getText(), taRemarks.getText());
                 closeAction.actionPerformed(event);
-            }  
-        }); 
+            }
+        });
         buttonPanel.add(okButton);
         buttonPanel.add(wf.createButton("gen.cancel", closeAction));
-        
+
         // Create overall panel
         JPanel panel = new JPanel(new GridBagLayout());
         panel.add(textfieldPanel, SwingUtils.createPanelGBConstraints(0, 0));
         panel.add(buttonPanel, SwingUtils.createPanelGBConstraints(0, 1));
-        
+
         return panel;
     }
-    
+
     /**
      * Gets the party that was entered by the user.
-     * @return the party or <code>null</code> if the user canceled this dialog 
+     * @return the party or <code>null</code> if the user canceled this dialog
      */
     public Party getEnteredParty() {
         return resultParty;
@@ -217,10 +230,11 @@ public class EditPartyView extends View {
      * Gets the title of this view.
      * @return the title of this view
      */
-    public String getTitle() {
+    @Override
+	public String getTitle() {
         return TextResource.getInstance().getString(initialParty != null ? "editPartyView.titleEdit" : "editPartyView.titleAdd");
     }
-    
+
     /**
      * This method is called when the user content of tfId has changed.
      * If the ID is not valid, then this is shown to the user.
@@ -253,7 +267,7 @@ public class EditPartyView extends View {
                 }
             }
         }
-        // If suggestion != null, then it contains the largest ID according to the 
+        // If suggestion != null, then it contains the largest ID according to the
         // lexicographically order. Increase the ID to get a unique ID.
         if (suggestion != null) {
             StringBuilder sb = new StringBuilder(suggestion);

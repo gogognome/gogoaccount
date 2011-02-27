@@ -1,8 +1,19 @@
 /*
- * $Id: LatexTextFormat.java,v 1.1 2006-12-11 18:56:47 sanderk Exp $
- *
- * Copyright (C) 2006 Sander Kooijmans
- */
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package cf.text;
 
 import nl.gogognome.text.Amount;
@@ -25,14 +36,16 @@ public class LatexTextFormat extends TextFormat {
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getNewLine()
      */
-    public String getNewLine() {
+    @Override
+	public String getNewLine() {
         return "\n\n";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getStartOfDocument()
      */
-    public String getStartOfDocument() {
+    @Override
+	public String getStartOfDocument() {
         return "\\documentclass[a4paper,10pt]{article}\n" +
         	"\\usepackage[dutch]{babel}\n" +
         	"\\usepackage{url}\n" +
@@ -49,14 +62,16 @@ public class LatexTextFormat extends TextFormat {
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getEndOfDocument()
      */
-    public String getEndOfDocument() {
+    @Override
+	public String getEndOfDocument() {
         return "\\end{document}";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getHeaderRow(java.lang.String[])
      */
-    public String getHeaderRow(String[] values) {
+    @Override
+	public String getHeaderRow(String[] values) {
         String[] headerValues = new String[values.length];
         for (int i = 0; i < headerValues.length; i++) {
             headerValues[i] = values[i] != null ? "\\textbf{" + values[i] + "}" : null;
@@ -66,7 +81,7 @@ public class LatexTextFormat extends TextFormat {
 
     /**
      * Gets the string for the start of a table.
-     * @param columns specifies the columns of the table. Each column is represented 
+     * @param columns specifies the columns of the table. Each column is represented
      *                 by one character.
      *         <ul>
      *           <li>'l' for a left-algined column
@@ -77,79 +92,91 @@ public class LatexTextFormat extends TextFormat {
      * @param columnWidths the widths of the columns
      * @return the string for the start of the table
      */
-    public String getStartOfTable(String columns, int[] columnWidths) {
+    @Override
+	public String getStartOfTable(String columns, int[] columnWidths) {
         super.getStartOfTable(columns, columnWidths);
         return "\\begin{tabular}{" + columns + "}\n";
     }
-    
+
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getEndOfTable()
      */
-    public String getEndOfTable() {
+    @Override
+	public String getEndOfTable() {
         return "\\end{tabular}\n";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getStartOfRow()
      */
-    public String getStartOfRow() {
+    @Override
+	public String getStartOfRow() {
         return "";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getEndOfRow()
      */
-    public String getEndOfRow() {
+    @Override
+	public String getEndOfRow() {
         return " \\\\ \n";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getCellLeftAligned(java.lang.String, int)
      */
-    public String getCellLeftAligned(String value, int width) {
+    @Override
+	public String getCellLeftAligned(String value, int width) {
         return value;
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getCellRightAligned(java.lang.String, int)
      */
-    public String getCellRightAligned(String value, int width) {
+    @Override
+	public String getCellRightAligned(String value, int width) {
         return value;
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getCellCentered(java.lang.String, int)
      */
-    public String getCellCentered(String value, int width) {
+    @Override
+	public String getCellCentered(String value, int width) {
         return value;
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getColumnSeparator()
      */
-    public String getColumnSeparator() {
+    @Override
+	public String getColumnSeparator() {
         return " ";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getInvisibleColumnSeparator()
      */
-    public String getInvisibleColumnSeparator() {
+    @Override
+	public String getInvisibleColumnSeparator() {
         return " ";
     }
 
     /* (non-Javadoc)
      * @see cf.text.TextFormat#getHorizontalSeparator()
      */
-    public String getHorizontalSeparator() {
+    @Override
+	public String getHorizontalSeparator() {
         return "\\hline";
     }
 
-    public String getCellSeparator() {
+    @Override
+	public String getCellSeparator() {
         return " & ";
     }
 
-    public String getRow(String[] values) {
+    @Override
+	public String getRow(String[] values) {
         if (values.length != columnWidths.length) {
             throw new IllegalArgumentException(
                     "The number of values differs from the number of columns");
@@ -177,12 +204,14 @@ public class LatexTextFormat extends TextFormat {
         sb.append(getEndOfRow());
         return sb.toString();
     }
-    
-    public String getNewParagraph() {
+
+    @Override
+	public String getNewParagraph() {
         return "\n\\paragraph{}\n";
     }
-    
-    public String formatAmount(Amount amount) {
+
+    @Override
+	public String formatAmount(Amount amount) {
         return textResource.getAmountFormat().formatAmount(amount, "\\euro");
     }
 }
