@@ -1,23 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!--
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
--->
 <cfbookkeeping currency="EUR" description="Testboekhoudng" startdate="2010.01.01">
     <assets>
         <account id="100" name="Kas"/>
+        <account id="101" name="Test"/>
+        <account id="102" name="Testje"/>
         <account id="190" name="Debiteuren"/>
     </assets>
     <liabilities>
@@ -33,9 +19,9 @@
         <account id="380" name="Diverse opbrengsten"/>
     </revenues>
     <parties>
-        <party address="Street 1" birthdate="1975.11.28" city="Some city 1" id="001" name="Sander Kooijmans" remarks="" type="deelnemer" zip="1234 AB"/>
-        <party address="Street 2" birthdate="1970.07.08" city="Some city 2" id="002" name="Rudy Train" remarks="" type="deelnemer" zip="5678 CD"/>
-        <party address="Street 3" birthdate="1976.08.10" city="Some city 3" id="003" name="Marvin" remarks="" type="deelnemer" zip="9012 EF"/>
+        <party address="Street 1" birthdate="1975.11.28" city="Some city 1" id="001" name="Sander Kooijmans" type="deelnemer" zip="1234 AB"/>
+        <party address="Street 2" birthdate="1970.07.08" city="Some city 2" id="002" name="Rudy Train" type="deelnemer" zip="5678 CD"/>
+        <party address="Street 3" birthdate="1976.08.10" city="Some city 3" id="003" name="Marvin" type="deelnemer" zip="9012 EF"/>
     </parties>
     <journals>
         <journal createdInvoice="2010-001" date="2010.07.01" description="Inschrijfgeld TourPool 2010" id="2010-001">
