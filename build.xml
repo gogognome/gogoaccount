@@ -72,7 +72,10 @@
 		<!-- Create a zip file containing all sources, build.xml and the jar file -->
 		<zip destfile="${distdir}/${productname}.zip">
 			<fileset dir="${distdir}" includes="${productname}.jar" />
-			<fileset dir="." excludes="${generateddir}/**" />
+			<fileset dir=".">
+				<exclude name="${generateddir}/**"/>
+				<exclude name="sketches/**"/>
+			</fileset>
         </zip>
 	</target>
 
