@@ -28,7 +28,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import nl.gogognome.text.Amount;
 import nl.gogognome.util.DateUtil;
@@ -45,15 +47,12 @@ public class Database {
     private static Database instance;
 
     /** Description of the bookkeeping represented by this database. */
-    private String description = "empty bookkeeping";
+    private String description = "";
 
-    private Account[] assets = new Account[0];
-
-    private Account[] liabilities = new Account[0];
-
-    private Account[] revenues = new Account[0];
-
-    private Account[] expenses = new Account[0];
+    private Map<String, Account> assets = new TreeMap<String, Account>();
+    private Map<String, Account> liabilities = new TreeMap<String, Account>();
+    private Map<String, Account> revenues = new TreeMap<String, Account>();
+    private Map<String, Account> expenses = new TreeMap<String, Account>();
 
     private ArrayList<Journal> journals = new ArrayList<Journal>();
 
@@ -198,7 +197,7 @@ public class Database {
 
     public Account[] getAssets()
     {
-        return assets;
+        return assets.values().toArray(new Account[assets.size()]);
     }
 
     /**
@@ -217,14 +216,16 @@ public class Database {
             }
         }
 
-        Arrays.sort(assets);
-        this.assets = assets;
+        this.assets = new TreeMap<String, Account>();
+        for (Account account : assets) {
+        	this.assets.put(account.getId(), account);
+        }
         updateIdsToAccountsMap();
     }
 
     public Account[] getExpenses()
     {
-        return expenses;
+        return expenses.values().toArray(new Account[expenses.size()]);
     }
 
     /**
@@ -243,14 +244,16 @@ public class Database {
             }
         }
 
-        Arrays.sort(expenses);
-        this.expenses = expenses;
+        this.expenses = new TreeMap<String, Account>();
+        for (Account account : expenses) {
+        	this.expenses.put(account.getId(), account);
+        }
         updateIdsToAccountsMap();
     }
 
     public Account[] getLiabilities()
     {
-        return liabilities;
+        return liabilities.values().toArray(new Account[liabilities.size()]);
     }
 
     public void setLiabilities(Account[] liabilities) throws DatabaseModificationFailedException
@@ -263,13 +266,15 @@ public class Database {
             }
         }
 
-        Arrays.sort(liabilities);
-        this.liabilities = liabilities;
+        this.liabilities = new TreeMap<String, Account>();
+        for (Account account : liabilities) {
+        	this.liabilities.put(account.getId(), account);
+        }
         updateIdsToAccountsMap();
     }
 
     public Account[] getRevenues() {
-        return revenues;
+        return revenues.values().toArray(new Account[revenues.size()]);
     }
 
     public void setRevenues(Account[] revenues) throws DatabaseModificationFailedException {
@@ -279,8 +284,10 @@ public class Database {
             }
         }
 
-        Arrays.sort(revenues);
-        this.revenues = revenues;
+        this.revenues = new TreeMap<String, Account>();
+        for (Account account : revenues) {
+        	this.revenues.put(account.getId(), account);
+        }
         updateIdsToAccountsMap();
     }
 
@@ -661,25 +668,12 @@ public class Database {
      * Updates the map <code>idsToAccountsMap</code> based on all
      * accounts registered at this database.
      */
-    private void updateIdsToAccountsMap()
-    {
+    private void updateIdsToAccountsMap() {
         idsToAccountsMap.clear();
-        for (int i=0; i<assets.length; i++)
-        {
-            idsToAccountsMap.put(assets[i].getId(), assets[i]);
-        }
-        for (int i=0; i<liabilities.length; i++)
-        {
-            idsToAccountsMap.put(liabilities[i].getId(), liabilities[i]);
-        }
-        for (int i=0; i<revenues.length; i++)
-        {
-            idsToAccountsMap.put(revenues[i].getId(), revenues[i]);
-        }
-        for (int i=0; i<expenses.length; i++)
-        {
-            idsToAccountsMap.put(expenses[i].getId(), expenses[i]);
-        }
+        idsToAccountsMap.putAll(assets);
+        idsToAccountsMap.putAll(liabilities);
+        idsToAccountsMap.putAll(expenses);
+        idsToAccountsMap.putAll(revenues);
     }
 
     /**
@@ -718,7 +712,7 @@ public class Database {
      */
     public boolean hasAccounts()
     {
-        return assets.length + liabilities.length + expenses.length + revenues.length > 0;
+        return !assets.isEmpty() || !liabilities.isEmpty() || !expenses.isEmpty() || !revenues.isEmpty();
     }
 
     /**
@@ -1075,6 +1069,48 @@ public class Database {
     }
 
     /**
+     * Adds an account to the database.
+     * @param database the database
+     * @param account the account
+     * @throws DatabaseModificationFailedException if a problem occurs while creating the account
+     */
+    public void addAccount(Account account) throws DatabaseModificationFailedException {
+    	if (idsToAccountsMap.containsKey(account.getId())) {
+    		throw new DatabaseModificationFailedException("An account with id " + account.getId() + " already exists!");
+    	}
+    	doAddAccout(account);
+    	notifyChange();
+    }
+
+    private void doAddAccout(Account account) {
+    	switch (account.getType()) {
+    	case ASSET: assets.put(account.getId(), account); break;
+    	case LIABILITY: liabilities.put(account.getId(), account); break;
+    	case EXPENSE: expenses.put(account.getId(), account); break;
+    	case REVENUE: revenues.put(account.getId(), account); break;
+    	}
+    	idsToAccountsMap.put(account.getId(), account);
+    }
+
+    /**
+     * Updates an existing account to the database.
+     * @param database the database
+     * @param account the account
+     * @throws DatabaseModificationFailedException if a problem occurs while updating the account
+     */
+    public void updateAccount(Account account) throws DatabaseModificationFailedException {
+    	if (!idsToAccountsMap.containsKey(account)) {
+    		throw new DatabaseModificationFailedException("Cannot update account " + account.getId() +
+    				" because it does not exist!");
+    	}
+
+    	doRemoveAccount(account.getId());
+    	doAddAccout(account);
+
+    	notifyChange();
+    }
+
+    /**
      * Removes an account from the database. The account may not be in use.
      * @param accountId the id of the account
      * @throws DatabaseModificationFailedException if a problem occurs
@@ -1083,31 +1119,30 @@ public class Database {
     	if (isAccountUsed(accountId)) {
     		throw new DatabaseModificationFailedException("The account " + accountId + " is in use and can therefore not be deleted!");
     	}
-    	assets = removeAccountFromArray(assets, accountId);
-    	liabilities = removeAccountFromArray(liabilities, accountId);
-    	expenses = removeAccountFromArray(expenses, accountId);
-    	revenues = removeAccountFromArray(revenues, accountId);
+    	doRemoveAccount(accountId);
     	notifyChange();
+    }
+
+    private void doRemoveAccount(String accountId) {
+    	idsToAccountsMap.remove(accountId);
+    	assets.remove(accountId);
+    	liabilities.remove(accountId);
+    	expenses.remove(accountId);
+    	revenues.remove(accountId);
     }
 
     /**
      * Removes an account from an array
      * @param accounts the account array
      * @param accountId the id of the account to be removed
-     * @return the accounts without the account with the specified id
      */
-    private static Account[] removeAccountFromArray(Account[] accounts, String accountId) {
-    	List<Account> accountList = new ArrayList<Account>(accounts.length);
-    	boolean changed = false;
-    	for (Account account : accounts) {
+    private static void removeAccountFromArray(List<Account> accounts, String accountId) {
+    	for (Iterator<Account> iter = accounts.iterator(); iter.hasNext();) {
+    		Account account = iter.next();
     		if (account.getId().equals(accountId)) {
-    			changed = true;
-    		} else {
-    			accountList.add(account);
+    			iter.remove();
     		}
     	}
-
-    	return changed ? accountList.toArray(new Account[accountList.size()]) : accounts;
     }
 
     private static Date getFirstDayOfYear(Date date) {

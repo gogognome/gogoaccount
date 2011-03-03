@@ -294,6 +294,35 @@ public class BookkeepingService {
     }
 
     /**
+     * Adds an account to the database.
+     * @param database the database
+     * @param account the account
+     * @throws CreationException if a problem occurs while creating the account
+     */
+	public static void addAccount(Database database, Account account) throws CreationException {
+		try {
+			database.addAccount(account);
+    	} catch (DatabaseModificationFailedException e) {
+    		throw new CreationException("Could not add account " + account.getId() + " to the database", e);
+    	}
+	}
+
+	/**
+	 * Updates an existing account.
+	 * @param database the database
+	 * @param account the account
+	 * @throws ServiceException if a problem occurs while updating the account
+	 */
+	public static void updateAccount(Database database, Account account) throws ServiceException {
+		try {
+			database.updateAccount(account);
+    	} catch (DatabaseModificationFailedException e) {
+    		throw new ServiceException("Could not update account " + account.getId() + " in the database", e);
+		}
+
+	}
+
+    /**
      * Deletes an account from the database. Only unused accounts can be deleted.
      * @param database the database
      * @param account the account
@@ -306,4 +335,6 @@ public class BookkeepingService {
     		throw new DeleteException("Could not delete account " + account.getId() + " from the database", e);
     	}
     }
+
+
 }

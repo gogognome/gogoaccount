@@ -234,6 +234,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	public void actionPerformed(ActionEvent e)
 	{
 		String command = e.getActionCommand();
+		if ("mi.newBookkeeping".equals(command)) { handleNewEdition(); }
 		if ("mi.openBookkeeping".equals(command)) { handleOpenBookkeeping(); }
 		if ("mi.configureBookkeeping".equals(command)) { handleConfigureBookkeeping(); }
 		if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
@@ -346,15 +347,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	/** Handles the new edition event. */
-/*	private void handleNewEdition()
+	private void handleNewEdition()
 	{
 		if (mayCurrentDatabaseBeDestroyed()) {
-			Database db = new Database();
-			Database.setCurrentDatabase(db);
-			handleEditEdition();
+			setDatabase(new Database());
+			database.setDescription(TextResource.getInstance().getString("mf.newBookkeepingDescription"));
+			database.databaseConsistentWithFile();
+			handleConfigureBookkeeping();
 		}
 	}
-*/
+
 	/** Handles the open bookkeeping event. */
 	private void handleOpenBookkeeping()
 	{

@@ -40,8 +40,11 @@ import javax.swing.event.ListSelectionListener;
 
 import nl.gogognome.beans.DateSelectionBean;
 import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.cf.services.DeleteException;
+import nl.gogognome.cf.services.ServiceException;
 import nl.gogognome.framework.View;
+import nl.gogognome.framework.ViewDialog;
 import nl.gogognome.framework.models.AbstractModel;
 import nl.gogognome.framework.models.DateModel;
 import nl.gogognome.framework.models.ModelChangeListener;
@@ -247,19 +250,44 @@ public class ConfigureBookkeepingView extends View {
 				int index = table.getSelectedRows()[0];
 				tableModel.removeRow(index);
 			} catch (DeleteException e) {
-				MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+				MessageDialog.showMessage(getParentWindow(), e);
 			}
 		}
 	}
 
-	private void onEditAccount() {
-		// TODO Auto-generated method stub
-
+	private void onAddAccount() {
+		EditAccountView eav = new EditAccountView(null);
+		ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
+		dialog.showDialog();
+		Account account = eav.getEditedAccount();
+        tableModel = new AccountTableModel(getAccountDefinitions(database));
+		try {
+			BookkeepingService.addAccount(database, account);
+			AccountDefinition definition = new AccountDefinition();
+			definition.account = account;
+			tableModel.addRow(definition);
+		} catch (CreationException e) {
+			MessageDialog.showMessage(getParentWindow(), e);
+		}
 	}
 
-	private void onAddAccount() {
-		// TODO Auto-generated method stub
+	private void onEditAccount() {
+    	int[] rows = table.getSelectedRows();
+    	if (rows.length == 1) {
+			AccountDefinition definition = tableModel.getRow(rows[0]);
+			EditAccountView eav = new EditAccountView(definition.account);
 
+			ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
+			dialog.showDialog();
+			Account account = eav.getEditedAccount();
+			try {
+				BookkeepingService.updateAccount(database, account);
+				definition.account = account;
+		        tableModel.updateRow(rows[0], definition);
+			} catch (ServiceException e) {
+				MessageDialog.showMessage(getParentWindow(), e);
+			}
+		}
 	}
 
 	private static List<AccountDefinition> getAccountDefinitions(Database database) {
@@ -312,7 +340,7 @@ public class ConfigureBookkeepingView extends View {
                 return getRow(rowIndex).used ?
                     WidgetFactory.getInstance().createIcon("ConfigureBookkeepingView.tickIcon16") : null;
             } else if (TYPE.equals(colDef)) {
-                return TextResource.getInstance().getString("ConfigureBookkeepingView.TYPE_" +
+                return TextResource.getInstance().getString("gen.TYPE_" +
                     getRow(rowIndex).account.getType().name());
             }
             return null;
