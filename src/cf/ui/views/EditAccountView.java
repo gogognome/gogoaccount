@@ -29,6 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.framework.View;
 import nl.gogognome.swing.ButtonPanel;
@@ -72,6 +73,8 @@ public class EditAccountView extends View {
 
 	@Override
 	public void onInit() {
+		setBorder(new EmptyBorder(10, 10, 10, 10));
+
         WidgetFactory wf = WidgetFactory.getInstance();
 
         // Create panel with ID, issue date, concerning party, paying party and amount to be paid.
