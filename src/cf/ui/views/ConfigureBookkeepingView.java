@@ -260,12 +260,12 @@ public class ConfigureBookkeepingView extends View {
 		ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
 		dialog.showDialog();
 		Account account = eav.getEditedAccount();
-        tableModel = new AccountTableModel(getAccountDefinitions(database));
 		try {
 			BookkeepingService.addAccount(database, account);
 			AccountDefinition definition = new AccountDefinition();
 			definition.account = account;
 			tableModel.addRow(definition);
+			table.setSortingStatus(0, SortedTable.ASCENDING);
 		} catch (CreationException e) {
 			MessageDialog.showMessage(getParentWindow(), e);
 		}
