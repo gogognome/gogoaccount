@@ -1099,7 +1099,7 @@ public class Database {
      * @throws DatabaseModificationFailedException if a problem occurs while updating the account
      */
     public void updateAccount(Account account) throws DatabaseModificationFailedException {
-    	if (!idsToAccountsMap.containsKey(account)) {
+    	if (!idsToAccountsMap.containsKey(account.getId())) {
     		throw new DatabaseModificationFailedException("Cannot update account " + account.getId() +
     				" because it does not exist!");
     	}
