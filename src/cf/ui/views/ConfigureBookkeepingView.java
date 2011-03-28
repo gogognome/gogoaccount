@@ -260,14 +260,16 @@ public class ConfigureBookkeepingView extends View {
 		ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
 		dialog.showDialog();
 		Account account = eav.getEditedAccount();
-		try {
-			BookkeepingService.addAccount(database, account);
-			AccountDefinition definition = new AccountDefinition();
-			definition.account = account;
-			tableModel.addRow(definition);
-			table.setSortingStatus(0, SortedTable.ASCENDING);
-		} catch (CreationException e) {
-			MessageDialog.showMessage(getParentWindow(), e);
+		if (account != null) {
+			try {
+				BookkeepingService.addAccount(database, account);
+				AccountDefinition definition = new AccountDefinition();
+				definition.account = account;
+				tableModel.addRow(definition);
+				table.setSortingStatus(0, SortedTable.ASCENDING);
+			} catch (CreationException e) {
+				MessageDialog.showMessage(getParentWindow(), e);
+			}
 		}
 	}
 
@@ -280,12 +282,14 @@ public class ConfigureBookkeepingView extends View {
 			ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
 			dialog.showDialog();
 			Account account = eav.getEditedAccount();
-			try {
-				BookkeepingService.updateAccount(database, account);
-				definition.account = account;
-		        tableModel.updateRow(rows[0], definition);
-			} catch (ServiceException e) {
-				MessageDialog.showMessage(getParentWindow(), e);
+			if (account != null) {
+				try {
+					BookkeepingService.updateAccount(database, account);
+					definition.account = account;
+			        tableModel.updateRow(rows[0], definition);
+				} catch (ServiceException e) {
+					MessageDialog.showMessage(getParentWindow(), e);
+				}
 			}
 		}
 	}
