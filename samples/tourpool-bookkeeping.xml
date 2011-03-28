@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<cfbookkeeping currency="EUR" description="Tour-Pool-boekhouding 2010" startdate="2010.01.01">
+    <assets>
+        <account id="100" name="Kas"/>
+        <account id="190" name="Debiteuren"/>
+    </assets>
+    <liabilities>
+        <account id="200" name="Eigen vermogen"/>
+        <account id="290" name="Crediteuren"/>
+    </liabilities>
+    <expenses>
+        <account id="400" name="Dagprijs"/>
+        <account id="480" name="Diverse onkosten"/>
+    </expenses>
+    <revenues>
+        <account id="300" name="Inschrijfgeld"/>
+        <account id="380" name="Diverse opbrengsten"/>
+    </revenues>
+    <parties>
+        <party address="Street 1" birthdate="1975.11.28" city="Some city 1" id="001" name="Alice" type="deelnemer" zip="1234 AB"/>
+        <party address="Street 2" birthdate="1970.07.08" city="Some city 2" id="002" name="Bob" type="deelnemer" zip="5678 CD"/>
+        <party address="Street 3" birthdate="1976.08.10" city="Some city 3" id="003" name="Charlie" type="deelnemer" zip="9012 EF"/>
+    </parties>
+    <journals>
+        <journal createdInvoice="2010-001" date="2010.07.01" description="Inschrijfgeld TourPool 2010" id="2010-001">
+            <item amount="EUR 5.00" id="190" side="debet"/>
+            <item amount="EUR 5.00" id="300" side="credit"/>
+        </journal>
+        <journal createdInvoice="2010-002" date="2010.07.01" description="Inschrijfgeld TourPool 2010" id="2010-002">
+            <item amount="EUR 5.00" id="190" side="debet"/>
+            <item amount="EUR 5.00" id="300" side="credit"/>
+        </journal>
+        <journal createdInvoice="2010-003" date="2010.07.01" description="Inschrijfgeld TourPool 2010" id="2010-003">
+            <item amount="EUR 5.00" id="190" side="debet"/>
+            <item amount="EUR 5.00" id="300" side="credit"/>
+        </journal>
+        <journal createdInvoice="Dagprijs1" date="2010.07.03" description="Dagprijs 1" id="Dagprijs1">
+            <item amount="EUR 1.00" id="400" side="debet"/>
+            <item amount="EUR 1.00" id="290" side="credit"/>
+        </journal>
+        <journal date="2010.07.03" description="Inschrijfgeld Sander" id="Inschrijfgeld">
+            <item amount="EUR 5.00" id="100" invoice="2010-001" payment="p1" side="debet"/>
+            <item amount="EUR 5.00" id="190" side="credit"/>
+        </journal>
+        <journal createdInvoice="Dagprijs2" date="2010.07.04" description="Dagprijs 2" id="Dagprijs2">
+            <item amount="EUR 1.00" id="400" side="debet"/>
+            <item amount="EUR 1.00" id="290" side="credit"/>
+        </journal>
+        <journal createdInvoice="Dagprijs3" date="2010.07.04" description="Dagprijs 3" id="Dagprijs3">
+            <item amount="EUR 1.00" id="400" side="debet"/>
+            <item amount="EUR 1.00" id="290" side="credit"/>
+        </journal>
+        <journal createdInvoice="Hoofdprijs" date="2010.07.25" description="Hoofdprijs" id="Hoofdprijs">
+            <item amount="EUR 12.00" id="400" side="debet"/>
+            <item amount="EUR 12.00" id="290" side="credit"/>
+        </journal>
+    </journals>
+    <invoices>
+        <invoice amountToBePaid="EUR 5.00" concerningParty="001" id="2010-001" issueDate="2010.07.01" payingParty="001">
+            <line description="Inschrijfgeld TourPool 2010"/>
+            <line amount="EUR 5.00" description="Inschrijfgeld"/>
+            <payment amount="EUR 5.00" date="2010.07.03" description="Kas" id="p1"/>
+        </invoice>
+        <invoice amountToBePaid="EUR 5.00" concerningParty="002" id="2010-002" issueDate="2010.07.01" payingParty="002">
+            <line description="Inschrijfgeld TourPool 2010"/>
+            <line amount="EUR 5.00" description="Inschrijfgeld"/>
+        </invoice>
+        <invoice amountToBePaid="EUR 5.00" concerningParty="003" id="2010-003" issueDate="2010.07.01" payingParty="003">
+            <line description="Inschrijfgeld TourPool 2010"/>
+            <line amount="EUR 5.00" description="Inschrijfgeld"/>
+        </invoice>
+        <invoice amountToBePaid="-/- EUR 1.00" concerningParty="001" id="Dagprijs1" issueDate="2010.07.03" payingParty="001">
+            <line description="Dagprijs 1"/>
+            <line amount="-/- EUR 1.00" description="Dagprijs"/>
+        </invoice>
+        <invoice amountToBePaid="-/- EUR 1.00" concerningParty="002" id="Dagprijs2" issueDate="2010.07.04" payingParty="002">
+            <line description="Dagprijs 2"/>
+            <line amount="-/- EUR 1.00" description="Dagprijs"/>
+        </invoice>
+        <invoice amountToBePaid="-/- EUR 1.00" concerningParty="003" id="Dagprijs3" issueDate="2010.07.04" payingParty="003">
+            <line description="Dagprijs 3"/>
+            <line amount="-/- EUR 1.00" description="Dagprijs"/>
+        </invoice>
+        <invoice amountToBePaid="-/- EUR 12.00" concerningParty="001" id="Hoofdprijs" issueDate="2010.07.25" payingParty="001">
+            <line description="Hoofdprijs"/>
+            <line amount="-/- EUR 12.00" description="Dagprijs"/>
+        </invoice>
+    </invoices>
+</cfbookkeeping>
