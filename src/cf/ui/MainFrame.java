@@ -214,7 +214,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 		reportingMenu.add(miGenerateInvoices);
 		reportingMenu.add(miGenerateReport);
-		reportingMenu.add(miPrintAddressLabels);
+		// TODO: Improve printing of address labels before enabling this menu item
+//		reportingMenu.add(miPrintAddressLabels);
 
 		helpMenu.add(miAbout);
 
