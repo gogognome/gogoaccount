@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<book lang="nl">
+  <title>Handleiding gogo account</title>
+
+  <bookinfo>
+    <copyright>
+      <year>2011</year>
+
+      <holder>Sander Kooijmans</holder>
+    </copyright>
+
+    <releaseinfo>V 1.0</releaseinfo>
+
+    <productname>gogo account</productname>
+
+    
+    <author>Sander Kooijmans</author>
+
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="images/bookkeeper.png"/>
+      </imageobject>
+    </mediaobject>
+  </bookinfo>
+
+  <toc/>
+
+  <chapter id="inleiding">
+    <title>Inleiding</title>
+
+    <section id="section-about-this-project">
+      <title>Over dit project</title>
+
+      <para>Als penningmeester van een kleine sportvereniging heb ik een aantal
+      gratis en een commercieel boekhoudprogramma ge&euml;valueerd. Geen van deze
+      programma's voldeed aan mijn eisen.</para>
+      
+      <para>Uit frustratie hierover ben ik begonnen aan mijn eigen boekhoudprogramma
+      dat inmiddels is uitgegroeid tot gogo account. Ik heb met gogo account al vijf
+      jaar de boekhouding van mijn sportvereniging op orde gehouden.</para>
+    </section>
+
+    <section id="section-licentie">
+      <title>Licentie informatie</title>
+
+      <para>gogo account, een eenvoudig boekhoudprogramma</para>
+      <para>Auteursrecht (C) 2011 Sander Kooijmans</para>
+      
+      <para>Dit programma is vrije software: je mag het herdistribueren en/of wijzigen onder
+		de voorwaarden van de GNU Algemene Publieke Licentie zoals gepubliceerd
+		door de Free Software Foundation, onder versie 3 van de Licentie.</para>
+		
+	  <para>Dit programma is gedistribueerd in de hoop dat het nuttig zal zijn maar ZONDER
+		ENIGE GARANTIE; zelfs zonder de impliciete garanties die GEBRUIKELIJK
+		ZIJN IN DE HANDEL of voor BRUIKBAARHEID VOOR EEN SPECIFIEK DOEL.
+		Zie de GNU Algemene Publieke Licentie voor meer details.</para>
+		
+	  <para>Je hoort een kopie van de GNU Algemene Publieke Licentie te hebben
+		ontvangen samen met dit programma. Als dat niet het geval is, zie
+		<uri>http://www.gnu.org/licenses/</uri>.</para>
+    </section>
+    
+    <section id="section-license">
+	  <title>License information</title>
+	  
+		<para>gogo account, a simple bookkeeping program</para>
+    	<para>Copyright (C) 2011 Sander Kooijmans</para>
+
+		<para>This program is free software: you can redistribute it and/or modify
+    	it under the terms of the GNU General Public License as published by
+    	the Free Software Foundation, either version 3 of the License.</para>
+
+    	<para>This program is distributed in the hope that it will be useful,
+    	but WITHOUT ANY WARRANTY; without even the implied warranty of
+    	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    	GNU General Public License for more details.</para>
+
+    	<para>You should have received a copy of the GNU General Public License
+    	along with this program.  If not, see <uri>http://www.gnu.org/licenses/</uri>.</para>
+    </section>
+
+    <section id="section-author-information">
+      <title>Auteur</title>
+
+      <para>Gogo account is geschreven door Sander Kooijmans. Als je vragen hebt
+      of een bug hebt ontdekt, neem dan contact op met de auteur via een e-mail
+      naar <email>gogoaccount@gogognome.nl</email>.</para>
+      
+      <para>Voor nieuwe versies van gogo account kun je het beste af en toe
+      eens kijken op de website van Sander: <uri>http://www.gogognome.nl/nl</uri></para>
+    </section>
+  </chapter>
+
+  <chapter id="chapter-introductie">
+    <title>Introductie</title>
+
+    <section id="section-geschiedenis">
+      <title>Waarom een nieuw boekhoudprogramma schrijven?</title>
+
+      <para>Sinds 2006 ben ik penningmeester van Volleybalverening Set Up uit Loon op Zand. 
+      Ik heb destijds een aantal bestaande boekhoudprogramma's bekeken. Een commercieel programma
+      en een aantal gratis programma's. Geen enkel van de programma's die ik bekeken had voldeden
+      aan mijn eisen:</para>
+
+      <itemizedlist>
+        <listitem>Het programma moet klein klein zijn wat betreft geheugen gebruik en gebruik van de harde schijf.</listitem>
+        <listitem>Het programma moet eenvoudig in gebruik zijn.</listitem>
+        <listitem>Het programma moet bedoeld zijn voor kleine boekhoudingen.</listitem>
+      </itemizedlist>
+      
+      <para>Uit frustratie hierover ben ik begonnen aan mijn eigen boekhoudprogramma. Ik heb het programma
+      inmiddels vijf jaar gebruikt voor de boekhouding van onze volleybalvereniging die uit 
+      ongeveer 60 leden bestond.</para>
+      
+      <para>Het boekhoudprogramma is ook prima bruikbaar om de financi&euml;n van je huishouden op een
+      rij te zetten.</para>
+
+	</section>
+	       
+    <section id="section-eigenschappen">
+      <title>Eigenschappen van gogo account</title>
+      
+		<para>Gogo account heeft de volgende eigenschappen:</para>
+
+		<itemizedlist>
+       	  <listitem>Zelf te definiëren posten</listitem>
+       	  <listitem>Journaal</listitem>
+       	  <listitem>Balans en winst- en verliesrekening</listitem>
+       	  <listitem>Relaties die als debiteur of crediteur kunnen fungeren</listitem>
+       	  <listitem>Facturen</listitem>
+       	</itemizedlist>
+       	
+      </section>
+  </chapter>
+</book>

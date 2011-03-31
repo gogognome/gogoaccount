@@ -16,6 +16,9 @@
 -->
 <project name="gogo account" default="dist" basedir=".">
 
+    <!-- Load our properties -->
+	<property file="project.properties"/>
+
 	<!-- set global properties for this build -->
 	<property name="srcdir" value="src" />
 	<property name="testdir" value="test/src" />
@@ -91,4 +94,12 @@
 		</java>
 	</target>
 
+    <target name="doc" description="Build all documentation">
+      <!-- Build the Users Guide -->
+      <ant antfile="${dbf.basedir}/build-docbook.xml" target="all">
+        <property name="docbook.dir" value="handleiding"/>
+        <property name="docbook.file" value="handleiding-gogoaccount"/>
+      </ant>
+    </target>
+	
 </project>
