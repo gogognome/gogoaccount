@@ -134,4 +134,93 @@
        	
       </section>
   </chapter>
+  
+  <chapter id="chapter-instalatie">
+    <title>Installatie en opstarten</title>
+    
+    <section id="section-downloaden">
+      <title>Downloaden gogo account</title>
+      <para>Om gogo account te installeren heeft u een ZIP-bestand nodig dat gedownload
+      kan worden van <uri>http://www.gogognome.nl/nl/gogoaccount.html</uri>. Het bestand
+      heet <filename>gogoaccount.zip</filename>.</para>
+      
+      <para>Ik ga ervanuit dat de lezer in staat is om het ZIP-bestand uit te pakken.
+      Het ZIP-bestand bevat alle broncode om zelf het programma te bouwen. De meeste
+      lezers zullen niet ge&iuml;nteresseerd zijn in het zelf bouwen van het pogramma.
+      Daarom is het gebouwde programma ook opgenomen in het ZIP-bestand.</para>
+      
+      <para>Het bestand <filename>gogoaccount.jar</filename> dat onderdeel is van het
+      ZIP-bestand is het eigenlijke programma. Dit is het enige bestand dat u nodig
+      heeft om gogo account te gebruiken.</para>
+    </section>
+
+    <section id="section-start-gogo-account">
+      <title>Starten gogo account</title>
+      <para>In Windows en de meeste Linux-distributies kan gogo account worden opgestart
+      door te dubbelklikken op het bestand <filename>gogoaccount.jar</filename>.</para>
+      
+      <para>Gogo account start op met de Engelstalige gebruikersinterface. Het programma
+      kan ook in het Nederland worden opgestart. Dit kan op verschillende manier gerealiseerd
+      worden.</para>
+      
+      <para>Vanuit een command prompt (Windows) of shell (Linux) kan gogo account worden
+      gestart met Nederlandse gebruikersinterface met het commando:</para>
+      
+      <programlisting>
+      java -jar gogoaccount.jar -lang=nl
+      </programlisting>
+      
+      <para>In Windows kan op de volgende manier een snelkoppeling worden gemaakt
+      naar een Nederlandstalige versie van gogo account:</para>
+      
+      <procedure>
+        <step><para>In Windows Verkenner, rechtsklik op <filename>gogoaccount.jar</filename>. 
+        Een snelkoppeling wordt hiermee aangemaakt.</para></step>
+        <step><para>Rechtsklik deze snelkoppeling en kies Eigenschappen.</para></step>
+        <step><para>Voeg voor de bestemming toe: <command>java -jar</command>.</para></step>
+        <step><para>Voeg achter de bestemming toe: <command>-lang=nl</command>.</para></step>
+        <step><para>Klik op het tabblad Algemeen en wijzig de naam van de snelkoppeling in <command>gogo account</command></para></step>
+        <step><para>Klik op OK.</para></step>
+      </procedure>
+      
+	</section>
+	    
+    <section id="section-compileren">
+      <title>Gogo account zelf bouwen</title>
+      
+      <para>Deze sectie is bedoeld voor de enkele lezer die besluit om gogo account
+      zelf te bouwen op basis van de broncode.</para>
+      
+      <para>Gogo account is geschreven in Java Standard Edition 5. Een Ant build
+      script is onderdeel van het ZIP-bestand. Met Ant kan gogo account gebouwd
+      gecompileerd worden en tevens <filename>gogoaccount.jar</filename> worden
+      gegenereerd.</para>
+      
+      <para>De belanrgrijkste targets van het build script zijn:</para>
+      <variablelist>
+        <varlistentry><term>compile</term>
+          <listitem><para>Compileert gogo account.</para></listitem>
+        </varlistentry>
+        
+        <varlistentry><term>dist</term>
+          <listitem><para>Maakt <filename>gogoaccount.zip</filename>.</para></listitem>
+        </varlistentry>
+
+        <varlistentry><term>clean</term>
+          <listitem><para>Verwijdert alle bestanden die gegenereerd zijn door de andere targets.</para></listitem>
+        </varlistentry>
+
+        <varlistentry><term>run</term>
+          <listitem><para>Start het gogo account op.</para></listitem>
+        </varlistentry>
+      </variablelist>      
+    </section>
+  </chapter>
+  
+  <chapter id="chapter-boekhouding-creeren">
+    <title>Een boekhouding cre&euml;ren</title>
+    <section>
+    <para>Dit hoofdstuk moet nog geschreven worden...</para>
+    </section>
+  </chapter>
 </book>
