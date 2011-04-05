@@ -183,6 +183,10 @@
         <step><para>Klik op OK.</para></step>
       </procedure>
       
+      <para>Na het opstarten verschijnt het volgende scherm:</para>
+      <screenshot>
+        <graphic fileref="images/screen-na-opstarten.png"></graphic>
+      </screenshot>
 	</section>
 	    
     <section id="section-compileren">
@@ -220,7 +224,53 @@
   <chapter id="chapter-boekhouding-creeren">
     <title>Een boekhouding cre&euml;ren</title>
     <section>
-    <para>Dit hoofdstuk moet nog geschreven worden...</para>
+	  <title>Een boekhouding cre&euml;ren</title>
+      <para>Stel u voor: u bent penningmeester van sportvereniging "Zet 'm op".
+      In dit hoofdstuk laat ik zien hoe u een administratie opzet voor deze vereniging.</para>
+
+      <para>Kies in het menu "Bestand" voor de optie "Nieuwe boekhouding...". Het volgende
+      scherm verschijnt:</para>
+    
+      <screenshot>
+        <graphic fileref="images/screen-nieuwe-boekhouding.png"></graphic>
+      </screenshot>
+        
+      <para>Verander nu de omschrijving in iets wat duidelijk maakt dat de boekhouding
+      voor "Zet 'm op" is.</para>
+      
+      <para>De startdatum is de startdatum van het boekjaar. Gogo account
+      vult hier standaard 1 januari van het huidige jaar in.</para>
+      
+      <para>De munteenheid staat standaard op EUR, wat een afkorting is van EURO.
+      Wilt u een andere munteenheid gebruiken, vul dan hier de code in van de
+      munteenheid op basis van de ISO 4217 standaard. Zie bijvoorbeeld
+      <uri>http://nl.wikipedia.org/wiki/ISO_4217</uri> voor een overzicht van afkortingen.</para>
+      
+      <para>De volgende stap is om de posten van de balans en de verlies- en winstrekening
+      toe te voegen. Druk op de knop "Toevoegen post...". Het volgende scherm verschijnt:</para>
+
+      <screenshot>
+        <graphic fileref="images/screen-nieuwe-post.png"></graphic>
+      </screenshot>
+      
+      <para>Iedere post heeft een id, omschrijving en een type. Het id is een nummer.
+      Iedere post moet een uniek id hebben. Welke nummers u gebruikt mag u zelf weten,
+      maar de boekhouding wordt overzichtelijker door structuur aan te brengen in
+      de ids.</para>
+      
+      <para>Er zijn vier types posten:</para>
+      <itemizedlist>
+        <listitem>Activa</listitem>
+        <listitem>Passiva</listitem>
+        <listitem>Uitgaven</listitem>
+        <listitem>Inkomsten</listitem>
+      </itemizedlist>
+      
+      <para>Hieronder ziet u een voorbeeld van de posten van sportvereniging "Zet 'm op":</para>
+      <screenshot>
+        <graphic fileref="images/screen-voorbeeld-posten.png"></graphic>
+      </screenshot>
+      
     </section>
   </chapter>
 </book>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<cfbookkeeping currency="EUR" description="Boekhouding Zet 'm op" startdate="2011.01.01">
+    <assets>
+        <account id="100" name="Kas"/>
+        <account id="101" name="Betaalrekening"/>
+        <account id="102" name="Spaarrekening"/>
+        <account id="190" name="Debiteuren"/>
+    </assets>
+    <liabilities>
+        <account id="200" name="Eigen vermogen"/>
+        <account id="290" name="Crediteuren"/>
+    </liabilities>
+    <expenses>
+        <account id="400" name="Zaalhuur"/>
+    </expenses>
+    <revenues>
+        <account id="300" name="Contributie"/>
+    </revenues>
+    <parties/>
+    <journals/>
+    <invoices/>
+</cfbookkeeping>
