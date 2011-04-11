@@ -127,7 +127,7 @@
 		<itemizedlist>
        	  <listitem>Zelf te definiëren posten</listitem>
        	  <listitem>Journaal</listitem>
-       	  <listitem>Balans en winst- en verliesrekening</listitem>
+       	  <listitem>Balans en resultatenrekening</listitem>
        	  <listitem>Relaties die als debiteur of crediteur kunnen fungeren</listitem>
        	  <listitem>Facturen</listitem>
        	</itemizedlist>
@@ -223,11 +223,14 @@
   
   <chapter id="chapter-boekhouding-creeren">
     <title>Een boekhouding cre&euml;ren</title>
-    <section>
-	  <title>Een boekhouding cre&euml;ren</title>
+    <section id="section-boekhouding-creeren-inleiding">
+	  <title>Inleiding</title>
       <para>Stel u voor: u bent penningmeester van sportvereniging "Zet 'm op".
       In dit hoofdstuk laat ik zien hoe u een administratie opzet voor deze vereniging.</para>
-
+    </section>
+    <section id="section-algemene-instellingen">
+	  <title>Algemene instellingen</title>
+     
       <para>Kies in het menu "Bestand" voor de optie "Nieuwe boekhouding...". Het volgende
       scherm verschijnt:</para>
     
@@ -245,8 +248,11 @@
       Wilt u een andere munteenheid gebruiken, vul dan hier de code in van de
       munteenheid op basis van de ISO 4217 standaard. Zie bijvoorbeeld
       <uri>http://nl.wikipedia.org/wiki/ISO_4217</uri> voor een overzicht van afkortingen.</para>
-      
-      <para>De volgende stap is om de posten van de balans en de verlies- en winstrekening
+    </section>
+
+    <section id="section-posten-creeren">
+	  <title>Posten voor balans en resultatenrekening</title>
+      <para>De volgende stap is om de posten van de balans en de resultatenrekening
       toe te voegen. Druk op de knop "Toevoegen post...". Het volgende scherm verschijnt:</para>
 
       <screenshot>
@@ -270,7 +276,82 @@
       <screenshot>
         <graphic fileref="images/screen-voorbeeld-posten.png"></graphic>
       </screenshot>
+
+    </section>
+    <section id="section-startbalans">
+	  <title>Startbalans maken</title>
       
+      <para>Sluit nu het configuratie-tabblad door op het kruisje te klikken dat
+      staat voor "Configureren boekhouding". Het scherm ziet er als volgt uit:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-startbalans1.png"></graphic>
+      </screenshot>
+      
+      <para>Het tabblad en resultatenrekening is zichtbaar. De posten die we 
+      hebben gecre&euml;erd zijn zichtbaar in de balans en de resultatenrekening.</para>
+      
+      <para>De balans en resultatenrekening worden voor vandaag getoond. U ziet dat
+      dit scherm is gemaakt op 11 april 2011. Bovenin het tabblad staat een invoerveld
+      waarmee u de datum van de balans en resultatenrekening kunt aanpassen. Het invoerformaat
+      voor de datum is DD-MM-JJJJ. Met dit invoerveld kunt u altijd de boekhouding bekijken
+      op een willekeurige datum.</para>
+      
+      <para>Alle getallen in de balans zijn nul. Dat is voor de meeste verenigingen
+      echter geen realistische situatie. Wat ontbreekt is de startbalans: de beginsituatie
+      van het boekjaar.</para>
+      
+      <para>Gogo account is een eenvoudig boekhoudprogramma. Het kent geen speciale
+      functionaliteit om een startbalans te maken. We kunnen de startbalans namelijk
+      aanmaken met een journaalpost. Journaalposten zijn het middel om wijzigingen
+      in de boekhouding aan te brengen. We kunnen dus een startbalans maken
+      door een journaalpost aan te maken.</para>
+      
+      <para>Kies in het menu de optie "Bewereken" en dan "Toevoegen journaal...". Het volgende
+      scherm verschijnt:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-startbalans2.png"></graphic>
+      </screenshot>
+       
+      <para>In dit scherm moeten een aantal gegevens worden ingevuld:
+      id is een korte code of omschrijving van de journaalpost. Deze id hoeft niet 
+      uniek te zijn voor alle journaalposten. Gebruik bijvoorbeeld een afkorting
+      van een rekening gevolgd door het volgnummer van een bankafschrift voor
+      journaalposten die u op basis van dat bankafschrift toevoegt. Dan kunt u later
+      eenvoudig deze journaalposten terugvinden.</para>
+      
+      <para>De datum waarop de wijziging van de boekhouding plaatsvindt. Voor de startbalans
+      is het handig om de laatste dag voor aanvang van het boekjaar in te vullen.
+      In dit voorbeeld is dat 31 december 2010.</para>
+      
+      <para>Bij omschrijving kunt u een wat langere omschrijving van de journaalpost
+      invoeren.</para>
+      
+      <para>Bij een journaalpost worden bedragen aan grootboekrekeningen gedebiteerd
+      of gecrediteerd. Voor de startbalans moeten we voor iedere balanspost een bedrag
+      debiteren of crediteren. Gebruik hiervoor de knop "Voeg item toe...". Het volgende
+      scherm verschijnt dan:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-startbalans3.png"></graphic>
+      </screenshot>
+      
+      <para>Ik heb een aantal fictieve bedragen ingevuld voor een aantal journaalposten.
+      Ik heb bewust geen bedragen gedebiteerd of gecrediteerd aan debiteuren of crediteuren.
+      Hierop kom ik later terug. Hier is mijn voorbeeld:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-startbalans4.png"></graphic>
+      </screenshot>
+      
+      <para>Klik nu op de "Ok" knop. De startbalans is nu ingevoerd. Het scherm ziet
+      er nu als volgt uit:</para>
+
+      <screenshot>
+        <graphic fileref="images/screen-startbalans5.png"></graphic>
+      </screenshot>
+       
     </section>
   </chapter>
 </book>
