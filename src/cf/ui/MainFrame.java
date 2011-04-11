@@ -16,6 +16,7 @@
 */
 package cf.ui;
 
+import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -135,6 +136,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         URL url = ClassLoader.getSystemResource("icon-32x32.png");
         Image image = Toolkit.getDefaultToolkit().createImage(url);
         setIconImage(image);
+        
+        setMinimumSize(new Dimension(800, 600));
 	}
 
 	/**
