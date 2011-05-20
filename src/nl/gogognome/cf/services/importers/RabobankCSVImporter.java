@@ -1,12 +1,24 @@
-/**
- *
- */
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.cf.services.importers;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.Date;
@@ -16,6 +28,7 @@ import java.util.Locale;
 import nl.gogognome.csv.CsvFileParser;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
+import nl.gogognome.util.DateUtil;
 
 
 /**
@@ -30,8 +43,6 @@ public class RabobankCSVImporter {
 	private File csvFile;
 
 	private List<ImportedTransaction> transactions = new ArrayList<ImportedTransaction>();
-
-	private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMdd");
 
 	private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
@@ -96,7 +107,7 @@ public class RabobankCSVImporter {
 	private Date parseDate(String[] values) throws ParseException {
 		String dateString = values[7];
 		try {
-			return DATE_FORMAT.parse(dateString);
+			return DateUtil.parseDateYYYYMMDD(dateString);
 		} catch (java.text.ParseException e) {
 			throw new ParseException("\"" + dateString + "\" is not a valid date.", e);
 		}

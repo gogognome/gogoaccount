@@ -1,6 +1,19 @@
-/**
- *
- */
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.cf.services.importers;
 
 import java.util.Date;
@@ -8,6 +21,7 @@ import java.util.Date;
 import nl.gogognome.text.Amount;
 import nl.gogognome.text.AmountFormat;
 import nl.gogognome.text.TextResource;
+import nl.gogognome.util.DateUtil;
 
 /**
  * This class represents a transaction that has been imported.
@@ -47,6 +61,7 @@ public class ImportedTransaction {
 	public String toString() {
 		AmountFormat af =  TextResource.getInstance().getAmountFormat();
 		return af.formatAmount(amount) + ' ' + fromAccount + " (" + fromName + ") -> " +
-			toAccount + " (" + toName + ") at " + date + " (" + description + ")";
+			toAccount + " (" + toName + ") at " + DateUtil.formatDateYYYYMMDD(date) +
+			" (" + description + ")";
 	}
 }
