@@ -16,8 +16,8 @@
 */
 package cf.engine;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.util.ComparatorUtil;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.ComparatorUtil;
 
 /**
  * This class represents a single item of a journal.

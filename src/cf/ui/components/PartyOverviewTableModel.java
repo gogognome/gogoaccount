@@ -35,11 +35,11 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 
-import nl.gogognome.swing.SortedTableModel;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.swing.SortedTableModel;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Party;

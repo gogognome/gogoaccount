@@ -18,7 +18,7 @@ package cf.engine;
 
 import java.util.Date;
 
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This class represents search criteria for parties.

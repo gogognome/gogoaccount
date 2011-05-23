@@ -25,9 +25,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
-import nl.gogognome.framework.models.DateModel;
-import nl.gogognome.swing.DialogWithButtons;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.DialogWithButtons;
+import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.ui.components.PartiesOverviewTableModel;
 

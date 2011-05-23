@@ -20,10 +20,10 @@ import java.util.Date;
 
 import javax.swing.table.AbstractTableModel;
 
-import nl.gogognome.framework.models.DateModel;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Party;
 

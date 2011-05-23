@@ -50,18 +50,18 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
-import nl.gogognome.beans.DateSelectionBean;
-import nl.gogognome.framework.View;
-import nl.gogognome.framework.ViewDialog;
-import nl.gogognome.framework.models.DateModel;
-import nl.gogognome.swing.ActionWrapper;
-import nl.gogognome.swing.MessageDialog;
-import nl.gogognome.swing.SortedTable;
-import nl.gogognome.swing.SortedTableModel;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.swing.ActionWrapper;
+import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.SortedTable;
+import nl.gogognome.lib.swing.SortedTableModel;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Party;
@@ -369,7 +369,7 @@ public class PartiesView extends View {
     }
 
     /**
-     * @see nl.gogognome.framework.View#onClose()
+     * @see nl.gogognome.lib.swing.views.View#onClose()
      */
     @Override
     public void onClose() {

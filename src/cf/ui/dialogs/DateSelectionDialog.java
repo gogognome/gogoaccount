@@ -27,9 +27,9 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
 
-import nl.gogognome.swing.MessageDialog;
-import nl.gogognome.swing.OkCancelDialog;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.OkCancelDialog;
+import nl.gogognome.lib.text.TextResource;
 
 /**
  * This class implements a date selection dialog.

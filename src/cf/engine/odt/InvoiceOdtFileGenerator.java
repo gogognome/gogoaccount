@@ -42,13 +42,13 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import nl.gogognome.task.Task;
-import nl.gogognome.task.TaskProgressListener;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.xml.GNodeList;
-import nl.gogognome.xml.XmlUtil;
+import nl.gogognome.lib.task.Task;
+import nl.gogognome.lib.task.TaskProgressListener;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.xml.GNodeList;
+import nl.gogognome.lib.xml.XmlUtil;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

@@ -29,13 +29,13 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.framework.View;
-import nl.gogognome.swing.ButtonPanel;
-import nl.gogognome.swing.MessageDialog;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.ButtonPanel;
+import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.TextResource;
 
 /**
  * This view allows the user to edit a description and amount. It is typically used

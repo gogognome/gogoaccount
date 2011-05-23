@@ -35,11 +35,11 @@ import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
 
-import nl.gogognome.swing.ActionWrapper;
-import nl.gogognome.swing.DialogWithButtons;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.ActionWrapper;
+import nl.gogognome.lib.swing.DialogWithButtons;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.engine.PartySearchCriteria;

@@ -16,8 +16,8 @@
 */
 package cf.text;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.TextResource;
 
 /**
  * This class offers functionality to format texts. Specific subclasses

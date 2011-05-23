@@ -21,8 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;

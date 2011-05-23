@@ -31,12 +31,12 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import nl.gogognome.beans.DateSelectionBean;
-import nl.gogognome.framework.View;
-import nl.gogognome.framework.models.DateModel;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Party;
 

@@ -21,9 +21,9 @@ import java.util.Currency;
 
 import javax.swing.JTextField;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
 
 /**
  * This class implements a text field for <code>Amount</code>s.

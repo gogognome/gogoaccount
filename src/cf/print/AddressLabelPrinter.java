@@ -33,7 +33,7 @@ import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSizeName;
 
-import nl.gogognome.util.StringUtil;
+import nl.gogognome.lib.util.StringUtil;
 import cf.engine.Party;
 
 /**

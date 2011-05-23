@@ -27,10 +27,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
-import nl.gogognome.framework.View;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.TextResource;
 
 /**
  * This class shows information about the ClubFinance application.

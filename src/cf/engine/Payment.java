@@ -19,9 +19,9 @@ package cf.engine;
 import java.util.Calendar;
 import java.util.Date;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.util.DateUtil;
-import nl.gogognome.util.StringUtil;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.StringUtil;
 
 /**
  * This class specifies a payment.

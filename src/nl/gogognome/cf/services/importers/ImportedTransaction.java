@@ -18,10 +18,10 @@ package nl.gogognome.cf.services.importers;
 
 import java.util.Date;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This class represents a transaction that has been imported.

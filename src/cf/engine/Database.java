@@ -32,8 +32,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This class maintains all accounts, journals, debtors and

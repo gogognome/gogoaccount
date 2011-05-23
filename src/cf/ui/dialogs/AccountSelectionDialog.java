@@ -22,8 +22,8 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import nl.gogognome.swing.OkCancelDialog;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.OkCancelDialog;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.ui.components.AccountSelectionBean;

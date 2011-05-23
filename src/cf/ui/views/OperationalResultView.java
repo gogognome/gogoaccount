@@ -25,11 +25,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.beans.DateSelectionBean;
-import nl.gogognome.framework.View;
-import nl.gogognome.framework.models.DateModel;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.ui.components.OperationalResultComponent;
 

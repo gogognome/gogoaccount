@@ -25,10 +25,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import nl.gogognome.csv.CsvFileParser;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.csv.CsvFileParser;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.util.DateUtil;
 
 
 /**

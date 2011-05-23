@@ -22,9 +22,9 @@ import java.util.Locale;
 import java.util.Map;
 
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Account.Type;
 
 /**

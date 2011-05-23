@@ -16,7 +16,7 @@
 */
 package cf.ui.components;
 
-import nl.gogognome.swing.JComboBoxWithKeyboardInput;
+import nl.gogognome.lib.swing.JComboBoxWithKeyboardInput;
 import cf.engine.Account;
 import cf.engine.Database;
 

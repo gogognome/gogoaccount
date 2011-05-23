@@ -16,7 +16,7 @@
 */
 package nl.gogognome.cf.services;
 
-import nl.gogognome.text.Amount;
+import nl.gogognome.lib.text.Amount;
 import cf.engine.Account;
 
 /**

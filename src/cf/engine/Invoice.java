@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This class represents an invoice. An invoice consists of an amount that has to be paid

@@ -20,8 +20,8 @@ import java.util.Date;
 import java.util.Locale;
 
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
 
 /**
  * This class represents an operational result.

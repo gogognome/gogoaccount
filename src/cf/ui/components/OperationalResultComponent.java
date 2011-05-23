@@ -32,12 +32,12 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.framework.models.AbstractModel;
-import nl.gogognome.framework.models.DateModel;
-import nl.gogognome.framework.models.ModelChangeListener;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.models.AbstractModel;
+import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.models.ModelChangeListener;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;

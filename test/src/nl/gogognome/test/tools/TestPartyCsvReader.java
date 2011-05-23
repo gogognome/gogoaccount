@@ -19,15 +19,15 @@ package nl.gogognome.test.tools;
 import java.awt.print.PrinterException;
 import java.io.IOException;
 
-import nl.gogognome.csv.CsvFileParser;
-import nl.gogognome.csv.ui.CsvParseSettingsView;
-import nl.gogognome.framework.View;
-import nl.gogognome.framework.ViewContainer;
-import nl.gogognome.framework.ViewFrame;
-import nl.gogognome.framework.ViewListener;
-import nl.gogognome.print.LabelPrinter;
-import nl.gogognome.print.TextLabel;
-import nl.gogognome.print.ui.SimpleLabelSheetSetupView;
+import nl.gogognome.lib.csv.CsvFileParser;
+import nl.gogognome.lib.csv.ui.CsvParseSettingsView;
+import nl.gogognome.lib.print.LabelPrinter;
+import nl.gogognome.lib.print.TextLabel;
+import nl.gogognome.lib.print.ui.SimpleLabelSheetSetupView;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.swing.views.ViewContainer;
+import nl.gogognome.lib.swing.views.ViewFrame;
+import nl.gogognome.lib.swing.views.ViewListener;
 
 /**
  * Tests the class <code>PartyCsvReader</code>.

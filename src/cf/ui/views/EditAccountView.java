@@ -31,11 +31,11 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.framework.View;
-import nl.gogognome.swing.ButtonPanel;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.ButtonPanel;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Account.Type;
 

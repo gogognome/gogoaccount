@@ -25,12 +25,12 @@ import java.util.List;
 import java.util.Locale;
 
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.task.Task;
-import nl.gogognome.task.TaskProgressListener;
-import nl.gogognome.text.Amount;
-import nl.gogognome.text.AmountFormat;
-import nl.gogognome.text.TextResource;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.task.Task;
+import nl.gogognome.lib.task.TaskProgressListener;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Account;
 import cf.engine.Balance;
 import cf.engine.Database;

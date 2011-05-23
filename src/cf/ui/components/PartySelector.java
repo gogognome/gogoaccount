@@ -30,9 +30,9 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import nl.gogognome.swing.ActionWrapper;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.lib.swing.ActionWrapper;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
 import cf.engine.Party;
 import cf.ui.dialogs.PartySelectionDialog;
 

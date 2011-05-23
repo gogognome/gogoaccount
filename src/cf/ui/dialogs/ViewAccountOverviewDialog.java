@@ -29,8 +29,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import nl.gogognome.swing.DialogWithButtons;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.DialogWithButtons;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.ui.components.AccountOverviewTableModel;

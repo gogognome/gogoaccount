@@ -28,10 +28,10 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import nl.gogognome.framework.ViewDialog;
-import nl.gogognome.swing.ActionWrapper;
-import nl.gogognome.swing.SwingUtils;
-import nl.gogognome.swing.WidgetFactory;
+import nl.gogognome.lib.swing.ActionWrapper;
+import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.views.ViewDialog;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.ui.views.InvoiceEditAndSelectionView;

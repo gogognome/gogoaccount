@@ -33,11 +33,11 @@ import java.io.IOException;
 
 import javax.swing.SwingConstants;
 
-import nl.gogognome.csv.CsvFileParser;
-import nl.gogognome.csv.ui.CsvParseSettingsView;
-import nl.gogognome.framework.View;
-import nl.gogognome.framework.ViewFrame;
-import nl.gogognome.framework.ViewListener;
+import nl.gogognome.lib.csv.CsvFileParser;
+import nl.gogognome.lib.csv.ui.CsvParseSettingsView;
+import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.swing.views.ViewFrame;
+import nl.gogognome.lib.swing.views.ViewListener;
 
 /**
  * This class implements a tool that prints addresses on paper. It prints one address per sheet

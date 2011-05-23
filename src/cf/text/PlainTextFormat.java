@@ -16,7 +16,7 @@
 */
 package cf.text;
 
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.text.TextResource;
 
 /**
  * This class implements a <code>TextFormat</code> for plain text documents.

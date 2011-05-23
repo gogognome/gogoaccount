@@ -24,10 +24,10 @@ import java.util.Date;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import nl.gogognome.swing.DialogWithButtons;
-import nl.gogognome.swing.SortedTable;
-import nl.gogognome.swing.WidgetFactory;
-import nl.gogognome.text.TextResource;
+import nl.gogognome.lib.swing.DialogWithButtons;
+import nl.gogognome.lib.swing.SortedTable;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.ui.components.PartyOverviewTableModel;

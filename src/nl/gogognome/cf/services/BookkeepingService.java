@@ -21,8 +21,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.text.Amount;
-import nl.gogognome.util.DateUtil;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
