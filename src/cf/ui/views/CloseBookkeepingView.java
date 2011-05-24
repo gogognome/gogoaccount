@@ -24,13 +24,13 @@ import java.util.Date;
 import javax.swing.AbstractAction;
 import javax.swing.SwingConstants;
 
+import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.StringModel;
-import nl.gogognome.lib.swing.views.ValuesEditPanel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
