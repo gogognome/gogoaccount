@@ -166,7 +166,8 @@ public class InvoiceGeneratorView extends View {
         // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
         buttonPanel.add(wf.createButton("invoiceGeneratorView.addInvoices", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 onAddInvoicesToBookkeeping();
             }
         }));
@@ -179,6 +180,14 @@ public class InvoiceGeneratorView extends View {
         // Add panels to the view
         setLayout(new BorderLayout());
         add(templatePanel, BorderLayout.CENTER);
+
+        setBorder(new EmptyBorder(10, 10, 10, 10));
+    }
+
+    private void updateTemplateLinesPanelAndRepaint() {
+    	updateTemplateLinesPanel();
+        revalidate();
+        repaint();
     }
 
     private void updateTemplateLinesPanel() {
@@ -228,18 +237,16 @@ public class InvoiceGeneratorView extends View {
         }
 
         JButton newButton = wf.createButton("invoiceGeneratorView.new", new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 templateLines.add(new TemplateLine());
-                updateTemplateLinesPanel();
+                updateTemplateLinesPanelAndRepaint();
             }
         });
         templateLinesPanel.add(newButton,
                 SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0,
                         GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                         0, 0, 0, 0));
-
-        revalidate();
-        repaint();
     }
 
 	private class DeleteActionListener implements ActionListener {
@@ -254,10 +261,11 @@ public class InvoiceGeneratorView extends View {
 	        this.index = index;
 	    }
 
-        public void actionPerformed(ActionEvent event) {
+        @Override
+		public void actionPerformed(ActionEvent event) {
             TemplateLine line = templateLines.remove(index);
             radioButtonGroup.remove(line.rbAmountToBePaid);
-            updateTemplateLinesPanel();
+            updateTemplateLinesPanelAndRepaint();
         }
 	}
 
@@ -347,5 +355,4 @@ public class InvoiceGeneratorView extends View {
 	    MessageDialog.showMessage(this, "gen.titleMessage",
 	            TextResource.getInstance().getString("invoiceGeneratorView.messageSuccess"));
 	}
-
 }
