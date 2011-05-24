@@ -157,23 +157,27 @@ public class PartiesView extends View {
         // Create button panel
         WidgetFactory wf = WidgetFactory.getInstance();
         JButton addButton = wf.createButton("partiesView.addParty", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onAddParty();
             }
         });
 
         JButton editButton = wf.createButton("partiesView.editParty", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onEditParty();
             }
         });
         JButton deleteButton = wf.createButton("partiesView.deleteParty", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onDeleteParty();
             }
         });
         btSelect = wf.createButton("partiesView.selectParty", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onSelectParty();
             }
         });
@@ -283,7 +287,8 @@ public class PartiesView extends View {
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = wf.createAction("partiesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 onSearch();
             }
         });
@@ -331,7 +336,8 @@ public class PartiesView extends View {
         });
 
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent e) {
+            @Override
+			public void valueChanged(ListSelectionEvent e) {
                 int[] rows = table.getSelectedRows();
                 if (rows.length == 1) {
                     taRemarks.setText(partiesTableModel.getParty(rows[0]).getRemarks());
@@ -410,12 +416,14 @@ public class PartiesView extends View {
         if (birthDateModel.getDate() != null) {
             searchCriteria.setBirthDate(birthDateModel.getDate());
         }
-        if (cmbType.getSelectedIndex() > 0) {
+        if (cmbType != null && cmbType.getSelectedIndex() > 0) {
             searchCriteria.setType((String)cmbType.getSelectedItem());
         }
 
         partiesTableModel.setParties(database.getParties(searchCriteria));
-        table.getSelectionModel().setSelectionInterval(0, 0);
+        if (partiesTableModel.getRowCount() > 0) {
+        	table.getSelectionModel().setSelectionInterval(0, 0);
+        }
         table.getFocusableComponent().requestFocusInWindow();
 
         // Update the default button if the select button is present
@@ -568,21 +576,24 @@ public class PartiesView extends View {
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnCount()
          */
-        public int getColumnCount() {
+        @Override
+		public int getColumnCount() {
             return 8;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getRowCount()
          */
-        public int getRowCount() {
+        @Override
+		public int getRowCount() {
             return parties.length;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getValueAt(int, int)
          */
-        public Object getValueAt(int row, int col) {
+        @Override
+		public Object getValueAt(int row, int col) {
             switch(col) {
             case 0: return parties[row].getId();
             case 1: return parties[row].getName();
@@ -602,7 +613,8 @@ public class PartiesView extends View {
             }
         }
 
-        public int getColumnWidth(int column) {
+        @Override
+		public int getColumnWidth(int column) {
             switch (column) {
             case 0: return 40;
             case 1:
@@ -612,7 +624,8 @@ public class PartiesView extends View {
             }
         }
 
-        public Comparator<Object> getComparator(int column) {
+        @Override
+		public Comparator<Object> getComparator(int column) {
             switch (column) {
             case 5:
                 return new DateComparator();
@@ -620,12 +633,14 @@ public class PartiesView extends View {
             return null;
         }
 
-        public TableCellRenderer getRendererForColumn(int column) {
+        @Override
+		public TableCellRenderer getRendererForColumn(int column) {
             return null;
         }
 
         private static class DateComparator implements Comparator<Object> {
-            public int compare(Object o1, Object o2) {
+            @Override
+			public int compare(Object o1, Object o2) {
                 Date d1 = (Date) o1;
                 Date d2 = (Date) o2;
                 return DateUtil.compareDayOfYear(d1, d2);
