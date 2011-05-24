@@ -27,6 +27,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.TitledBorder;
 
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -157,7 +158,8 @@ public class InvoiceToOdtView extends View {
                 SwingUtils.createTextFieldGBConstraints(1, 0));
 
         JButton button = wf.createButton("gen.btSelectFile", new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfTemplateFileName.getText());
                 if (fileChooser.showOpenDialog(getParentWindow()) == JFileChooser.APPROVE_OPTION) {
                     tfTemplateFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
@@ -176,7 +178,8 @@ public class InvoiceToOdtView extends View {
             SwingUtils.createTextFieldGBConstraints(1, 1));
 
         button = wf.createButton("gen.btSelectFile", new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfOdtFileName.getText());
                 if (fileChooser.showOpenDialog(getParentWindow()) == JFileChooser.APPROVE_OPTION) {
                     tfOdtFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
@@ -217,13 +220,15 @@ public class InvoiceToOdtView extends View {
         // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
         buttonPanel.add(WidgetFactory.getInstance().createButton("invoiceToOdtView.generate", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 handleOk();
             }
         }));
         buttonPanel.add(WidgetFactory.getInstance().createButton("gen.cancel", closeAction));
         panel.add(buttonPanel, SwingUtils.createPanelGBConstraints(1, 6));
 
+        panel.setBorder(new TitledBorder(getTitle()));
         add(panel);
     }
 }
