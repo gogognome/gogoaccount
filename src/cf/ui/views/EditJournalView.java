@@ -44,7 +44,6 @@ import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
@@ -187,31 +186,36 @@ public class EditJournalView extends View {
 
         // Add buttons
         JButton addButton = wf.createButton("ajd.addItem", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleAddButtonPressed();
             }
         });
 
         JButton editButton = wf.createButton("ajd.editItem", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleEditButtonPressed();
             }
         });
 
         JButton deleteButton = wf.createButton("ajd.deleteItem", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleDeleteButtonPressed();
             }
         });
 
         JButton okButton = wf.createButton("gen.ok", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleOkButtonPressed();
             }
         });
 
         JButton okAndNextButton = wf.createButton("ajd.okAndNextJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleOkAndNextButtonPressed();
             }
         });
@@ -331,20 +335,22 @@ public class EditJournalView extends View {
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() {
     	JournalItem defaultItem = null;
-        if (itemsTableModel.getRowCount() > 0) {
-        	// Create dialog with default values that make the journal balance.
-        	Amount debetAmount = Amount.getZero(database.getCurrency());
-        	for (JournalItem item : itemsTableModel.getItems()) {
-        		if (item.isDebet()) {
-        			debetAmount = debetAmount.add(item.getAmount());
-        		} else {
-        			debetAmount = debetAmount.subtract(item.getAmount());
-        		}
-        	}
-        	boolean debet = debetAmount.isNegative();
-        	defaultItem = new JournalItem(debet ? debetAmount.negate() : debetAmount,
-        			database.getAllAccounts()[0], debet, null, null);
-        }
+
+    	// Default values are not handy in practice.
+//        if (itemsTableModel.getRowCount() > 0) {
+//        	// Create dialog with default values that make the journal balance.
+//        	Amount debetAmount = Amount.getZero(database.getCurrency());
+//        	for (JournalItem item : itemsTableModel.getItems()) {
+//        		if (item.isDebet()) {
+//        			debetAmount = debetAmount.add(item.getAmount());
+//        		} else {
+//        			debetAmount = debetAmount.subtract(item.getAmount());
+//        		}
+//        	}
+//        	boolean debet = debetAmount.isNegative();
+//        	defaultItem = new JournalItem(debet ? debetAmount.negate() : debetAmount,
+//        			database.getAllAccounts()[0], debet, null, null);
+//        }
         EditJournalItemDialog dialog = new EditJournalItemDialog(this, database, "ajd.addJournalItem", defaultItem);
         dialog.showDialog();
         JournalItem item = dialog.getEnteredJournalItem();
