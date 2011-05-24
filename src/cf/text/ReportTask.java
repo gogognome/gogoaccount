@@ -16,7 +16,6 @@
 */
 package cf.text;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -39,7 +38,6 @@ import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.OperationalResult;
 import cf.engine.Party;
-import cf.pdf.PdfLatex;
 
 /**
  * This class generates reports in a text-format.
@@ -51,8 +49,7 @@ import cf.pdf.PdfLatex;
  */
 public class ReportTask implements Task {
     public final static int RP_TXT = 0;
-    public final static int RP_PDF = 1;
-    public final static int RP_HTML = 2;
+    public final static int RP_HTML = 1;
 
     /** The locale used to format the report. */
     private Locale locale;
@@ -98,17 +95,14 @@ public class ReportTask implements Task {
      * @throws IOException if an I/O exception occurs
      * @throws InterruptedException if the conversion from LaTeX to PDF fails
      */
-    public Object execute(TaskProgressListener progressListener) throws Exception {
+    @Override
+	public Object execute(TaskProgressListener progressListener) throws Exception {
     	this.progressListener = progressListener;
     	progressListener.onProgressUpdate(0);
         try {
 	        switch(fileType) {
 	            case RP_TXT:
 	                textFormat = new PlainTextFormat(TextResource.getInstance());
-	                break;
-	            case RP_PDF:
-	                textFormat = new LatexTextFormat(TextResource.getInstance());
-	                fileName = PdfLatex.getTexFileName(fileName);
 	                break;
 	            case RP_HTML:
 	                textFormat = new HtmlTextFormat(TextResource.getInstance());
@@ -127,10 +121,6 @@ public class ReportTask implements Task {
             throw e;
         }
 
-        progressListener.onProgressUpdate(90);
-        if (fileType == RP_PDF) {
-            PdfLatex.convertTexToPdf(new File(fileName), (new File(fileName)).getParentFile());
-        }
         progressListener.onProgressUpdate(100);
         return null;
     }
