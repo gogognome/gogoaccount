@@ -69,6 +69,7 @@ import cf.ui.views.CloseBookkeepingView;
 import cf.ui.views.ConfigureBookkeepingView;
 import cf.ui.views.EditJournalView;
 import cf.ui.views.EditJournalsView;
+import cf.ui.views.ImportBankStatementView;
 import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.InvoiceToOdtView;
 import cf.ui.views.OperationalResultView;
@@ -103,6 +104,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
     /** The view for editing parties. */
     private PartiesView partiesView;
 
+    private ImportBankStatementView importBankStatementView;
+
     /** The view to configure a bookkeeping. */
     private ConfigureBookkeepingView configureBookkeepingView;
 
@@ -136,7 +139,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         URL url = ClassLoader.getSystemResource("icon-32x32.png");
         Image image = Toolkit.getDefaultToolkit().createImage(url);
         setIconImage(image);
-        
+
         setMinimumSize(new Dimension(800, 600));
 	}
 
@@ -175,6 +178,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		JMenuItem miSaveEdition = wf.createMenuItem("mi.saveBookkeeping", this);
 		JMenuItem miSaveEditionAs = wf.createMenuItem("mi.saveBookkeepingAs", this);
         JMenuItem miCloseBookkeeping = wf.createMenuItem("mi.closeBookkeeping", this);
+        JMenuItem miImportBankStatement = wf.createMenuItem("mi.importBankStatement", this);
 		JMenuItem miExit = wf.createMenuItem("mi.exit", this);
 
 		// the edit menu
@@ -199,10 +203,13 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 		fileMenu.add(miNewEdition);
 		fileMenu.add(miOpenEdition);
-		fileMenu.add(miConfigureBookkeeping);
 		fileMenu.add(miSaveEdition);
 		fileMenu.add(miSaveEditionAs);
         fileMenu.add(miCloseBookkeeping);
+        fileMenu.addSeparator();
+		fileMenu.add(miConfigureBookkeeping);
+        fileMenu.add(miImportBankStatement);
+        fileMenu.addSeparator();
 		fileMenu.add(miExit);
 
 		editMenu.add(miAddJournal);
@@ -244,6 +251,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
 		if ("mi.saveBookkeepingAs".equals(command)) { handleSaveBookeepingAs(); }
         if ("mi.closeBookkeeping".equals(command)) { handleCloseBookkeeping(); }
+        if ("mi.importBankStatement".equals(command)) { handleImportBankStatement(); }
 		if ("mi.exit".equals(command)) { handleExit(); }
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
 		if ("mi.viewBalance".equals(command)) { handleViewBalance(); }
@@ -459,6 +467,22 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             } catch (CreationException e) {
                 MessageDialog.showMessage(this, "gen.error", e.getMessage());
             }
+        }
+	}
+
+	private void handleImportBankStatement() {
+        if (importBankStatementView == null) {
+            importBankStatementView = new ImportBankStatementView(database);
+            importBankStatementView.addViewListener(new ViewListener() {
+                public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    importBankStatementView = null;
+                }
+            });
+            viewTabbedPane.openView(importBankStatementView);
+            viewTabbedPane.selectView(importBankStatementView);
+        } else {
+            viewTabbedPane.selectView(importBankStatementView);
         }
 	}
 

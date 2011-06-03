@@ -64,4 +64,33 @@ public class ImportedTransaction {
 			toAccount + " (" + toName + ") at " + DateUtil.formatDateYYYYMMDD(date) +
 			" (" + description + ")";
 	}
+
+	public String getFromAccount() {
+		return fromAccount;
+	}
+
+	public String getFromName() {
+		return fromName;
+	}
+
+	public Amount getAmount() {
+		return amount;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public String getToAccount() {
+		return toAccount;
+	}
+
+	public String getToName() {
+		return toName;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
 }
