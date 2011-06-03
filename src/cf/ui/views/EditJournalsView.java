@@ -65,7 +65,7 @@ import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.ItemsTableModel;
 
 /**
- * This class implements the Edit journals view.
+ * This class allows the user to browse the journals and to edit individual journals.
  *
  * @author Sander Kooijmans
  */
