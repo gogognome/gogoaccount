@@ -17,18 +17,17 @@
 package cf.ui.components;
 
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -70,26 +69,21 @@ public class InvoiceSelector extends JPanel {
         tfDescription.setEditable(false);
         tfDescription.setFocusable(false);
 
-        Dimension dimension = new Dimension(21, 21);
-        ActionWrapper actionWrapper = wf.createAction("gen.btSelectInvoice");
-        btSelect = new JButton(actionWrapper);
-        btSelect.setText(null);
-        btSelect.setPreferredSize(dimension);
-        actionWrapper.setAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+        Action action = new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
                 selectInvoice();
-            }
-        });
+			}
+		};
+		btSelect = wf.createIconButton("gen.btSelectInvoice", action, 21);
 
-        actionWrapper = wf.createAction("gen.btClearInvoice");
-        btClear = new JButton(actionWrapper);
-        btClear.setText(null);
-        btClear.setPreferredSize(dimension);
-        actionWrapper.setAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+		action = new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
                 setSelectedInvoice(null);
-            }
-        });
+			}
+		};
+		btClear = wf.createIconButton("gen.btClearInvoice", action, 21);
 
         add(tfDescription, SwingUtils.createTextFieldGBConstraints(0, 0));
         add(btSelect, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0,
