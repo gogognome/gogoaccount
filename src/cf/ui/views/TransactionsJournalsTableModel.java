@@ -33,7 +33,7 @@ class TransactionsJournalsTableModel extends AbstractListSortedTableModel<Transa
 	private Database database;
 
     private final static ColumnDefinition DATE =
-        new ColumnDefinition("importBankStatementView.date", Date.class, 50, null, null);
+        new ColumnDefinition("importBankStatementView.date", Date.class, 70, null, null);
 
     private final static ColumnDefinition FROM_ACCOUNT =
         new ColumnDefinition("importBankStatementView.fromAccount", String.class, 100, null, null);
@@ -78,7 +78,7 @@ class TransactionsJournalsTableModel extends AbstractListSortedTableModel<Transa
         	AmountFormat af = TextResource.getInstance().getAmountFormat();
             return af.formatAmount(getRow(rowIndex).getImportedTransaction().getAmount());
         } else if (DESCRIPTION1.equals(colDef)) {
-            return getRow(rowIndex).getImportedTransaction().getToAccount();
+            return getRow(rowIndex).getImportedTransaction().getDescription();
         } else if (ID.equals(colDef)) {
             return getRow(rowIndex).getJournal() != null ? getRow(rowIndex).getJournal().getId() : null;
         } else if (DESCRIPTION2.equals(colDef)) {

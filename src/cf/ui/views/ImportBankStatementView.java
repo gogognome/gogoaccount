@@ -17,9 +17,10 @@
 package cf.ui.views;
 
 import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,13 +39,17 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
+import nl.gogognome.cf.services.importers.ImportedTransaction;
+import nl.gogognome.cf.services.importers.RabobankCSVImporter;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SortedTable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.FileSelectionModel;
+import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
@@ -63,7 +68,7 @@ import cf.ui.dialogs.ItemsTableModel;
  *
  * @author Sander Kooijmans
  */
-public class ImportBankStatementView extends View {
+public class ImportBankStatementView extends View implements ModelChangeListener {
 
     private FileSelectionModel fileSelectionModel = new FileSelectionModel(null);
 
@@ -79,8 +84,12 @@ public class ImportBankStatementView extends View {
     /** The table model for the journals. */
     private TransactionsJournalsTableModel transactionJournalsTableModel;
 
+    private JButton importButton;
+
     /** The database. */
     Database database;
+
+    private ValuesEditPanel vep;
 
 	/**
 	 * Creates the view.
@@ -98,28 +107,29 @@ public class ImportBankStatementView extends View {
     public void onInit() {
 		WidgetFactory wf = WidgetFactory.getInstance();
 
-		ValuesEditPanel vep = new ValuesEditPanel();
+		vep = new ValuesEditPanel();
 		vep.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
 //		vep.addField("importBankStatementView.typeOfBankStatement");
 
 		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
-		buttonPanel.add(wf.createButton("importBankStatementView.import", new AbstractAction() {
+		importButton = wf.createButton("importBankStatementView.import", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				handleImport();
 			}
-		}));
+		});
+		buttonPanel.add(importButton);
 
 		JPanel importPanel = new JPanel(new BorderLayout());
 		importPanel.add(vep, BorderLayout.NORTH);
 		importPanel.add(buttonPanel, BorderLayout.SOUTH);
-		importPanel.setBorder(wf.createTitleBorder("importBankStatementView.importSettings"));
+		importPanel.setBorder(wf.createTitleBorderWithMargin("importBankStatementView.importSettings"));
 
 		// Create table of journals
 		transactionJournalsTableModel = new TransactionsJournalsTableModel(
 				Collections.<Transaction>emptyList(), database);
 		journalsTable = WidgetFactory.getInstance().createSortedTable(transactionJournalsTableModel);
-        journalsTable.setTitle(TextResource.getInstance().getString("importBankStatementView.transactionsJournals"));
+        journalsTable.setTitle("importBankStatementView.transactionsJournals");
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
@@ -197,27 +207,28 @@ public class ImportBankStatementView extends View {
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
 		tablesPanel.add(journalsTable.getComponent(),
-            SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 10, 10, 10, 10));
+				SwingUtils.createPanelGBConstraints(0, 1));
 
         JScrollPane scrollPane = new JScrollPane(itemsTable);
-        tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
+        tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 2));
 
         setLayout(new BorderLayout());
         add(importPanel, BorderLayout.NORTH);
 		add(tablesPanel, BorderLayout.CENTER);
         add(buttonsPanel, BorderLayout.SOUTH);
 
-        journalsTable.selectFirstRow();
+        fileSelectionModel.addModelChangeListener(this);
+        modelChanged(fileSelectionModel);
 	}
 
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("editJournalsView.title");
+        return TextResource.getInstance().getString("importBankStatementView.title");
     }
 
     @Override
     public void onClose() {
+    	vep.deinitialize();
         journalsTable = null;
         transactionJournalsTableModel = null;
     }
@@ -234,11 +245,29 @@ public class ImportBankStatementView extends View {
     }
 
 	private void handleImport() {
-		// TODO Auto-generated method stub
-
+		File file = fileSelectionModel.getFile();
+		try {
+			RabobankCSVImporter importer = new RabobankCSVImporter(file);
+			List<ImportedTransaction> transactions = importer.importTransactions();
+			fileSelectionModel.setEnabled(false, this);
+			importButton.setEnabled(false);
+			addTransactionsToTable(transactions);
+		} catch (FileNotFoundException e) {
+			MessageDialog.showErrorMessage(this,
+					"importBankStatementView.fileNotFound", file.getAbsoluteFile());
+		} catch (Exception e) {
+			MessageDialog.showErrorMessage(this, e,
+					"importBankStatementView.problemWhileImportingTransactions");
+		}
 	}
 
-    /**
+    private void addTransactionsToTable(List<ImportedTransaction> transactions) {
+    	for (ImportedTransaction t : transactions) {
+    		transactionJournalsTableModel.addRow(new Transaction(t, null));
+    	}
+	}
+
+	/**
      * This method lets the user edit the selected journal.
      */
     private void handleEditItem() {
@@ -326,5 +355,14 @@ public class ImportBankStatementView extends View {
 //            }
 //        }
     }
+
+	@Override
+	public void modelChanged(AbstractModel model) {
+		if (model == fileSelectionModel) {
+			importButton.setEnabled(fileSelectionModel.getFile() != null
+					&& fileSelectionModel.getFile().isFile());
+		}
+
+	}
 
 }
