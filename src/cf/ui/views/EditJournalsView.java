@@ -108,7 +108,7 @@ public class EditJournalsView extends View {
 		// Create table of journals
         journalsTableModel = new JournalsTableModel(database);
 		journalsTable = WidgetFactory.getInstance().createSortedTable(journalsTableModel);
-        journalsTable.setTitle(TextResource.getInstance().getString("editJournalsView.journals"));
+        journalsTable.setTitle("editJournalsView.journals");
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);

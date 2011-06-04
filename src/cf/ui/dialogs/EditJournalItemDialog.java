@@ -189,8 +189,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
                     TextResource.getInstance().getString("ejid.invalidAmount"));
             } else {
                 assert parentView != null;
-                MessageDialog.showMessage(parentView, "gen.titleError",
-                    TextResource.getInstance().getString("ejid.invalidAmount"));
+                MessageDialog.showErrorMessage(parentView, "ejid.invalidAmount");
             }
             return;
         }
