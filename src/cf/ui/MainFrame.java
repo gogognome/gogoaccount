@@ -81,6 +81,11 @@ import cf.ui.views.PartiesView;
  * @author Sander Kooijmans
  */
 public class MainFrame extends JFrame implements ActionListener, DatabaseListener {
+
+	static {
+		TextResource.getInstance().loadResourceBundle("stringresources");
+	}
+
     private static final long serialVersionUID = 1L;
 
     /** The current database of the application. */
@@ -242,6 +247,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * This method is invoked when an action occurs.
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
+	@Override
 	public void actionPerformed(ActionEvent e)
 	{
 		String command = e.getActionCommand();
@@ -377,6 +383,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		    TextResource tr = TextResource.getInstance();
 			FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleOpenBookkeeping"), FileDialog.LOAD);
 			fileDialog.setFilenameFilter(new FilenameFilter() {
+				@Override
 				public boolean accept(File dir, String name) {
 					File compositeName = new File(dir,name);
 					return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } }
@@ -398,7 +405,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    if (configureBookkeepingView == null) {
 	    	configureBookkeepingView = new ConfigureBookkeepingView(database);
 	    	configureBookkeepingView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     configureBookkeepingView = null;
                 }
@@ -430,6 +438,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    TextResource tr = TextResource.getInstance();
 		FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleSaveAs"), FileDialog.SAVE);
 		fileDialog.setFilenameFilter(new FilenameFilter() {
+			@Override
 			public boolean accept(File dir, String name) {
 				File compositeName = new File(dir,name);
 				return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } }
@@ -474,7 +483,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if (importBankStatementView == null) {
             importBankStatementView = new ImportBankStatementView(database);
             importBankStatementView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     importBankStatementView = null;
                 }
@@ -555,7 +565,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if (balanceAndOperationResultView == null) {
             balanceAndOperationResultView = new BalanceAndOperationResultView(database);
             balanceAndOperationResultView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     balanceAndOperationResultView = null;
                 }
@@ -571,7 +582,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    if (balanceView == null) {
 	        balanceView = new BalanceView(database);
             balanceView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     balanceView = null;
                 }
@@ -587,7 +599,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    if (operationalResultView == null) {
 	        operationalResultView = new OperationalResultView(database);
             operationalResultView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     operationalResultView = null;
                 }
@@ -603,7 +616,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if (partiesView == null) {
             partiesView = new PartiesView(database, false);
             partiesView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     partiesView = null;
                 }
@@ -685,7 +699,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             if (editJournalsView == null) {
                 editJournalsView = new EditJournalsView(database);
                 editJournalsView.addViewListener(new ViewListener() {
-                    public void onViewClosed(View view) {
+                    @Override
+					public void onViewClosed(View view) {
                         view.removeViewListener(this);
                         editJournalsView = null;
                     }
@@ -704,7 +719,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if (invoiceToOdtView == null) {
             invoiceToOdtView = new InvoiceToOdtView(database);
             invoiceToOdtView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     invoiceToOdtView = null;
                 }
@@ -735,7 +751,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if (invoiceGeneratorView == null) {
             invoiceGeneratorView = new InvoiceGeneratorView(database);
             invoiceGeneratorView.addViewListener(new ViewListener() {
-                public void onViewClosed(View view) {
+                @Override
+				public void onViewClosed(View view) {
                     view.removeViewListener(this);
                     invoiceGeneratorView = null;
                 }
@@ -757,7 +774,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
      * This method is called when the database has changed.
      * @param database the database that has changed
      */
-    public void databaseChanged(Database database) {
+    @Override
+	public void databaseChanged(Database database) {
         setTitle(createTitle());
     }
 }
