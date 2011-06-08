@@ -41,6 +41,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
@@ -147,7 +148,8 @@ public class EditJournalsView extends View {
 		// Let items table be updated when another row is selected in the journals table.
 		final ListSelectionModel rowSM = journalsTable.getSelectionModel();
 		rowSM.addListSelectionListener(new ListSelectionListener() {
-		    public void valueChanged(ListSelectionEvent e) {
+		    @Override
+			public void valueChanged(ListSelectionEvent e) {
 		        //Ignore extra messages.
 		        if (e.getValueIsAdjusting()) { return; }
 
@@ -162,21 +164,24 @@ public class EditJournalsView extends View {
         buttonsPanel.setOpaque(false);
 
 		JButton editButton = wf.createButton("ejd.editJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 handleEditItem();
             }
 		});
 		buttonsPanel.add(editButton);
 
 		JButton addButton = wf.createButton("ejd.addJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 handleAddItem();
             }
 		});
 		buttonsPanel.add(addButton);
 
 		JButton deleteButton = wf.createButton("ejd.deleteJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 handleDeleteItem();
             }
 		});
@@ -341,35 +346,40 @@ public class EditJournalsView extends View {
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnCount()
          */
-        public int getColumnCount() {
+        @Override
+		public int getColumnCount() {
             return 4;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getRowCount()
          */
-        public int getRowCount() {
+        @Override
+		public int getRowCount() {
             return journals.size();
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#isCellEditable(int, int)
          */
-        public boolean isCellEditable(int row, int column) {
+        @Override
+		public boolean isCellEditable(int row, int column) {
             return false;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnClass(int)
          */
-        public Class<?> getColumnClass(int column) {
+        @Override
+		public Class<?> getColumnClass(int column) {
             return column == 0 ? java.util.Date.class : String.class;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getValueAt(int, int)
          */
-        public Object getValueAt(int row, int col) {
+        @Override
+		public Object getValueAt(int row, int col) {
             Journal journal = journals.get(row);
             Object result = null;
             switch(col) {
@@ -395,13 +405,15 @@ public class EditJournalsView extends View {
         /**
          * @see javax.swing.table.TableModel#setValueAt(Object, int, int)
          */
-        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        @Override
+		public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnName(int)
          */
-        public String getColumnName(int col) {
+        @Override
+		public String getColumnName(int col) {
             String id = null;
             switch(col) {
             case 0:
@@ -422,14 +434,16 @@ public class EditJournalsView extends View {
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#addTableModelListener(javax.swing.event.TableModelListener)
          */
-        public void addTableModelListener(TableModelListener listener) {
+        @Override
+		public void addTableModelListener(TableModelListener listener) {
             journalsTableModelListeners.add(listener);
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#removeTableModelListener(javax.swing.event.TableModelListener)
          */
-        public void removeTableModelListener(TableModelListener listener) {
+        @Override
+		public void removeTableModelListener(TableModelListener listener) {
             journalsTableModelListeners.remove(listener);
         }
 
@@ -444,7 +458,8 @@ public class EditJournalsView extends View {
             }
         }
 
-        public int getColumnWidth(int column) {
+        @Override
+		public int getColumnWidth(int column) {
             switch (column) {
             case 0:
             case 1:
@@ -460,7 +475,8 @@ public class EditJournalsView extends View {
             }
         }
 
-        public TableCellRenderer getRendererForColumn(int column) {
+        @Override
+		public TableCellRenderer getRendererForColumn(int column) {
             switch (column) {
             case 0:
                 return new DefaultTableCellRenderer() {
@@ -474,14 +490,21 @@ public class EditJournalsView extends View {
             }
         }
 
-        public Comparator<Object> getComparator(int column) {
+        @Override
+        public TableCellEditor getEditorForColumn(int column) {
+        	return null;
+        }
+
+        @Override
+		public Comparator<Object> getComparator(int column) {
             return null;
         }
 
         /**
          * @see DatabaseListener#databaseChanged(Database)
          */
-        public void databaseChanged(Database db) {
+        @Override
+		public void databaseChanged(Database db) {
             journals = database.getJournals();
             notifyListeners(new TableModelEvent(this));
         }

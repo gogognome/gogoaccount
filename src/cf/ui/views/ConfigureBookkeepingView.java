@@ -125,8 +125,11 @@ public class ConfigureBookkeepingView extends View {
         generalSettingsPanel.add(tfDescription,
             SwingUtils.createTextFieldGBConstraints(1, row));
         tfDescription.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
 			public void removeUpdate(DocumentEvent e) { onDescriptionChanged(); }
+			@Override
 			public void insertUpdate(DocumentEvent e) { onDescriptionChanged(); }
+			@Override
 			public void changedUpdate(DocumentEvent e) { onDescriptionChanged(); }
 		});
         row++;
@@ -137,6 +140,7 @@ public class ConfigureBookkeepingView extends View {
         generalSettingsPanel.add(dsbStartDate,
             SwingUtils.createTextFieldGBConstraints(1, row));
         startDateModel.addModelChangeListener(new ModelChangeListener() {
+			@Override
 			public void modelChanged(AbstractModel model) {
 				onStartDateChanged();
 			}
@@ -150,8 +154,11 @@ public class ConfigureBookkeepingView extends View {
         generalSettingsPanel.add(tfCurrency,
             SwingUtils.createLabelGBConstraints(1, row));
         tfCurrency.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
 			public void removeUpdate(DocumentEvent e) { onCurrencyChanged(); }
+			@Override
 			public void insertUpdate(DocumentEvent e) { onCurrencyChanged(); }
+			@Override
 			public void changedUpdate(DocumentEvent e) { onCurrencyChanged(); }
 		});
         row++;
@@ -165,6 +172,7 @@ public class ConfigureBookkeepingView extends View {
         table = wf.createSortedTable(tableModel, JTable.AUTO_RESIZE_OFF);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			@Override
 			public void valueChanged(ListSelectionEvent e) {
 				updateButtonState();
 			}
@@ -173,18 +181,21 @@ public class ConfigureBookkeepingView extends View {
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         buttonPanel.add(wf.createButton("ConfigureBookkeepingView.addAccount", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onAddAccount();
             }
         }));
         editAccountButton = wf.createButton("ConfigureBookkeepingView.editAccount", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onEditAccount();
             }
         });
         buttonPanel.add(editAccountButton);
         deleteAccountButton = wf.createButton("ConfigureBookkeepingView.deleteAccount", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onDeleteAccount();
             }
         });
@@ -314,16 +325,16 @@ public class ConfigureBookkeepingView extends View {
     private static class AccountTableModel extends AbstractListSortedTableModel<AccountDefinition> {
 
         private final static ColumnDefinition ID =
-            new ColumnDefinition("ConfigureBookkeepingView.id", String.class, 50, null, null);
+            new ColumnDefinition("ConfigureBookkeepingView.id", String.class, 50);
 
         private final static ColumnDefinition NAME =
-            new ColumnDefinition("ConfigureBookkeepingView.name", String.class, 400, null, null);
+            new ColumnDefinition("ConfigureBookkeepingView.name", String.class, 400);
 
         private final static ColumnDefinition USED =
-            new ColumnDefinition("ConfigureBookkeepingView.used", Icon.class, 50, null, null);
+            new ColumnDefinition("ConfigureBookkeepingView.used", Icon.class, 50);
 
         private final static ColumnDefinition TYPE =
-            new ColumnDefinition("ConfigureBookkeepingView.type", String.class, 150, null, null);
+            new ColumnDefinition("ConfigureBookkeepingView.type", String.class, 150);
 
         private final static List<ColumnDefinition> COLUMN_DEFINITIONS = Arrays.asList(
             ID, NAME, USED, TYPE
@@ -334,7 +345,8 @@ public class ConfigureBookkeepingView extends View {
         }
 
         /** {@inheritDoc} */
-        public Object getValueAt(int rowIndex, int columnIndex) {
+        @Override
+		public Object getValueAt(int rowIndex, int columnIndex) {
             ColumnDefinition colDef = getColumnDefinition(columnIndex);
             if (ID.equals(colDef)) {
                 return getRow(rowIndex).account.getId();

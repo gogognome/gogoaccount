@@ -41,6 +41,7 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import nl.gogognome.lib.swing.ActionWrapper;
@@ -153,7 +154,8 @@ public class InvoiceEditAndSelectionView extends View {
 //            }
 //        });
         btSelect = wf.createButton("invoicesView.selectInvoice", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 onSelectInvoice();
             }
         });
@@ -224,7 +226,8 @@ public class InvoiceEditAndSelectionView extends View {
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = wf.createAction("invoicesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 onSearch();
             }
         });
@@ -248,7 +251,8 @@ public class InvoiceEditAndSelectionView extends View {
         JScrollPane scrollPane = new JScrollPane(table.getComponent());
 
         Action selectionAction = new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 if (selectioEnabled) {
                     onSelectInvoice();
 //                } else {
@@ -399,21 +403,24 @@ public class InvoiceEditAndSelectionView extends View {
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnCount()
          */
-        public int getColumnCount() {
+        @Override
+		public int getColumnCount() {
             return 4;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getRowCount()
          */
-        public int getRowCount() {
+        @Override
+		public int getRowCount() {
             return invoices.length;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getValueAt(int, int)
          */
-        public Object getValueAt(int row, int col) {
+        @Override
+		public Object getValueAt(int row, int col) {
             switch(col) {
             case 0: return invoices[row].getId();
             case 1: return invoices[row].getPayingParty().getName();
@@ -424,7 +431,8 @@ public class InvoiceEditAndSelectionView extends View {
             }
         }
 
-        public int getColumnWidth(int column) {
+        @Override
+		public int getColumnWidth(int column) {
             switch (column) {
             case 0:
                 return 40;
@@ -437,7 +445,8 @@ public class InvoiceEditAndSelectionView extends View {
             return 0;
         }
 
-        public Comparator<Object> getComparator(int column) {
+        @Override
+		public Comparator<Object> getComparator(int column) {
             switch (column) {
             case 3:
                 return new DateComparator();
@@ -445,13 +454,20 @@ public class InvoiceEditAndSelectionView extends View {
             return null;
         }
 
-        public TableCellRenderer getRendererForColumn(int column) {
+        @Override
+		public TableCellRenderer getRendererForColumn(int column) {
             return null;
+        }
+
+        @Override
+        public TableCellEditor getEditorForColumn(int column) {
+        	return null;
         }
     }
 
     private static class DateComparator implements Comparator<Object> {
-        public int compare(Object o1, Object o2) {
+        @Override
+		public int compare(Object o1, Object o2) {
             Date d1 = (Date) o1;
             Date d2 = (Date) o2;
             return DateUtil.compareDayOfYear(d1, d2);

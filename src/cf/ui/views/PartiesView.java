@@ -48,6 +48,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
@@ -636,6 +637,11 @@ public class PartiesView extends View {
         @Override
 		public TableCellRenderer getRendererForColumn(int column) {
             return null;
+        }
+
+        @Override
+        public TableCellEditor getEditorForColumn(int column) {
+        	return null;
         }
 
         private static class DateComparator implements Comparator<Object> {

@@ -33,6 +33,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
 import nl.gogognome.lib.swing.SortedTableModel;
@@ -109,7 +110,8 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
 
         // Sort invoices on date
         Arrays.sort(invoices, new Comparator<Invoice>() {
-            public int compare(Invoice o1, Invoice o2) {
+            @Override
+			public int compare(Invoice o1, Invoice o2) {
                 return DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate());
             }
         });
@@ -178,21 +180,24 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
-    public int getColumnCount() {
+    @Override
+	public int getColumnCount() {
         return 5;
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getRowCount()
      */
-    public int getRowCount() {
+    @Override
+	public int getRowCount() {
         return lineInfos.length + 1;
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getValueAt(int, int)
      */
-    public Object getValueAt(int row, int column) {
+    @Override
+	public Object getValueAt(int row, int column) {
         TextResource tr = TextResource.getInstance();
         AmountFormat af = tr.getAmountFormat();
         String result;
@@ -295,7 +300,8 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         return TextResource.getInstance().getString(id);
     }
 
-    public int getColumnWidth(int column) {
+    @Override
+	public int getColumnWidth(int column) {
         switch(column) {
         case 0: return 250;
         case 1: return 250;
@@ -306,11 +312,13 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
         }
     }
 
-    public Comparator<Object> getComparator(int column) {
+    @Override
+	public Comparator<Object> getComparator(int column) {
         return null;
     }
 
-    public TableCellRenderer getRendererForColumn(int column) {
+    @Override
+	public TableCellRenderer getRendererForColumn(int column) {
         return new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -332,15 +340,18 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                     if (row < lineInfos.length && lineInfos[row].isFirstLine && row > 0) {
                         // Add border to the top of the label.
                         label.setBorder(new Border() {
-                            public Insets getBorderInsets(Component c) {
+                            @Override
+							public Insets getBorderInsets(Component c) {
                                 return new Insets(2, 0, 0, 0);
                             }
 
-                            public boolean isBorderOpaque() {
+                            @Override
+							public boolean isBorderOpaque() {
                                 return true;
                             }
 
-                            public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+                            @Override
+							public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
                                 g.setColor(Color.BLACK);
                                 g.drawRect(x, y, width, 1);
                             }
@@ -352,5 +363,10 @@ public class PartyOverviewTableModel extends AbstractTableModel implements Sorte
                 return comp;
             }
         };
+    }
+
+    @Override
+    public TableCellEditor getEditorForColumn(int column) {
+    	return null;
     }
 }

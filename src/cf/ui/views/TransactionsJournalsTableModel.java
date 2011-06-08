@@ -33,28 +33,28 @@ class TransactionsJournalsTableModel extends AbstractListSortedTableModel<Transa
 	private Database database;
 
     private final static ColumnDefinition DATE =
-        new ColumnDefinition("importBankStatementView.date", Date.class, 70, null, null);
+        new ColumnDefinition("importBankStatementView.date", Date.class, 70);
 
     private final static ColumnDefinition FROM_ACCOUNT =
-        new ColumnDefinition("importBankStatementView.fromAccount", String.class, 100, null, null);
+        new ColumnDefinition("importBankStatementView.fromAccount", String.class, 100);
 
     private final static ColumnDefinition TO_ACCOUNT =
-        new ColumnDefinition("importBankStatementView.toAccount", String.class, 100, null, null);
+        new ColumnDefinition("importBankStatementView.toAccount", String.class, 100);
 
     private final static ColumnDefinition AMOUNT =
-        new ColumnDefinition("importBankStatementView.amount", String.class, 100, null, null);
+        new ColumnDefinition("importBankStatementView.amount", String.class, 100);
 
     private final static ColumnDefinition DESCRIPTION1 =
-        new ColumnDefinition("importBankStatementView.description1", String.class, 200, null, null);
+        new ColumnDefinition("importBankStatementView.description1", String.class, 200);
 
     private final static ColumnDefinition ID =
-        new ColumnDefinition("importBankStatementView.id", String.class, 50, null, null);
+        new ColumnDefinition("importBankStatementView.id", String.class, 50);
 
     private final static ColumnDefinition DESCRIPTION2 =
-        new ColumnDefinition("importBankStatementView.description2", String.class, 200, null, null);
+        new ColumnDefinition("importBankStatementView.description2", String.class, 200);
 
     private final static ColumnDefinition INVOICE =
-        new ColumnDefinition("importBankStatementView.invoice", String.class, 200, null, null);
+        new ColumnDefinition("importBankStatementView.invoice", String.class, 200);
 
     private final static List<ColumnDefinition> COLUMN_DEFINITIONS = Arrays.asList(
         DATE, FROM_ACCOUNT, TO_ACCOUNT, AMOUNT, DESCRIPTION1, ID, DESCRIPTION2, INVOICE
@@ -66,7 +66,8 @@ class TransactionsJournalsTableModel extends AbstractListSortedTableModel<Transa
     }
 
     /** {@inheritDoc} */
-    public Object getValueAt(int rowIndex, int columnIndex) {
+    @Override
+	public Object getValueAt(int rowIndex, int columnIndex) {
         ColumnDefinition colDef = getColumnDefinition(columnIndex);
         if (DATE.equals(colDef)) {
             return getRow(rowIndex).getImportedTransaction().getDate();
