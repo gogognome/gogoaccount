@@ -18,17 +18,19 @@ package nl.gogognome.cf.services.importers;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import nl.gogognome.lib.csv.CsvFileParser;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;
+import au.com.bytecode.opencsv.CSVReader;
 
 
 /**
@@ -57,14 +59,27 @@ public class RabobankCSVImporter {
 	 * @throws ParseException if a problem occurred while interpreting the file
 	 */
 	public List<ImportedTransaction> importTransactions() throws IOException, ParseException {
-		CsvFileParser parser = new CsvFileParser(csvFile);
-		parseValues(parser.getValues());
-		return transactions;
+		Reader reader = null;
+		CSVReader csvReader = null;
+		try {
+			reader = new FileReader(csvFile);
+			csvReader = new CSVReader(reader);
+			parseValues(csvReader.readAll());
+			reader.close();
+			return transactions;
+		} finally {
+			if (csvReader != null) {
+				csvReader.close();
+			}
+			if (reader != null) {
+				reader.close();
+			}
+		}
 	}
 
-	private void parseValues(String[][] values) throws ParseException {
-		for (int line=0; line<values.length; line++) {
-			parseLine(values[line]);
+	private void parseValues(List<String[]> values) throws ParseException {
+		for (String[] line : values) {
+			parseLine(line);
 		}
 	}
 

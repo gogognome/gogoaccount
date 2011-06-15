@@ -42,10 +42,12 @@
 		<mkdir dir="${classdir}"/>
 
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${srcdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.5" target="1.5" debug="true" />
+		<javac srcdir="${srcdir}" classpath="${classpath};${libdir}/gogolib.jar;${libdir}/opencsv-2.3.jar" 
+			destdir="${classdir}" source="1.5" target="1.5" debug="true" />
 		
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${testdir}" classpath="${classpath};${libdir}/gogolib.jar" destdir="${classdir}" source="1.5" target="1.5" debug="true" />
+		<javac srcdir="${testdir}" classpath="${classpath};${libdir}/gogolib.jar;${libdir}/opencsv-2.3.jar" 
+			destdir="${classdir}" source="1.5" target="1.5" debug="true" />
 		
 		<copy todir="${classdir}">
 			<fileset dir="${resourcedir}">
@@ -61,6 +63,7 @@
 		<!-- Extract libraries -->
 		<mkdir dir="${libclassesdir}"/>
 		<unzip dest="${libclassesdir}" src="${libdir}/gogolib.jar" />
+		<unzip dest="${libclassesdir}" src="${libdir}/opencsv-2.3.jar" />
 		
 		<!-- Put everything in ${build} into the jar file -->
 		<jar jarfile="${distdir}/${productname}.jar">
