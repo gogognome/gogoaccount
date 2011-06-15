@@ -88,7 +88,8 @@ public class ReportDialog extends OkCancelDialog {
                 SwingUtils.createTextFieldGBConstraints(1, 0));
 
         JButton button = wf.createButton("gen.btSelectFile", new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 JFileChooser fileChooser = new JFileChooser(tfFileName.getText());
                 if (fileChooser.showOpenDialog(parentFrame) == JFileChooser.APPROVE_OPTION) {
                     tfFileName.setText(fileChooser.getSelectedFile().getAbsolutePath());
@@ -146,9 +147,7 @@ public class ReportDialog extends OkCancelDialog {
 
         Date date = dateModel.getDate();
         if (date == null) {
-            MessageDialog dialog = new MessageDialog(parentFrame, "ds.parseErrorTitle",
-                    TextResource.getInstance().getString("ds.parseErrorMessage"));
-            dialog.showDialog();
+            MessageDialog.showErrorMessage(parentFrame, "ds.parseErrorMessage");
             return;
         }
 

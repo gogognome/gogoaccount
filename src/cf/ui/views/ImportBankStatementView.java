@@ -168,7 +168,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 		// Let items table be updated when another row is selected in the journals table.
 		final ListSelectionModel rowSM = journalsTable.getSelectionModel();
 		rowSM.addListSelectionListener(new ListSelectionListener() {
-		    public void valueChanged(ListSelectionEvent e) {
+		    @Override
+			public void valueChanged(ListSelectionEvent e) {
 		        //Ignore extra messages.
 		        if (e.getValueIsAdjusting()) { return; }
 
@@ -183,21 +184,24 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         buttonsPanel.setOpaque(false);
 
 		JButton editButton = wf.createButton("ejd.editJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 handleEditItem();
             }
 		});
 		buttonsPanel.add(editButton);
 
 		JButton addButton = wf.createButton("ejd.addJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 handleAddItem();
             }
 		});
 		buttonsPanel.add(addButton);
 
 		JButton deleteButton = wf.createButton("ejd.deleteJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 handleDeleteItem();
             }
 		});
@@ -295,14 +299,14 @@ public class ImportBankStatementView extends View implements ModelChangeListener
                             try {
                                 database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
                             } catch (DatabaseModificationFailedException e) {
-                                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                                MessageDialog.showErrorMessage(this, e, "ejd.updateInvoiceException");
                             }
                         }
                     }
                     try {
                         database.updateJournal(journal, newJournal);
                     } catch (DatabaseModificationFailedException e) {
-                        MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                        MessageDialog.showErrorMessage(this, e, "ejd.updateJournalException");
                     }
                     updateJournalItemTable(row);
                 }
@@ -321,7 +325,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
             try {
                 database.addJournal(journal, true);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                MessageDialog.showErrorMessage(this, e, "ajd.addJournalException");
             }
         }
     }

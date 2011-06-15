@@ -252,14 +252,14 @@ public class EditJournalsView extends View {
                             try {
                                 database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
                             } catch (DatabaseModificationFailedException e) {
-                                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                                MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateInvoiceException");
                             }
                         }
                     }
                     try {
                         database.updateJournal(journal, newJournal);
                     } catch (DatabaseModificationFailedException e) {
-                        MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                        MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateJournalException");
                     }
                     updateJournalItemTable(row);
                 }
@@ -278,7 +278,7 @@ public class EditJournalsView extends View {
             try {
                 database.addJournal(journal, true);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                MessageDialog.showErrorMessage(getParentWindow(), e, "ajd.addItemException");
             }
         }
     }
@@ -291,24 +291,22 @@ public class EditJournalsView extends View {
         if (row != -1) {
             if (journalsTableModel.getJournal(row).createsInvoice()) {
                 if (!database.getPayments(journalsTableModel.getJournal(row).getIdOfCreatedInvoice()).isEmpty()) {
-                    MessageDialog.showMessage(getParentWindow(), "gen.warning",
-                        TextResource.getInstance().getString("editJournalsView.journalCreatingInvoiceCannotBeDeleted"));
+                    MessageDialog.showMessage(this, "gen.warning",
+                        "editJournalsView.journalCreatingInvoiceCannotBeDeleted");
                     return;
                 }
             }
 
-            MessageDialog dialog = MessageDialog.showMessage(this,
-                "gen.titleWarning",
-                TextResource.getInstance().getString("editJournalsView.areYouSureAboutDeletion"),
-                new String[] {"gen.yes", "gen.no"});
-            if (dialog.getSelectedButton() == 1) {
+            int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
+                "editJournalsView.areYouSureAboutDeletion");
+            if (choice == MessageDialog.NO_OPTION) {
                 return; // do not remove the journal
             }
 
             try {
                 BookkeepingService.removeJournal(database, journalsTableModel.getJournal(row));
             } catch (DeleteException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.removeJournalException");
             }
         }
     }

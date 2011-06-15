@@ -184,25 +184,29 @@ public class EditJournalDialog extends OkCancelDialog
 
         // Add buttons
         JButton addButton = wf.createButton("ajd.addItem", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleAddButtonPressed(evt);
             }
         });
 
         JButton editButton = wf.createButton("ajd.editItem", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleEditButtonPressed(evt);
             }
         });
 
         JButton deleteButton = wf.createButton("ajd.deleteItem", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleDeleteButtonPressed(evt);
             }
         });
 
         JButton okAndNextButton = wf.createButton("ajd.okAndNextJournal", new AbstractAction() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override
+			public void actionPerformed(ActionEvent evt) {
                 handleOkAndNextButtonPressed();
             }
         });
@@ -296,7 +300,7 @@ public class EditJournalDialog extends OkCancelDialog
         TextResource tr = TextResource.getInstance();
         Date date = dateModel.getDate();
         if (date == null) {
-            MessageDialog.showMessage(parent, "gen.titleError", tr.getString("gen.invalidDate"));
+            MessageDialog.showMessage(parent, "gen.titleError", "gen.invalidDate");
             return null;
         }
 
@@ -308,8 +312,7 @@ public class EditJournalDialog extends OkCancelDialog
             return new Journal(id, description, date, items, idOfCreatedInvoice);
         }
         catch (IllegalArgumentException e) {
-            new MessageDialog(parent, "gen.titleError",
-                    tr.getString("gen.itemsNotInBalance"));
+            MessageDialog.showErrorMessage(parent, "gen.itemsNotInBalance");
             return null;
         }
     }

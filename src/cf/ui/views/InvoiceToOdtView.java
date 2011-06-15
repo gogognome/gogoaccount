@@ -76,7 +76,7 @@ public class InvoiceToOdtView extends View {
     }
 
     /**
-     * Checks wehther the user has entered all necessary information.
+     * Checks whether the user has entered all necessary information.
      * If so, then the ODT file will be generated; if not, then an
      * error message is shown to the user.
      */
@@ -120,7 +120,7 @@ public class InvoiceToOdtView extends View {
             			TextResource.getInstance().getString("invoiceToOdtView.progressDialogTitle"));
             	progressDialog.execute(converter);
             } catch (Exception e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                MessageDialog.showErrorMessage(this, e, "invoiceToOdtView.executeTaskException");
                 return;
             }
         }

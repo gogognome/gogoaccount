@@ -279,7 +279,7 @@ public class EditJournalView extends View {
                 try {
                     database.addJournal(journal, true);
                 } catch (DatabaseModificationFailedException e) {
-                    MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                    MessageDialog.showErrorMessage(this,e, "ajd.addJournalException");
                     return; // do not close the view
                 }
             } else {
@@ -297,7 +297,7 @@ public class EditJournalView extends View {
             try {
                 database.addJournal(journal, true);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
+                MessageDialog.showErrorMessage(this, e, "ajd.addJournalException");
                 return; // do not clear the table model
             }
             itemsTableModel.clear();

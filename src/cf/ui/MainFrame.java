@@ -330,26 +330,22 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if (database.hasUnsavedChanges())
 		{
 		    TextResource tr = TextResource.getInstance();
-			MessageDialog dialog = new MessageDialog(this,
-				"gen.titleWarning",
-				tr.getString("mf.saveChangesBeforeExit"),
-				new String[] {"gen.yes", "gen.no", "gen.cancel"});
-			switch(dialog.getSelectedButton())
-			{
-				case 0: // yes
+			int choice = MessageDialog.showYesNoCancelQuestion(this, "gen.titleWarning",
+				"mf.saveChangesBeforeExit");
+			switch (choice)	{
+				case MessageDialog.YES_OPTION:
 					handleSaveBookkeeping();
 					result = true;
 					break;
-				case 1: // no; continue without saving
+				case MessageDialog.NO_OPTION: // continue without saving
 					result = true;
 					break;
-				case -1: // user pressed escape or closed dialog
-				case 2: // cancel
+				case MessageDialog.CLOSED_OPTION:
+				case MessageDialog.CANCEL_OPTION:
 					result = false;
 					break;
 				default:
-					throw new IllegalStateException("Unknown button pressed. Index: "
-						+ dialog.getSelectedButton());
+					throw new IllegalStateException("Unknown button pressed. Index: " + choice);
 			}
 		}
 		else
@@ -474,7 +470,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
                 Database newDatabase = BookkeepingService.closeBookkeeping(database, description, date, accountToAddResultTo);
                 setDatabase(newDatabase);
             } catch (CreationException e) {
-                MessageDialog.showMessage(this, "gen.error", e.getMessage());
+                MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");
             }
         }
 	}
@@ -506,10 +502,10 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		try {
 			newDatabase = XMLFileReader.createDatabaseFromFile(fileName);
 		} catch (XMLParseException e) {
-			new MessageDialog(this, "mf.errorOpeningFile", e);
+			MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
 		} catch (IOException e) {
-            new MessageDialog(this, "mf.errorOpeningFile", e);
+			MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
         }
 		newDatabase.databaseConsistentWithFile();
@@ -547,9 +543,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 			database.setFileName(fileName);
 			database.databaseConsistentWithFile();
 		} catch (Exception e) {
-			String message = e.getMessage();
-			new MessageDialog(this, "gen.error",
-				message != null ? message : e.toString());
+			MessageDialog.showErrorMessage(this, e, "mf.saveException");
 		}
 	}
 
@@ -682,8 +676,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleAddJournal() {
 	    if (!database.hasAccounts()) {
-	        MessageDialog.showMessage(this, "gen.warning",
-	                TextResource.getInstance().getString("mf.noAccountsPresent"));
+	        MessageDialog.showMessage(this, "gen.warning", "mf.noAccountsPresent");
 	    } else {
             EditJournalView view = new EditJournalView(database, "ajd.title", null);
             ViewDialog dialog = new ViewDialog(this, view);
@@ -693,8 +686,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleEditJournals() {
 	    if (!database.hasAccounts()) {
-	        MessageDialog.showMessage(this, "gen.warning",
-	                TextResource.getInstance().getString("mf.noAccountsPresent"));
+	        MessageDialog.showMessage(this, "gen.warning", "mf.noAccountsPresent");
 	    } else {
             if (editJournalsView == null) {
                 editJournalsView = new EditJournalsView(database);
@@ -742,8 +734,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    try {
             alp.printAddressLabels();
         } catch (PrinterException e) {
-	        MessageDialog.showMessage(this, "gen.error",
-	                TextResource.getInstance().getString("mf.problemWhilePrinting"));
+	        MessageDialog.showMessage(this, "gen.error", "mf.problemWhilePrinting");
         }
 	}
 

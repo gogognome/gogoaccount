@@ -446,8 +446,7 @@ public class PartiesView extends View {
             try {
                 database.addParty(party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning",
-                    TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
+                MessageDialog.showErrorMessage(this, "partiesView.partyAlreadyExists");
             }
         }
         onSearch();
@@ -472,8 +471,7 @@ public class PartiesView extends View {
             try {
                 database.updateParty(oldParty, party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning",
-                    TextResource.getInstance().getString("partiesView.partyAlreadyExists"));
+                MessageDialog.showErrorMessage(this, e, "partiesView.partyAlreadyExists");
             }
         }
         onSearch();
@@ -491,15 +489,13 @@ public class PartiesView extends View {
         }
 
         Party party = partiesTableModel.getParty(rows[0]);
-        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.warning",
-            TextResource.getInstance().getString("partiesView.areYouSurePartyIsDeleted", party.getName()),
-            new String[] { "gen.yes", "gen.no" });
-        if (messageDialog.getSelectedButton() == 0) {
+        int choice = MessageDialog.showYesNoQuestion(this, "gen.warning",
+            "partiesView.areYouSurePartyIsDeleted", party.getName());
+        if (choice == MessageDialog.YES_OPTION) {
             try {
                 database.removeParty(party);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showMessage(getParentWindow(), "gen.titleWarning",
-                    TextResource.getInstance().getString("partiesView.partyCouldNotBeDeleted"));
+                MessageDialog.showErrorMessage(this, e, "partiesView.partyCouldNotBeDeleted");
             }
         }
         onSearch();

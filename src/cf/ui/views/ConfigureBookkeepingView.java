@@ -251,17 +251,15 @@ public class ConfigureBookkeepingView extends View {
     private void onDeleteAccount() {
     	AccountDefinition accountDefintion = getSelectedAccountDefinition();
     	Account account = accountDefintion.account;
-    	String question = TextResource.getInstance().getString("ConfigureBookkeepingView.deleteAccountAreYouSure",
-    			account.getId() + " - " + account.getName());
-		MessageDialog dialog = MessageDialog.showMessage(this, "ConfigureBookkeepingView.deleteAccountTitle",
-				question, new String[] { "gen.yes", "gen.no" } );
-		if (dialog.getSelectedButton() == 0) {
+		int choice = MessageDialog.showYesNoQuestion(this, "ConfigureBookkeepingView.deleteAccountTitle",
+				"ConfigureBookkeepingView.deleteAccountAreYouSure",	account.getId() + " - " + account.getName());
+		if (choice == MessageDialog.YES_OPTION) {
 			try {
 				BookkeepingService.deleteAccount(database, account);
 				int index = table.getSelectedRows()[0];
 				tableModel.removeRow(index);
 			} catch (DeleteException e) {
-				MessageDialog.showMessage(getParentWindow(), e);
+				MessageDialog.showErrorMessage(getParentWindow(), e, "ConfigureBookkeepingView.deleteAccountException");
 			}
 		}
 	}
@@ -279,7 +277,7 @@ public class ConfigureBookkeepingView extends View {
 				tableModel.addRow(definition);
 				table.setSortingStatus(0, SortedTable.ASCENDING);
 			} catch (CreationException e) {
-				MessageDialog.showMessage(getParentWindow(), e);
+				MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.addAccountException");
 			}
 		}
 	}
@@ -299,7 +297,7 @@ public class ConfigureBookkeepingView extends View {
 					definition.account = account;
 			        tableModel.updateRow(rows[0], definition);
 				} catch (ServiceException e) {
-					MessageDialog.showMessage(getParentWindow(), e);
+					MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.updateAccountException");
 				}
 			}
 		}

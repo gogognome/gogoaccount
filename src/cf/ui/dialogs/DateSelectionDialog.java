@@ -93,8 +93,7 @@ public class DateSelectionDialog extends OkCancelDialog
         catch (ParseException e)
         {
             // do not hide the dialog. Let the user try to enter a date again.
-            new MessageDialog(parentFrame, "ds.parseErrorTitle",
-                    TextResource.getInstance().getString("ds.parseErrorMessage"));
+            MessageDialog.showErrorMessage(parentFrame, e, "ds.parseErrorMessage");
         }
     }
 

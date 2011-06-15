@@ -336,11 +336,10 @@ public class InvoiceGeneratorView extends View {
         }
 
         // Ask the user whether he/she is sure to generate the invoices.
-        MessageDialog messageDialog = MessageDialog.showMessage(this, "gen.titleWarning",
-            TextResource.getInstance().getString("invoiceGeneratorView.areYouSure"),
-            new String[] { "gen.yes", "gen.no" });
-        if (messageDialog.getSelectedButton() != 0) {
-            // The user cancelled the operation.
+        int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
+        		"invoiceGeneratorView.areYouSure");
+        if (choice != MessageDialog.YES_OPTION) {
+            // The user canceled the operation.
             return;
         }
 
