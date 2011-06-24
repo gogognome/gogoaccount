@@ -38,6 +38,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
+import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -149,7 +150,7 @@ public class EditJournalView extends View {
 
         dateModel = new DateModel();
         dateModel.setDate(date, null);
-        sbDate = new DateSelectionBean(dateModel);
+        sbDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
         topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, 1));
 
         label = wf.createLabel("gen.description");

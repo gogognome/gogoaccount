@@ -31,6 +31,7 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -163,7 +164,7 @@ public class EditPartyView extends View {
         row++;
 
         dateModel = new DateModel();
-        DateSelectionBean dsbBirthDate = new DateSelectionBean(dateModel);
+        DateSelectionBean dsbBirthDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
         label = wf.createLabel("editPartyView.birthDate", dsbBirthDate);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
@@ -182,15 +183,18 @@ public class EditPartyView extends View {
         } else {
             tfId.setText(suggestNewId());
             tfId.getDocument().addDocumentListener(new DocumentListener() {
-                public void changedUpdate(DocumentEvent e) {
+                @Override
+				public void changedUpdate(DocumentEvent e) {
                     onIdChange();
                 }
 
-                public void insertUpdate(DocumentEvent e) {
+                @Override
+				public void insertUpdate(DocumentEvent e) {
                     onIdChange();
                 }
 
-                public void removeUpdate(DocumentEvent e) {
+                @Override
+				public void removeUpdate(DocumentEvent e) {
                     onIdChange();
                 }
             });
@@ -200,7 +204,8 @@ public class EditPartyView extends View {
         // Create panel with buttons
         JPanel buttonPanel = new JPanel(new FlowLayout());
         okButton = wf.createButton("gen.ok", new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 resultParty = new Party(tfId.getText(), tfName.getText(),
                     tfAddress.getText(), tfZipCode.getText(), tfCity.getText(), dateModel.getDate(),
                     tfType.getText(), taRemarks.getText());

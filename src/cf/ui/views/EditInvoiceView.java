@@ -36,6 +36,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
 
+import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -161,7 +162,7 @@ public class EditInvoiceView extends View {
 
         dateModel = new DateModel();
         dateModel.setDate(date, null);
-        DateSelectionBean sbDate = new DateSelectionBean(dateModel);
+        DateSelectionBean sbDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
         label = wf.createLabel("editInvoiceView.issueDate", sbDate);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, row));
@@ -202,21 +203,24 @@ public class EditInvoiceView extends View {
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         JButton button = wf.createButton("editInvoiceView.addRow", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 onAddRow();
             }
         });
         buttonPanel.add(button);
 
         button = wf.createButton("editInvoiceView.editRow", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 onEditRow();
             }
         });
         buttonPanel.add(button);
 
         button = wf.createButton("editInvoiceView.deleteRow", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 onDeleteRow();
             }
         });
@@ -227,7 +231,8 @@ public class EditInvoiceView extends View {
         // Create button panel with ok and cancel buttons.
         buttonPanel = new ButtonPanel(SwingConstants.CENTER);
         button = wf.createButton("gen.ok", new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 onOk();
             }
         });
@@ -244,7 +249,8 @@ public class EditInvoiceView extends View {
         // Add listener that copies the concerning party to the paying party if the paying
         // party has not been selected yet.
         concerningPartyListener = new PartySelectorListener() {
-            public void onSelectedPartyChanged(Party newParty) {
+            @Override
+			public void onSelectedPartyChanged(Party newParty) {
                 if (psPayingParty.getSelectedParty() == null) {
                     psPayingParty.setSelectedParty(newParty);
                 }
@@ -454,15 +460,18 @@ public class EditInvoiceView extends View {
 
         }
 
-        public int getColumnCount() {
+        @Override
+		public int getColumnCount() {
             return 2;
         }
 
-        public int getRowCount() {
+        @Override
+		public int getRowCount() {
             return descriptions.size();
         }
 
-        public Object getValueAt(int rowIndex, int columnIndex) {
+        @Override
+		public Object getValueAt(int rowIndex, int columnIndex) {
             Object result;
             switch(columnIndex) {
             case 0:

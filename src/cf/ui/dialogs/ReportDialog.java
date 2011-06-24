@@ -33,7 +33,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerDateModel;
 import javax.swing.border.TitledBorder;
 
-import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.OkCancelDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -109,7 +109,7 @@ public class ReportDialog extends OkCancelDialog {
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
 
-        fileNamePanel.add(new DateSelectionBean(dateModel),
+        fileNamePanel.add(BeanFactory.getInstance().createDateSelectionBean(dateModel),
                 SwingUtils.createTextFieldGBConstraints(1, 1));
 
         // Create file type panel

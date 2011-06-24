@@ -29,7 +29,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 
-import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -195,7 +195,7 @@ public class InvoiceToOdtView extends View {
                 SwingUtils.createLabelGBConstraints(0, 2));
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
-        panel.add(new DateSelectionBean(dateModel),
+        panel.add(BeanFactory.getInstance().createDateSelectionBean(dateModel),
                 SwingUtils.createLabelGBConstraints(1, 2));
 
         panel.add(wf.createLabel("invoiceToOdtView.concerning"),
@@ -214,7 +214,7 @@ public class InvoiceToOdtView extends View {
                 SwingUtils.createLabelGBConstraints(0, 5));
         dueDateModel = new DateModel();
         dueDateModel.setDate(DateUtil.addDays(new Date(), 14), null);
-        panel.add(new DateSelectionBean(dueDateModel),
+        panel.add(BeanFactory.getInstance().createDateSelectionBean(dueDateModel),
                 SwingUtils.createLabelGBConstraints(1, 5));
 
         // Create button panel
