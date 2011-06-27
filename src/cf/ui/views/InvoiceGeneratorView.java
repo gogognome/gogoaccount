@@ -147,7 +147,7 @@ public class InvoiceGeneratorView extends View {
         panel.add(WidgetFactory.getInstance().createLabel("invoiceGeneratorView.date", dateSelectionBean),
                 SwingUtils.createLabelGBConstraints(0, 1));
         panel.add(dateSelectionBean,
-                SwingUtils.createTextFieldGBConstraints(1, 1));
+                SwingUtils.createLabelGBConstraints(1, 1));
         panel.add(wf.createLabel("invoiceGeneratorView.description", tfDescription),
                 SwingUtils.createLabelGBConstraints(0, 2));
         panel.add(tfDescription,
@@ -280,8 +280,7 @@ public class InvoiceGeneratorView extends View {
 	    // Validate the input.
         Date date = invoiceGenerationDateModel.getDate();
         if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError",
-                    TextResource.getInstance().getString("gen.invalidDate"));
+            MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
             return;
         }
 
@@ -298,31 +297,31 @@ public class InvoiceGeneratorView extends View {
             } else {
                 if (line.isAmountToBePaid()) {
                     MessageDialog.showMessage(this, "gen.titleError",
-                        TextResource.getInstance().getString("invoiceGeneratorView.moreThanOneAmountToBePaid"));
+                        "invoiceGeneratorView.moreThanOneAmountToBePaid");
                     return;
                 }
             }
             if (line.getDebet() == null && line.getCredit() == null) {
                 MessageDialog.showMessage(this, "gen.titleError",
-                    TextResource.getInstance().getString("invoiceGeneratorView.emptyAmountsFound"));
+                    "invoiceGeneratorView.emptyAmountsFound");
                 return;
             }
             if (line.getDebet() != null && line.getCredit() != null) {
                 MessageDialog.showMessage(this, "gen.titleError",
-                    TextResource.getInstance().getString("invoiceGeneratorView.doubleAmountsFound"));
+                    "invoiceGeneratorView.doubleAmountsFound");
                 return;
             }
 
             if (line.getAccount() == null) {
                 MessageDialog.showMessage(this, "gen.titleError",
-                    TextResource.getInstance().getString("invoiceGeneratorView.emptyAccountFound"));
+                    "invoiceGeneratorView.emptyAccountFound");
                 return;
             }
         }
 
         if (!amountToBePaidSelected) {
             MessageDialog.showMessage(this, "gen.titleError",
-                TextResource.getInstance().getString("invoiceGeneratorView.noAmountToBePaidSelected"));
+                "invoiceGeneratorView.noAmountToBePaidSelected");
             return;
         }
 
@@ -353,6 +352,6 @@ public class InvoiceGeneratorView extends View {
             return;
         }
 	    MessageDialog.showMessage(this, "gen.titleMessage",
-	            TextResource.getInstance().getString("invoiceGeneratorView.messageSuccess"));
+	            "invoiceGeneratorView.messageSuccess");
 	}
 }

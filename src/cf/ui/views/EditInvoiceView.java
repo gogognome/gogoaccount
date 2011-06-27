@@ -165,7 +165,7 @@ public class EditInvoiceView extends View {
         DateSelectionBean sbDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
         label = wf.createLabel("editInvoiceView.issueDate", sbDate);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, row));
+        topPanel.add(sbDate, SwingUtils.createLabelGBConstraints(1, row));
         row++;
 
         psConcerningParty = new PartySelector();

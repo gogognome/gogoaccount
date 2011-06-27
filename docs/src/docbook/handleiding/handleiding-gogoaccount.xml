@@ -277,10 +277,6 @@
         <graphic fileref="images/screen-voorbeeld-posten.png"></graphic>
       </screenshot>
 
-    </section>
-    <section id="section-startbalans">
-	  <title>Startbalans maken</title>
-      
       <para>Sluit nu het configuratie-tabblad door op het kruisje te klikken dat
       staat voor "Configureren boekhouding". Het scherm ziet er als volgt uit:</para>
       
@@ -300,14 +296,18 @@
       <para>Alle getallen in de balans zijn nul. Dat is voor de meeste verenigingen
       echter geen realistische situatie. Wat ontbreekt is de startbalans: de beginsituatie
       van het boekjaar.</para>
+
+    </section>
+    <section id="section-startbalans">
+	  <title>Journalen toevoegen</title>
       
       <para>Gogo account is een eenvoudig boekhoudprogramma. Het kent geen speciale
       functionaliteit om een startbalans te maken. We kunnen de startbalans namelijk
-      aanmaken met een journaalpost. Journaalposten zijn het middel om wijzigingen
+      aanmaken met een journaal. Journalen zijn het middel om wijzigingen
       in de boekhouding aan te brengen. We kunnen dus een startbalans maken
-      door een journaalpost aan te maken.</para>
+      door een journaal aan te maken.</para>
       
-      <para>Kies in het menu de optie "Bewereken" en dan "Toevoegen journaal...". Het volgende
+      <para>Kies in het menu de optie "Bewerken" en dan "Toevoegen journaal...". Het volgende
       scherm verschijnt:</para>
       
       <screenshot>
@@ -315,20 +315,20 @@
       </screenshot>
        
       <para>In dit scherm moeten een aantal gegevens worden ingevuld:
-      id is een korte code of omschrijving van de journaalpost. Deze id hoeft niet 
-      uniek te zijn voor alle journaalposten. Gebruik bijvoorbeeld een afkorting
+      id is een korte code of omschrijving van de journaalp. Deze id hoeft niet 
+      uniek te zijn voor alle journalen. Gebruik bijvoorbeeld een afkorting
       van een rekening gevolgd door het volgnummer van een bankafschrift voor
-      journaalposten die u op basis van dat bankafschrift toevoegt. Dan kunt u later
-      eenvoudig deze journaalposten terugvinden.</para>
+      journalen die u op basis van dat bankafschrift toevoegt. Dan kunt u later
+      eenvoudig deze journalen terugvinden.</para>
       
       <para>De datum waarop de wijziging van de boekhouding plaatsvindt. Voor de startbalans
       is het handig om de laatste dag voor aanvang van het boekjaar in te vullen.
       In dit voorbeeld is dat 31 december 2010.</para>
       
-      <para>Bij omschrijving kunt u een wat langere omschrijving van de journaalpost
+      <para>Bij omschrijving kunt u een wat langere omschrijving van de journaal
       invoeren.</para>
       
-      <para>Bij een journaalpost worden bedragen aan grootboekrekeningen gedebiteerd
+      <para>Bij een journaal worden bedragen aan grootboekrekeningen gedebiteerd
       of gecrediteerd. Voor de startbalans moeten we voor iedere balanspost een bedrag
       debiteren of crediteren. Gebruik hiervoor de knop "Voeg item toe...". Het volgende
       scherm verschijnt dan:</para>
@@ -337,7 +337,7 @@
         <graphic fileref="images/screen-startbalans3.png"></graphic>
       </screenshot>
       
-      <para>Ik heb een aantal fictieve bedragen ingevuld voor een aantal journaalposten.
+      <para>Ik heb een aantal fictieve bedragen ingevuld voor een aantal journalen.
       Ik heb bewust geen bedragen gedebiteerd of gecrediteerd aan debiteuren of crediteuren.
       Hierop kom ik later terug. Hier is mijn voorbeeld:</para>
       
@@ -351,7 +351,56 @@
       <screenshot>
         <graphic fileref="images/screen-startbalans5.png"></graphic>
       </screenshot>
+
+    </section>
+    <section id="section-startbalans">
+	  <title>Relaties</title>
        
+      <para>Voordat we facturen kunnen genereren moeten we eerst de namen
+      en adressen invoeren van de personen die de facturen moeten gaan betalen.
+      Dergelijke personen, bedrijven of instanties worden in gogo account
+      relaties genoemd.</para>
+      
+      <para>Om relaties aan te maken kiest u "Bewerken" en dan "Bewerken relaties...".
+      Het volgende scherm verschijnt dan:</para>
+
+      <screenshot>
+        <graphic fileref="images/screen-parties1.png"></graphic>
+      </screenshot>
+       
+      <para>Laten we eerst een aantal relaties toevoegen. Druk op "Toevoegen relatie...".</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-parties2.png"></graphic>
+      </screenshot>
+      
+      <para>Bij een relatie kunt u een naam, adres, postcode en woonplaats en geboortedatum invullen.
+      U kunt opmerkingen toevoegen die voor uzelf bedoeld zijn, zoals een contactpersoon
+      van een bedrijf.</para>
+      
+      <para>U kunt een relatie een type meegeven. Bijvoorbeeld: "competitie", "recreant"
+      of "sponsor". Bij het zoeken van relaties kunt u dan snel alle competitiespelers
+      terugvinden door te zoeken op relaties met type "competitie".</para>
+      
+      <para>Tot slot heeft iedere relatie een id. Dit is een getal waarmee de relatie
+      binnen het programma wordt gerepresenteerd. De id moet uniek zijn voor iedere
+      relatie. U kunt later alles wijzigingen van een relatie, behalve zijn id.</para>
+      
+      <para>Gogo account zal zelf een uniek id-nummer voorstellen. U mag echter zelf
+      een ander id kiezen.</para> 
+      
+      <para>Hier is een voorbeeld van een relatie:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-parties3.png"></graphic>
+      </screenshot>
+      
+      <para>Ik heb als voorbeeld nog een aantal relaties toegevoegd.
+      Het scherm ziet er nu zo uit:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-parties4.png"></graphic>
+      </screenshot>
     </section>
   </chapter>
 </book>

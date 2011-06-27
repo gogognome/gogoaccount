@@ -151,7 +151,7 @@ public class EditJournalView extends View {
         dateModel = new DateModel();
         dateModel.setDate(date, null);
         sbDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
-        topPanel.add(sbDate, SwingUtils.createTextFieldGBConstraints(1, 1));
+        topPanel.add(sbDate, SwingUtils.createLabelGBConstraints(1, 1));
 
         label = wf.createLabel("gen.description");
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, 2));

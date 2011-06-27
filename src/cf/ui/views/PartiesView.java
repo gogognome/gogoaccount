@@ -270,7 +270,7 @@ public class PartiesView extends View {
         dsbBirthDate.addFocusListener(focusListener);
         criteriaPanel.add(wf.createLabel("partiesView.birthDate", dsbBirthDate),
             SwingUtils.createLabelGBConstraints(0, row));
-        criteriaPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
+        criteriaPanel.add(dsbBirthDate, SwingUtils.createLabelGBConstraints(1, row));
         row++;
 
         String[] types = database.getPartyTypes();
@@ -598,7 +598,9 @@ public class PartiesView extends View {
             case 2: return parties[row].getAddress();
             case 3: return parties[row].getZipCode();
             case 4: return parties[row].getCity();
-            case 5: return parties[row].getBirthDate();
+            case 5: 
+            	return parties[row].getBirthDate() != null ?
+            			TextResource.getInstance().formatDate("gen.dateFormat",	parties[row].getBirthDate()) : null;
             case 6: return parties[row].getType();
             case 7:
                 String remarks = parties[row].getRemarks();

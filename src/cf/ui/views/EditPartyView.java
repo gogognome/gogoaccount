@@ -167,7 +167,7 @@ public class EditPartyView extends View {
         DateSelectionBean dsbBirthDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
         label = wf.createLabel("editPartyView.birthDate", dsbBirthDate);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(dsbBirthDate, SwingUtils.createTextFieldGBConstraints(1, row));
+        textfieldPanel.add(dsbBirthDate, SwingUtils.createLabelGBConstraints(1, row));
 
         if (initialParty != null) {
             tfId.setText(initialParty.getId());
