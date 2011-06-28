@@ -110,7 +110,7 @@ public class ReportDialog extends OkCancelDialog {
         dateModel.setDate(new Date(), null);
 
         fileNamePanel.add(BeanFactory.getInstance().createDateSelectionBean(dateModel),
-                SwingUtils.createTextFieldGBConstraints(1, 1));
+                SwingUtils.createLabelGBConstraints(1, 1));
 
         // Create file type panel
         gbl = new GridBagLayout();
