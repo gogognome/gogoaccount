@@ -70,7 +70,7 @@ import cf.ui.dialogs.ItemsTableModel;
  */
 public class ImportBankStatementView extends View implements ModelChangeListener {
 
-    private FileSelectionModel fileSelectionModel = new FileSelectionModel(null);
+    private FileSelectionModel fileSelectionModel = new FileSelectionModel();
 
     /** The table containing journals. */
     private SortedTable journalsTable;
