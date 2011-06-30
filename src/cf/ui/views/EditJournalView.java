@@ -97,6 +97,8 @@ public class EditJournalView extends View {
 
     private List<JournalAddListener> listeners = new ArrayList<EditJournalView.JournalAddListener>();
 
+    private ValuesEditPanel valuesEditPanel;
+
     /**
      * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
      * To add one or more new journals, set <code>journal</code> to <code>null</code>.
@@ -155,6 +157,7 @@ public class EditJournalView extends View {
         vep.addField("gen.id", idModel);
         vep.addField("gen.date", dateModel);
         vep.addField("gen.description", descriptionModel);
+        valuesEditPanel = vep;
 
         // Create table of items
         itemsTable = new JTable(itemsTableModel);
@@ -275,7 +278,7 @@ public class EditJournalView extends View {
             try {
                 createNewOrStoreUpdatedJournal(journal);
                 itemsTableModel.clear();
-                requestFocus();
+                valuesEditPanel.requestFocus();
             } catch (Exception e) {
                 MessageDialog.showErrorMessage(this, e, "ajd.addJournalException");
             }
