@@ -44,7 +44,7 @@ public class AccountOverviewTableModel extends AbstractListSortedTableModel<Acco
     private static final long serialVersionUID = 1L;
 
     private final static ColumnDefinition DATE =
-        new ColumnDefinition("gen.date", String.class, 75);
+        new ColumnDefinition("gen.date", Date.class, 75);
 
     private final static ColumnDefinition ID =
         new ColumnDefinition("gen.id", String.class, 100);
@@ -176,9 +176,7 @@ public class AccountOverviewTableModel extends AbstractListSortedTableModel<Acco
     	ColumnDefinition col = getColumnDefinition(column);
         LineInfo lineInfo = getRow(row);
         if (DATE.equals(col)) {
-        	if (lineInfo.date != null) {
-        		return TextResource.getInstance().formatDate("gen.dateFormat", lineInfo.date);
-        	}
+        	return lineInfo.date;
         } else if (ID.equals(col)) {
         	return lineInfo.id;
         } else if (ID.equals(col)) {
