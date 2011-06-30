@@ -60,14 +60,15 @@ public class AboutView extends View {
 
         int n = 1;
         while (n != Integer.MAX_VALUE) {
-            String line = tr.getString("aboutView.line" + n);
-            if (line == null) {
-                break;
-            } else {
+        	String lineId = "aboutView.line" + n;
+        	if (tr.containsString(lineId)) {
+	            String line = tr.getString(lineId);
                 JLabel label = new JLabel(line);
                 add(label, SwingUtils.createLabelGBConstraints(0, n));
                 n += 1;
-            }
+        	} else {
+        		break;
+        	}
         }
 
         JButton closeButton = WidgetFactory.getInstance().createButton("gen.ok", closeAction);
