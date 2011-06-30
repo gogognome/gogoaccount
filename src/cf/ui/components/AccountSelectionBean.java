@@ -16,6 +16,9 @@
 */
 package cf.ui.components;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.gogognome.lib.swing.JComboBoxWithKeyboardInput;
 import cf.engine.Account;
 import cf.engine.Database;
@@ -27,8 +30,10 @@ import cf.engine.Database;
  */
 public class AccountSelectionBean extends JComboBoxWithKeyboardInput
 {
-    /** Contains the accounts that are shown in the combo box. */
-    private static Account[] accounts;
+	private static final long serialVersionUID = 1L;
+
+	/** Contains the accounts that are shown in the combo box. */
+    private List<Account> accounts;
 
     /**
      * Creates an <code>AccountCellEditor</code>.
@@ -38,38 +43,17 @@ public class AccountSelectionBean extends JComboBoxWithKeyboardInput
      */
     public AccountSelectionBean(Database database, Account account) {
         super();
-		Account[] assets = database.getAssets();
-		Account[] liabilities = database.getLiabilities();
-		Account[] expenses = database.getExpenses();
-		Account[] revenues = database.getRevenues();
-		accounts = new Account[assets.length + liabilities.length + expenses.length + revenues.length];
-		int index = 0;
-		for (int i = 0; i < assets.length; i++) {
-		    accounts[index] = assets[i];
-		    index++;
-        }
-		for (int i = 0; i < liabilities.length; i++) {
-		    accounts[index] = liabilities[i];
-		    index++;
-        }
-		for (int i = 0; i < expenses.length; i++) {
-		    accounts[index] = expenses[i];
-		    index++;
-        }
-		for (int i = 0; i < revenues.length; i++) {
-		    accounts[index] = revenues[i];
-		    index++;
-        }
 
-		for (int i=0; i<accounts.length; i++) {
-		    addItem(accounts[i].getId() + " " + accounts[i].getName());
+        accounts = Arrays.asList(database.getAllAccounts());
+		for (Account a : accounts) {
+		    addItem(a.getId() + ' ' + a.getName());
 		}
 
 		// Select initial account
-		index = -1;
+		int index = -1;
 		if (account != null) {
-			for (int i=0; i<accounts.length; i++) {
-			    if (accounts[i].equals(account)) {
+			for (int i=0; i<accounts.size(); i++) {
+			    if (accounts.get(i).equals(account)) {
 			        index = i;
 			    }
 			}
@@ -85,7 +69,7 @@ public class AccountSelectionBean extends JComboBoxWithKeyboardInput
         Account result = null;
         int index = getSelectedIndex();
         if (index != -1) {
-            result = accounts[index];
+            result = accounts.get(index);
         }
         return result;
     }
