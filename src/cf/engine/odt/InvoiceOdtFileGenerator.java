@@ -73,8 +73,8 @@ public class InvoiceOdtFileGenerator implements Task {
     /** The outputstream of the ODT file. */
     private ZipOutputStream zipOutputStream;
 
-    private String templateFileName;
-    private String odtFileName;
+    private File templateFile;
+    private File odtFile;
     private Invoice[] invoices;
     private Date date;
     private String concerning;
@@ -83,19 +83,19 @@ public class InvoiceOdtFileGenerator implements Task {
 
     /**
      * Constructor.
-     * @param templateFileName the file name of the template
-     * @param odtFileName the file name of the ODT file to be created
+     * @param templateFile the file of the template
+     * @param odtFile the file of the ODT file to be created
      * @param invoices the invoices to be added to the PDF file
      * @param date
      * @param concerning
      * @param ourReference
      * @param dueDate
      */
-    public InvoiceOdtFileGenerator(String templateFileName, String odtFileName,
+    public InvoiceOdtFileGenerator(File templateFile, File odtFile,
             Invoice[] invoices, Date date, String concerning, String ourReference,
             Date dueDate) {
-    	this.templateFileName = templateFileName;
-    	this.odtFileName = odtFileName;
+    	this.templateFile = templateFile;
+    	this.odtFile = odtFile;
     	this.invoices = invoices;
     	this.date = date;
     	this.concerning = concerning;
@@ -110,15 +110,16 @@ public class InvoiceOdtFileGenerator implements Task {
      * @throws IOException if a problem occurs while reading the template or
      *         while creating the ODT file
      */
+	@Override
 	public Object execute(TaskProgressListener progressListener) throws IOException {
         zipOutputStream = new ZipOutputStream(new BufferedOutputStream(
-            new FileOutputStream(odtFileName)));
+            new FileOutputStream(odtFile)));
         progressListener.onProgressUpdate(0);
-        long totalFileSize = new File(templateFileName).length();
+        long totalFileSize = templateFile.length();
         long bytesHandled = 0;
         try {
             zipInputStream = new ZipInputStream(new BufferedInputStream(
-                new FileInputStream(templateFileName)));
+                new FileInputStream(templateFile)));
             ZipEntry zipEntry = zipInputStream.getNextEntry();
             while (zipEntry != null) {
                 if ("content.xml".equals(zipEntry.getName())) {
@@ -247,8 +248,8 @@ public class InvoiceOdtFileGenerator implements Task {
      * Replace keywords in the node's texts by attributes of the specified invoice.
      * @param node the node
      * @param invoice the invoice
-     * @param concerning TODO
-     * @param dueDate  TODO
+     * @param concerning
+     * @param dueDate
      * @return the new node that is created by the substition process
      */
     private Node applySubstitutions(Node node, Invoice invoice, String concerning, Date dueDate) {
