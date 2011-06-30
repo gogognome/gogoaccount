@@ -56,13 +56,12 @@ import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
 import cf.engine.XMLParseException;
 import cf.print.AddressLabelPrinter;
-import cf.ui.dialogs.AccountSelectionDialog;
 import cf.ui.dialogs.DateSelectionDialog;
 import cf.ui.dialogs.ReportDialog;
-import cf.ui.dialogs.ViewAccountOverviewDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.AboutView;
+import cf.ui.views.AccountMutationsView;
 import cf.ui.views.BalanceAndOperationResultView;
 import cf.ui.views.BalanceView;
 import cf.ui.views.CloseBookkeepingView;
@@ -108,6 +107,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
     /** The view for editing parties. */
     private PartiesView partiesView;
+
+    private AccountMutationsView accountMutationsView;
 
     private ImportBankStatementView importBankStatementView;
 
@@ -262,7 +263,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
 		if ("mi.viewBalance".equals(command)) { handleViewBalance(); }
 		if ("mi.viewOperationalResult".equals(command)) { handleViewOperationalResult(); }
-		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountOverview(); }
+		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
 		if ("mi.viewPartyOverview".equals(command)) { handleViewPartyOverview(); }
 		if ("mi.viewPartiesOverview".equals(command)) { handleViewPartiesOverview(); }
 		if ("mi.addJournal".equals(command)) { handleAddJournal(); }
@@ -623,24 +624,21 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         }
     }
 
-	private void handleViewAccountOverview()
-	{
-        AccountSelectionDialog accountSelectionDialog =
-        	new AccountSelectionDialog(this, database, "mf.selectAccountForAccountOverview");
-        accountSelectionDialog.showDialog();
-        Account account = accountSelectionDialog.getAccount();
-        if (account != null)
-        {
-            DateSelectionDialog dateSelectionDialog =
-                new DateSelectionDialog(this, "mf.selectDateForAccountOverview");
-            dateSelectionDialog.showDialog();
-            Date date = dateSelectionDialog.getDate();
-            if (date != null)
-            {
-	            ViewAccountOverviewDialog dialog = new ViewAccountOverviewDialog(this, database, account, date);
-	            dialog.showDialog();
-	        }
-	    }
+	private void handleViewAccountMutations() {
+        if (accountMutationsView == null) {
+        	accountMutationsView = new AccountMutationsView(database);
+        	accountMutationsView.addViewListener(new ViewListener() {
+                @Override
+				public void onViewClosed(View view) {
+                    view.removeViewListener(this);
+                    accountMutationsView = null;
+                }
+            });
+            viewTabbedPane.openView(accountMutationsView);
+            viewTabbedPane.selectView(accountMutationsView);
+        } else {
+            viewTabbedPane.selectView(accountMutationsView);
+        }
 	}
 
 	private void handleViewPartyOverview() {
