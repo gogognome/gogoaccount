@@ -54,13 +54,11 @@ import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
-import cf.engine.DatabaseModificationFailedException;
-import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.Party;
-import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.ItemsTableModel;
+import cf.ui.views.EditJournalView.JournalAddListener;
 
 /**
  * This view allows the user to import a bank statement and create journals
@@ -68,7 +66,7 @@ import cf.ui.dialogs.ItemsTableModel;
  *
  * @author Sander Kooijmans
  */
-public class ImportBankStatementView extends View implements ModelChangeListener {
+public class ImportBankStatementView extends View implements ModelChangeListener, JournalAddListener {
 
     private FileSelectionModel fileSelectionModel = new FileSelectionModel();
 
@@ -278,39 +276,6 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
             Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-            EditJournalDialog dialog =
-                new EditJournalDialog(getParentFrame(), database, "ejd.editJournalTitle", journal, false);
-            dialog.showDialog();
-            List<Journal> journals = dialog.getEditedJournals();
-            if (!journals.isEmpty()) {
-                if (journals.size() != 1) {
-                    throw new IllegalStateException("journals.length must be 1");
-                }
-                Journal newJournal = journals.get(0);
-                if (!journal.equals(newJournal)) {
-                    // the journal was modified
-                    if (journal.createsInvoice()) {
-                        EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle",
-                            database.getInvoice(journal.getIdOfCreatedInvoice()));
-                        ViewDialog editInvoiceDialog = new ViewDialog(getParentWindow(), editInvoiceView);
-                        editInvoiceDialog.showDialog();
-                        Invoice newInvoice = editInvoiceView.getEditedInvoice();
-                        if (newInvoice != null) {
-                            try {
-                                database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
-                            } catch (DatabaseModificationFailedException e) {
-                                MessageDialog.showErrorMessage(this, e, "ejd.updateInvoiceException");
-                            }
-                        }
-                    }
-                    try {
-                        database.updateJournal(journal, newJournal);
-                    } catch (DatabaseModificationFailedException e) {
-                        MessageDialog.showErrorMessage(this, e, "ejd.updateJournalException");
-                    }
-                    updateJournalItemTable(row);
-                }
-            }
         }
     }
 
@@ -318,16 +283,10 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      * This method lets the user add new journals.
      */
     private void handleAddItem() {
-        EditJournalDialog dialog = new EditJournalDialog(getParentFrame(), database, "ajd.title", true);
+        EditJournalView view = new EditJournalView(database, "ajd.title", null);
+        view.addListener(this);
+        ViewDialog dialog = new ViewDialog(this, view);
         dialog.showDialog();
-        List<Journal> journals = dialog.getEditedJournals();
-        for (Journal journal : journals) {
-            try {
-                database.addJournal(journal, true);
-            } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showErrorMessage(this, e, "ajd.addJournalException");
-            }
-        }
     }
 
     /**
@@ -366,6 +325,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 			importButton.setEnabled(fileSelectionModel.getFile() != null
 					&& fileSelectionModel.getFile().isFile());
 		}
+
+	}
+
+	@Override
+	public void journalAdded(Journal journal) {
+		// TODO Auto-generated method stub
 
 	}
 

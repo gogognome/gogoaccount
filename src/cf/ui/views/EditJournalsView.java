@@ -62,7 +62,6 @@ import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.Party;
-import cf.ui.dialogs.EditJournalDialog;
 import cf.ui.dialogs.ItemsTableModel;
 
 /**
@@ -160,8 +159,8 @@ public class EditJournalsView extends View {
 		});
 
 		// Create button panel
-		JPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
-        buttonsPanel.setOpaque(false);
+		JPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
+        buttonPanel.setOpaque(false);
 
 		JButton editButton = wf.createButton("ejd.editJournal", new AbstractAction() {
             @Override
@@ -169,7 +168,7 @@ public class EditJournalsView extends View {
                 handleEditItem();
             }
 		});
-		buttonsPanel.add(editButton);
+		buttonPanel.add(editButton);
 
 		JButton addButton = wf.createButton("ejd.addJournal", new AbstractAction() {
             @Override
@@ -177,7 +176,7 @@ public class EditJournalsView extends View {
                 handleAddItem();
             }
 		});
-		buttonsPanel.add(addButton);
+		buttonPanel.add(addButton);
 
 		JButton deleteButton = wf.createButton("ejd.deleteJournal", new AbstractAction() {
             @Override
@@ -185,7 +184,7 @@ public class EditJournalsView extends View {
                 handleDeleteItem();
             }
 		});
-		buttonsPanel.add(deleteButton);
+		buttonPanel.add(deleteButton);
 
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
@@ -199,7 +198,7 @@ public class EditJournalsView extends View {
 
         setLayout(new BorderLayout());
 		add(tablesPanel, BorderLayout.CENTER);
-        add(buttonsPanel, BorderLayout.SOUTH);
+        add(buttonPanel, BorderLayout.SOUTH);
 
         journalsTable.selectFirstRow();
 	}
@@ -231,38 +230,34 @@ public class EditJournalsView extends View {
         int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
             Journal journal = journalsTableModel.getJournal(row);
-            EditJournalDialog dialog =
-                new EditJournalDialog(getParentFrame(), database, "ejd.editJournalTitle", journal, false);
+
+            EditJournalView view = new EditJournalView(database, "ajd.title", journal);
+            ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();
-            List<Journal> journals = dialog.getEditedJournals();
-            if (!journals.isEmpty()) {
-                if (journals.size() != 1) {
-                    throw new IllegalStateException("journals.length must be 1");
-                }
-                Journal newJournal = journals.get(0);
-                if (!journal.equals(newJournal)) {
-                    // the journal was modified
-                    if (journal.createsInvoice()) {
-                        EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle",
-                            database.getInvoice(journal.getIdOfCreatedInvoice()));
-                        ViewDialog editInvoiceDialog = new ViewDialog(getParentWindow(), editInvoiceView);
-                        editInvoiceDialog.showDialog();
-                        Invoice newInvoice = editInvoiceView.getEditedInvoice();
-                        if (newInvoice != null) {
-                            try {
-                                database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
-                            } catch (DatabaseModificationFailedException e) {
-                                MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateInvoiceException");
-                            }
+
+            Journal newJournal = view.getEditedJournal();
+            if (!journal.equals(newJournal)) {
+                // the journal was modified
+                if (journal.createsInvoice()) {
+                    EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle",
+                        database.getInvoice(journal.getIdOfCreatedInvoice()));
+                    ViewDialog editInvoiceDialog = new ViewDialog(getParentWindow(), editInvoiceView);
+                    editInvoiceDialog.showDialog();
+                    Invoice newInvoice = editInvoiceView.getEditedInvoice();
+                    if (newInvoice != null) {
+                        try {
+                            database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
+                        } catch (DatabaseModificationFailedException e) {
+                            MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateInvoiceException");
                         }
                     }
-                    try {
-                        database.updateJournal(journal, newJournal);
-                    } catch (DatabaseModificationFailedException e) {
-                        MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateJournalException");
-                    }
-                    updateJournalItemTable(row);
                 }
+                try {
+                    database.updateJournal(journal, newJournal);
+                } catch (DatabaseModificationFailedException e) {
+                    MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateJournalException");
+                }
+                updateJournalItemTable(row);
             }
         }
     }
@@ -271,16 +266,9 @@ public class EditJournalsView extends View {
      * This method lets the user add new journals.
      */
     private void handleAddItem() {
-        EditJournalDialog dialog = new EditJournalDialog(getParentFrame(), database, "ajd.title", true);
+        EditJournalView view = new EditJournalView(database, "ajd.title", null);
+        ViewDialog dialog = new ViewDialog(this, view);
         dialog.showDialog();
-        List<Journal> journals = dialog.getEditedJournals();
-        for (Journal journal : journals) {
-            try {
-                database.addJournal(journal, true);
-            } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showErrorMessage(getParentWindow(), e, "ajd.addItemException");
-            }
-        }
     }
 
     /**
