@@ -68,7 +68,7 @@ public class AccountMutationsView extends View {
 
 	@Override
 	public String getTitle() {
-		return "AccountMutationsView.title";
+		return TextResource.getInstance().getString("AccountMutationsView.title");
 	}
 
 	@Override
