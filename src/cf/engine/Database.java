@@ -87,6 +87,9 @@ public class Database {
 	/** The name of the file from which the database was loaded. */
 	private String fileName;
 
+	/** Maps accounts from imported transactions to accounts of gogo account. */
+	private Map<String, String> importedTransactionAccountToAccountMap = new HashMap<String, String>();
+
 	/**
 	 * Contains the <tt>DatabaseListeners</tt>.
 	 */
@@ -1043,7 +1046,8 @@ public class Database {
         if (paymentsForInvoice != null) {
             payments.addAll(paymentsForInvoice.values());
             Collections.sort(payments, new Comparator<Payment>() {
-                public int compare(Payment o1, Payment o2) {
+                @Override
+				public int compare(Payment o1, Payment o2) {
                     return DateUtil.compareDayOfYear(o1.getDate(), o2.getDate());
                 }
             });
@@ -1123,26 +1127,41 @@ public class Database {
     	notifyChange();
     }
 
+    /**
+     * Sets a link between an account of an imported transaction and an account
+     * of gogo account.
+     * @param importedAccount the account of an imported transaction
+     * @param accountId the id of the account in gogo account
+     */
+    public void setImportedAccount(String importedAccount, String accountId) {
+    	importedTransactionAccountToAccountMap.put(importedAccount, accountId);
+    	notifyChange();
+    }
+
+    /**
+     * Gets the account that corresponds to an account of an imported transaction.
+     * @param importedAccount the account of an imported transaction
+     * @return the account or null if no corresponding account is found
+     */
+    public Account getAccountForImportedAccount(String importedAccount) {
+    	String accountId = importedTransactionAccountToAccountMap.get(importedAccount);
+    	if (accountId != null) {
+        	return getAccount(accountId);
+    	} else {
+    		return null;
+    	}
+    }
+
+    public Map<String, String> getImportedTransactionAccountToAccountMap() {
+		return importedTransactionAccountToAccountMap;
+	}
+
     private void doRemoveAccount(String accountId) {
     	idsToAccountsMap.remove(accountId);
     	assets.remove(accountId);
     	liabilities.remove(accountId);
     	expenses.remove(accountId);
     	revenues.remove(accountId);
-    }
-
-    /**
-     * Removes an account from an array
-     * @param accounts the account array
-     * @param accountId the id of the account to be removed
-     */
-    private static void removeAccountFromArray(List<Account> accounts, String accountId) {
-    	for (Iterator<Account> iter = accounts.iterator(); iter.hasNext();) {
-    		Account account = iter.next();
-    		if (account.getId().equals(accountId)) {
-    			iter.remove();
-    		}
-    	}
     }
 
     private static Date getFirstDayOfYear(Date date) {

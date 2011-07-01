@@ -54,6 +54,17 @@ public class JournalItem
      * @param account the account on which the amount is booked
      * @param debet true if the amount is booked on the debet side; false if
      *              the amount is booked on the credit side
+     */
+    public JournalItem(Amount amount, Account account, boolean debet) {
+    	this(amount, account, debet, null, null);
+    }
+
+    /**
+     * Constructs a journal item.
+     * @param amount the amount
+     * @param account the account on which the amount is booked
+     * @param debet true if the amount is booked on the debet side; false if
+     *              the amount is booked on the credit side
      * @param invoiceId the id of the invoice to which the amount is booked as payment;
      *              <code>null</code> if no invoice is involved.
      * @param paymentId the id of the payment; <code>null</code> if no payment is involved

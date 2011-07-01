@@ -501,7 +501,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private void loadFile(String fileName) {
         Database newDatabase = null;
 		try {
-			newDatabase = XMLFileReader.createDatabaseFromFile(fileName);
+			newDatabase = new XMLFileReader(new File(fileName)).createDatabaseFromFile();
 		} catch (XMLParseException e) {
 			MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
@@ -540,7 +540,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 */
 	private void saveBookkeeping(String fileName) {
 		try {
-			XMLFileWriter.writeDatabaseToFile(database, fileName);
+			new XMLFileWriter(database, new File(fileName)).writeDatabaseToFile();
 			database.setFileName(fileName);
 			database.databaseConsistentWithFile();
 		} catch (Exception e) {

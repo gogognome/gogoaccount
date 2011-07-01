@@ -327,9 +327,27 @@ public class ImportBankStatementView extends View
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
         	updateTransactionJournal(row, journal);
+        	setLinkBetweenImportedTransactionAccountAndAccount(
+        			transactionJournalsTableModel.getRow(row).getImportedTransaction(), journal);
         } else {
         	MessageDialog.showErrorMessage(this, "ImportBankStatementView.JournalCreatedButNoTransactionSelected");
         }
+	}
+
+	private void setLinkBetweenImportedTransactionAccountAndAccount(
+			ImportedTransaction transaction, Journal journal) {
+		JournalItem[] items = journal.getItems();
+		if (items.length == 2) {
+			for (JournalItem item : items) {
+				String importedAccount;
+				if (item.isDebet()) {
+					importedAccount = transaction.getToAccount();
+				} else {
+					importedAccount = transaction.getFromAccount();
+				}
+				database.setImportedAccount(importedAccount, item.getAccount().getId());
+			}
+		}
 	}
 
 	@Override

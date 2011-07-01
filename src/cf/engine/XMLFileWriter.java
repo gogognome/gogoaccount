@@ -17,17 +17,21 @@
 package cf.engine;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
@@ -49,8 +53,17 @@ public class XMLFileWriter {
 
     private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
-    private XMLFileWriter() {
-        // should never be called
+	private static final String FILE_VERSION = "1.0";
+
+    private final Database database;
+
+    private final File file;
+
+    private Document doc;
+
+    public XMLFileWriter(Database database, File file) {
+        this.database = database;
+        this.file = file;
     }
 
 	/**
@@ -58,155 +71,146 @@ public class XMLFileWriter {
 	 *
 	 * @param fileName the name of the file.
 	 */
-	public static void writeDatabaseToFile( Database db, String fileName )
-	{
-		try
-		{
-			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
-			DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-			Document doc = docBuilder.newDocument();
-			Element rootElement = doc.createElement("cfbookkeeping");
+	public void writeDatabaseToFile() throws IOException {
+		try	{
+			doc = createDocument();
+
+			Element rootElement = doc.createElement("gogoAccountBookkeeping");
 			doc.appendChild(rootElement);
 
-			// write description
-			rootElement.setAttribute("description", db.getDescription());
-
-			// write currency
-			rootElement.setAttribute("currency", db.getCurrency().getCurrencyCode());
-
-			// write start date
-			rootElement.setAttribute("startdate", DATE_FORMAT.format(db.getStartOfPeriod()));
+			rootElement.setAttribute("fileversion", FILE_VERSION);
+			rootElement.setAttribute("description", database.getDescription());
+			rootElement.setAttribute("currency", database.getCurrency().getCurrencyCode());
+			rootElement.setAttribute("startdate", DATE_FORMAT.format(database.getStartOfPeriod()));
 
 			// write accounts
-			rootElement.appendChild(createElementForAccounts(doc, db, "assets",
-			        db.getAssets()));
-			rootElement.appendChild(createElementForAccounts(doc, db, "liabilities",
-			        db.getLiabilities()));
-			rootElement.appendChild(createElementForAccounts(doc, db, "expenses",
-			        db.getExpenses()));
-			rootElement.appendChild(createElementForAccounts(doc, db, "revenues",
-			        db.getRevenues()));
+			rootElement.appendChild(createElementForAccounts("assets",
+			        database.getAssets()));
+			rootElement.appendChild(createElementForAccounts("liabilities",
+			        database.getLiabilities()));
+			rootElement.appendChild(createElementForAccounts("expenses",
+			        database.getExpenses()));
+			rootElement.appendChild(createElementForAccounts("revenues",
+			        database.getRevenues()));
 
-			// write debtors and creditors
-			rootElement.appendChild(createElementForParties(doc, db,
-			        "parties", db.getParties()));
+			rootElement.appendChild(createElementForParties(database.getParties()));
+			appendElementsForJournals(rootElement);
+            rootElement.appendChild(createElementForInvoices());
+            rootElement.appendChild(createElementForImportedAccounts());
 
-			// write journals
-			Element journalsElem = doc.createElement("journals");
-			List<Journal> journals = db.getJournals();
-			for (Journal journal : journals) {
-			    Element journalElem = doc.createElement("journal");
-			    journalElem.setAttribute("id", journal.getId());
-			    journalElem.setAttribute("date", DATE_FORMAT.format(journal.getDate()));
-			    journalElem.setAttribute("description", journal.getDescription());
-			    if (journal.createsInvoice()) {
-			        journalElem.setAttribute("createdInvoice", journal.getIdOfCreatedInvoice());
-			    }
-			    JournalItem[] items = journal.getItems();
-			    for (int j = 0; j < items.length; j++) {
-                    Element item = doc.createElement("item");
-                    item.setAttribute("id", items[j].getAccount().getId());
-                    item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(items[j].getAmount()));
-                    item.setAttribute("side", items[j].isDebet() ? "debet" : "credit");
-                    if (items[j].getInvoiceId() != null) {
-                        item.setAttribute("invoice", items[j].getInvoiceId());
-                        if (items[j].getPaymentId() != null) {
-                            item.setAttribute("payment", items[j].getPaymentId());
-                        }
-                    }
-                    journalElem.appendChild(item);
-                }
-			    journalsElem.appendChild(journalElem);
-            }
-			rootElement.appendChild(journalsElem);
-
-            // write the invoices
-            rootElement.appendChild(createElementForInvoices(doc, db, "invoices", db.getInvoices()));
-
-
-			// Use a Transformer for output
-			TransformerFactory tFactory = TransformerFactory.newInstance();
-			Transformer transformer = tFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-			transformer.setOutputProperty( OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-			DOMSource source = new DOMSource(doc);
-			StreamResult result = new StreamResult( new File(fileName) );
-			transformer.transform(source, result);
-		}
-		catch( ParserConfigurationException e )
-		{
-		    //logger.error("An exception occurred that should never have occurred: ", e);
-		    throw new RuntimeException(e);
-		}
-		catch( TransformerException e )
-		{
-			//logger.error("An exception occurred: ", e);
-			throw new RuntimeException(e);
+			writeDomToFile(doc);
+		} catch( Exception e ) 	{
+		    throw new IOException("Failed to write the XML file " + file, e);
 		}
 	}
 
-	private static Element createElementForAccounts(Document doc, Database db,
-	        String groupName, Account[] accounts)
-	{
+	private void appendElementsForJournals(Element rootElement) {
+		Element journalsElem = doc.createElement("journals");
+		List<Journal> journals = database.getJournals();
+		for (Journal journal : journals) {
+		    Element journalElem = doc.createElement("journal");
+		    journalElem.setAttribute("id", journal.getId());
+		    journalElem.setAttribute("date", DATE_FORMAT.format(journal.getDate()));
+		    journalElem.setAttribute("description", journal.getDescription());
+		    if (journal.createsInvoice()) {
+		        journalElem.setAttribute("createdInvoice", journal.getIdOfCreatedInvoice());
+		    }
+		    JournalItem[] items = journal.getItems();
+		    for (int j = 0; j < items.length; j++) {
+		        Element item = doc.createElement("item");
+		        item.setAttribute("id", items[j].getAccount().getId());
+		        item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(items[j].getAmount()));
+		        item.setAttribute("side", items[j].isDebet() ? "debet" : "credit");
+		        if (items[j].getInvoiceId() != null) {
+		            item.setAttribute("invoice", items[j].getInvoiceId());
+		            if (items[j].getPaymentId() != null) {
+		                item.setAttribute("payment", items[j].getPaymentId());
+		            }
+		        }
+		        journalElem.appendChild(item);
+		    }
+		    journalsElem.appendChild(journalElem);
+		}
+		rootElement.appendChild(journalsElem);
+	}
+
+	private void writeDomToFile(Document doc)
+			throws TransformerFactoryConfigurationError,
+			TransformerConfigurationException, TransformerException {
+		// Use a Transformer for output
+		TransformerFactory tFactory = TransformerFactory.newInstance();
+		Transformer transformer = tFactory.newTransformer();
+		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+		transformer.setOutputProperty( OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+		DOMSource source = new DOMSource(doc);
+		StreamResult result = new StreamResult(file);
+		transformer.transform(source, result);
+	}
+
+	private static Document createDocument() throws ParserConfigurationException {
+		DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
+		DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
+		Document doc = docBuilder.newDocument();
+		return doc;
+	}
+
+	private Element createElementForAccounts(String groupName, Account[] accounts) {
 		Element groupElem = doc.createElement(groupName);
-		for (int i=0; i<accounts.length; i++)
-		{
+		for (Account account : accounts) {
 		    Element elem = doc.createElement("account");
-		    elem.setAttribute("id", accounts[i].getId());
-		    elem.setAttribute("name", accounts[i].getName());
+		    elem.setAttribute("id", account.getId());
+		    elem.setAttribute("name", account.getName());
 		    groupElem.appendChild(elem);
 		}
 		return groupElem;
 	}
 
-	private static Element createElementForParties(Document doc, Database db,
-	        String groupName, Party[] parties) {
-		Element groupElem = doc.createElement(groupName);
-		for (int i=0; i<parties.length; i++) {
+	private Element createElementForParties(Party[] parties) {
+		Element groupElem = doc.createElement("parties");
+		for (Party party : parties) {
 		    Element elem = doc.createElement("party");
-		    elem.setAttribute("id", parties[i].getId());
-		    elem.setAttribute("name", parties[i].getName());
-		    if (parties[i].getAddress() != null) {
-		        elem.setAttribute("address", parties[i].getAddress());
+		    elem.setAttribute("id", party.getId());
+		    elem.setAttribute("name", party.getName());
+		    if (party.getAddress() != null) {
+		        elem.setAttribute("address", party.getAddress());
 		    }
-		    if (parties[i].getZipCode() != null) {
-		        elem.setAttribute("zip", parties[i].getZipCode());
+		    if (party.getZipCode() != null) {
+		        elem.setAttribute("zip", party.getZipCode());
 		    }
-		    if (parties[i].getCity() != null) {
-		        elem.setAttribute("city", parties[i].getCity());
+		    if (party.getCity() != null) {
+		        elem.setAttribute("city", party.getCity());
 		    }
-            if (parties[i].getType() != null) {
-                elem.setAttribute("type", parties[i].getType());
+            if (party.getType() != null) {
+                elem.setAttribute("type", party.getType());
             }
-            if (parties[i].getRemarks() != null) {
-                elem.setAttribute("remarks", parties[i].getRemarks());
+            if (party.getRemarks() != null) {
+                elem.setAttribute("remarks", party.getRemarks());
             }
-            if (parties[i].getBirthDate() != null) {
-                elem.setAttribute("birthdate", DATE_FORMAT.format(parties[i].getBirthDate()));
+            if (party.getBirthDate() != null) {
+                elem.setAttribute("birthdate", DATE_FORMAT.format(party.getBirthDate()));
             }
 		    groupElem.appendChild(elem);
 		}
 		return groupElem;
 	}
 
-    private static Element createElementForInvoices(Document doc, Database db,
-            String groupName, Invoice[] invoices) {
-        Element groupElem = doc.createElement(groupName);
-        for (int i=0; i<invoices.length; i++) {
+    private Element createElementForInvoices() {
+        Element groupElem = doc.createElement("invoices");
+        for (Invoice invoice : database.getInvoices()) {
             Element elem = doc.createElement("invoice");
-            elem.setAttribute("id", invoices[i].getId());
-            elem.setAttribute("amountToBePaid", AMOUNT_FORMAT.formatAmount(invoices[i].getAmountToBePaid()));
-            elem.setAttribute("concerningParty", invoices[i].getConcerningParty().getId());
+            elem.setAttribute("id", invoice.getId());
+            elem.setAttribute("amountToBePaid", AMOUNT_FORMAT.formatAmount(invoice.getAmountToBePaid()));
+            elem.setAttribute("concerningParty", invoice.getConcerningParty().getId());
 
-            Party payingParty = invoices[i].getPayingParty();
+            Party payingParty = invoice.getPayingParty();
             if (payingParty != null) {
                 elem.setAttribute("payingParty", payingParty.getId());
             }
 
-            String[] descriptions = invoices[i].getDescriptions();
-            Amount[] amounts = invoices[i].getAmounts();
+            String[] descriptions = invoice.getDescriptions();
+            Amount[] amounts = invoice.getAmounts();
             assert descriptions.length == amounts.length;
             for (int l=0; l<descriptions.length; l++) {
                 Element lineElem = doc.createElement("line");
@@ -216,9 +220,9 @@ public class XMLFileWriter {
                 }
                 elem.appendChild(lineElem);
             }
-            elem.setAttribute("issueDate", DATE_FORMAT.format(invoices[i].getIssueDate()));
+            elem.setAttribute("issueDate", DATE_FORMAT.format(invoice.getIssueDate()));
 
-            List<Payment> payments = invoices[i].getPayments();
+            List<Payment> payments = invoice.getPayments();
             for (Payment payment : payments) {
                 Element paymentElem = doc.createElement("payment");
                 paymentElem.setAttribute("id", payment.getId());
@@ -232,5 +236,17 @@ public class XMLFileWriter {
         }
         return groupElem;
     }
+
+	private Element createElementForImportedAccounts() {
+        Element groupElem = doc.createElement("importedaccounts");
+        Map<String, String> map = database.getImportedTransactionAccountToAccountMap();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            Element elem = doc.createElement("mapping");
+            elem.setAttribute("importedaccount", entry.getKey());
+            elem.setAttribute("account", entry.getValue());
+            groupElem.appendChild(elem);
+        }
+        return groupElem;
+	}
 
 }

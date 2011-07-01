@@ -46,6 +46,8 @@ public class AddJournalForTransactionView extends EditJournalView {
 
 	private Plugin plugin;
 
+	private ImportedTransaction importedTransaction;
+
 	private JLabel fromAccount = new JLabel();
 
 	private JLabel amount = new JLabel();
@@ -82,8 +84,10 @@ public class AddJournalForTransactionView extends EditJournalView {
 		ValuesEditPanel vep = new ValuesEditPanel();
 		addDeinitializable(vep);
 		vep.addField("AddJournalForTransactionView.date", date);
-		vep.addField("AddJournalForTransactionView.fromAccount", fromAccount);
+		// Order is "to account" and then "from account". This corresponds typically
+		// with values on the debet and credit sides respectively.
 		vep.addField("AddJournalForTransactionView.toAccount", toAccount);
+		vep.addField("AddJournalForTransactionView.fromAccount", fromAccount);
 		vep.addField("AddJournalForTransactionView.amount", amount);
 		vep.addField("AddJournalForTransactionView.description", description);
 		vep.setBorder(WidgetFactory.getInstance().createTitleBorderWithMargin("AddJournalForTransactionView.transaction"));
@@ -93,10 +97,10 @@ public class AddJournalForTransactionView extends EditJournalView {
 
 	@Override
 	protected void initValuesForNextJournal() {
-		ImportedTransaction t = plugin.getNextImportedTransaction();
-		if (t != null) {
-			initValuesForImportedTransaction(t);
-			updateLabelsForImportedTransaction(t);
+		importedTransaction = plugin.getNextImportedTransaction();
+		if (importedTransaction != null) {
+			initValuesForImportedTransaction(importedTransaction);
+			updateLabelsForImportedTransaction(importedTransaction);
 		} else {
 			requestClose();
 		}
@@ -111,9 +115,12 @@ public class AddJournalForTransactionView extends EditJournalView {
 	private void initValuesForImportedTransaction(ImportedTransaction t) {
 		dateModel.setDate(t.getDate());
 		descriptionModel.setString(t.getDescription());
-		Account account = database.getAllAccounts()[0];
-		itemsTableModel.addItem(new JournalItem(t.getAmount(), account, true, null, null));
-		itemsTableModel.addItem(new JournalItem(t.getAmount(), account, false, null, null));
+		Account debetAccount = database.getAccountForImportedAccount(t.getFromAccount());
+		Account creditAccount = database.getAccountForImportedAccount(t.getToAccount());
+		if (debetAccount != null && creditAccount != null) {
+			itemsTableModel.addItem(createDefaultItemToBeAdded());
+			itemsTableModel.addItem(createDefaultItemToBeAdded());
+		}
 	}
 
 	private void updateLabelsForImportedTransaction(ImportedTransaction t) {
@@ -135,4 +142,29 @@ public class AddJournalForTransactionView extends EditJournalView {
 		}
 	}
 
+	@Override
+	protected JournalItem createDefaultItemToBeAdded() {
+		switch (itemsTableModel.getRowCount()) {
+		case 0: { // first item
+			Account account = getAccountForImportedAccount(importedTransaction.getToAccount());
+			return new JournalItem(importedTransaction.getAmount(), account, true);
+		}
+
+		case 1: { // second item
+			Account account = getAccountForImportedAccount(importedTransaction.getFromAccount());
+			return new JournalItem(importedTransaction.getAmount(), account, false);
+		}
+
+		default: // other item
+			return null;
+		}
+	}
+
+	private Account getAccountForImportedAccount(String importedAccount) {
+		Account account = database.getAccountForImportedAccount(importedAccount);
+		if (account == null) {
+			account = database.getAllAccounts()[0];
+		}
+		return account;
+	}
 }

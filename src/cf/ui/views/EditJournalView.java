@@ -326,7 +326,7 @@ public class EditJournalView extends View {
 
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() {
-    	JournalItem defaultItem = null;
+    	JournalItem defaultItem = createDefaultItemToBeAdded();
 
         EditJournalItemDialog dialog = new EditJournalItemDialog(this, database, "ajd.addJournalItem", defaultItem);
         dialog.showDialog();
@@ -336,7 +336,17 @@ public class EditJournalView extends View {
         }
     }
 
-    /** Handles the edit button. Lets the user edit a journal item. */
+    /**
+     * This method is called when a new journal item is to be created.
+     * This method creates a JournalItem that will be used to set the initial values
+     * of the new journal item.
+     * @return the journal item containing the initial values; null is allowed
+     */
+    protected JournalItem createDefaultItemToBeAdded() {
+		return null;
+	}
+
+	/** Handles the edit button. Lets the user edit a journal item. */
     private void handleEditButtonPressed() {
         int row = itemsTable.getSelectedRow();
         JournalItem item = itemsTableModel.getItem(row);

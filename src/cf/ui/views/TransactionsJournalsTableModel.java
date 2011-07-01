@@ -35,11 +35,11 @@ class TransactionsJournalsTableModel extends AbstractListSortedTableModel<Transa
     private final static ColumnDefinition DATE =
         new ColumnDefinition("importBankStatementView.date", Date.class, 70);
 
-    private final static ColumnDefinition FROM_ACCOUNT =
-        new ColumnDefinition("importBankStatementView.fromAccount", String.class, 100);
-
     private final static ColumnDefinition TO_ACCOUNT =
         new ColumnDefinition("importBankStatementView.toAccount", String.class, 100);
+
+    private final static ColumnDefinition FROM_ACCOUNT =
+        new ColumnDefinition("importBankStatementView.fromAccount", String.class, 100);
 
     private final static ColumnDefinition AMOUNT =
         new ColumnDefinition("importBankStatementView.amount", String.class, 100);
@@ -57,7 +57,7 @@ class TransactionsJournalsTableModel extends AbstractListSortedTableModel<Transa
         new ColumnDefinition("importBankStatementView.invoice", String.class, 200);
 
     private final static List<ColumnDefinition> COLUMN_DEFINITIONS = Arrays.asList(
-        DATE, FROM_ACCOUNT, TO_ACCOUNT, AMOUNT, DESCRIPTION1, ID, DESCRIPTION2, INVOICE
+        DATE, TO_ACCOUNT, FROM_ACCOUNT, AMOUNT, DESCRIPTION1, ID, DESCRIPTION2, INVOICE
     );
 
     public TransactionsJournalsTableModel(List<Transaction> transactions, Database database) {

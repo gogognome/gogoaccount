@@ -16,6 +16,7 @@
 */
 package nl.gogognome.cf.tool;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -90,7 +91,7 @@ public class PrintAgeOfParties {
         }
 
         try {
-            Database db = XMLFileReader.createDatabaseFromFile(xmlFileName);
+            Database db = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
             Party[] parties = db.getParties();
             for (int i = 0; i < parties.length; i++) {
                 Date birthDay = parties[i].getBirthDate();

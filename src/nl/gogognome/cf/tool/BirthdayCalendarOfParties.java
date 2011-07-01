@@ -16,6 +16,7 @@
 */
 package nl.gogognome.cf.tool;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class BirthdayCalendarOfParties {
 
         ArrayList<Party> partiesWithBirthdate = new ArrayList<Party>();
         try {
-            Database db = XMLFileReader.createDatabaseFromFile(xmlFileName);
+            Database db = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
             Party[] parties = db.getParties();
             for (int i = 0; i < parties.length; i++) {
                 if (parties[i].getBirthDate() != null && !"oud-lid".equals(parties[i].getType())) {
@@ -84,7 +85,8 @@ public class BirthdayCalendarOfParties {
             System.out.println(tr.getString("printAge.ioError", e.getMessage()));
         }
         Collections.sort(partiesWithBirthdate, new Comparator<Party>() {
-            public int compare(Party p1, Party p2) {
+            @Override
+			public int compare(Party p1, Party p2) {
                 int m1 = DateUtil.getField(p1.getBirthDate(), Calendar.MONTH);
                 int d1 = DateUtil.getField(p1.getBirthDate(), Calendar.DATE);
                 int m2 = DateUtil.getField(p2.getBirthDate(), Calendar.MONTH);
