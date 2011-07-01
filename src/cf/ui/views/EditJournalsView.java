@@ -28,9 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.AbstractAction;
-import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -45,10 +43,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.DeleteException;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SortedTable;
 import nl.gogognome.lib.swing.SortedTableModel;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -58,10 +54,10 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
-import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Invoice;
 import cf.engine.Journal;
-import cf.engine.Party;
+import cf.ui.controllers.DeleteJournalController;
+import cf.ui.controllers.EditJournalController;
 import cf.ui.dialogs.ItemsTableModel;
 
 /**
@@ -71,7 +67,9 @@ import cf.ui.dialogs.ItemsTableModel;
  */
 public class EditJournalsView extends View {
 
-    private final static Color BACKGROUND_COLOR = new Color(255, 230, 230);
+	private static final long serialVersionUID = 1L;
+
+	private final static Color BACKGROUND_COLOR = new Color(255, 230, 230);
 
     /** The table containing journals. */
     private SortedTable journalsTable;
@@ -124,25 +122,8 @@ public class EditJournalsView extends View {
 		columnModel.getColumn(3).setPreferredWidth(300);
 
 		// Set renderers for column 1 and 2.
-		TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
-		    @Override
-            public void setValue(Object value) {
-		        super.setValue(value);
-		        setHorizontalAlignment(SwingConstants.RIGHT);
-		    }
-		};
-
-		columnModel.getColumn(1).setCellRenderer(rightAlignedRenderer);
-		columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
-
-		// Create combo box for parties
-		JComboBox comboBox = new JComboBox();
-		Party[] parties = database.getParties();
-		for (int i = 0; i < parties.length; i++)
-		{
-		    comboBox.addItem(parties[i].getId() + " " + parties[i].getName());
-        }
-		columnModel.getColumn(3).setCellEditor(new DefaultCellEditor(comboBox));
+		columnModel.getColumn(1).setCellRenderer(new RightAlignedRenderer());
+		columnModel.getColumn(2).setCellRenderer(new RightAlignedRenderer());
 
 		// Let items table be updated when another row is selected in the journals table.
 		final ListSelectionModel rowSM = journalsTable.getSelectionModel();
@@ -230,35 +211,9 @@ public class EditJournalsView extends View {
         int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
             Journal journal = journalsTableModel.getJournal(row);
-
-            EditJournalView view = new EditJournalView(database, "ajd.title", journal);
-            ViewDialog dialog = new ViewDialog(this, view);
-            dialog.showDialog();
-
-            Journal newJournal = view.getEditedJournal();
-            if (!journal.equals(newJournal)) {
-                // the journal was modified
-                if (journal.createsInvoice()) {
-                    EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle",
-                        database.getInvoice(journal.getIdOfCreatedInvoice()));
-                    ViewDialog editInvoiceDialog = new ViewDialog(getParentWindow(), editInvoiceView);
-                    editInvoiceDialog.showDialog();
-                    Invoice newInvoice = editInvoiceView.getEditedInvoice();
-                    if (newInvoice != null) {
-                        try {
-                            database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
-                        } catch (DatabaseModificationFailedException e) {
-                            MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateInvoiceException");
-                        }
-                    }
-                }
-                try {
-                    database.updateJournal(journal, newJournal);
-                } catch (DatabaseModificationFailedException e) {
-                    MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.updateJournalException");
-                }
-                updateJournalItemTable(row);
-            }
+            EditJournalController controller = new EditJournalController(this, database, journal);
+            controller.execute();
+            updateJournalItemTable(row);
         }
     }
 
@@ -277,25 +232,9 @@ public class EditJournalsView extends View {
     private void handleDeleteItem() {
         int row = journalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
-            if (journalsTableModel.getJournal(row).createsInvoice()) {
-                if (!database.getPayments(journalsTableModel.getJournal(row).getIdOfCreatedInvoice()).isEmpty()) {
-                    MessageDialog.showMessage(this, "gen.warning",
-                        "editJournalsView.journalCreatingInvoiceCannotBeDeleted");
-                    return;
-                }
-            }
-
-            int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
-                "editJournalsView.areYouSureAboutDeletion");
-            if (choice == MessageDialog.NO_OPTION) {
-                return; // do not remove the journal
-            }
-
-            try {
-                BookkeepingService.removeJournal(database, journalsTableModel.getJournal(row));
-            } catch (DeleteException e) {
-                MessageDialog.showErrorMessage(getParentWindow(), e, "editJournalsView.removeJournalException");
-            }
+        	DeleteJournalController controller =
+        		new DeleteJournalController(this, database, journalsTableModel.getJournal(row));
+        	controller.execute();
         }
     }
 

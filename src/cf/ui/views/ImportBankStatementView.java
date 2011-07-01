@@ -25,18 +25,13 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.AbstractAction;
-import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import nl.gogognome.cf.services.importers.ImportedTransaction;
@@ -44,6 +39,7 @@ import nl.gogognome.cf.services.importers.RabobankCSVImporter;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SortedTable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -56,9 +52,9 @@ import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
-import cf.engine.Party;
+import cf.ui.controllers.DeleteJournalController;
+import cf.ui.controllers.EditJournalController;
 import cf.ui.dialogs.ItemsTableModel;
-import cf.ui.views.EditJournalView.JournalAddListener;
 
 /**
  * This view allows the user to import a bank statement and create journals
@@ -66,12 +62,13 @@ import cf.ui.views.EditJournalView.JournalAddListener;
  *
  * @author Sander Kooijmans
  */
-public class ImportBankStatementView extends View implements ModelChangeListener, JournalAddListener {
+public class ImportBankStatementView extends View
+	implements ModelChangeListener, ListSelectionListener, AddJournalForTransactionView.Plugin{
 
     private FileSelectionModel fileSelectionModel = new FileSelectionModel();
 
-    /** The table containing journals. */
-    private SortedTable journalsTable;
+    /** The table containing transactions and journals. */
+    private SortedTable transactionsJournalsTable;
 
     /** The table containing journal items. */
     private JTable itemsTable;
@@ -83,6 +80,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private TransactionsJournalsTableModel transactionJournalsTableModel;
 
     private JButton importButton;
+
+    private JButton addButton;
+
+    private JButton editButton;
+
+    private JButton deleteButton;
 
     /** The database. */
     Database database;
@@ -103,6 +106,13 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      */
     @Override
     public void onInit() {
+		addComponents();
+        addListeners();
+        disableEnableButtons();
+        updateJournalItemTable();
+	}
+
+	private void addComponents() {
 		WidgetFactory wf = WidgetFactory.getInstance();
 
 		vep = new ValuesEditPanel();
@@ -126,8 +136,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 		// Create table of journals
 		transactionJournalsTableModel = new TransactionsJournalsTableModel(
 				Collections.<Transaction>emptyList(), database);
-		journalsTable = WidgetFactory.getInstance().createSortedTable(transactionJournalsTableModel);
-        journalsTable.setTitle("importBankStatementView.transactionsJournals");
+		transactionsJournalsTable = WidgetFactory.getInstance().createSortedTable(transactionJournalsTableModel);
+        transactionsJournalsTable.setTitle("importBankStatementView.transactionsJournals");
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
@@ -143,72 +153,26 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 		columnModel.getColumn(3).setPreferredWidth(300);
 
 		// Set renderers for column 1 and 2.
-		TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
-		    @Override
-            public void setValue(Object value) {
-		        super.setValue(value);
-		        setHorizontalAlignment(SwingConstants.RIGHT);
-		    }
-		};
-
-		columnModel.getColumn(1).setCellRenderer(rightAlignedRenderer);
-		columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
-
-		// Create combo box for parties
-		JComboBox comboBox = new JComboBox();
-		Party[] parties = database.getParties();
-		for (int i = 0; i < parties.length; i++)
-		{
-		    comboBox.addItem(parties[i].getId() + " " + parties[i].getName());
-        }
-		columnModel.getColumn(3).setCellEditor(new DefaultCellEditor(comboBox));
-
-		// Let items table be updated when another row is selected in the journals table.
-		final ListSelectionModel rowSM = journalsTable.getSelectionModel();
-		rowSM.addListSelectionListener(new ListSelectionListener() {
-		    @Override
-			public void valueChanged(ListSelectionEvent e) {
-		        //Ignore extra messages.
-		        if (e.getValueIsAdjusting()) { return; }
-
-		        if (!rowSM.isSelectionEmpty()) {
-		            updateJournalItemTable(rowSM.getMinSelectionIndex());
-		        }
-		    }
-		});
+		columnModel.getColumn(1).setCellRenderer(new RightAlignedRenderer());
+		columnModel.getColumn(2).setCellRenderer(new RightAlignedRenderer());
 
 		// Create button panel
 		JPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonsPanel.setOpaque(false);
 
-		JButton editButton = wf.createButton("ejd.editJournal", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent e) {
-                handleEditItem();
-            }
-		});
+		editButton = wf.createButton("ejd.editJournal", new EditAction());
 		buttonsPanel.add(editButton);
 
-		JButton addButton = wf.createButton("ejd.addJournal", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent e) {
-                handleAddItem();
-            }
-		});
+		addButton = wf.createButton("ejd.addJournal", new AddAction());
 		buttonsPanel.add(addButton);
 
-		JButton deleteButton = wf.createButton("ejd.deleteJournal", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent e) {
-                handleDeleteItem();
-            }
-		});
+		deleteButton = wf.createButton("ejd.deleteJournal", new DeleteAction());
 		buttonsPanel.add(deleteButton);
 
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
-		tablesPanel.add(journalsTable.getComponent(),
+		tablesPanel.add(transactionsJournalsTable.getComponent(),
 				SwingUtils.createPanelGBConstraints(0, 1));
 
         JScrollPane scrollPane = new JScrollPane(itemsTable);
@@ -218,9 +182,17 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         add(importPanel, BorderLayout.NORTH);
 		add(tablesPanel, BorderLayout.CENTER);
         add(buttonsPanel, BorderLayout.SOUTH);
+	}
 
-        fileSelectionModel.addModelChangeListener(this);
+	private void addListeners() {
+		fileSelectionModel.addModelChangeListener(this);
+		transactionsJournalsTable.getSelectionModel().addListSelectionListener(this);
         modelChanged(fileSelectionModel);
+	}
+
+	private void removeListeners() {
+		fileSelectionModel.removeModelChangeListener(this);
+		transactionsJournalsTable.getSelectionModel().removeListSelectionListener(this);
 	}
 
     @Override
@@ -231,19 +203,23 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     @Override
     public void onClose() {
     	vep.deinitialize();
-        journalsTable = null;
-        transactionJournalsTableModel = null;
+    	removeListeners();
     }
 
     /**
      * Updates the journal item table so that it shows the items for the
      * specified journal.
-     * @param row the row of the journal whose items should be shown.
      */
-    private void updateJournalItemTable(int row) {
-    	Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-    	JournalItem[] items = journal != null ? journal.getItems() : new JournalItem[0];
-        itemsTableModel.setJournalItems(items);
+    private void updateJournalItemTable() {
+    	int row = transactionsJournalsTable.getSingleSelectedRow();
+    	JournalItem[] items;
+    	if (row != -1) {
+	    	Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
+	    	items = journal != null ? journal.getItems() : new JournalItem[0];
+    	} else {
+    		items = new JournalItem[0];
+    	}
+    	itemsTableModel.setJournalItems(items);
     }
 
 	private void handleImport() {
@@ -254,6 +230,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 			fileSelectionModel.setEnabled(false, this);
 			importButton.setEnabled(false);
 			addTransactionsToTable(transactions);
+			transactionsJournalsTable.selectFirstRow();
 		} catch (FileNotFoundException e) {
 			MessageDialog.showErrorMessage(this,
 					"importBankStatementView.fileNotFound", file.getAbsoluteFile());
@@ -272,19 +249,23 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 	/**
      * This method lets the user edit the selected journal.
      */
-    private void handleEditItem() {
-        int row = journalsTable.getSelectionModel().getMinSelectionIndex();
+    private void editJournalForSelectedTransaction() {
+        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
             Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
+            EditJournalController controller = new EditJournalController(this, database, journal);
+            controller.execute();
+            if (controller.isJournalUpdated()) {
+            	updateTransactionJournal(row, controller.getUpdatedJournal());
+            }
         }
     }
 
     /**
      * This method lets the user add new journals.
      */
-    private void handleAddItem() {
-        EditJournalView view = new EditJournalView(database, "ajd.title", null);
-        view.addListener(this);
+    private void addJournalForSelectedTransaction() {
+        AddJournalForTransactionView view = new AddJournalForTransactionView(database, this);
         ViewDialog dialog = new ViewDialog(this, view);
         dialog.showDialog();
     }
@@ -292,32 +273,34 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     /**
      * This method lets the user delete the selected journal.
      */
-    private void handleDeleteItem() {
-//        int row = journalsTable.getSelectionModel().getMinSelectionIndex();
-//        if (row != -1) {
-//            if (transactionJournalsTableModel.getRow(row).getJournal().createsInvoice()) {
-//                if (!database.getPayments(journalsTableModel.getJournal(row).getIdOfCreatedInvoice()).isEmpty()) {
-//                    MessageDialog.showMessage(getParentWindow(), "gen.warning",
-//                        TextResource.getInstance().getString("editJournalsView.journalCreatingInvoiceCannotBeDeleted"));
-//                    return;
-//                }
-//            }
-//
-//            MessageDialog dialog = MessageDialog.showMessage(this,
-//                "gen.titleWarning",
-//                TextResource.getInstance().getString("editJournalsView.areYouSureAboutDeletion"),
-//                new String[] {"gen.yes", "gen.no"});
-//            if (dialog.getSelectedButton() == 1) {
-//                return; // do not remove the journal
-//            }
-//
-//            try {
-//                BookkeepingService.removeJournal(database, journalsTableModel.getJournal(row));
-//            } catch (DeleteException e) {
-//                MessageDialog.showMessage(getParentWindow(), "gen.error", e.getMessage());
-//            }
-//        }
+    private void deleteJournalFromSelectedTransaction() {
+        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+        if (row != -1) {
+            Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
+        	DeleteJournalController controller = new DeleteJournalController(this, database, journal);
+        	controller.execute();
+
+        	if (controller.isJournalDeleted()) {
+        		updateTransactionJournal(row, null);
+        	}
+        }
     }
+
+	private void updateTransactionJournal(int row, Journal journal) {
+        Transaction t = transactionJournalsTableModel.getRow(row);
+    	t.setJournal(journal);
+		transactionJournalsTableModel.updateRow(row, t);
+		updateJournalItemTable();
+	}
+
+	private void disableEnableButtons() {
+		int row = transactionsJournalsTable.getSingleSelectedRow();
+		boolean rowSelected = row != -1;
+		boolean journalPresent = rowSelected && transactionJournalsTableModel.getRow(row).getJournal() != null;
+		addButton.setEnabled(rowSelected);
+		editButton.setEnabled(journalPresent);
+		deleteButton.setEnabled(journalPresent);
+	}
 
 	@Override
 	public void modelChanged(AbstractModel model) {
@@ -329,9 +312,66 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 	}
 
 	@Override
-	public void journalAdded(Journal journal) {
-		// TODO Auto-generated method stub
+	public void valueChanged(ListSelectionEvent e) {
+        //Ignore extra messages.
+        if (e.getValueIsAdjusting()) {
+        	return;
+        }
 
+        updateJournalItemTable();
+		disableEnableButtons();
 	}
 
+	@Override
+	public void journalAdded(Journal journal) {
+        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+        if (row != -1) {
+        	updateTransactionJournal(row, journal);
+        } else {
+        	MessageDialog.showErrorMessage(this, "ImportBankStatementView.JournalCreatedButNoTransactionSelected");
+        }
+	}
+
+	@Override
+	public ImportedTransaction getNextImportedTransaction() {
+        ImportedTransaction importedTransaction = null;
+
+        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+        if (row != -1) {
+        	while (row < transactionJournalsTableModel.getRowCount()) {
+	        	if (transactionJournalsTableModel.getRow(row).getJournal() != null) {
+	        		row++;
+	        	} else {
+	        		break;
+	        	}
+        	}
+        }
+
+		if (row != -1 && row < transactionJournalsTableModel.getRowCount()) {
+			transactionsJournalsTable.getSelectionModel().setSelectionInterval(row, row);
+			importedTransaction = transactionJournalsTableModel.getRow(row).getImportedTransaction();
+		}
+		return importedTransaction;
+	}
+
+	private class AddAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			addJournalForSelectedTransaction();
+		}
+	}
+
+	private class EditAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			editJournalForSelectedTransaction();
+		}
+	}
+
+	private class DeleteAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			deleteJournalFromSelectedTransaction();
+		}
+	}
 }

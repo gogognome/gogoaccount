@@ -20,9 +20,7 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
@@ -46,6 +44,7 @@ import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
+import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.ui.dialogs.EditJournalItemDialog;
@@ -58,12 +57,8 @@ import cf.ui.dialogs.ItemsTableModel;
  */
 public class EditJournalView extends View {
 
-    public interface JournalAddListener {
-    	public void journalAdded(Journal journal);
-    }
-
     /** The database. */
-    private Database database;
+    protected Database database;
 
     /** The id of the title. */
     private String titleId;
@@ -72,7 +67,7 @@ public class EditJournalView extends View {
      * The journal used to initialize the view. <code>null</code> indicates that a new journal
      * is to be edited.
      */
-    private Journal initialJournal;
+    protected Journal journalToBeEdited;
 
     /**
      * The id of the invoice that is created by the edited journal. If <code>null</code>, then
@@ -80,22 +75,20 @@ public class EditJournalView extends View {
      */
     private String idOfCreatedInvoice;
 
-    private StringModel idModel = new StringModel();
+    protected StringModel idModel = new StringModel();
 
-    private StringModel descriptionModel = new StringModel();
+    protected StringModel descriptionModel = new StringModel();
 
     /** The table containing journal items. */
     private JTable itemsTable;
 
-    private ItemsTableModel itemsTableModel;
+    protected ItemsTableModel itemsTableModel;
 
     /** The date model used to edit the date. */
-    private DateModel dateModel = new DateModel();
+    protected DateModel dateModel = new DateModel();
 
     /** The journal edited by the journal. This will only be filled when the user is editing a journal. */
-    private Journal editedJournal;
-
-    private List<JournalAddListener> listeners = new ArrayList<EditJournalView.JournalAddListener>();
+    protected Journal editedJournal;
 
     private ValuesEditPanel valuesEditPanel;
 
@@ -111,15 +104,7 @@ public class EditJournalView extends View {
     public EditJournalView(Database database, String titleId, Journal journal) {
         this.database = database;
         this.titleId = titleId;
-        this.initialJournal = journal;
-    }
-
-    public void addListener(JournalAddListener listener) {
-    	listeners.add(listener);
-    }
-
-    public void removeListener(JournalAddListener listener) {
-    	listeners.remove(listener);
+        this.journalToBeEdited = journal;
     }
 
     @Override
@@ -132,18 +117,23 @@ public class EditJournalView extends View {
         itemsTableModel = new ItemsTableModel(database);
         itemsTableModel.setJournalItems(new JournalItem[0]);
 
-        if (initialJournal == null) {
+        initModelsForJournal(journalToBeEdited);
+	}
+
+	private void initModelsForJournal(Journal initialValuesJournal) {
+		if (initialValuesJournal == null) {
         	dateModel.setDate(new Date(), null);
         } else {
-            idOfCreatedInvoice = initialJournal.getIdOfCreatedInvoice();
-            idModel.setString(initialJournal.getId());
-            dateModel.setDate(initialJournal.getDate());
-            descriptionModel.setString(initialJournal.getDescription());
+            idOfCreatedInvoice = initialValuesJournal.getIdOfCreatedInvoice();
+            idModel.setString(initialValuesJournal.getId());
+            dateModel.setDate(initialValuesJournal.getDate());
+            descriptionModel.setString(initialValuesJournal.getDescription());
 
-            for (JournalItem item : initialJournal.getItems()) {
+            for (JournalItem item : initialValuesJournal.getItems()) {
                 itemsTableModel.addItem(item);
             }
         }
+		initValuesForNextJournal();
 	}
 
 	/**
@@ -190,7 +180,7 @@ public class EditJournalView extends View {
         buttonPanel.add(new JLabel());
         buttonPanel.add(createOkButton());
 
-        if (initialJournal == null) {
+        if (journalToBeEdited == null) {
 	        buttonPanel.add(createOkAndNextButton());
         }
 
@@ -198,15 +188,20 @@ public class EditJournalView extends View {
 
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
-        panel.add(vep, SwingUtils.createGBConstraints(0, 0, 2, 1));
+
+        int row = 0;
+        panel.add(vep, SwingUtils.createGBConstraints(0, row, 2, 1));
+        row++;
+
         panel.add(scrollableTable,
-                SwingUtils.createGBConstraints(0, 1, 1, 1, 1.0, 1.0,
+                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.WEST, GridBagConstraints.BOTH,
                         10, 0, 0, 0));
         panel.add(buttonPanel,
-                SwingUtils.createGBConstraints(1, 1, 1, 1, 0.0, 0.0,
+                SwingUtils.createGBConstraints(1, row, 1, 1, 0.0, 0.0,
                         GridBagConstraints.NORTHEAST, GridBagConstraints.NONE,
                         0, 0, 0, 0));
+        row++;
 
         setLayout(new BorderLayout());
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -279,20 +274,27 @@ public class EditJournalView extends View {
                 createNewOrStoreUpdatedJournal(journal);
                 itemsTableModel.clear();
                 valuesEditPanel.requestFocus();
+                initValuesForNextJournal();
             } catch (Exception e) {
                 MessageDialog.showErrorMessage(this, e, "ajd.addJournalException");
             }
         }
     }
 
-    private void createNewOrStoreUpdatedJournal(Journal journal) throws Exception {
-        if (initialJournal == null) {
-            // Add the new journal to the database
-            database.addJournal(journal, true);
+	private void createNewOrStoreUpdatedJournal(Journal journal) throws Exception {
+        if (journalToBeEdited == null) {
+            createNewJournal(journal);
         } else {
             // Set the edited journal
             editedJournal = journal;
         }
+	}
+
+	protected void createNewJournal(Journal journal) throws DatabaseModificationFailedException {
+		database.addJournal(journal, true);
+	}
+
+	protected void initValuesForNextJournal() {
 	}
 
     /**
@@ -371,7 +373,6 @@ public class EditJournalView extends View {
 
     @Override
     public void onClose() {
-    	listeners.clear();
     }
 
 }
