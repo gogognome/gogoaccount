@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.util.Date;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -174,6 +175,7 @@ public class EditJournalView extends View {
         columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
 
         JPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
         buttonPanel.add(createAddButton());
         buttonPanel.add(createEditButton());
         buttonPanel.add(createDeleteButton());
