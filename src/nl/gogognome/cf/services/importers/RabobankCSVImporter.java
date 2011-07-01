@@ -17,7 +17,6 @@
 package nl.gogognome.cf.services.importers;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -40,25 +39,17 @@ import au.com.bytecode.opencsv.CSVReader;
  *
  * @author Sander Kooijmans
  */
-public class RabobankCSVImporter {
-
-	private File csvFile;
+public class RabobankCSVImporter implements TransactionImporter {
 
 	private List<ImportedTransaction> transactions = new ArrayList<ImportedTransaction>();
 
 	private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
-	public RabobankCSVImporter(File csvFile) throws FileNotFoundException {
-		this.csvFile = csvFile;
+	public RabobankCSVImporter() {
 	}
 
-	/**
-	 * Reads the CSV file and returns a list of transactions.
-	 * @return the transactions
-	 * @throws IOException if a problem occurred while reading the file
-	 * @throws ParseException if a problem occurred while interpreting the file
-	 */
-	public List<ImportedTransaction> importTransactions() throws IOException, ParseException {
+	@Override
+	public List<ImportedTransaction> importTransactions(File csvFile) throws IOException, ParseException {
 		Reader reader = null;
 		CSVReader csvReader = null;
 		try {

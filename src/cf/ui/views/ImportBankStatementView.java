@@ -21,6 +21,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +37,8 @@ import javax.swing.table.TableColumnModel;
 
 import nl.gogognome.cf.services.importers.ImportedTransaction;
 import nl.gogognome.cf.services.importers.RabobankCSVImporter;
+import nl.gogognome.cf.services.importers.TransactionImporter;
+import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -45,6 +48,7 @@ import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.FileSelectionModel;
+import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -79,6 +83,8 @@ public class ImportBankStatementView extends View
     /** The table model for the journals. */
     private TransactionsJournalsTableModel transactionJournalsTableModel;
 
+    private ListModel<TransactionImporter> importersModel = new ListModel<TransactionImporter>();
+
     private JButton importButton;
 
     private JButton addButton;
@@ -106,10 +112,17 @@ public class ImportBankStatementView extends View
      */
     @Override
     public void onInit() {
+    	initModels();
 		addComponents();
         addListeners();
         disableEnableButtons();
         updateJournalItemTable();
+	}
+
+	private void initModels() {
+		List<TransactionImporter> importers = new ArrayList<TransactionImporter>();
+		importers.add(new RabobankCSVImporter());
+		importersModel.setItems(importers);
 	}
 
 	private void addComponents() {
@@ -117,9 +130,10 @@ public class ImportBankStatementView extends View
 
 		vep = new ValuesEditPanel();
 		vep.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
-//		vep.addField("importBankStatementView.typeOfBankStatement");
+		vep.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
+				new ImporterFormatter());
 
-		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
+		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
 		importButton = wf.createButton("importBankStatementView.import", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -186,12 +200,14 @@ public class ImportBankStatementView extends View
 
 	private void addListeners() {
 		fileSelectionModel.addModelChangeListener(this);
+		importersModel.addModelChangeListener(this);
 		transactionsJournalsTable.getSelectionModel().addListSelectionListener(this);
         modelChanged(fileSelectionModel);
 	}
 
 	private void removeListeners() {
 		fileSelectionModel.removeModelChangeListener(this);
+		importersModel.removeModelChangeListener(this);
 		transactionsJournalsTable.getSelectionModel().removeListSelectionListener(this);
 	}
 
@@ -225,9 +241,10 @@ public class ImportBankStatementView extends View
 	private void handleImport() {
 		File file = fileSelectionModel.getFile();
 		try {
-			RabobankCSVImporter importer = new RabobankCSVImporter(file);
-			List<ImportedTransaction> transactions = importer.importTransactions();
+			TransactionImporter importer = importersModel.getSingleSelectedItem();
+			List<ImportedTransaction> transactions = importer.importTransactions(file);
 			fileSelectionModel.setEnabled(false, this);
+			importersModel.setEnabled(false, this);
 			importButton.setEnabled(false);
 			addTransactionsToTable(transactions);
 			transactionsJournalsTable.selectFirstRow();
@@ -304,11 +321,13 @@ public class ImportBankStatementView extends View
 
 	@Override
 	public void modelChanged(AbstractModel model) {
-		if (model == fileSelectionModel) {
-			importButton.setEnabled(fileSelectionModel.getFile() != null
-					&& fileSelectionModel.getFile().isFile());
-		}
+		importButton.setEnabled(canImportBeStarted());
+	}
 
+	private boolean canImportBeStarted() {
+		return fileSelectionModel.getFile() != null
+				&& fileSelectionModel.getFile().isFile()
+				&& importersModel.getSingleSelectedIndex() != -1;
 	}
 
 	@Override
@@ -392,4 +411,19 @@ public class ImportBankStatementView extends View
 			deleteJournalFromSelectedTransaction();
 		}
 	}
+}
+
+class ImporterFormatter implements ObjectFormatter<TransactionImporter> {
+
+	@Override
+	public String format(TransactionImporter t) {
+		String id;
+		if (t instanceof RabobankCSVImporter) {
+			id = "importBankStatementView.rabobankCsv";
+		} else {
+			id = "unknown importer";
+		}
+		return TextResource.getInstance().getString(id);
+	}
+
 }
