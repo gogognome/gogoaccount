@@ -34,7 +34,7 @@ import au.com.bytecode.opencsv.CSVReader;
 
 /**
  * This class reads a comma separated values file that was created by the Rabobank.
- * A list of {@link ImportedTransaction}s is created that represents the contents
+ * A list of {@link ImportedTransactionRabobankCsv}s is created that represents the contents
  * of the CSV file.
  *
  * @author Sander Kooijmans
@@ -94,7 +94,7 @@ public class RabobankCSVImporter implements TransactionImporter {
 		Amount amount = parseAmount(values);
 		String description = parseDescription(values);
 
-		transactions.add(new ImportedTransaction(fromAccount, null, amount, date, toAccount,
+		transactions.add(new ImportedTransactionRabobankCsv(fromAccount, null, amount, date, toAccount,
 				toName, description));
 	}
 
@@ -106,7 +106,7 @@ public class RabobankCSVImporter implements TransactionImporter {
 		Amount amount = parseAmount(values);
 		String description = parseDescription(values);
 
-		transactions.add(new ImportedTransaction(fromAccount, fromName, amount, date, toAccount,
+		transactions.add(new ImportedTransactionRabobankCsv(fromAccount, fromName, amount, date, toAccount,
 				null, description));
 	}
 

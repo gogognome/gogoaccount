@@ -20,6 +20,7 @@ import java.awt.BorderLayout;
 
 import javax.swing.JLabel;
 
+import nl.gogognome.cf.services.ImportBankStatementService;
 import nl.gogognome.cf.services.importers.ImportedTransaction;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -115,8 +116,9 @@ public class AddJournalForTransactionView extends EditJournalView {
 	private void initValuesForImportedTransaction(ImportedTransaction t) {
 		dateModel.setDate(t.getDate());
 		descriptionModel.setString(t.getDescription());
-		Account debetAccount = database.getAccountForImportedAccount(t.getFromAccount());
-		Account creditAccount = database.getAccountForImportedAccount(t.getToAccount());
+		ImportBankStatementService service = new ImportBankStatementService(database);
+		Account debetAccount = service.getFromAccount(t);
+		Account creditAccount = service.getToAccount(t);
 		if (debetAccount != null && creditAccount != null) {
 			itemsTableModel.addItem(createDefaultItemToBeAdded());
 			itemsTableModel.addItem(createDefaultItemToBeAdded());
@@ -146,25 +148,24 @@ public class AddJournalForTransactionView extends EditJournalView {
 	protected JournalItem createDefaultItemToBeAdded() {
 		switch (itemsTableModel.getRowCount()) {
 		case 0: { // first item
-			Account account = getAccountForImportedAccount(importedTransaction.getToAccount());
+			Account account = new ImportBankStatementService(database)
+				.getToAccount(importedTransaction);
+			if (account == null) {
+				account = database.getAllAccounts()[0];
+			}
 			return new JournalItem(importedTransaction.getAmount(), account, true);
 		}
 
 		case 1: { // second item
-			Account account = getAccountForImportedAccount(importedTransaction.getFromAccount());
+			Account account = new ImportBankStatementService(database)
+				.getFromAccount(importedTransaction);
+			if (account == null) {
+				account = database.getAllAccounts()[0];
+			}
 			return new JournalItem(importedTransaction.getAmount(), account, false);
 		}
-
 		default: // other item
 			return null;
 		}
-	}
-
-	private Account getAccountForImportedAccount(String importedAccount) {
-		Account account = database.getAccountForImportedAccount(importedAccount);
-		if (account == null) {
-			account = database.getAllAccounts()[0];
-		}
-		return account;
 	}
 }

@@ -35,6 +35,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumnModel;
 
+import nl.gogognome.cf.services.ImportBankStatementService;
 import nl.gogognome.cf.services.importers.ImportedTransaction;
 import nl.gogognome.cf.services.importers.RabobankCSVImporter;
 import nl.gogognome.cf.services.importers.TransactionImporter;
@@ -356,15 +357,15 @@ public class ImportBankStatementView extends View
 	private void setLinkBetweenImportedTransactionAccountAndAccount(
 			ImportedTransaction transaction, Journal journal) {
 		JournalItem[] items = journal.getItems();
+		ImportBankStatementService service = new ImportBankStatementService(database);
 		if (items.length == 2) {
 			for (JournalItem item : items) {
 				String importedAccount;
 				if (item.isDebet()) {
-					importedAccount = transaction.getToAccount();
+					service.setImportedToAccount(transaction, item.getAccount());
 				} else {
-					importedAccount = transaction.getFromAccount();
+					service.setImportedFromAccount(transaction, item.getAccount());
 				}
-				database.setImportedAccount(importedAccount, item.getAccount().getId());
 			}
 		}
 	}
