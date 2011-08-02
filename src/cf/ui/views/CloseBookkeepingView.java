@@ -82,7 +82,7 @@ public class CloseBookkeepingView extends View {
     /** {@inheritDoc} */
     @Override
     public void onClose() {
-        valuesEditPanel.deinitialize();
+        valuesEditPanel.close();
     }
 
     /** {@inheritDoc} */

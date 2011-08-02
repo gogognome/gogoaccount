@@ -219,7 +219,7 @@ public class ImportBankStatementView extends View
 
     @Override
     public void onClose() {
-    	vep.deinitialize();
+    	vep.close();
     	removeListeners();
     }
 
