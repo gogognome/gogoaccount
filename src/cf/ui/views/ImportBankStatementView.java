@@ -44,7 +44,6 @@ import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
-import nl.gogognome.lib.swing.SortedTable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
@@ -72,29 +71,19 @@ public class ImportBankStatementView extends View
 
     private FileSelectionModel fileSelectionModel = new FileSelectionModel();
 
-    /** The table containing transactions and journals. */
-    private SortedTable transactionsJournalsTable;
-
-    /** The table containing journal items. */
     private JTable itemsTable;
-
-    /** The table mdoel for the journal items. */
     private ItemsTableModel itemsTableModel;
 
-    /** The table model for the journals. */
+    private JTable transactionsJournalsTable;
     private TransactionsJournalsTableModel transactionJournalsTableModel;
 
     private ListModel<TransactionImporter> importersModel = new ListModel<TransactionImporter>();
 
     private JButton importButton;
-
     private JButton addButton;
-
     private JButton editButton;
-
     private JButton deleteButton;
 
-    /** The database. */
     Database database;
 
     private ValuesEditPanel vep;
@@ -146,13 +135,13 @@ public class ImportBankStatementView extends View
 		JPanel importPanel = new JPanel(new BorderLayout());
 		importPanel.add(vep, BorderLayout.NORTH);
 		importPanel.add(buttonPanel, BorderLayout.SOUTH);
-		importPanel.setBorder(wf.createTitleBorderWithMargin("importBankStatementView.importSettings"));
+		importPanel.setBorder(wf.createTitleBorderWithMarginAndPadding("importBankStatementView.importSettings"));
 
 		// Create table of journals
 		transactionJournalsTableModel = new TransactionsJournalsTableModel(
 				Collections.<Transaction>emptyList(), database);
 		transactionsJournalsTable = WidgetFactory.getInstance().createSortedTable(transactionJournalsTableModel);
-        transactionsJournalsTable.setTitle("importBankStatementView.transactionsJournals");
+        transactionsJournalsTable.setBorder(wf.createTitleBorderWithPadding("importBankStatementView.transactionsJournals"));
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
@@ -187,7 +176,7 @@ public class ImportBankStatementView extends View
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
-		tablesPanel.add(transactionsJournalsTable.getComponent(),
+		tablesPanel.add(new JScrollPane(transactionsJournalsTable),
 				SwingUtils.createPanelGBConstraints(0, 1));
 
         JScrollPane scrollPane = new JScrollPane(itemsTable);
@@ -228,7 +217,7 @@ public class ImportBankStatementView extends View
      * specified journal.
      */
     private void updateJournalItemTable() {
-    	int row = transactionsJournalsTable.getSingleSelectedRow();
+    	int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
     	JournalItem[] items;
     	if (row != -1) {
 	    	Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
@@ -248,7 +237,7 @@ public class ImportBankStatementView extends View
 			importersModel.setEnabled(false, this);
 			importButton.setEnabled(false);
 			addTransactionsToTable(transactions);
-			transactionsJournalsTable.selectFirstRow();
+			SwingUtils.selectFirstRow(transactionsJournalsTable);
 		} catch (FileNotFoundException e) {
 			MessageDialog.showErrorMessage(this,
 					"importBankStatementView.fileNotFound", file.getAbsoluteFile());
@@ -312,7 +301,7 @@ public class ImportBankStatementView extends View
 	}
 
 	private void disableEnableButtons() {
-		int row = transactionsJournalsTable.getSingleSelectedRow();
+		int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
 		boolean rowSelected = row != -1;
 		boolean journalPresent = rowSelected && transactionJournalsTableModel.getRow(row).getJournal() != null;
 		addButton.setEnabled(rowSelected);

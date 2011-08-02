@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.lib.swing.AbstractListSortedTableModel;
+import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.text.Amount;
@@ -39,7 +39,7 @@ import cf.engine.JournalItem;
  *
  * @author Sander Kooijmans
  */
-public class AccountOverviewTableModel extends AbstractListSortedTableModel<AccountOverviewTableModel.LineInfo> {
+public class AccountOverviewTableModel extends AbstractListTableModel<AccountOverviewTableModel.LineInfo> {
 
     private static final long serialVersionUID = 1L;
 

@@ -26,11 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Comparator;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import javax.swing.AbstractAction;
@@ -39,6 +36,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -47,23 +45,18 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.SortedTable;
-import nl.gogognome.lib.swing.SortedTableModel;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.SwingUtils.SelectionAction;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
-import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Party;
@@ -78,21 +71,15 @@ public class PartiesView extends View {
 
     private PartiesTableModel partiesTableModel;
 
-    private SortedTable table;
+    private JTable table;
+    private ListSelectionListener listSelectionListener;
 
-    /** The database whose parties are to be shown and changed. */
     private Database database;
 
-    /** The date model that determines the date for the balance of the parties. */
     private DateModel dateModel;
 
-    /** Indicates whether this view should also allow the user to select a party. */
     private boolean selectioEnabled;
 
-    /**
-     * Indicates that multiple parties can be selected (<code>true</code>) or at most
-     * one party (<code>false</code>).
-     */
     private boolean multiSelectionEnabled;
 
     /** The parties selected by the user or <code>null</code> if no party has been selected. */
@@ -114,7 +101,7 @@ public class PartiesView extends View {
     private JButton btSearch;
     private JButton btSelect;
 
-    /** Focus listener used to change the deafult button. */
+    /** Focus listener used to change the default button. */
     private FocusListener focusListener;
 
     /**
@@ -297,67 +284,40 @@ public class PartiesView extends View {
         btSearch = new JButton(actionWrapper);
 
         buttonPanel.add(btSearch);
-        criteriaPanel.add(buttonPanel,
-                SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
-                        GridBagConstraints.EAST, GridBagConstraints.NONE,
-                        5, 0, 0, 0));
+        criteriaPanel.add(buttonPanel, SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
+        		GridBagConstraints.EAST, GridBagConstraints.NONE, 5, 0, 0, 0));
 
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
         resultPanel.setBorder(new CompoundBorder(new TitledBorder(tr.getString("partiesView.foundParties")),
             new EmptyBorder(5, 12, 5, 12)));
 
-        partiesTableModel = new PartiesTableModel();
+        partiesTableModel = new PartiesTableModel(Collections.<Party>emptyList());
         table = WidgetFactory.getInstance().createSortedTable(partiesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
-        table.getComponent().addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    if (selectioEnabled) {
-                        onSelectParty();
-                    } else {
-                        onEditParty();
-                    }
-                }
-            }
-        });
+        SelectionAction sa = SwingUtils.addSelectionAction(table, new SelectionActionImpl());
+        addCloseable(sa);
 
-        table.getComponent().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    if (selectioEnabled) {
-                        onSelectParty();
-                    } else {
-                        onEditParty();
-                    }
-                }
-            }
-        });
-
-        table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        listSelectionListener = new ListSelectionListener() {
             @Override
 			public void valueChanged(ListSelectionEvent e) {
-                int[] rows = table.getSelectedRows();
-                if (rows.length == 1) {
-                    taRemarks.setText(partiesTableModel.getParty(rows[0]).getRemarks());
+                int row = SwingUtils.getSelectedRowConvertedToModel(table);
+                if (row != -1) {
+                    taRemarks.setText(partiesTableModel.getRow(row).getRemarks());
                 } else {
                     taRemarks.setText("");
                 }
             }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(table.getComponent());
-//        scrollPane.setMinimumSize(new Dimension(500, 100));
-        resultPanel.add(scrollPane, BorderLayout.CENTER);
+        };
+        table.getSelectionModel().addListSelectionListener(listSelectionListener);
+        resultPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         // Create details panel
         JPanel detailPanel = new JPanel(new GridBagLayout());
 
         taRemarks = new JTextArea();
-        scrollPane = new JScrollPane(taRemarks);
+        JScrollPane scrollPane = new JScrollPane(taRemarks);
         scrollPane.setPreferredSize(new Dimension(500, 100));
 
         detailPanel.add(wf.createLabel("partiesView.remarks", taRemarks),
@@ -381,6 +341,8 @@ public class PartiesView extends View {
      */
     @Override
     public void onClose() {
+    	table.getSelectionModel().removeListSelectionListener(listSelectionListener);
+
         tfId.removeFocusListener(focusListener);
         tfName.removeFocusListener(focusListener);
         tfAddress.removeFocusListener(focusListener);
@@ -422,11 +384,9 @@ public class PartiesView extends View {
             searchCriteria.setType((String)cmbType.getSelectedItem());
         }
 
-        partiesTableModel.setParties(database.getParties(searchCriteria));
-        if (partiesTableModel.getRowCount() > 0) {
-        	table.getSelectionModel().setSelectionInterval(0, 0);
-        }
-        table.getFocusableComponent().requestFocusInWindow();
+        partiesTableModel.replaceRows(Arrays.asList(database.getParties(searchCriteria)));
+        SwingUtils.selectFirstRow(table);
+        table.requestFocusInWindow();
 
         // Update the default button if the select button is present
         if (btSelect != null) {
@@ -457,12 +417,12 @@ public class PartiesView extends View {
      * This method is called when the "edit party" button is pressed.
      */
     private void onEditParty() {
-        int rows[] = table.getSelectedRows();
-        if (rows.length == 0) {
+        int row = SwingUtils.getSelectedRowConvertedToModel(table);
+        if (row == -1) {
             return;
         }
 
-        Party oldParty = partiesTableModel.getParty(rows[0]);
+        Party oldParty = partiesTableModel.getRow(row);
         EditPartyView editPartyView = new EditPartyView(database, oldParty);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
@@ -476,20 +436,20 @@ public class PartiesView extends View {
             }
         }
         onSearch();
-        // Select the row that has been edited.
-        table.getSelectionModel().setSelectionInterval(rows[0], rows[0]);
+
+        SwingUtils.selectRowWithModelIndex(table, row);
     }
 
     /**
      * This method is called when the "delete party" button is pressed.
      */
     private void onDeleteParty() {
-        int rows[] = table.getSelectedRows();
-        if (rows.length == 0) {
+        int row = SwingUtils.getSelectedRowConvertedToModel(table);
+        if (row == -1) {
             return;
         }
 
-        Party party = partiesTableModel.getParty(rows[0]);
+        Party party = partiesTableModel.getRow(row);
         int choice = MessageDialog.showYesNoQuestion(this, "gen.warning",
             "partiesView.areYouSurePartyIsDeleted", party.getName());
         if (choice == MessageDialog.YES_OPTION) {
@@ -506,12 +466,12 @@ public class PartiesView extends View {
      * This method is called when the "select party" button is pressed.
      */
     private void onSelectParty() {
-        int rows[] = table.getSelectedRows();
+        int rows[] = SwingUtils.getSelectedRowsConvertedToModel(table);
         selectedParties = new Party[rows.length];
         for (int i = 0; i < rows.length; i++) {
-            selectedParties[i] = partiesTableModel.getParty(rows[i]);
+            selectedParties[i] = partiesTableModel.getRow(rows[i]);
         }
-        closeAction.actionPerformed(null);
+        requestClose();
     }
 
     /**
@@ -522,135 +482,14 @@ public class PartiesView extends View {
         return selectedParties;
     }
 
-    /** The table model that shows information about the parties. */
-    private static class PartiesTableModel extends AbstractTableModel implements SortedTableModel {
-
-        /** The parties to be shown. */
-        private Party[] parties = new Party[0];
-
-        /**
-         * Sets the parties to be shown in the table.
-         * @param parties the parties
-         */
-        public void setParties(Party[] parties) {
-            this.parties = parties;
-            fireTableDataChanged();
-        }
-
-        /**
-         * Gets the party for the specified row.
-         * @param row the row
-         */
-        public Party getParty(int row) {
-            return parties[row];
-        }
-
-        @Override
-		public Class<?> getColumnClass(int columnIndex) {
-            switch(columnIndex) {
-            case 5: return Date.class;
-            default: return String.class;
+    private class SelectionActionImpl extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+            if (selectioEnabled) {
+                onSelectParty();
+            } else {
+                onEditParty();
             }
-        }
-
-        @Override
-        public String getColumnName(int columnIndex) {
-            String id;
-            switch(columnIndex) {
-            case 0: id = "gen.id"; break;
-            case 1: id = "gen.name"; break;
-            case 2: id = "gen.address"; break;
-            case 3: id = "gen.zipCode"; break;
-            case 4: id = "gen.city"; break;
-            case 5: id = "gen.birthDate"; break;
-            case 6: id = "gen.type"; break;
-            case 7: id = "gen.remarks"; break;
-            default:
-                id = null;
-            }
-            return TextResource.getInstance().getString(id);
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.table.TableModel#getColumnCount()
-         */
-        @Override
-		public int getColumnCount() {
-            return 8;
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.table.TableModel#getRowCount()
-         */
-        @Override
-		public int getRowCount() {
-            return parties.length;
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.table.TableModel#getValueAt(int, int)
-         */
-        @Override
-		public Object getValueAt(int row, int col) {
-            switch(col) {
-            case 0: return parties[row].getId();
-            case 1: return parties[row].getName();
-            case 2: return parties[row].getAddress();
-            case 3: return parties[row].getZipCode();
-            case 4: return parties[row].getCity();
-            case 5: 
-            	return parties[row].getBirthDate() != null ?
-            			TextResource.getInstance().formatDate("gen.dateFormat",	parties[row].getBirthDate()) : null;
-            case 6: return parties[row].getType();
-            case 7:
-                String remarks = parties[row].getRemarks();
-                if (remarks != null && remarks.length() > 30) {
-                    int size = Math.max(20, remarks.lastIndexOf(' ', 30));
-                    remarks = remarks.substring(0, size) + "...";
-                }
-                return remarks;
-            default: return null;
-            }
-        }
-
-        @Override
-		public int getColumnWidth(int column) {
-            switch (column) {
-            case 0: return 40;
-            case 1:
-            case 2: return 200;
-            case 3: return 80;
-            default: return 100;
-            }
-        }
-
-        @Override
-		public Comparator<Object> getComparator(int column) {
-            switch (column) {
-            case 5:
-                return new DateComparator();
-            }
-            return null;
-        }
-
-        @Override
-		public TableCellRenderer getRendererForColumn(int column) {
-            return null;
-        }
-
-        @Override
-        public TableCellEditor getEditorForColumn(int column) {
-        	return null;
-        }
-
-        private static class DateComparator implements Comparator<Object> {
-            @Override
-			public int compare(Object o1, Object o2) {
-                Date d1 = (Date) o1;
-                Date d2 = (Date) o2;
-                return DateUtil.compareDayOfYear(d1, d2);
-            }
-
-        }
+		}
     }
 }

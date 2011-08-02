@@ -29,6 +29,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -44,11 +45,10 @@ import nl.gogognome.cf.services.DeleteException;
 import nl.gogognome.cf.services.ServiceException;
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
-import nl.gogognome.lib.swing.AbstractListSortedTableModel;
+import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.SortedTable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
@@ -77,7 +77,7 @@ public class ConfigureBookkeepingView extends View {
 
     private DateModel startDateModel = new DateModel();
     private AccountTableModel tableModel;
-    private SortedTable table;
+    private JTable table;
 
     private JTextField tfDescription = new JTextField();
     private DateSelectionBean dsbStartDate =
@@ -171,7 +171,8 @@ public class ConfigureBookkeepingView extends View {
         		BorderFactory.createTitledBorder(tr.getString("ConfigureBookkeepingView.accounts")),
         		BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         tableModel = new AccountTableModel(getAccountDefinitions(database));
-        table = wf.createSortedTable(tableModel, JTable.AUTO_RESIZE_OFF);
+        table = wf.createSortedTable(tableModel);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
@@ -179,7 +180,7 @@ public class ConfigureBookkeepingView extends View {
 				updateButtonState();
 			}
 		});
-        accountsAndButtonsPanel.add(table.getComponent(), BorderLayout.CENTER);
+        accountsAndButtonsPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         buttonPanel.add(wf.createButton("ConfigureBookkeepingView.addAccount", new AbstractAction() {
@@ -243,7 +244,7 @@ public class ConfigureBookkeepingView extends View {
      */
     private AccountDefinition getSelectedAccountDefinition() {
     	AccountDefinition accountDefintion = null;
-    	int[] rows = table.getSelectedRows();
+    	int[] rows = SwingUtils.getSelectedRowsConvertedToModel(table);
     	if (rows.length == 1) {
     		accountDefintion = tableModel.getRow(rows[0]);
     	}
@@ -258,7 +259,7 @@ public class ConfigureBookkeepingView extends View {
 		if (choice == MessageDialog.YES_OPTION) {
 			try {
 				BookkeepingService.deleteAccount(database, account);
-				int index = table.getSelectedRows()[0];
+				int index = SwingUtils.getSelectedRowConvertedToModel(table);
 				tableModel.removeRow(index);
 			} catch (DeleteException e) {
 				MessageDialog.showErrorMessage(getParentWindow(), e, "ConfigureBookkeepingView.deleteAccountException");
@@ -277,7 +278,6 @@ public class ConfigureBookkeepingView extends View {
 				AccountDefinition definition = new AccountDefinition();
 				definition.account = account;
 				tableModel.addRow(definition);
-				table.setSortingStatus(0, SortedTable.ASCENDING);
 			} catch (CreationException e) {
 				MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.addAccountException");
 			}
@@ -285,7 +285,7 @@ public class ConfigureBookkeepingView extends View {
 	}
 
 	private void onEditAccount() {
-    	int[] rows = table.getSelectedRows();
+    	int[] rows = SwingUtils.getSelectedRowsConvertedToModel(table);
     	if (rows.length == 1) {
 			AccountDefinition definition = tableModel.getRow(rows[0]);
 			EditAccountView eav = new EditAccountView(definition.account);
@@ -322,7 +322,7 @@ public class ConfigureBookkeepingView extends View {
         public boolean used;
     }
 
-    private static class AccountTableModel extends AbstractListSortedTableModel<AccountDefinition> {
+    private static class AccountTableModel extends AbstractListTableModel<AccountDefinition> {
 
         private final static ColumnDefinition ID =
             new ColumnDefinition("ConfigureBookkeepingView.id", String.class, 50);

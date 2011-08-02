@@ -140,7 +140,7 @@ public class InvoiceToOdtView extends View {
     public void onInit() {
         WidgetFactory wf = WidgetFactory.getInstance();
         ValuesEditPanel vep = new ValuesEditPanel();
-        addDeinitializable(vep);
+        addCloseable(vep);
 
         vep.addField("invoiceToOdtView.templateFilename", templateFileModel);
         vep.addField("invoiceToOdtView.odtFileName", odtFileModel);
@@ -164,6 +164,6 @@ public class InvoiceToOdtView extends View {
         add(vep, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        setBorder(wf.createTitleBorderWithMargin("invoiceToOdtView.title"));
+        setBorder(wf.createTitleBorderWithMarginAndPadding("invoiceToOdtView.title"));
     }
 }

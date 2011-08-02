@@ -22,13 +22,12 @@ import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Date;
 
-import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
-import nl.gogognome.lib.swing.SortedTable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
@@ -51,12 +50,11 @@ public class AccountMutationsView extends View {
 
 	private Database database;
 
-	private JComponent table;
-
+	private JTable table;
+	private JScrollPane tableScrollPane;
 	private AccountOverviewTableModel model;
 
 	private DateModel dateModel = new DateModel(new Date());
-
 	private ListModel<Account> accountListModel = new ListModel<Account>();
 
 	private ModelChangeListener listener;
@@ -88,19 +86,17 @@ public class AccountMutationsView extends View {
 	private void addComponents() {
 		WidgetFactory wf = WidgetFactory.getInstance();
 		model = new AccountOverviewTableModel(database, accountListModel.getSingleSelectedItem(), dateModel.getDate());
-		SortedTable sortedTable = wf.createSortedTable(model, JTable.AUTO_RESIZE_OFF);
-
-		table = sortedTable.getComponent();
-		table.setBorder(wf.createTitleBorder("AccountMutationsView.initialTableTitle"));
+		table = wf.createSortedTable(model);
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
 		JPanel accountAndDatePanel = new JPanel(new FlowLayout());
 		ValuesEditPanel vep = new ValuesEditPanel();
-		addDeinitializable(vep);
+		addCloseable(vep);
 		vep.addComboBoxField("AccountMutationsView.account", accountListModel, new AccountFormatter());
 		accountAndDatePanel.add(vep);
 
 		vep = new ValuesEditPanel();
-		addDeinitializable(vep);
+		addCloseable(vep);
 		vep.addField("AccountMutationsView.date", dateModel);
 		accountAndDatePanel.add(vep);
 
@@ -108,7 +104,9 @@ public class AccountMutationsView extends View {
 		add(accountAndDatePanel, SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.NONE,
                 10, 10, 10, 10));
-		add(table, SwingUtils.createPanelGBConstraints(0, 1));
+		tableScrollPane = new JScrollPane(table);
+		tableScrollPane.setBorder(wf.createTitleBorder("AccountMutationsView.initialTableTitle"));
+		add(tableScrollPane, SwingUtils.createPanelGBConstraints(0, 1));
 	}
 
 	@Override
@@ -142,12 +140,12 @@ public class AccountMutationsView extends View {
 
 		if (account != null && date != null) {
 			TextResource tr = TextResource.getInstance();
-			table.setBorder(wf.createTitleBorder("vao.accountAtDate",
+			tableScrollPane.setBorder(wf.createTitleBorder("vao.accountAtDate",
 			        account.getId() + " - " + account.getName(),
 			        tr.formatDate("gen.dateFormat", date)));
 		} else {
 			model.clear();
-			table.setBorder(wf.createTitleBorder("AccountMutationsView.initialTableTitle"));
+			tableScrollPane.setBorder(wf.createTitleBorder("AccountMutationsView.initialTableTitle"));
 		}
 	}
 

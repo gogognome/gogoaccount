@@ -23,9 +23,10 @@ import java.util.Date;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 
 import nl.gogognome.lib.swing.DialogWithButtons;
-import nl.gogognome.lib.swing.SortedTable;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
@@ -52,7 +53,7 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		super(frame, "vpo.title", BT_OK);
 
 		PartyOverviewTableModel model = new PartyOverviewTableModel(database, party, date);
-		SortedTable table = WidgetFactory.getInstance().createUnsortedTable(model);
+		JTable table = WidgetFactory.getInstance().createTable(model);
 
 		// Create panel with date and name of party.
 		JLabel label = new JLabel();
@@ -64,7 +65,7 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		// Create panel with label and table.
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(label, BorderLayout.NORTH);
-		panel.add(table.getComponent(), BorderLayout.CENTER);
+		panel.add(new JScrollPane(table), BorderLayout.CENTER);
 		panel.setPreferredSize(new Dimension(800,600));
 
 		componentInitialized(panel);

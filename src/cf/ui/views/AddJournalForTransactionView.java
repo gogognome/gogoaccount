@@ -83,7 +83,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 
 	private void addImportedTransactionComponent() {
 		ValuesEditPanel vep = new ValuesEditPanel();
-		addDeinitializable(vep);
+		addCloseable(vep);
 		vep.addField("AddJournalForTransactionView.date", date);
 		// Order is "to account" and then "from account". This corresponds typically
 		// with values on the debet and credit sides respectively.
@@ -91,7 +91,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 		vep.addField("AddJournalForTransactionView.fromAccount", fromAccount);
 		vep.addField("AddJournalForTransactionView.amount", amount);
 		vep.addField("AddJournalForTransactionView.description", description);
-		vep.setBorder(WidgetFactory.getInstance().createTitleBorderWithMargin("AddJournalForTransactionView.transaction"));
+		vep.setBorder(WidgetFactory.getInstance().createTitleBorderWithMarginAndPadding("AddJournalForTransactionView.transaction"));
 
 		add(vep, BorderLayout.NORTH);
 	}

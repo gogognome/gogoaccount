@@ -144,7 +144,7 @@ public class EditJournalView extends View {
         WidgetFactory wf = WidgetFactory.getInstance();
 
         ValuesEditPanel vep = new ValuesEditPanel();
-        addDeinitializable(vep);
+        addCloseable(vep);
         vep.addField("gen.id", idModel);
         vep.addField("gen.date", dateModel);
         vep.addField("gen.description", descriptionModel);

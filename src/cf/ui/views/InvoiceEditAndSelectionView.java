@@ -26,8 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.Comparator;
-import java.util.Date;
+import java.util.Arrays;
+import java.util.Collections;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -36,22 +36,18 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 
 import nl.gogognome.lib.swing.ActionWrapper;
-import nl.gogognome.lib.swing.SortedTable;
-import nl.gogognome.lib.swing.SortedTableModel;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.SwingUtils.SelectionAction;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.TextResource;
-import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.InvoiceSearchCriteria;
@@ -63,12 +59,11 @@ import cf.engine.InvoiceSearchCriteria;
  *
  * @author Sander Kooijmans
  */
-@SuppressWarnings("serial")
 public class InvoiceEditAndSelectionView extends View {
 
     private InvoicesTableModel invoicesTableModel;
 
-    private SortedTable table;
+    private JTable table;
 
     /** The database whose invoices are to be shown and changed. */
     private Database database;
@@ -241,15 +236,12 @@ public class InvoiceEditAndSelectionView extends View {
 
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
-        // TODO: add empty border
         resultPanel.setBorder(new TitledBorder(
                 tr.getString("invoicesView.foundParties")));
 
-        invoicesTableModel = new InvoicesTableModel();
+        invoicesTableModel = new InvoicesTableModel(Collections.<Invoice>emptyList());
         table = WidgetFactory.getInstance().createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane scrollPane = new JScrollPane(table.getComponent());
-
         Action selectionAction = new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent e) {
@@ -260,15 +252,16 @@ public class InvoiceEditAndSelectionView extends View {
                 }
             }
         };
-        table.setSelectionAction(selectionAction);
+        SelectionAction sa = SwingUtils.addSelectionAction(table, selectionAction);
+        addCloseable(sa);
 
-        resultPanel.add(scrollPane, BorderLayout.CENTER);
+        resultPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         // Create details panel
         JPanel detailPanel = new JPanel(new GridBagLayout());
 
         taRemarks = new JTextArea();
-        scrollPane = new JScrollPane(taRemarks);
+        JScrollPane scrollPane = new JScrollPane(taRemarks);
         scrollPane.setPreferredSize(new Dimension(500, 100));
 
         detailPanel.add(wf.createLabel("invoicesView.remarks", taRemarks),
@@ -314,9 +307,9 @@ public class InvoiceEditAndSelectionView extends View {
         }
         searchCriteria.setIncludeClosedInvoices(btIncludeClosedInvoices.isSelected());
 
-        invoicesTableModel.setInvoices(database.getInvoices(searchCriteria));
-        table.selectFirstRow();
-        table.getFocusableComponent().requestFocusInWindow();
+        invoicesTableModel.replaceRows(Arrays.asList(database.getInvoices(searchCriteria)));
+        SwingUtils.selectFirstRow(table);
+        table.requestFocusInWindow();
 
         // Update the default button if the select button is present
         if (btSelect != null) {
@@ -328,10 +321,10 @@ public class InvoiceEditAndSelectionView extends View {
      * This method is called when the "select invoice" button is pressed.
      */
     private void onSelectInvoice() {
-        int rows[] = table.getSelectedRows();
+        int rows[] = SwingUtils.getSelectedRowsConvertedToModel(table);
         selectedInvoices = new Invoice[rows.length];
         for (int i = 0; i < rows.length; i++) {
-            selectedInvoices[i] = invoicesTableModel.getInvoice(rows[i]);
+            selectedInvoices[i] = invoicesTableModel.getRow(rows[i]);
         }
         closeAction.actionPerformed(null);
     }
@@ -342,136 +335,5 @@ public class InvoiceEditAndSelectionView extends View {
      */
     public Invoice[] getSelectedInvoices() {
         return selectedInvoices;
-    }
-
-    /** The table model that shows information about the invoices. */
-    private static class InvoicesTableModel extends AbstractTableModel implements SortedTableModel {
-
-        /** The invoices to be shown. */
-        private Invoice[] invoices = new Invoice[0];
-
-        /**
-         * Sets the invoices to be shown in the table.
-         * @param invoices the invoices
-         */
-        public void setInvoices(Invoice[] invoices) {
-            this.invoices = invoices;
-            fireTableDataChanged();
-        }
-
-        /**
-         * Gets the invoice for the specified row.
-         * @param row the row
-         */
-        public Invoice getInvoice(int row) {
-            return invoices[row];
-        }
-
-        /**
-         * @see javax.swing.table.AbstractTableModel#getColumnClass(int)
-         */
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            switch(columnIndex) {
-            case 0:
-            case 1:
-            case 2:
-                return String.class;
-            case 3:
-                return Date.class;
-            }
-            return null;
-        }
-
-        /**
-         * @see javax.swing.table.AbstractTableModel#getColumnName(int)
-         */
-        @Override
-        public String getColumnName(int columnIndex) {
-            String id;
-            switch(columnIndex) {
-            case 0: id = "gen.id"; break;
-            case 1: id = "gen.name"; break;
-            case 2: id = "gen.saldo"; break;
-            case 3: id = "gen.date"; break;
-            default:
-                id = null;
-            }
-            return TextResource.getInstance().getString(id);
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.table.TableModel#getColumnCount()
-         */
-        @Override
-		public int getColumnCount() {
-            return 4;
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.table.TableModel#getRowCount()
-         */
-        @Override
-		public int getRowCount() {
-            return invoices.length;
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.table.TableModel#getValueAt(int, int)
-         */
-        @Override
-		public Object getValueAt(int row, int col) {
-            switch(col) {
-            case 0: return invoices[row].getId();
-            case 1: return invoices[row].getPayingParty().getName();
-            case 2: return TextResource.getInstance().getAmountFormat().formatAmount(
-                invoices[row].getRemainingAmountToBePaid(new Date()));
-            case 3: return invoices[row].getIssueDate();
-            default: return null;
-            }
-        }
-
-        @Override
-		public int getColumnWidth(int column) {
-            switch (column) {
-            case 0:
-                return 40;
-            case 1:
-            case 2:
-                return 200;
-            case 3:
-                return 100;
-            }
-            return 0;
-        }
-
-        @Override
-		public Comparator<Object> getComparator(int column) {
-            switch (column) {
-            case 3:
-                return new DateComparator();
-            }
-            return null;
-        }
-
-        @Override
-		public TableCellRenderer getRendererForColumn(int column) {
-            return null;
-        }
-
-        @Override
-        public TableCellEditor getEditorForColumn(int column) {
-        	return null;
-        }
-    }
-
-    private static class DateComparator implements Comparator<Object> {
-        @Override
-		public int compare(Object o1, Object o2) {
-            Date d1 = (Date) o1;
-            Date d2 = (Date) o2;
-            return DateUtil.compareDayOfYear(d1, d2);
-        }
-
     }
 }

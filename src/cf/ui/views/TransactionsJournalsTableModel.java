@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.lib.swing.AbstractListSortedTableModel;
+import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -28,7 +28,7 @@ import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Journal;
 
-class TransactionsJournalsTableModel extends AbstractListSortedTableModel<Transaction> {
+class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction> {
 
 	private Database database;
 
