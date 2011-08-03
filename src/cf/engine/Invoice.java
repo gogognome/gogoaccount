@@ -117,7 +117,7 @@ public class Invoice implements Comparable<Invoice> {
     /**
      * Gets the amount that has to be paid for this invoice minus the payments that have been made.
      * @param date the date for which the amount has to be determined.
-     * @return the remainig amount that has to be paid
+     * @return the remaining amount that has to be paid
      */
     public Amount getRemainingAmountToBePaid(Date date) {
         Amount result = amountToBePaid;
@@ -194,7 +194,8 @@ public class Invoice implements Comparable<Invoice> {
      * @return a negative number, zero or a positive number if this invoice is smaller than,
      *         equal to or larger than the other invoice.
      */
-    public int compareTo(Invoice that) {
+    @Override
+	public int compareTo(Invoice that) {
         return this.id.compareTo(that.id);
     }
 
