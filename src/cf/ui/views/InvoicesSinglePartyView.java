@@ -224,7 +224,7 @@ public class InvoicesSinglePartyView extends View {
 
 		private JPanel createTitleBar() {
 			AmountFormat af = Factory.getInstance(AmountFormat.class);
-			JPanel titlePanel = new JPanel();
+			JPanel titlePanel = new JPanel(new GridBagLayout());
 			titlePanel.setBackground(
 					totalDebet.equals(totalCredit) ? CLOSED_INVOICE_COLOR : OPEN_INVOICE_COLOR);
 			StringBuilder sb = new StringBuilder(invoice.getId());
@@ -232,11 +232,12 @@ public class InvoicesSinglePartyView extends View {
 			String[] descriptions = invoice.getDescriptions();
 			for (int i=0; i<amounts.length; i++) {
 				if (amounts[i] == null) {
-					sb.append(' ' ).append(descriptions[i]);
+					sb.append("   ").append(descriptions[i]);
 				}
 			}
-			sb.append(' ').append(af.formatAmount(invoice.getAmountToBePaid()));
-			titlePanel.add(new JLabel(sb.toString()));
+			sb.append("   ").append(af.formatAmount(invoice.getAmountToBePaid()));
+			titlePanel.add(new JLabel(sb.toString()), SwingUtils.createLabelGBConstraints(0, 0));
+			titlePanel.add(new JLabel(""), SwingUtils.createTextFieldGBConstraints(1, 0));
 			return titlePanel;
 		}
 
@@ -261,7 +262,7 @@ public class InvoicesSinglePartyView extends View {
 					String debet = amounts[i].isPositive() ? af.formatAmount(amounts[i]) : "";
 					addToLinePanel(1, new JLabel(debet));
 
-					String credit = amounts[i].isNegative() ? af.formatAmount(amounts[i]) : "";
+					String credit = amounts[i].isNegative() ? af.formatAmount(amounts[i].negate()) : "";
 					addToLinePanel(2, new JLabel(credit));
 
 					row++;
