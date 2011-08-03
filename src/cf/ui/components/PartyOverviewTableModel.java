@@ -34,7 +34,6 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
@@ -56,11 +55,11 @@ import cf.engine.Payment;
  */
 public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
 
-	private final static ColumnDefinition DATE =
-		new ColumnDefinition("gen.date", Date.class, 250);
-
 	private final static ColumnDefinition ID =
 		new ColumnDefinition("gen.id", String.class, 250);
+
+	private final static ColumnDefinition DATE =
+		new ColumnDefinition("gen.date", Date.class, 250);
 
 	private final static ColumnDefinition DESCRIPTION =
 		new ColumnDefinition("gen.description", String.class, 600);
@@ -72,7 +71,7 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
 		new ColumnDefinition("gen.credit", String.class, 250);
 
 	private final static List<ColumnDefinition> COLUMN_DEFINITIONS =
-		Arrays.asList(DATE, ID, DESCRIPTION, DEBET, CREDIT);
+		Arrays.asList(ID, DATE, DESCRIPTION, DEBET, CREDIT);
 
     private Database database;
     private Party party;
@@ -80,6 +79,13 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
 
     private Font smallFont;
     private Font defaultFont;
+
+    private Amount totalDebet;
+    private Amount totalCredit;
+
+    private TextResource textResource = Factory.getInstance(TextResource.class);
+
+    private TableCellRenderer tableCellRenderer = new TableCellRenderer();
 
     /**
      * Constructs a new <code>partyOverviewComponent</code>.
@@ -89,6 +95,7 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
      */
     public PartyOverviewTableModel(Database database, Party party, Date date) {
         super(COLUMN_DEFINITIONS, Collections.<LineInfo>emptyList());
+
         this.database = database;
         this.party = party;
         this.date = date;
@@ -99,8 +106,8 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
     }
 
     private void initializeValues() {
-        Amount totalDebet = Amount.getZero(database.getCurrency());
-        Amount totalCredit = totalDebet;
+        totalDebet = Amount.getZero(database.getCurrency());
+        totalCredit = totalDebet;
         ArrayList<LineInfo> lineInfos = new ArrayList<LineInfo>();
         Invoice[] invoices = database.getInvoices();
 
@@ -115,55 +122,12 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
         for (int i = 0; i < invoices.length; i++) {
             if (party.equals(invoices[i].getPayingParty())) {
                 if (DateUtil.compareDayOfYear(invoices[i].getIssueDate(),date) <= 0) {
-                    // Add a line with the total amount to be paid
-                    LineInfo invoiceInfo = new LineInfo();
-                    invoiceInfo.id = invoices[i].getId();
-                    invoiceInfo.date = invoices[i].getIssueDate();
-                    invoiceInfo.description = Factory.getInstance(TextResource.class).getString("partyOverviewTableModel.totalAmount");
-                    invoiceInfo.isFirstLine = true;
-                    if (!invoices[i].getAmountToBePaid().isNegative()) {
-                        invoiceInfo.debetAmount = invoices[i].getAmountToBePaid();
-                        totalDebet = totalDebet.add(invoiceInfo.debetAmount);
-                    } else {
-                        invoiceInfo.creditAmount = invoices[i].getAmountToBePaid().negate();
-                        totalCredit = totalCredit.add(invoiceInfo.creditAmount);
-                    }
-                    lineInfos.add(invoiceInfo);
-
-                    // Add a line per description of the invoice
-                    String[] descriptions = invoices[i].getDescriptions();
-                    Amount[] amounts = invoices[i].getAmounts();
-                    for (int l=0; l<descriptions.length; l++) {
-                        LineInfo lineInfo = new LineInfo();
-                        lineInfo.isDescription = true;
-//                        lineInfo.id = invoices[i].getId();
-//                        lineInfo.date = invoices[i].getIssueDate();
-                        lineInfo.description = descriptions[l];
-                        if (amounts[l] != null) {
-                            if (!amounts[l].isNegative()) {
-                                lineInfo.debetAmount = amounts[l];
-                            } else {
-                                lineInfo.creditAmount = amounts[l].negate();
-                            }
-                        }
-                        lineInfos.add(lineInfo);
-                    }
+                	addInvoiceToLineInfos(lineInfos, invoices[i]);
                 }
 	            List<Payment> payments = invoices[i].getPayments();
 	            for (Payment payment : payments) {
 	                if (DateUtil.compareDayOfYear(payment.getDate(), date) <= 0) {
-	                    LineInfo lineInfo = new LineInfo();
-                        lineInfo.id = invoices[i].getId();
-	                    lineInfo.date = payment.getDate();
-	                    lineInfo.description = payment.getDescription();
-	                    if (!payment.getAmount().isNegative()) {
-	                        lineInfo.creditAmount = payment.getAmount();
-	                        totalCredit = totalCredit.add(lineInfo.creditAmount);
-	                    } else {
-                            lineInfo.debetAmount = payment.getAmount().negate();
-                            totalDebet = totalDebet.add(lineInfo.debetAmount);
-	                    }
-                        lineInfos.add(lineInfo);
+	                	addPaymentToLineInfos(lineInfos, payment);
 	                }
 	            }
             }
@@ -178,7 +142,63 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
         replaceRows(lineInfos);
     }
 
-    @Override
+	private void addInvoiceToLineInfos(List<LineInfo> lineInfos, Invoice invoice) {
+        addTotalMountLine(lineInfos, invoice);
+
+        String[] descriptions = invoice.getDescriptions();
+        Amount[] amounts = invoice.getAmounts();
+        for (int l=0; l<descriptions.length; l++) {
+            addInvoiceDescriptionLine(lineInfos, descriptions[l], amounts[l]);
+        }
+	}
+
+	private void addTotalMountLine(List<LineInfo> lineInfos, Invoice invoice) {
+		LineInfo invoiceInfo = new LineInfo();
+        invoiceInfo.id = invoice.getId();
+        invoiceInfo.date = invoice.getIssueDate();
+        invoiceInfo.isFirstLine = true;
+        if (!invoice.getAmountToBePaid().isNegative()) {
+            invoiceInfo.description = textResource.getString("partyOverviewTableModel.totalAmountToBeReceived");
+            invoiceInfo.debetAmount = invoice.getAmountToBePaid();
+            totalDebet = totalDebet.add(invoiceInfo.debetAmount);
+        } else {
+            invoiceInfo.description = textResource.getString("partyOverviewTableModel.totalAmountToBePaid");
+            invoiceInfo.creditAmount = invoice.getAmountToBePaid().negate();
+            totalCredit = totalCredit.add(invoiceInfo.creditAmount);
+        }
+        lineInfos.add(invoiceInfo);
+	}
+
+	private void addInvoiceDescriptionLine(List<LineInfo> lineInfos,
+			String description, Amount amount) {
+		LineInfo lineInfo = new LineInfo();
+		lineInfo.isDescription = true;
+		lineInfo.description = description;
+		if (amount != null) {
+		    if (!amount.isNegative()) {
+		        lineInfo.debetAmount = amount;
+		    } else {
+		        lineInfo.creditAmount = amount.negate();
+		    }
+		}
+		lineInfos.add(lineInfo);
+	}
+
+    private void addPaymentToLineInfos(ArrayList<LineInfo> lineInfos, Payment payment) {
+        LineInfo lineInfo = new LineInfo();
+        lineInfo.date = payment.getDate();
+        lineInfo.description = payment.getDescription();
+        if (!payment.getAmount().isNegative()) {
+            lineInfo.creditAmount = payment.getAmount();
+            totalCredit = totalCredit.add(lineInfo.creditAmount);
+        } else {
+            lineInfo.debetAmount = payment.getAmount().negate();
+            totalDebet = totalDebet.add(lineInfo.debetAmount);
+        }
+        lineInfos.add(lineInfo);
+	}
+
+	@Override
 	public Object getValueAt(int row, int column) {
         Object result = null;
 
@@ -214,55 +234,57 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
 
     @Override
 	public TableCellRenderer getRendererForColumn(int column) {
-        return new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
-                Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (getRow(row).isDescription) {
-                    comp.setFont(smallFont);
-                } else {
-                    comp.setFont(defaultFont);
-                }
-
-                if (comp instanceof JLabel) {
-                    JLabel label = (JLabel) comp;
-                    if (column >= 3) {
-                        label.setHorizontalAlignment(SwingConstants.RIGHT);
-                    } else {
-                        label.setHorizontalAlignment(SwingConstants.LEFT);
-                    }
-                    if (getRow(row).isFirstLine && row > 0) {
-                        // Add border to the top of the label.
-                        label.setBorder(new Border() {
-                            @Override
-							public Insets getBorderInsets(Component c) {
-                                return new Insets(2, 0, 0, 0);
-                            }
-
-                            @Override
-							public boolean isBorderOpaque() {
-                                return true;
-                            }
-
-                            @Override
-							public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-                                g.setColor(Color.BLACK);
-                                g.drawRect(x, y, width, 1);
-                            }
-
-                        });
-                    }
-                }
-
-                return comp;
-            }
-        };
+    	return tableCellRenderer;
     }
 
     @Override
     public TableCellEditor getEditorForColumn(int column) {
     	return null;
+    }
+
+    private class TableCellRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (getRow(row).isDescription) {
+                comp.setFont(smallFont);
+            } else {
+                comp.setFont(defaultFont);
+            }
+
+            if (comp instanceof JLabel) {
+                JLabel label = (JLabel) comp;
+                if (column >= 3) {
+                    label.setHorizontalAlignment(SwingConstants.RIGHT);
+                } else {
+                    label.setHorizontalAlignment(SwingConstants.LEFT);
+                }
+                if (getRow(row).isFirstLine && row > 0) {
+                    // Add border to the top of the label.
+                    label.setBorder(new Border() {
+                        @Override
+						public Insets getBorderInsets(Component c) {
+                            return new Insets(2, 0, 0, 0);
+                        }
+
+                        @Override
+						public boolean isBorderOpaque() {
+                            return true;
+                        }
+
+                        @Override
+						public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+                            g.setColor(Color.BLACK);
+                            g.drawRect(x, y, width, 1);
+                        }
+
+                    });
+                }
+            }
+
+            return comp;
+        }
     }
 }
 

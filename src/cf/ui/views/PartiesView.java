@@ -103,6 +103,15 @@ public class PartiesView extends View {
     private FocusListener focusListener;
 
     /**
+     * Constructor for the parties view. Parties can be edited. There is no select
+     * party button.
+     * @param database
+     */
+    public PartiesView(Database database) {
+        this(database, false);
+    }
+
+    /**
      * Constructor for a parties view in which at most one party can be selected.
      * @param database the database used to search for parties and to add, delete or update parties from.
      * @param selectioEnabled <code>true</code> if the user should be able to select a party;

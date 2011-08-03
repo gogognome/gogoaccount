@@ -102,8 +102,8 @@ public class AccountMutationsView extends View {
 		add(accountAndDatePanel, SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.NONE,
                 10, 10, 10, 10));
-		tableScrollPane = widgetFactory.createScrollPane(table);
-		tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
+		tableScrollPane = widgetFactory.createScrollPane(table,
+				"AccountMutationsView.initialTableTitle");
 		add(tableScrollPane, SwingUtils.createPanelGBConstraints(0, 1));
 	}
 

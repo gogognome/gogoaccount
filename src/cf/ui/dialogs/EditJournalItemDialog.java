@@ -15,6 +15,7 @@
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */package cf.ui.dialogs;
 
+
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Frame;
@@ -27,6 +28,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.OkCancelDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -39,7 +41,6 @@ import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.JournalItem;
 import cf.ui.components.AccountSelectionBean;
-import cf.ui.components.InvoiceSelector;
 
 /**
  * This class implements the Edit Journal Item dialog.
@@ -53,7 +54,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
 
     private JComboBox cbSide;
 
-    private InvoiceSelector invoiceSelector;
+    private InvoiceBean invoiceSelector;
 
     /** The parent frame of this dialog. */
     private Frame parentFrame;
@@ -165,7 +166,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
         addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.invoice"),
                 gridBag, labelConstraints);
 
-        invoiceSelector = new InvoiceSelector(database);
+        invoiceSelector = new InvoiceBean(database);
         invoiceSelector.setSelectedInvoice(invoice);
         addComponentToGridBag(labelsAndFieldsPanel, invoiceSelector,
                 gridBag, fieldConstraints);

@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package cf.ui.components;
+package nl.gogognome.gogoaccount.gui.beans;
 
 import java.awt.Container;
 import java.awt.GridBagConstraints;
@@ -23,7 +23,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -41,9 +40,9 @@ import cf.ui.views.InvoiceEditAndSelectionView;
  *
  * @author Sander Kooijmans
  */
-public class InvoiceSelector extends JPanel {
+public class InvoiceBean extends JPanel {
 
-    /** The database used to select the invoice from. */
+	/** The database used to select the invoice from. */
     private Database database;
 
     /** Contains a description of the selected invoice. */
@@ -61,7 +60,7 @@ public class InvoiceSelector extends JPanel {
     /**
      * Constructor.
      */
-    public InvoiceSelector(Database database) {
+    public InvoiceBean(Database database) {
         this.database = database;
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
@@ -70,21 +69,8 @@ public class InvoiceSelector extends JPanel {
         tfDescription.setEditable(false);
         tfDescription.setFocusable(false);
 
-        Action action = new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-                selectInvoice();
-			}
-		};
-		btSelect = wf.createIconButton("gen.btSelectInvoice", action, 21);
-
-		action = new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-                setSelectedInvoice(null);
-			}
-		};
-		btClear = wf.createIconButton("gen.btClearInvoice", action, 21);
+		btSelect = wf.createIconButton("gen.btSelectInvoice", new SelectAction(), 21);
+		btClear = wf.createIconButton("gen.btClearInvoice", new ClearAction(), 21);
 
         add(tfDescription, SwingUtils.createTextFieldGBConstraints(0, 0));
         add(btSelect, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0,
@@ -104,7 +90,7 @@ public class InvoiceSelector extends JPanel {
     }
 
     /**
-     * Selecs an invoice.
+     * Selects an invoice.
      * @param party the invoice
      */
     public void setSelectedInvoice(Invoice invoice) {
@@ -133,4 +119,17 @@ public class InvoiceSelector extends JPanel {
         }
     }
 
+	private final class SelectAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+		    selectInvoice();
+		}
+	}
+
+    private final class ClearAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+		    setSelectedInvoice(null);
+		}
+	}
 }
