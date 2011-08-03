@@ -29,13 +29,11 @@ import javax.swing.JTable;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Database;
 
@@ -66,7 +64,7 @@ public class AccountMutationsView extends View {
 
 	@Override
 	public String getTitle() {
-		return TextResource.getInstance().getString("AccountMutationsView.title");
+		return textResource.getString("AccountMutationsView.title");
 	}
 
 	@Override
@@ -74,6 +72,7 @@ public class AccountMutationsView extends View {
 		initModels();
 		addComponents();
 		addListeners();
+		updateTableModel();
 	}
 
 	private void initModels() {
@@ -84,9 +83,8 @@ public class AccountMutationsView extends View {
 	}
 
 	private void addComponents() {
-		WidgetFactory wf = WidgetFactory.getInstance();
 		model = new AccountOverviewTableModel(database, accountListModel.getSingleSelectedItem(), dateModel.getDate());
-		table = wf.createSortedTable(model);
+		table = widgetFactory.createSortedTable(model);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
 		JPanel accountAndDatePanel = new JPanel(new FlowLayout());
@@ -104,8 +102,8 @@ public class AccountMutationsView extends View {
 		add(accountAndDatePanel, SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.NONE,
                 10, 10, 10, 10));
-		tableScrollPane = new JScrollPane(table);
-		tableScrollPane.setBorder(wf.createTitleBorder("AccountMutationsView.initialTableTitle"));
+		tableScrollPane = widgetFactory.createScrollPane(table);
+		tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
 		add(tableScrollPane, SwingUtils.createPanelGBConstraints(0, 1));
 	}
 
@@ -132,20 +130,17 @@ public class AccountMutationsView extends View {
 	}
 
 	private void updateTableModel() {
-		WidgetFactory wf = WidgetFactory.getInstance();
-
 		Account account = accountListModel.getSingleSelectedItem();
 		Date date = dateModel.getDate();
 		model.setAccountAndDate(account, date);
 
 		if (account != null && date != null) {
-			TextResource tr = TextResource.getInstance();
-			tableScrollPane.setBorder(wf.createTitleBorder("vao.accountAtDate",
+			tableScrollPane.setBorder(widgetFactory.createTitleBorder("vao.accountAtDate",
 			        account.getId() + " - " + account.getName(),
-			        tr.formatDate("gen.dateFormat", date)));
+			        textResource.formatDate("gen.dateFormat", date)));
 		} else {
 			model.clear();
-			tableScrollPane.setBorder(wf.createTitleBorder("AccountMutationsView.initialTableTitle"));
+			tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
 		}
 	}
 

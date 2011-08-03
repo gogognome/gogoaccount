@@ -48,6 +48,7 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.swing.views.ViewListener;
 import nl.gogognome.lib.swing.views.ViewTabbedPane;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
@@ -82,7 +83,12 @@ import cf.ui.views.PartiesView;
 public class MainFrame extends JFrame implements ActionListener, DatabaseListener {
 
 	static {
-		TextResource.getInstance().loadResourceBundle("stringresources");
+		TextResource tr = new TextResource();
+		tr.loadResourceBundle("stringresources");
+		Factory.bindSingleton(TextResource.class, tr);
+
+		WidgetFactory wf = new WidgetFactory(tr);
+		Factory.bindSingleton(WidgetFactory.class, wf);
 	}
 
     private static final long serialVersionUID = 1L;

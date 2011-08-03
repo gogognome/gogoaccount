@@ -35,10 +35,8 @@ import javax.swing.table.TableColumnModel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
 import cf.engine.Journal;
@@ -81,11 +79,10 @@ public class EditJournalsView extends View {
     @Override
     public void onInit() {
         setBackground(BACKGROUND_COLOR);
-		WidgetFactory wf = WidgetFactory.getInstance();
 
-		// Create table of journals
+        // Create table of journals
         journalsTableModel = new JournalsTableModel(database);
-		journalsTable = WidgetFactory.getInstance().createSortedTable(journalsTableModel);
+		journalsTable = widgetFactory.createSortedTable(journalsTableModel);
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
@@ -112,25 +109,23 @@ public class EditJournalsView extends View {
 		JPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonPanel.setOpaque(false);
 
-		JButton editButton = wf.createButton("ejd.editJournal", new EditAction());
+		JButton editButton = widgetFactory.createButton("ejd.editJournal", new EditAction());
 		buttonPanel.add(editButton);
 
-		JButton addButton = wf.createButton("ejd.addJournal", new AddAction());
+		JButton addButton = widgetFactory.createButton("ejd.addJournal", new AddAction());
 		buttonPanel.add(addButton);
 
-		JButton deleteButton = wf.createButton("ejd.deleteJournal", new DeleteAction());
+		JButton deleteButton = widgetFactory.createButton("ejd.deleteJournal", new DeleteAction());
 		buttonPanel.add(deleteButton);
 
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
-        JScrollPane scrollPane = new JScrollPane(journalsTable);
-        scrollPane.setBorder(wf.createTitleBorder("editJournalsView.journals"));
+        JScrollPane scrollPane = widgetFactory.createScrollPane(journalsTable, "editJournalsView.journals");
 		tablesPanel.add(scrollPane, SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH, 10, 10, 10, 10));
 
-        scrollPane = new JScrollPane(itemsTable);
-        scrollPane.setBorder(wf.createTitleBorder("editJournalsView.journalItems"));
+        scrollPane = widgetFactory.createScrollPane(itemsTable, "editJournalsView.journalItems");
         tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
 
         setLayout(new BorderLayout());
@@ -142,7 +137,7 @@ public class EditJournalsView extends View {
 
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("editJournalsView.title");
+        return textResource.getString("editJournalsView.title");
     }
 
     @Override
