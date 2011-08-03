@@ -17,7 +17,6 @@
 package cf.ui;
 
 import java.awt.Dimension;
-import java.awt.FileDialog;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -26,23 +25,22 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.print.PrinterException;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
-import java.util.Locale;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.WindowConstants;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
-import nl.gogognome.lib.swing.plaf.DefaultLookAndFeel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.swing.views.ViewListener;
@@ -81,15 +79,6 @@ import cf.ui.views.PartiesView;
  * @author Sander Kooijmans
  */
 public class MainFrame extends JFrame implements ActionListener, DatabaseListener {
-
-	static {
-		TextResource tr = new TextResource();
-		tr.loadResourceBundle("stringresources");
-		Factory.bindSingleton(TextResource.class, tr);
-
-		WidgetFactory wf = new WidgetFactory(tr);
-		Factory.bindSingleton(WidgetFactory.class, wf);
-	}
 
     private static final long serialVersionUID = 1L;
 
@@ -208,7 +197,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		// the reporting menu
 		JMenuItem miGenerateInvoices = wf.createMenuItem("mi.generateInvoices", this);
 		JMenuItem miGenerateReport = wf.createMenuItem("mi.generateReport", this);
-		JMenuItem miPrintAddressLabels = wf.createMenuItem("mi.printAddressLabels", this);
+//		JMenuItem miPrintAddressLabels = wf.createMenuItem("mi.printAddressLabels", this);
 
 		// the help menu
 		JMenuItem miAbout = wf.createMenuItem("mi.about", this);
@@ -283,42 +272,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	/**
-	 * Starts the application.
-	 * @param args command line arguments; if one argument is passed, then
-	 *        it is used as file name of an edition that is loaded.
-	 *        Further, if the argument <tt>-lang=X</tt> is used, then
-	 *        the language is set to </tt>X</tt>. </tt>X</tt> should be a valid
-	 *        ISO 639 language code.
-	 */
-	public static void main(String[] args)
-	{
-		// parse arguments: language must be set before creating main frame
-		String fileName = null;
-		for (int i=0; i<args.length; i++)
-		{
-			if (args[i].startsWith("-lang="))
-			{
-				TextResource.getInstance().setLocale(new Locale(args[i].substring(6)));
-			}
-			else
-			{
-				fileName = args[i];
-			}
-		}
-
-        DefaultLookAndFeel.useDefaultLookAndFeel();
-
-        // Create and show main frame.
-		MainFrame mf = new MainFrame();
-        mf.setVisible(true);
-		mf.setExtendedState(MAXIMIZED_BOTH);
-
-		if (fileName != null) {
-		    mf.loadFile(fileName);
-		}
-	}
-
-	/**
 	 * Checks whether the database may be destroyed.
 	 *
 	 * <p>If the database has been
@@ -336,7 +289,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		boolean result;
 		if (database.hasUnsavedChanges())
 		{
-		    TextResource tr = TextResource.getInstance();
 			int choice = MessageDialog.showYesNoCancelQuestion(this, "gen.titleWarning",
 				"mf.saveChangesBeforeExit");
 			switch (choice)	{
@@ -383,20 +335,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	{
 		if (mayCurrentDatabaseBeDestroyed())
 		{
-		    TextResource tr = TextResource.getInstance();
-			FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleOpenBookkeeping"), FileDialog.LOAD);
-			fileDialog.setFilenameFilter(new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					File compositeName = new File(dir,name);
-					return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } }
-				);
-			fileDialog.setVisible(true);
-			String directory = fileDialog.getDirectory();
-			String filename  = fileDialog.getFile();
-			if (directory != null && filename != null)
-			{
-				loadFile(directory + filename);
+		    TextResource tr = Factory.getInstance(TextResource.class);
+			JFileChooser fc = new JFileChooser();
+			if (database.getFileName() != null) {
+				fc.setCurrentDirectory(new File(database.getFileName()));
+			}
+			fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
+			int choice = fc.showDialog(this, tr.getString("mf.titleOpenBookkeeping"));
+			if (choice == JFileChooser.APPROVE_OPTION) {
+				File file = fc.getSelectedFile();
+				loadFile(file.getAbsolutePath());
 			}
 			requestFocus();
 		}
@@ -435,24 +383,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		}
 	}
 
-	/** Handles the save edition as event. */
-	private void handleSaveBookeepingAs()
-	{
-	    TextResource tr = TextResource.getInstance();
-		FileDialog fileDialog = new FileDialog(this, tr.getString("mf.titleSaveAs"), FileDialog.SAVE);
-		fileDialog.setFilenameFilter(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				File compositeName = new File(dir,name);
-				return compositeName.isDirectory() || name.toLowerCase().endsWith(".xml"); } }
-			);
-		fileDialog.setFile(database.getFileName());
-		fileDialog.setVisible(true);
-		String directory = fileDialog.getDirectory();
-		String filename  = fileDialog.getFile();
-		if (directory != null && filename != null)
-		{
-			saveBookkeeping(directory + filename);
+	private void handleSaveBookeepingAs() {
+	    TextResource tr = Factory.getInstance(TextResource.class);
+		JFileChooser fc = new JFileChooser();
+		if (database.getFileName() != null) {
+			fc.setCurrentDirectory(new File(database.getFileName()));
+		}
+		fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
+		int choice = fc.showDialog(this, tr.getString("mf.titleSaveAs"));
+		if (choice == JFileChooser.APPROVE_OPTION) {
+			saveBookkeeping(fc.getSelectedFile().getAbsolutePath());
 		}
 		requestFocus();
 	}
@@ -500,11 +440,10 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	/**
-	 *
 	 * Loads a bookkeeping from an XML file.
 	 * @param fileName the name of the file.
 	 */
-	private void loadFile(String fileName) {
+	public void loadFile(String fileName) {
         Database newDatabase = null;
 		try {
 			newDatabase = new XMLFileReader(new File(fileName)).createDatabaseFromFile();

@@ -28,7 +28,7 @@
 	<property name="classdir" value="${generateddir}/classes" />
 	<property name="libclassesdir" value="${generateddir}/libclasses" />
 	<property name="distdir" value="${generateddir}/dist" />
-	<property name="mainClass" value="cf.ui.MainFrame" />
+	<property name="mainClass" value="cf.ui.Start" />
 	<property name="productname" value="gogoaccount" />
 	
 	<target name="init" description="initialisation used by other targets">
