@@ -59,8 +59,8 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		JLabel label = new JLabel();
 		TextResource tr = TextResource.getInstance();
 		label.setText(tr.getString("vpo.partyAtDate",
-		        new String[] { party.getId() + " - " + party.getName(),
-		        tr.formatDate("gen.dateFormat", date) }));
+		        party.getId() + " - " + party.getName(),
+		        tr.formatDate("gen.dateFormat", date)));
 
 		// Create panel with label and table.
 		JPanel panel = new JPanel(new BorderLayout());
