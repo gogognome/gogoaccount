@@ -26,8 +26,11 @@ import java.awt.event.WindowEvent;
 import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -50,7 +53,6 @@ import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
-import cf.engine.Party;
 import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
 import cf.engine.XMLParseException;
@@ -58,11 +60,9 @@ import cf.print.AddressLabelPrinter;
 import cf.ui.dialogs.DateSelectionDialog;
 import cf.ui.dialogs.ReportDialog;
 import cf.ui.dialogs.ViewPartiesOverviewDialog;
-import cf.ui.dialogs.ViewPartyOverviewDialog;
 import cf.ui.views.AboutView;
 import cf.ui.views.AccountMutationsView;
 import cf.ui.views.BalanceAndOperationResultView;
-import cf.ui.views.BalanceView;
 import cf.ui.views.CloseBookkeepingView;
 import cf.ui.views.ConfigureBookkeepingView;
 import cf.ui.views.EditJournalView;
@@ -70,7 +70,7 @@ import cf.ui.views.EditJournalsView;
 import cf.ui.views.ImportBankStatementView;
 import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.InvoiceToOdtView;
-import cf.ui.views.OperationalResultView;
+import cf.ui.views.InvoicesSinglePartyView;
 import cf.ui.views.PartiesView;
 
 /**
@@ -91,33 +91,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** The tabbed pane containing the views. */
 	private ViewTabbedPane viewTabbedPane;
 
-   /** The view containing the balance and operational result. */
-    private BalanceAndOperationResultView balanceAndOperationResultView;
-
-	/** The balance view. */
-	private BalanceView balanceView;
-
-	/** The operational result view. */
-	private OperationalResultView operationalResultView;
-
-    /** The view for editing parties. */
-    private PartiesView partiesView;
-
-    private AccountMutationsView accountMutationsView;
-
-    private ImportBankStatementView importBankStatementView;
-
-    /** The view to configure a bookkeeping. */
-    private ConfigureBookkeepingView configureBookkeepingView;
-
-    /** The view for invoice generation. */
-    private InvoiceGeneratorView invoiceGeneratorView;
-
-    /** The view to edit journals. */
-    private EditJournalsView editJournalsView;
-
-    /** The view to generate an ODT file for invoices. */
-    private InvoiceToOdtView invoiceToOdtView;
+	private Map<Class<?>, View> openViews = new HashMap<Class<?>, View>();
 
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 	private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
@@ -258,8 +232,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if ("mi.importBankStatement".equals(command)) { handleImportBankStatement(); }
 		if ("mi.exit".equals(command)) { handleExit(); }
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
-		if ("mi.viewBalance".equals(command)) { handleViewBalance(); }
-		if ("mi.viewOperationalResult".equals(command)) { handleViewOperationalResult(); }
 		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
 		if ("mi.viewPartyOverview".equals(command)) { handleViewPartyOverview(); }
 		if ("mi.viewPartiesOverview".equals(command)) { handleViewPartiesOverview(); }
@@ -352,22 +324,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	/** Handles the configure bookkeeping event. */
-	private void handleConfigureBookkeeping()
-	{
-	    if (configureBookkeepingView == null) {
-	    	configureBookkeepingView = new ConfigureBookkeepingView(database);
-	    	configureBookkeepingView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    configureBookkeepingView = null;
-                }
-            });
-            viewTabbedPane.openView(configureBookkeepingView);
-            viewTabbedPane.selectView(configureBookkeepingView);
-        } else {
-            viewTabbedPane.selectView(configureBookkeepingView);
-	    }
+	private void handleConfigureBookkeeping() {
+		openView(ConfigureBookkeepingView.class);
 	}
 
 	/** Handles the save bookkeeping event. */
@@ -423,20 +381,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleImportBankStatement() {
-        if (importBankStatementView == null) {
-            importBankStatementView = new ImportBankStatementView(database);
-            importBankStatementView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    importBankStatementView = null;
-                }
-            });
-            viewTabbedPane.openView(importBankStatementView);
-            viewTabbedPane.selectView(importBankStatementView);
-        } else {
-            viewTabbedPane.selectView(importBankStatementView);
-        }
+		openView(ImportBankStatementView.class);
 	}
 
 	/**
@@ -469,11 +414,10 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         Database.setInstance(database);
         database.addListener(this);
         viewTabbedPane.closeAllViews();
-        balanceView = null;
-        operationalResultView = null;
-        partiesView = null;
-        invoiceGeneratorView = null;
-        editJournalsView = null;
+
+        for (View view : openViews.values()) {
+        	view.requestClose();
+        }
 
         databaseChanged(database);
         handleViewBalanceAndOperationalResult();
@@ -502,106 +446,19 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleViewBalanceAndOperationalResult() {
-        if (balanceAndOperationResultView == null) {
-            balanceAndOperationResultView = new BalanceAndOperationResultView(database);
-            balanceAndOperationResultView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    balanceAndOperationResultView = null;
-                }
-            });
-            viewTabbedPane.openView(balanceAndOperationResultView);
-            viewTabbedPane.selectView(balanceAndOperationResultView);
-        } else {
-            viewTabbedPane.selectView(balanceAndOperationResultView);
-        }
+		openView(BalanceAndOperationResultView.class);
     }
 
-	private void handleViewBalance() {
-	    if (balanceView == null) {
-	        balanceView = new BalanceView(database);
-            balanceView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    balanceView = null;
-                }
-            });
-            viewTabbedPane.openView(balanceView);
-            viewTabbedPane.selectView(balanceView);
-        } else {
-            viewTabbedPane.selectView(balanceView);
-	    }
-	}
-
-	private void handleViewOperationalResult() {
-	    if (operationalResultView == null) {
-	        operationalResultView = new OperationalResultView(database);
-            operationalResultView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    operationalResultView = null;
-                }
-            });
-	        viewTabbedPane.openView(operationalResultView);
-            viewTabbedPane.selectView(operationalResultView);
-	    } else {
-	        viewTabbedPane.selectView(operationalResultView);
-	    }
-	}
-
     private void handleEditParties() {
-        if (partiesView == null) {
-            partiesView = new PartiesView(database, false);
-            partiesView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    partiesView = null;
-                }
-            });
-            viewTabbedPane.openView(partiesView);
-            viewTabbedPane.selectView(partiesView);
-        } else {
-            viewTabbedPane.selectView(partiesView);
-        }
+    	openView(PartiesView.class);
     }
 
 	private void handleViewAccountMutations() {
-        if (accountMutationsView == null) {
-        	accountMutationsView = new AccountMutationsView(database);
-        	accountMutationsView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    accountMutationsView = null;
-                }
-            });
-            viewTabbedPane.openView(accountMutationsView);
-            viewTabbedPane.selectView(accountMutationsView);
-        } else {
-            viewTabbedPane.selectView(accountMutationsView);
-        }
+		openView(AccountMutationsView.class);
 	}
 
 	private void handleViewPartyOverview() {
-        PartiesView partiesView = new PartiesView(database, true);
-        ViewDialog partyViewDialog = new ViewDialog(this, partiesView);
-        partyViewDialog.showDialog();
-
-	    Party[] parties = partiesView.getSelectedParties();
-	    if (parties != null && parties.length == 1) {
-	        DateSelectionDialog dateSelectionDialog =
-	            new DateSelectionDialog(this, "mf.selectDateForPartyOverview");
-	        dateSelectionDialog.showDialog();
-	        Date date = dateSelectionDialog.getDate();
-	        if (date != null) {
-	            ViewPartyOverviewDialog dialog = new ViewPartyOverviewDialog(this, database, parties[0], date);
-	            dialog.showDialog();
-	        }
-	    }
+		openView(InvoicesSinglePartyView.class);
 	}
 
 	private void handleViewPartiesOverview()
@@ -631,40 +488,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    if (!database.hasAccounts()) {
 	        MessageDialog.showMessage(this, "gen.warning", "mf.noAccountsPresent");
 	    } else {
-            if (editJournalsView == null) {
-                editJournalsView = new EditJournalsView(database);
-                editJournalsView.addViewListener(new ViewListener() {
-                    @Override
-					public void onViewClosed(View view) {
-                        view.removeViewListener(this);
-                        editJournalsView = null;
-                    }
-                });
-                viewTabbedPane.openView(editJournalsView);
-                viewTabbedPane.selectView(editJournalsView);
-            } else {
-                viewTabbedPane.selectView(editJournalsView);
-            }
+	    	openView(EditJournalsView.class);
 	    }
 	}
 
 	private void handleGenerateInvoices() {
-//	    InvoiceToPdfDialog dialog = new InvoiceToPdfDialog(this, database);
-//	    dialog.showDialog();
-        if (invoiceToOdtView == null) {
-            invoiceToOdtView = new InvoiceToOdtView(database);
-            invoiceToOdtView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    invoiceToOdtView = null;
-                }
-            });
-            viewTabbedPane.openView(invoiceToOdtView);
-            viewTabbedPane.selectView(invoiceToOdtView);
-        } else {
-            viewTabbedPane.selectView(invoiceToOdtView);
-        }
+		openView(InvoiceToOdtView.class);
 	}
 
 	private void handleGenerateReport() {
@@ -682,20 +511,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleAddInvoices() {
-        if (invoiceGeneratorView == null) {
-            invoiceGeneratorView = new InvoiceGeneratorView(database);
-            invoiceGeneratorView.addViewListener(new ViewListener() {
-                @Override
-				public void onViewClosed(View view) {
-                    view.removeViewListener(this);
-                    invoiceGeneratorView = null;
-                }
-            });
-            viewTabbedPane.openView(invoiceGeneratorView);
-            viewTabbedPane.selectView(invoiceGeneratorView);
-        } else {
-            viewTabbedPane.selectView(invoiceGeneratorView);
-        }
+		openView(InvoiceGeneratorView.class);
 	}
 
 	/** Shows the about dialog. */
@@ -704,12 +520,42 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    new ViewDialog(this, aboutView).showDialog();
 	}
 
-    /**
+	private void openView(Class<? extends View> viewClass) {
+		View view = openViews.get(viewClass);
+	    if (view == null) {
+	    	try {
+				view = createView(viewClass);
+			} catch (Exception e) {
+				MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
+				return;
+			}
+	    	view.addViewListener(new ViewCloseListener());
+            viewTabbedPane.openView(view);
+            viewTabbedPane.selectView(view);
+        } else {
+            viewTabbedPane.selectView(view);
+	    }
+	}
+
+    private View createView(Class<? extends View> viewClass) throws Exception {
+    	Constructor<? extends View> c = viewClass.getConstructor(Database.class);
+    	return c.newInstance(database);
+	}
+
+	/**
      * This method is called when the database has changed.
      * @param database the database that has changed
      */
     @Override
 	public void databaseChanged(Database database) {
         setTitle(createTitle());
+    }
+
+    private class ViewCloseListener implements ViewListener {
+        @Override
+		public void onViewClosed(View view) {
+            view.removeViewListener(this);
+            openViews.remove(view.getClass());
+        }
     }
 }
