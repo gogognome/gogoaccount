@@ -45,7 +45,6 @@ import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.FileSelectionModel;
 import nl.gogognome.lib.swing.models.ListModel;
@@ -53,6 +52,7 @@ import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
@@ -116,15 +116,13 @@ public class ImportBankStatementView extends View
 	}
 
 	private void addComponents() {
-		WidgetFactory wf = WidgetFactory.getInstance();
-
 		vep = new ValuesEditPanel();
 		vep.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
 		vep.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
 				new ImporterFormatter());
 
 		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
-		importButton = wf.createButton("importBankStatementView.import", new AbstractAction() {
+		importButton = widgetFactory.createButton("importBankStatementView.import", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				handleImport();
@@ -135,13 +133,13 @@ public class ImportBankStatementView extends View
 		JPanel importPanel = new JPanel(new BorderLayout());
 		importPanel.add(vep, BorderLayout.NORTH);
 		importPanel.add(buttonPanel, BorderLayout.SOUTH);
-		importPanel.setBorder(wf.createTitleBorderWithMarginAndPadding("importBankStatementView.importSettings"));
+		importPanel.setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("importBankStatementView.importSettings"));
 
 		// Create table of journals
 		transactionJournalsTableModel = new TransactionsJournalsTableModel(
 				Collections.<Transaction>emptyList(), database);
-		transactionsJournalsTable = WidgetFactory.getInstance().createSortedTable(transactionJournalsTableModel);
-        transactionsJournalsTable.setBorder(wf.createTitleBorderWithPadding("importBankStatementView.transactionsJournals"));
+		transactionsJournalsTable = widgetFactory.createSortedTable(transactionJournalsTableModel);
+        transactionsJournalsTable.setBorder(widgetFactory.createTitleBorderWithPadding("importBankStatementView.transactionsJournals"));
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
@@ -164,13 +162,13 @@ public class ImportBankStatementView extends View
 		JPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonsPanel.setOpaque(false);
 
-		editButton = wf.createButton("ejd.editJournal", new EditAction());
+		editButton = widgetFactory.createButton("ejd.editJournal", new EditAction());
 		buttonsPanel.add(editButton);
 
-		addButton = wf.createButton("ejd.addJournal", new AddAction());
+		addButton = widgetFactory.createButton("ejd.addJournal", new AddAction());
 		buttonsPanel.add(addButton);
 
-		deleteButton = wf.createButton("ejd.deleteJournal", new DeleteAction());
+		deleteButton = widgetFactory.createButton("ejd.deleteJournal", new DeleteAction());
 		buttonsPanel.add(deleteButton);
 
 		// Add components to the view.
@@ -203,7 +201,7 @@ public class ImportBankStatementView extends View
 
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("importBankStatementView.title");
+        return textResource.getString("importBankStatementView.title");
     }
 
     @Override
@@ -413,7 +411,7 @@ class ImporterFormatter implements ObjectFormatter<TransactionImporter> {
 		} else {
 			id = "unknown importer";
 		}
-		return TextResource.getInstance().getString(id);
+		return Factory.getInstance(TextResource.class).getString(id);
 	}
 
 }

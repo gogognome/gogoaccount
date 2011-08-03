@@ -41,12 +41,13 @@ import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Party;
@@ -111,7 +112,7 @@ public class EditInvoiceView extends View {
 
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString(titleId);
+        return textResource.getString(titleId);
     }
 
     @Override
@@ -123,8 +124,6 @@ public class EditInvoiceView extends View {
 
     @Override
     public void onInit() {
-        WidgetFactory wf = WidgetFactory.getInstance();
-
         // Create panel with ID, issue date, concerning party, paying party and amount to be paid.
         GridBagLayout gbl = new GridBagLayout();
         JPanel topPanel = new JPanel(gbl);
@@ -139,23 +138,23 @@ public class EditInvoiceView extends View {
             date = initialInvoice.getIssueDate();
             concerningParty = initialInvoice.getConcerningParty();
             payingParty = initialInvoice.getPayingParty();
-            amount = TextResource.getInstance().getAmountFormat().formatAmountWithoutCurrency(
+            amount = Factory.getInstance(AmountFormat.class).formatAmountWithoutCurrency(
                 initialInvoice.getAmountToBePaid());
         } else {
             date = new Date();
             id = database.suggestNewInvoiceId(
-                TextResource.getInstance().formatDate("editInvoiceView.dateFormatForNewId", date));
+                textResource.formatDate("editInvoiceView.dateFormatForNewId", date));
             concerningParty = null;
             payingParty = null;
             amount = "";
         }
-        tfId = wf.createTextField(id);
+        tfId = widgetFactory.createTextField(id);
         if (initialInvoice != null) {
             tfId.setEditable(false); // prevent changing the id of an existing invoice
             tfId.setEnabled(false);
         }
         int row = 0;
-        JLabel label = wf.createLabel("editInvoiceView.id", tfId);
+        JLabel label = widgetFactory.createLabel("editInvoiceView.id", tfId);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
@@ -163,27 +162,27 @@ public class EditInvoiceView extends View {
         dateModel = new DateModel();
         dateModel.setDate(date, null);
         DateSelectionBean sbDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
-        label = wf.createLabel("editInvoiceView.issueDate", sbDate);
+        label = widgetFactory.createLabel("editInvoiceView.issueDate", sbDate);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(sbDate, SwingUtils.createLabelGBConstraints(1, row));
         row++;
 
         psConcerningParty = new PartySelector();
         psConcerningParty.setSelectedParty(concerningParty);
-        label = wf.createLabel("editInvoiceView.concerningParty", psConcerningParty);
+        label = widgetFactory.createLabel("editInvoiceView.concerningParty", psConcerningParty);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(psConcerningParty, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         psPayingParty = new PartySelector();
         psPayingParty.setSelectedParty(payingParty);
-        label = wf.createLabel("editInvoiceView.payingParty", psPayingParty);
+        label = widgetFactory.createLabel("editInvoiceView.payingParty", psPayingParty);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(psPayingParty, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         tfAmount = new JTextField(amount);
-        label = wf.createLabel("editInvoiceView.amount", tfAmount);
+        label = widgetFactory.createLabel("editInvoiceView.amount", tfAmount);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(tfAmount, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
@@ -202,7 +201,7 @@ public class EditInvoiceView extends View {
         middlePanel.add(scrollPane, BorderLayout.CENTER);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
-        JButton button = wf.createButton("editInvoiceView.addRow", new AbstractAction() {
+        JButton button = widgetFactory.createButton("editInvoiceView.addRow", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent e) {
                 onAddRow();
@@ -210,7 +209,7 @@ public class EditInvoiceView extends View {
         });
         buttonPanel.add(button);
 
-        button = wf.createButton("editInvoiceView.editRow", new AbstractAction() {
+        button = widgetFactory.createButton("editInvoiceView.editRow", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent e) {
                 onEditRow();
@@ -218,7 +217,7 @@ public class EditInvoiceView extends View {
         });
         buttonPanel.add(button);
 
-        button = wf.createButton("editInvoiceView.deleteRow", new AbstractAction() {
+        button = widgetFactory.createButton("editInvoiceView.deleteRow", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent e) {
                 onDeleteRow();
@@ -230,14 +229,14 @@ public class EditInvoiceView extends View {
 
         // Create button panel with ok and cancel buttons.
         buttonPanel = new ButtonPanel(SwingConstants.CENTER);
-        button = wf.createButton("gen.ok", new AbstractAction() {
+        button = widgetFactory.createButton("gen.ok", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent event) {
                 onOk();
             }
         });
         buttonPanel.add(button);
-        button = wf.createButton("gen.cancel", closeAction);
+        button = widgetFactory.createButton("gen.cancel", closeAction);
         buttonPanel.add(button);
 
         // Put all panels on the view.
@@ -288,10 +287,10 @@ public class EditInvoiceView extends View {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
             MessageDialog.showMessage(this, "gen.titleWarning",
-                TextResource.getInstance().getString("editInvoiceView.noRowsSelectedToEdit"));
+                textResource.getString("editInvoiceView.noRowsSelectedToEdit"));
         } else if (rows.length == 0) {
             MessageDialog.showMessage(this, "gen.titleWarning",
-                TextResource.getInstance().getString("editInvoiceView.multipleRowsSelectedToEdit"));
+                textResource.getString("editInvoiceView.multipleRowsSelectedToEdit"));
         } else {
             EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
                 "editInvoiceView.editRowTileId",
@@ -314,7 +313,7 @@ public class EditInvoiceView extends View {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
             MessageDialog.showMessage(this, "gen.titleWarning",
-                TextResource.getInstance().getString("editInvoiceView.noRowsSelectedForDeletion"));
+                textResource.getString("editInvoiceView.noRowsSelectedForDeletion"));
         } else {
             tableModel.deleteRows(rows);
         }
@@ -349,7 +348,7 @@ public class EditInvoiceView extends View {
 
         Amount amount;
         try {
-             amount = TextResource.getInstance().getAmountFormat().parse(tfAmount.getText(), database.getCurrency());
+             amount = Factory.getInstance(AmountFormat.class).parse(tfAmount.getText(), database.getCurrency());
         } catch (ParseException e) {
             MessageDialog.showMessage(this, "gen.warning", "ejid.invalidAmount");
             return;
@@ -446,11 +445,11 @@ public class EditInvoiceView extends View {
             String result;
             switch(columnIndex) {
             case 0:
-                result = TextResource.getInstance().getString("editInvoiceView.tableHeader.descriptions");
+                result = Factory.getInstance(TextResource.class).getString("editInvoiceView.tableHeader.descriptions");
                 break;
 
             case 1:
-                result = TextResource.getInstance().getString("editInvoiceView.tableHeader.amounts");
+                result = Factory.getInstance(TextResource.class).getString("editInvoiceView.tableHeader.amounts");
                 break;
 
             default:
@@ -481,7 +480,8 @@ public class EditInvoiceView extends View {
             case 1:
                 Amount a = amounts.get(rowIndex);
                 if (a != null) {
-                    result = TextResource.getInstance().getAmountFormat().formatAmountWithoutCurrency(a);
+                    result = Factory.getInstance(AmountFormat.class)
+                    	.formatAmountWithoutCurrency(a);
                 } else {
                     result = "";
                 }

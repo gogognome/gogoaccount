@@ -20,8 +20,8 @@ import java.util.Date;
 
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.Factory;
 
 /**
  * This class represents a transaction that has been imported.
@@ -61,36 +61,43 @@ public class ImportedTransactionRabobankCsv implements ImportedTransaction {
 
 	@Override
 	public String toString() {
-		AmountFormat af =  TextResource.getInstance().getAmountFormat();
+		AmountFormat af =  Factory.getInstance(AmountFormat.class);
 		return af.formatAmount(amount) + ' ' + fromAccount + " (" + fromName + ") -> " +
 			toAccount + " (" + toName + ") at " + DateUtil.formatDateYYYYMMDD(date) +
 			" (" + description + ")";
 	}
 
+	@Override
 	public String getFromAccount() {
 		return fromAccount;
 	}
 
+	@Override
 	public String getFromName() {
 		return fromName;
 	}
 
+	@Override
 	public Amount getAmount() {
 		return amount;
 	}
 
+	@Override
 	public Date getDate() {
 		return date;
 	}
 
+	@Override
 	public String getToAccount() {
 		return toAccount;
 	}
 
+	@Override
 	public String getToName() {
 		return toName;
 	}
 
+	@Override
 	public String getDescription() {
 		return description;
 	}

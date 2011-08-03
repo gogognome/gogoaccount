@@ -23,6 +23,7 @@ import javax.swing.JFrame;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.plaf.DefaultLookAndFeel;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 
@@ -50,7 +51,7 @@ public class Start {
 	}
 
 	private void startApplication(String[] args) {
-		initFactory();
+		initFactory(Locale.getDefault());
 		parseArguments(args);
         DefaultLookAndFeel.useDefaultLookAndFeel();
 		initFrame();
@@ -60,13 +61,13 @@ public class Start {
 		}
 	}
 
-	private void initFactory() {
-		TextResource tr = new TextResource();
+	private void initFactory(Locale locale) {
+		TextResource tr = new TextResource(locale);
 		tr.loadResourceBundle("stringresources");
-		Factory.bindSingleton(TextResource.class, tr);
 
-		WidgetFactory wf = new WidgetFactory(tr);
-		Factory.bindSingleton(WidgetFactory.class, wf);
+		Factory.bindSingleton(TextResource.class, tr);
+		Factory.bindSingleton(WidgetFactory.class, new WidgetFactory(tr));
+		Factory.bindSingleton(AmountFormat.class, new AmountFormat(tr.getLocale()));
 	}
 
 	/**
@@ -78,7 +79,7 @@ public class Start {
 		{
 			if (args[i].startsWith("-lang=")) {
 				Locale locale = new Locale(args[i].substring(6));
-				Factory.getInstance(TextResource.class).setLocale(locale);
+				initFactory(locale);
 			} else {
 				fileName = args[i];
 			}

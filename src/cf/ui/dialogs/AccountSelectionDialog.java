@@ -24,6 +24,7 @@ import javax.swing.JPanel;
 
 import nl.gogognome.lib.swing.OkCancelDialog;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.ui.components.AccountSelectionBean;
@@ -53,7 +54,7 @@ public class AccountSelectionDialog extends OkCancelDialog
     {
         super(frame, "as.selectAccount");
         JComponent component = new JPanel();
-        component.add(new JLabel(TextResource.getInstance().getString(id)));
+        component.add(new JLabel(Factory.getInstance(TextResource.class).getString(id)));
 
         sbAccount = new AccountSelectionBean(database, null);
         component.add(sbAccount);

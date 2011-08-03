@@ -37,6 +37,7 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Balance;
 import cf.engine.Database;
@@ -77,14 +78,16 @@ public class BalanceComponent extends JScrollPane {
         this.dateModel = dateModel;
 
         database.addListener(new DatabaseListener() {
-            public void databaseChanged(Database db) {
+            @Override
+			public void databaseChanged(Database db) {
                 initializeValues();
                 validateTree();
             }
         });
 
         dateModel.addModelChangeListener(new ModelChangeListener() {
-            public void modelChanged(AbstractModel model) {
+            @Override
+			public void modelChanged(AbstractModel model) {
                 if (((DateModel)(model)).getDate() != null) {
 	                initializeValues();
 	                validateTree();
@@ -111,8 +114,8 @@ public class BalanceComponent extends JScrollPane {
         }
 
         Balance balance = database.getBalance(date);
-        TextResource tr = TextResource.getInstance();
-        AmountFormat af = tr.getAmountFormat();
+        TextResource tr = Factory.getInstance(TextResource.class);
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         Account[] assets = balance.getAssets();
         Account[] liabilities = balance.getLiabilities();
 
@@ -274,14 +277,14 @@ public class BalanceComponent extends JScrollPane {
         panel.add(new JLabel(tr.getString("balanceComponent.totalDebtors")),
             SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 1.0,
                 GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
-        panel.add(new JLabel(tr.getAmountFormat().formatAmount(database.getTotalDebtors(date))),
+        panel.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalDebtors(date))),
             SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 1.0,
                 GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
         row++;
         panel.add(new JLabel(tr.getString("balanceComponent.totalCreditors")),
             SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 1.0,
                 GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
-        panel.add(new JLabel(tr.getAmountFormat().formatAmount(database.getTotalCreditors(date))),
+        panel.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalCreditors(date))),
             SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 1.0,
                 GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
         row++;

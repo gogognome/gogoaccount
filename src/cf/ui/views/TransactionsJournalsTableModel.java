@@ -23,7 +23,7 @@ import java.util.List;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Journal;
@@ -76,7 +76,7 @@ class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction>
         } else if (TO_ACCOUNT.equals(colDef)) {
             return getRow(rowIndex).getImportedTransaction().getToAccount();
         } else if (AMOUNT.equals(colDef)) {
-        	AmountFormat af = TextResource.getInstance().getAmountFormat();
+        	AmountFormat af = Factory.getInstance(AmountFormat.class);
             return af.formatAmount(getRow(rowIndex).getImportedTransaction().getAmount());
         } else if (DESCRIPTION1.equals(colDef)) {
             return getRow(rowIndex).getImportedTransaction().getDescription();

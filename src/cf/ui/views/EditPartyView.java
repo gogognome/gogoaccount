@@ -34,10 +34,8 @@ import javax.swing.event.DocumentListener;
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Party;
 
@@ -105,11 +103,9 @@ public class EditPartyView extends View {
         // Create the panel with labels and text fields
         JPanel textfieldPanel = new JPanel(new GridBagLayout());
 
-        WidgetFactory wf = WidgetFactory.getInstance();
-
         int row = 0;
-        tfId = wf.createTextField(10);
-        JLabel label = wf.createLabel("editPartyView.id", tfId);
+        tfId = widgetFactory.createTextField(10);
+        JLabel label = widgetFactory.createLabel("editPartyView.id", tfId);
         textfieldPanel.add(label,
                 SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
@@ -120,43 +116,43 @@ public class EditPartyView extends View {
         textfieldPanel.add(lbIdRemark, SwingUtils.createTextFieldGBConstraints(2, row));
         row++;
 
-        tfName = wf.createTextField(30);
-        label = wf.createLabel("editPartyView.name", tfName);
+        tfName = widgetFactory.createTextField(30);
+        label = widgetFactory.createLabel("editPartyView.name", tfName);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfName, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
-        tfAddress = wf.createTextField(30);
-        label = wf.createLabel("editPartyView.address", tfAddress);
+        tfAddress = widgetFactory.createTextField(30);
+        label = widgetFactory.createLabel("editPartyView.address", tfAddress);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfAddress, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
-        tfZipCode = wf.createTextField(30);
-        label = wf.createLabel("editPartyView.zipCode", tfZipCode);
+        tfZipCode = widgetFactory.createTextField(30);
+        label = widgetFactory.createLabel("editPartyView.zipCode", tfZipCode);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfZipCode, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
-        tfCity = wf.createTextField(30);
-        label = wf.createLabel("editPartyView.city", tfCity);
+        tfCity = widgetFactory.createTextField(30);
+        label = widgetFactory.createLabel("editPartyView.city", tfCity);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfCity, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
-        tfType = wf.createTextField(30);
-        label = wf.createLabel("editPartyView.type", tfType);
+        tfType = widgetFactory.createTextField(30);
+        label = widgetFactory.createLabel("editPartyView.type", tfType);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(tfType, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
             GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
         row++;
 
         taRemarks = new JTextArea(5, 30);
-        label = wf.createLabel("editPartyView.remarks", taRemarks);
+        label = widgetFactory.createLabel("editPartyView.remarks", taRemarks);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         JScrollPane remarksPane = new JScrollPane(taRemarks);
         textfieldPanel.add(remarksPane, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
@@ -165,7 +161,7 @@ public class EditPartyView extends View {
 
         dateModel = new DateModel();
         DateSelectionBean dsbBirthDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
-        label = wf.createLabel("editPartyView.birthDate", dsbBirthDate);
+        label = widgetFactory.createLabel("editPartyView.birthDate", dsbBirthDate);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(dsbBirthDate, SwingUtils.createLabelGBConstraints(1, row));
 
@@ -203,7 +199,7 @@ public class EditPartyView extends View {
 
         // Create panel with buttons
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        okButton = wf.createButton("gen.ok", new AbstractAction() {
+        okButton = widgetFactory.createButton("gen.ok", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent event) {
                 resultParty = new Party(tfId.getText(), tfName.getText(),
@@ -213,7 +209,7 @@ public class EditPartyView extends View {
             }
         });
         buttonPanel.add(okButton);
-        buttonPanel.add(wf.createButton("gen.cancel", closeAction));
+        buttonPanel.add(widgetFactory.createButton("gen.cancel", closeAction));
 
         // Create overall panel
         JPanel panel = new JPanel(new GridBagLayout());
@@ -237,7 +233,7 @@ public class EditPartyView extends View {
      */
     @Override
 	public String getTitle() {
-        return TextResource.getInstance().getString(initialParty != null ? "editPartyView.titleEdit" : "editPartyView.titleAdd");
+        return textResource.getString(initialParty != null ? "editPartyView.titleEdit" : "editPartyView.titleAdd");
     }
 
     /**
@@ -248,9 +244,9 @@ public class EditPartyView extends View {
         String remark = "";
         String id = tfId.getText();
         if (initialParty == null && database.getParty(id) != null ) {
-            remark = TextResource.getInstance().getString("editPartyView.idExistsAlready");
+            remark = textResource.getString("editPartyView.idExistsAlready");
         } else if (id.length() == 0) {
-            remark = TextResource.getInstance().getString("editPartyView.idIsEmpty");
+            remark = textResource.getString("editPartyView.idIsEmpty");
         }
         lbIdRemark.setText(remark);
     }

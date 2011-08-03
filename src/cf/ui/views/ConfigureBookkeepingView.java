@@ -57,6 +57,7 @@ import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 
@@ -98,7 +99,7 @@ public class ConfigureBookkeepingView extends View {
     /** {@inheritDoc} */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("ConfigureBookkeepingView.title");
+        return textResource.getString("ConfigureBookkeepingView.title");
     }
 
     /** {@inheritDoc} */
@@ -111,18 +112,15 @@ public class ConfigureBookkeepingView extends View {
     public void onInit() {
         setLayout(new BorderLayout());
 
-        TextResource tr = TextResource.getInstance();
-        WidgetFactory wf = WidgetFactory.getInstance();
-
         // Create panel with general settings
         JPanel generalSettingsPanel = new JPanel(new GridBagLayout());
         generalSettingsPanel.setBorder(BorderFactory.createCompoundBorder(
-        		BorderFactory.createTitledBorder(tr.getString("ConfigureBookkeepingView.generalSettings")),
+        		BorderFactory.createTitledBorder(textResource.getString("ConfigureBookkeepingView.generalSettings")),
         		BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         int row = 0;
         tfDescription.setText(database.getDescription());
-        generalSettingsPanel.add(wf.createLabel("ConfigureBookkeepingView.description", tfDescription),
+        generalSettingsPanel.add(widgetFactory.createLabel("ConfigureBookkeepingView.description", tfDescription),
             SwingUtils.createLabelGBConstraints(0, row));
         generalSettingsPanel.add(tfDescription,
             SwingUtils.createTextFieldGBConstraints(1, row));
@@ -137,7 +135,7 @@ public class ConfigureBookkeepingView extends View {
         row++;
 
         startDateModel.setDate(database.getStartOfPeriod(), null);
-        generalSettingsPanel.add(wf.createLabel("ConfigureBookkeepingView.startDate", dsbStartDate),
+        generalSettingsPanel.add(widgetFactory.createLabel("ConfigureBookkeepingView.startDate", dsbStartDate),
             SwingUtils.createLabelGBConstraints(0, row));
         generalSettingsPanel.add(dsbStartDate,
             SwingUtils.createTextFieldGBConstraints(1, row));
@@ -151,7 +149,7 @@ public class ConfigureBookkeepingView extends View {
 
         tfCurrency.setText(database.getCurrency().getCurrencyCode());
         tfCurrency.setColumns(4);
-        generalSettingsPanel.add(wf.createLabel("ConfigureBookkeepingView.currency", tfCurrency),
+        generalSettingsPanel.add(widgetFactory.createLabel("ConfigureBookkeepingView.currency", tfCurrency),
             SwingUtils.createLabelGBConstraints(0, row));
         generalSettingsPanel.add(tfCurrency,
             SwingUtils.createLabelGBConstraints(1, row));
@@ -168,10 +166,10 @@ public class ConfigureBookkeepingView extends View {
         // Create panel with accounts table
         JPanel accountsAndButtonsPanel = new JPanel(new BorderLayout());
         accountsAndButtonsPanel.setBorder(BorderFactory.createCompoundBorder(
-        		BorderFactory.createTitledBorder(tr.getString("ConfigureBookkeepingView.accounts")),
+        		BorderFactory.createTitledBorder(textResource.getString("ConfigureBookkeepingView.accounts")),
         		BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         tableModel = new AccountTableModel(getAccountDefinitions(database));
-        table = wf.createSortedTable(tableModel);
+        table = widgetFactory.createSortedTable(tableModel);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -183,20 +181,20 @@ public class ConfigureBookkeepingView extends View {
         accountsAndButtonsPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
-        buttonPanel.add(wf.createButton("ConfigureBookkeepingView.addAccount", new AbstractAction() {
+        buttonPanel.add(widgetFactory.createButton("ConfigureBookkeepingView.addAccount", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onAddAccount();
             }
         }));
-        editAccountButton = wf.createButton("ConfigureBookkeepingView.editAccount", new AbstractAction() {
+        editAccountButton = widgetFactory.createButton("ConfigureBookkeepingView.editAccount", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onEditAccount();
             }
         });
         buttonPanel.add(editAccountButton);
-        deleteAccountButton = wf.createButton("ConfigureBookkeepingView.deleteAccount", new AbstractAction() {
+        deleteAccountButton = widgetFactory.createButton("ConfigureBookkeepingView.deleteAccount", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onDeleteAccount();
@@ -354,9 +352,9 @@ public class ConfigureBookkeepingView extends View {
                 return getRow(rowIndex).account.getName();
             } else if (USED.equals(colDef)) {
                 return getRow(rowIndex).used ?
-                    WidgetFactory.getInstance().createIcon("ConfigureBookkeepingView.tickIcon16") : null;
+                		Factory.getInstance(WidgetFactory.class).createIcon("ConfigureBookkeepingView.tickIcon16") : null;
             } else if (TYPE.equals(colDef)) {
-                return TextResource.getInstance().getString("gen.TYPE_" +
+                return Factory.getInstance(TextResource.class).getString("gen.TYPE_" +
                     getRow(rowIndex).account.getType().name());
             }
             return null;

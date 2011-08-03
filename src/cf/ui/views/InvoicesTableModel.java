@@ -22,8 +22,9 @@ import java.util.List;
 
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
-import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DayOfYearComparator;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Invoice;
 
 /**
@@ -64,7 +65,7 @@ class InvoicesTableModel extends AbstractListTableModel<Invoice> {
 		} else if (NAME == colDef) {
 			result = invoice.getPayingParty().getName();
 		} else if (SALDO == colDef) {
-			result = TextResource.getInstance().getAmountFormat().formatAmount(
+			result = Factory.getInstance(AmountFormat.class).formatAmount(
 					invoice.getRemainingAmountToBePaid(new Date()));
 		} else if (DATE == colDef) {
 			return invoice.getIssueDate();

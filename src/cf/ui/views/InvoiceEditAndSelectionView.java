@@ -45,9 +45,7 @@ import javax.swing.border.TitledBorder;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.InvoiceSearchCriteria;
@@ -122,7 +120,7 @@ public class InvoiceEditAndSelectionView extends View {
      */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("invoicesView.title");
+        return textResource.getString("invoicesView.title");
     }
 
     /* (non-Javadoc)
@@ -131,34 +129,14 @@ public class InvoiceEditAndSelectionView extends View {
     @Override
     public void onInit() {
         // Create button panel
-        WidgetFactory wf = WidgetFactory.getInstance();
-//        JButton addButton = wf.createButton("invoicesView.addParty", new AbstractAction() {
-//            public void actionPerformed(ActionEvent evt) {
-//                onAddParty();
-//            }
-//        });
-//
-//        JButton editButton = wf.createButton("invoicesView.editParty", new AbstractAction() {
-//            public void actionPerformed(ActionEvent evt) {
-//                onEditParty();
-//            }
-//        });
-//        JButton deleteButton = wf.createButton("invoicesView.deleteParty", new AbstractAction() {
-//            public void actionPerformed(ActionEvent evt) {
-//                onDeleteParty();
-//            }
-//        });
-        btSelect = wf.createButton("invoicesView.selectInvoice", new AbstractAction() {
+        btSelect = widgetFactory.createButton("invoicesView.selectInvoice", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onSelectInvoice();
             }
         });
-//
+
         JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 0, 5));
-//        buttonPanel.add(addButton);
-//        buttonPanel.add(editButton);
-//        buttonPanel.add(deleteButton);
         if (selectioEnabled) {
             buttonPanel.add(new JLabel());
             buttonPanel.add(btSelect);
@@ -180,13 +158,10 @@ public class InvoiceEditAndSelectionView extends View {
      * @return the panel
      */
     private JPanel createPanel() {
-        WidgetFactory wf = WidgetFactory.getInstance();
-        TextResource tr =  TextResource.getInstance();
-
         // Create the criteria panel
         JPanel criteriaPanel = new JPanel(new GridBagLayout());
         criteriaPanel.setBorder(new TitledBorder(
-                tr.getString("invoicesView.searchCriteria")));
+                textResource.getString("invoicesView.searchCriteria")));
 
         focusListener = new FocusAdapter() {
             @Override
@@ -198,7 +173,7 @@ public class InvoiceEditAndSelectionView extends View {
         int row = 0;
         tfId = new JTextField();
         tfId.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("invoicesView.id", tfId),
+        criteriaPanel.add(widgetFactory.createLabel("invoicesView.id", tfId),
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfId,
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -206,20 +181,20 @@ public class InvoiceEditAndSelectionView extends View {
 
         tfName = new JTextField();
         tfName.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("invoicesView.name", tfName),
+        criteriaPanel.add(widgetFactory.createLabel("invoicesView.name", tfName),
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfName,
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         btIncludeClosedInvoices = new JCheckBox(
-            tr.getString("invoicesView.includeClosedInvoices"), false);
+            textResource.getString("invoicesView.includeClosedInvoices"), false);
         criteriaPanel.add(btIncludeClosedInvoices,
             SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        ActionWrapper actionWrapper = wf.createAction("invoicesView.btnSearch");
+        ActionWrapper actionWrapper = widgetFactory.createAction("invoicesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent event) {
@@ -237,10 +212,10 @@ public class InvoiceEditAndSelectionView extends View {
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
         resultPanel.setBorder(new TitledBorder(
-                tr.getString("invoicesView.foundParties")));
+                textResource.getString("invoicesView.foundParties")));
 
         invoicesTableModel = new InvoicesTableModel(Collections.<Invoice>emptyList());
-        table = WidgetFactory.getInstance().createSortedTable(invoicesTableModel);
+        table = widgetFactory.createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
         Action selectionAction = new AbstractAction() {
             @Override
@@ -265,7 +240,7 @@ public class InvoiceEditAndSelectionView extends View {
         JScrollPane scrollPane = new JScrollPane(taRemarks);
         scrollPane.setPreferredSize(new Dimension(500, 100));
 
-        detailPanel.add(wf.createLabel("invoicesView.remarks", taRemarks),
+        detailPanel.add(widgetFactory.createLabel("invoicesView.remarks", taRemarks),
             SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 0, 0, 12));
         detailPanel.add(scrollPane, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,

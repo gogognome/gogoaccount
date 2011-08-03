@@ -28,11 +28,9 @@ import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Account;
 import cf.engine.Database;
@@ -76,7 +74,7 @@ public class CloseBookkeepingView extends View {
     /** {@inheritDoc} */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("closeBookkeepingView.title");
+        return textResource.getString("closeBookkeepingView.title");
     }
 
     /** {@inheritDoc} */
@@ -98,14 +96,14 @@ public class CloseBookkeepingView extends View {
         initDescription();
         valuesEditPanel.addField("closeBookkeepingView.description", descriptionModel);
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
-        WidgetFactory wf = WidgetFactory.getInstance();
-        buttonPanel.add(wf.createButton("gen.ok", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+        buttonPanel.add(widgetFactory.createButton("gen.ok", new AbstractAction() {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 onOk();
             }
         }));
 
-        buttonPanel.add(wf.createButton("gen.cancel", closeAction));
+        buttonPanel.add(widgetFactory.createButton("gen.cancel", closeAction));
 
         // Add the panels to the view.
         setLayout(new GridBagLayout());
@@ -115,14 +113,12 @@ public class CloseBookkeepingView extends View {
 
     private void onOk() {
         if (dateModel.getDate() == null) {
-            MessageDialog.showMessage(this, "gen.warning",
-                TextResource.getInstance().getString("closeBookkeepingView.enterDate"));
+            MessageDialog.showMessage(this, "gen.warning", "closeBookkeepingView.enterDate");
             return;
         }
 
         if (accountComboBox.getSelectedAccount() == null) {
-            MessageDialog.showMessage(this, "gen.warning",
-                TextResource.getInstance().getString("closeBookkeepingView.selectAccount"));
+            MessageDialog.showMessage(this, "gen.warning", "closeBookkeepingView.selectAccount");
             return;
         }
 

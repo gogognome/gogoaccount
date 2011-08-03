@@ -119,6 +119,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
     /** The view to generate an ODT file for invoices. */
     private InvoiceToOdtView invoiceToOdtView;
 
+	private TextResource textResource = Factory.getInstance(TextResource.class);
+	private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
+
 	/** Creates the main frame. */
 	public MainFrame() {
 		super();
@@ -149,7 +152,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * @return the title
 	 */
 	private String createTitle() {
-	    String result = TextResource.getInstance().getString("mf.title");
+	    String result = textResource.getString("mf.title");
 	    String description = database.getDescription();
 	    if (description != null)
 	    {
@@ -165,42 +168,41 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** Creates the menu bar. */
 	private void createMenuBar() {
 		// the menus
-		WidgetFactory wf = WidgetFactory.getInstance();
-		JMenu fileMenu = wf.createMenu("mi.file");
-		JMenu editMenu = wf.createMenu("mi.edit");
-		JMenu viewMenu = wf.createMenu("mi.view");
-		JMenu reportingMenu = wf.createMenu("mi.reporting");
-		JMenu helpMenu = wf.createMenu("mi.help");
+		JMenu fileMenu = widgetFactory.createMenu("mi.file");
+		JMenu editMenu = widgetFactory.createMenu("mi.edit");
+		JMenu viewMenu = widgetFactory.createMenu("mi.view");
+		JMenu reportingMenu = widgetFactory.createMenu("mi.reporting");
+		JMenu helpMenu = widgetFactory.createMenu("mi.help");
 
 		// the file menu
-		JMenuItem miNewEdition = wf.createMenuItem("mi.newBookkeeping", this);
-		JMenuItem miOpenEdition = wf.createMenuItem("mi.openBookkeeping", this);
-        JMenuItem miConfigureBookkeeping = wf.createMenuItem("mi.configureBookkeeping", this);
-		JMenuItem miSaveEdition = wf.createMenuItem("mi.saveBookkeeping", this);
-		JMenuItem miSaveEditionAs = wf.createMenuItem("mi.saveBookkeepingAs", this);
-        JMenuItem miCloseBookkeeping = wf.createMenuItem("mi.closeBookkeeping", this);
-        JMenuItem miImportBankStatement = wf.createMenuItem("mi.importBankStatement", this);
-		JMenuItem miExit = wf.createMenuItem("mi.exit", this);
+		JMenuItem miNewEdition = widgetFactory.createMenuItem("mi.newBookkeeping", this);
+		JMenuItem miOpenEdition = widgetFactory.createMenuItem("mi.openBookkeeping", this);
+        JMenuItem miConfigureBookkeeping = widgetFactory.createMenuItem("mi.configureBookkeeping", this);
+		JMenuItem miSaveEdition = widgetFactory.createMenuItem("mi.saveBookkeeping", this);
+		JMenuItem miSaveEditionAs = widgetFactory.createMenuItem("mi.saveBookkeepingAs", this);
+        JMenuItem miCloseBookkeeping = widgetFactory.createMenuItem("mi.closeBookkeeping", this);
+        JMenuItem miImportBankStatement = widgetFactory.createMenuItem("mi.importBankStatement", this);
+		JMenuItem miExit = widgetFactory.createMenuItem("mi.exit", this);
 
 		// the edit menu
-		JMenuItem miAddJournal = wf.createMenuItem("mi.addJournal", this);
-		JMenuItem miEditJournals = wf.createMenuItem("mi.editJournals", this);
-		JMenuItem miAddInvoices = wf.createMenuItem("mi.addInvoices", this);
-        JMenuItem miEditParties = wf.createMenuItem("mi.editParties", this);
+		JMenuItem miAddJournal = widgetFactory.createMenuItem("mi.addJournal", this);
+		JMenuItem miEditJournals = widgetFactory.createMenuItem("mi.editJournals", this);
+		JMenuItem miAddInvoices = widgetFactory.createMenuItem("mi.addInvoices", this);
+        JMenuItem miEditParties = widgetFactory.createMenuItem("mi.editParties", this);
 
 		// the view menu
-        JMenuItem miViewBalanceAndOpertaionalResult = wf.createMenuItem("mi.viewBalanceAndOperationalResult", this);
-		JMenuItem miViewAccountOverview = wf.createMenuItem("mi.viewAccountOverview", this);
-		JMenuItem miViewPartyOverview = wf.createMenuItem("mi.viewPartyOverview", this);
-		JMenuItem miViewPartiesOverview = wf.createMenuItem("mi.viewPartiesOverview", this);
+        JMenuItem miViewBalanceAndOpertaionalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
+		JMenuItem miViewAccountOverview = widgetFactory.createMenuItem("mi.viewAccountOverview", this);
+		JMenuItem miViewPartyOverview = widgetFactory.createMenuItem("mi.viewPartyOverview", this);
+		JMenuItem miViewPartiesOverview = widgetFactory.createMenuItem("mi.viewPartiesOverview", this);
 
 		// the reporting menu
-		JMenuItem miGenerateInvoices = wf.createMenuItem("mi.generateInvoices", this);
-		JMenuItem miGenerateReport = wf.createMenuItem("mi.generateReport", this);
+		JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", this);
+		JMenuItem miGenerateReport = widgetFactory.createMenuItem("mi.generateReport", this);
 //		JMenuItem miPrintAddressLabels = wf.createMenuItem("mi.printAddressLabels", this);
 
 		// the help menu
-		JMenuItem miAbout = wf.createMenuItem("mi.about", this);
+		JMenuItem miAbout = widgetFactory.createMenuItem("mi.about", this);
 
 		fileMenu.add(miNewEdition);
 		fileMenu.add(miOpenEdition);
@@ -324,7 +326,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	{
 		if (mayCurrentDatabaseBeDestroyed()) {
 			setDatabase(new Database());
-			database.setDescription(TextResource.getInstance().getString("mf.newBookkeepingDescription"));
+			database.setDescription(textResource.getString("mf.newBookkeepingDescription"));
 			database.databaseConsistentWithFile();
 			handleConfigureBookkeeping();
 		}
@@ -335,13 +337,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	{
 		if (mayCurrentDatabaseBeDestroyed())
 		{
-		    TextResource tr = Factory.getInstance(TextResource.class);
 			JFileChooser fc = new JFileChooser();
 			if (database.getFileName() != null) {
 				fc.setCurrentDirectory(new File(database.getFileName()));
 			}
 			fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
-			int choice = fc.showDialog(this, tr.getString("mf.titleOpenBookkeeping"));
+			int choice = fc.showDialog(this, textResource.getString("mf.titleOpenBookkeeping"));
 			if (choice == JFileChooser.APPROVE_OPTION) {
 				File file = fc.getSelectedFile();
 				loadFile(file.getAbsolutePath());
@@ -384,13 +385,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleSaveBookeepingAs() {
-	    TextResource tr = Factory.getInstance(TextResource.class);
 		JFileChooser fc = new JFileChooser();
 		if (database.getFileName() != null) {
 			fc.setCurrentDirectory(new File(database.getFileName()));
 		}
 		fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
-		int choice = fc.showDialog(this, tr.getString("mf.titleSaveAs"));
+		int choice = fc.showDialog(this, textResource.getString("mf.titleSaveAs"));
 		if (choice == JFileChooser.APPROVE_OPTION) {
 			saveBookkeeping(fc.getSelectedFile().getAbsolutePath());
 		}

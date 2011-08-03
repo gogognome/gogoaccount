@@ -31,6 +31,7 @@ import javax.swing.JTextField;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.ui.views.InvoiceEditAndSelectionView;
@@ -62,7 +63,7 @@ public class InvoiceSelector extends JPanel {
      */
     public InvoiceSelector(Database database) {
         this.database = database;
-        WidgetFactory wf = WidgetFactory.getInstance();
+        WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
         tfDescription = new JTextField();
@@ -125,7 +126,7 @@ public class InvoiceSelector extends JPanel {
         }
 
         InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(database, true);
-        ViewDialog dialog = new ViewDialog((Window)parent, invoicesView);
+        ViewDialog dialog = new ViewDialog(parent, invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {
             setSelectedInvoice(invoicesView.getSelectedInvoices()[0]);

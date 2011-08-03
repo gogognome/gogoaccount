@@ -41,6 +41,7 @@ import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.text.ReportTask;
 
@@ -72,8 +73,8 @@ public class ReportDialog extends OkCancelDialog {
         this.parentFrame = frame;
         this.database = database;
 
-        WidgetFactory wf = WidgetFactory.getInstance();
-        TextResource tr = TextResource.getInstance();
+        WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
+        TextResource tr = Factory.getInstance(TextResource.class);
 
         // Create file name and date panel
         GridBagLayout gbl = new GridBagLayout();
@@ -152,8 +153,9 @@ public class ReportDialog extends OkCancelDialog {
         }
 
         hideDialog();
+        String description = Factory.getInstance(TextResource.class).getString("genreport.progress");
         TaskWithProgressDialog taskWithProgressDialog =
-        	new TaskWithProgressDialog(parentFrame, TextResource.getInstance().getString("genreport.progress"));
+        	new TaskWithProgressDialog(parentFrame, description);
         taskWithProgressDialog.execute(new ReportTask(database, date, tfFileName.getText(), fileType));
     }
 }

@@ -29,6 +29,7 @@ import javax.swing.JTable;
 import nl.gogognome.lib.swing.DialogWithButtons;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.ui.components.PartyOverviewTableModel;
@@ -53,11 +54,11 @@ public class ViewPartyOverviewDialog extends DialogWithButtons
 		super(frame, "vpo.title", BT_OK);
 
 		PartyOverviewTableModel model = new PartyOverviewTableModel(database, party, date);
-		JTable table = WidgetFactory.getInstance().createTable(model);
+		JTable table = Factory.getInstance(WidgetFactory.class).createTable(model);
 
 		// Create panel with date and name of party.
 		JLabel label = new JLabel();
-		TextResource tr = TextResource.getInstance();
+		TextResource tr = Factory.getInstance(TextResource.class);
 		label.setText(tr.getString("vpo.partyAtDate",
 		        party.getId() + " - " + party.getName(),
 		        tr.formatDate("gen.dateFormat", date)));

@@ -22,8 +22,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.engine.XMLFileReader;
@@ -46,10 +49,11 @@ public class PrintAgeOfParties {
 
         // First set the language so that the error messages caused by parsing the other
         // arguments are shown in the specified language.
-        TextResource tr = TextResource.getInstance();
+        initFactory(Locale.getDefault());
+        TextResource tr = Factory.getInstance(TextResource.class);
         for (int i=0; i<args.length; i++) {
             if (args[i].startsWith("-lang=")) {
-                tr.setLocale(new Locale(args[i].substring(6)));
+                initFactory(new Locale(args[i].substring(6)));
             }
         }
 
@@ -80,7 +84,8 @@ public class PrintAgeOfParties {
             printUsage();
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat(TextResource.getInstance().getString("gen.dateFormat"));
+        SimpleDateFormat sdf = new SimpleDateFormat(Factory.getInstance(TextResource.class)
+        		.getString("gen.dateFormat"));
         Date date;
         try {
             date = sdf.parse(dateString);
@@ -109,8 +114,17 @@ public class PrintAgeOfParties {
         }
     }
 
+	private static void initFactory(Locale locale) {
+		TextResource tr = new TextResource(locale);
+		tr.loadResourceBundle("stringresources");
+
+		Factory.bindSingleton(TextResource.class, tr);
+		Factory.bindSingleton(WidgetFactory.class, new WidgetFactory(tr));
+		Factory.bindSingleton(AmountFormat.class, new AmountFormat(tr.getLocale()));
+	}
+
     private static void printUsage() {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
         for (int i=0; tr.getString("printAge.usage" + i) != null; i++) {
             System.out.println(tr.getString("printAge.usage" + i));
         }

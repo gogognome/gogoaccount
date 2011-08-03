@@ -28,6 +28,7 @@ import javax.swing.JTable;
 import nl.gogognome.lib.swing.DialogWithButtons;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.ui.components.PartiesOverviewTableModel;
 
@@ -50,7 +51,7 @@ public class ViewPartiesOverviewDialog extends DialogWithButtons
 
         JPanel panel = new JPanel(new BorderLayout());
 
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
         String s = tr.getString("vpos.overviewOfPartiesAt",
                 new Object[] {tr.formatDate("gen.dateFormat", date)});
         panel.add(new JLabel(s), BorderLayout.NORTH);

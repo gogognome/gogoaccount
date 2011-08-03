@@ -42,6 +42,7 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Party;
@@ -118,7 +119,7 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
                     LineInfo invoiceInfo = new LineInfo();
                     invoiceInfo.id = invoices[i].getId();
                     invoiceInfo.date = invoices[i].getIssueDate();
-                    invoiceInfo.description = TextResource.getInstance().getString("partyOverviewTableModel.totalAmount");
+                    invoiceInfo.description = Factory.getInstance(TextResource.class).getString("partyOverviewTableModel.totalAmount");
                     invoiceInfo.isFirstLine = true;
                     if (!invoices[i].getAmountToBePaid().isNegative()) {
                         invoiceInfo.debetAmount = invoices[i].getAmountToBePaid();
@@ -169,7 +170,7 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
         }
 
         LineInfo totalLineInfo = new LineInfo();
-        totalLineInfo.id = TextResource.getInstance().getString("gen.total");
+        totalLineInfo.id = Factory.getInstance(TextResource.class).getString("gen.total");
         totalLineInfo.debetAmount = totalDebet;
         totalLineInfo.creditAmount = totalCredit;
         lineInfos.add(totalLineInfo);
@@ -183,8 +184,8 @@ public class PartyOverviewTableModel extends AbstractListTableModel<LineInfo> {
 
         LineInfo lineInfo = getRow(row);
         ColumnDefinition colDef = COLUMN_DEFINITIONS.get(column);
-        TextResource tr = TextResource.getInstance();
-        AmountFormat af = tr.getAmountFormat();
+        TextResource tr = Factory.getInstance(TextResource.class);
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
 
         if (DATE == colDef) {
             if (lineInfo.date != null) {

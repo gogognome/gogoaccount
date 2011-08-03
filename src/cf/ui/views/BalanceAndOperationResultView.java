@@ -30,7 +30,6 @@ import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.ui.components.BalanceComponent;
 import cf.ui.components.OperationalResultComponent;
@@ -59,7 +58,7 @@ public class BalanceAndOperationResultView extends View {
      */
     @Override
 	public String getTitle() {
-        return TextResource.getInstance().getString("balanceAndOperationalResultView.title");
+        return textResource.getString("balanceAndOperationalResultView.title");
     }
 
     /* (non-Javadoc)
@@ -70,12 +69,10 @@ public class BalanceAndOperationResultView extends View {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
 
-        TextResource tr = TextResource.getInstance();
-
         JPanel datePanel = new JPanel(new GridBagLayout());
         datePanel.setOpaque(false);
         datePanel.setBorder(new EmptyBorder(5, 10, 5, 5));
-        datePanel.add(new JLabel(tr.getString("balanceAndOperationalResultView.selectDate")),
+        datePanel.add(new JLabel(textResource.getString("balanceAndOperationalResultView.selectDate")),
                 SwingUtils.createLabelGBConstraints(0, 0));
 
         dateModel = new DateModel();

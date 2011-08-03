@@ -30,7 +30,6 @@ import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.ui.components.OperationalResultComponent;
 
@@ -58,7 +57,7 @@ public class OperationalResultView extends View {
      */
     @Override
 	public String getTitle() {
-        return TextResource.getInstance().getString("operationalResultView.title");
+        return textResource.getString("operationalResultView.title");
     }
 
     /* (non-Javadoc)
@@ -67,12 +66,10 @@ public class OperationalResultView extends View {
     @Override
 	public void onInit() {
         setLayout(new BorderLayout());
-
         setBackground(BACKGROUND_COLOR);
-        TextResource tr = TextResource.getInstance();
 
         JPanel datePanel = new JPanel(new GridBagLayout());
-        datePanel.add(new JLabel(tr.getString("operationalResultView.selectDate")),
+        datePanel.add(new JLabel(textResource.getString("operationalResultView.selectDate")),
                 SwingUtils.createLabelGBConstraints(0, 0));
         datePanel.setOpaque(false);
         datePanel.setBorder(new EmptyBorder(5, 10, 5, 5));

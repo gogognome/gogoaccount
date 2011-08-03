@@ -40,6 +40,7 @@ import nl.gogognome.lib.swing.DialogWithButtons;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.engine.PartySearchCriteria;
@@ -144,8 +145,8 @@ public class PartySelectionDialog extends DialogWithButtons {
      * @return the panel
      */
     private JPanel createPanel() {
-        WidgetFactory wf = WidgetFactory.getInstance();
-        TextResource tr =  TextResource.getInstance();
+        WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
+        TextResource tr =  Factory.getInstance(TextResource.class);
 
         // Create the criteria panel
         JPanel criteriaPanel = new JPanel(new GridBagLayout());
@@ -197,7 +198,8 @@ public class PartySelectionDialog extends DialogWithButtons {
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = wf.createAction("psd.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 handleSearch();
             }
         });
@@ -296,27 +298,30 @@ public class PartySelectionDialog extends DialogWithButtons {
                 case 3: id = "gen.zipCode"; break;
                 case 4: id = "gen.city"; break;
             }
-            return TextResource.getInstance().getString(id);
+            return Factory.getInstance(TextResource.class).getString(id);
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getColumnCount()
          */
-        public synchronized int getColumnCount() {
+        @Override
+		public synchronized int getColumnCount() {
             return 5;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getRowCount()
          */
-        public synchronized int getRowCount() {
+        @Override
+		public synchronized int getRowCount() {
             return parties.length;
         }
 
         /* (non-Javadoc)
          * @see javax.swing.table.TableModel#getValueAt(int, int)
          */
-        public synchronized Object getValueAt(int row, int col) {
+        @Override
+		public synchronized Object getValueAt(int row, int col) {
             String result = null;
             Party party = parties[row];
             switch(col) {

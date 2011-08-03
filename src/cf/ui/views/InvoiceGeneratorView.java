@@ -46,11 +46,9 @@ import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.Party;
 import cf.ui.components.AccountComboBox;
@@ -113,7 +111,7 @@ public class InvoiceGeneratorView extends View {
     /** Gets the title of this view. */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("invoiceGeneratorView.title");
+        return textResource.getString("invoiceGeneratorView.title");
     }
 
     /** This method is called when the view is closed. */
@@ -126,33 +124,30 @@ public class InvoiceGeneratorView extends View {
      */
     @Override
     public void onInit() {
-        TextResource tr = TextResource.getInstance();
-
         // Initialize template panel
         JPanel templatePanel = new JPanel(new BorderLayout());
         templatePanel.setBorder(new CompoundBorder(
-            new TitledBorder(tr.getString("invoiceGeneratorView.template")),
+            new TitledBorder(textResource.getString("invoiceGeneratorView.template")),
             new EmptyBorder(10, 10, 10, 10)));
 
-        WidgetFactory wf = WidgetFactory.getInstance();
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(wf.createLabel("invoiceGeneratorView.id", tfId),
+        panel.add(widgetFactory.createLabel("invoiceGeneratorView.id", tfId),
                 SwingUtils.createLabelGBConstraints(0, 0));
         panel.add(tfId,
                 SwingUtils.createTextFieldGBConstraints(1, 0));
-        tfId.setToolTipText(tr.getString("invoiceGeneratorView.tooltip"));
+        tfId.setToolTipText(textResource.getString("invoiceGeneratorView.tooltip"));
         invoiceGenerationDateModel = new DateModel();
         invoiceGenerationDateModel.setDate(new Date(), null);
         DateSelectionBean dateSelectionBean = BeanFactory.getInstance().createDateSelectionBean(invoiceGenerationDateModel);
-        panel.add(WidgetFactory.getInstance().createLabel("invoiceGeneratorView.date", dateSelectionBean),
+        panel.add(widgetFactory.createLabel("invoiceGeneratorView.date", dateSelectionBean),
                 SwingUtils.createLabelGBConstraints(0, 1));
         panel.add(dateSelectionBean,
                 SwingUtils.createLabelGBConstraints(1, 1));
-        panel.add(wf.createLabel("invoiceGeneratorView.description", tfDescription),
+        panel.add(widgetFactory.createLabel("invoiceGeneratorView.description", tfDescription),
                 SwingUtils.createLabelGBConstraints(0, 2));
         panel.add(tfDescription,
                 SwingUtils.createTextFieldGBConstraints(1, 2));
-        tfDescription.setToolTipText(tr.getString("invoiceGeneratorView.tooltip"));
+        tfDescription.setToolTipText(textResource.getString("invoiceGeneratorView.tooltip"));
 
         panel.setBorder(new EmptyBorder(0, 0, 12, 0));
 
@@ -166,7 +161,7 @@ public class InvoiceGeneratorView extends View {
 
         // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
-        buttonPanel.add(wf.createButton("invoiceGeneratorView.addInvoices", new AbstractAction() {
+        buttonPanel.add(widgetFactory.createButton("invoiceGeneratorView.addInvoices", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent e) {
                 onAddInvoicesToBookkeeping();
@@ -192,18 +187,15 @@ public class InvoiceGeneratorView extends View {
     }
 
     private void updateTemplateLinesPanel() {
-        TextResource tr = TextResource.getInstance();
-        WidgetFactory wf = WidgetFactory.getInstance();
-
         templateLinesPanel.removeAll();
 
-        templateLinesPanel.add(new JLabel(tr.getString("invoiceGeneratorView.amountToBePaid")),
+        templateLinesPanel.add(new JLabel(textResource.getString("invoiceGeneratorView.amountToBePaid")),
                 SwingUtils.createLabelGBConstraints(0, 0));
-        templateLinesPanel.add(new JLabel(tr.getString("gen.account")),
+        templateLinesPanel.add(new JLabel(textResource.getString("gen.account")),
                 SwingUtils.createLabelGBConstraints(1, 0));
-        templateLinesPanel.add(new JLabel(tr.getString("gen.debet")),
+        templateLinesPanel.add(new JLabel(textResource.getString("gen.debet")),
                 SwingUtils.createLabelGBConstraints(2, 0));
-        templateLinesPanel.add(new JLabel(tr.getString("gen.credit")),
+        templateLinesPanel.add(new JLabel(textResource.getString("gen.credit")),
                 SwingUtils.createLabelGBConstraints(3, 0));
 
         int row = 1;
@@ -228,7 +220,7 @@ public class InvoiceGeneratorView extends View {
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 0, bottom, 5));
 
-            JButton deleteButton = wf.createButton("invoiceGeneratorView.delete", null);
+            JButton deleteButton = widgetFactory.createButton("invoiceGeneratorView.delete", null);
             deleteButton.addActionListener(new DeleteActionListener(i));
             templateLinesPanel.add(deleteButton,
                     SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0,
@@ -237,7 +229,7 @@ public class InvoiceGeneratorView extends View {
             row++;
         }
 
-        JButton newButton = wf.createButton("invoiceGeneratorView.new", new AbstractAction() {
+        JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent event) {
                 templateLines.add(new TemplateLine());

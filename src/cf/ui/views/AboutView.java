@@ -28,9 +28,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 
 /**
  * This class shows information about the ClubFinance application.
@@ -41,7 +39,7 @@ public class AboutView extends View {
 
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("aboutView.title");
+        return textResource.getString("aboutView.title");
     }
 
     @Override
@@ -50,7 +48,6 @@ public class AboutView extends View {
 
     @Override
     public void onInit() {
-        TextResource tr = TextResource.getInstance();
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         setLayout(new GridBagLayout());
 
@@ -61,8 +58,8 @@ public class AboutView extends View {
         int n = 1;
         while (n != Integer.MAX_VALUE) {
         	String lineId = "aboutView.line" + n;
-        	if (tr.containsString(lineId)) {
-	            String line = tr.getString(lineId);
+        	if (textResource.containsString(lineId)) {
+	            String line = textResource.getString(lineId);
                 JLabel label = new JLabel(line);
                 add(label, SwingUtils.createLabelGBConstraints(0, n));
                 n += 1;
@@ -71,7 +68,7 @@ public class AboutView extends View {
         	}
         }
 
-        JButton closeButton = WidgetFactory.getInstance().createButton("gen.ok", closeAction);
+        JButton closeButton = widgetFactory.createButton("gen.ok", closeAction);
         add(closeButton, SwingUtils.createGBConstraints(0, n, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
             GridBagConstraints.NONE, 5, 0, 0, 0));
     }

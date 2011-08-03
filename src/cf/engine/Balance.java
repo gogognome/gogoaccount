@@ -25,6 +25,7 @@ import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account.Type;
 
 /**
@@ -264,8 +265,8 @@ public class Balance {
          * @param amount the amount of result
          */
         public ResultAccount(boolean debet, Amount amount, Type type) {
-            super("", TextResource.getInstance().getString(
-                    debet ?"gen.loss" : "gen.profit"),
+            super("", Factory.getInstance(TextResource.class).getString(
+                    debet ? "gen.loss" : "gen.profit"),
                     debet, type);
             this.amount = amount;
         }

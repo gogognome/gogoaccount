@@ -33,7 +33,7 @@ import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.Invoice;
@@ -94,7 +94,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
         super(parent, titleId);
         this.parentFrame = parent;
         this.database = database;
-        AmountFormat af = TextResource.getInstance().getAmountFormat();
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(),
                 item.isDebet(), database.getInvoice(item.getInvoiceId()));
     }
@@ -110,7 +110,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
         super(view, titleId);
         this.parentView = view;
         this.database = database;
-        AmountFormat af = TextResource.getInstance().getAmountFormat();
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         if (item != null) {
             initDialog(af.formatAmountWithoutCurrency(item.getAmount()), item.getAccount(),
                     item.isDebet(), database.getInvoice(item.getInvoiceId()));
@@ -141,7 +141,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
 		fieldConstraints.fill = GridBagConstraints.HORIZONTAL;
 		fieldConstraints.anchor = GridBagConstraints.WEST;
 
-        WidgetFactory wf = WidgetFactory.getInstance();
+        WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         addComponentToGridBag(labelsAndFieldsPanel, wf.createLabel("gen.account"),
                 gridBag, labelConstraints);
         sbAccount = new AccountSelectionBean(database, account);
@@ -179,7 +179,7 @@ public class EditJournalItemDialog extends OkCancelDialog {
     @Override
 	protected void handleOk() {
         Amount amount;
-        AmountFormat af = TextResource.getInstance().getAmountFormat();
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         try {
             amount = af.parse(tfAmount.getText(), database.getCurrency());
         }

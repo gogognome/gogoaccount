@@ -30,6 +30,7 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Balance;
 import cf.engine.Database;
@@ -82,7 +83,7 @@ public class ReportTask implements Task {
         this.date = date;
         this.fileName = fileName;
         this.fileType = fileType;
-        this.locale = TextResource.getInstance().getLocale();
+        this.locale = Factory.getInstance(TextResource.class).getLocale();
     }
 
     /**
@@ -102,10 +103,10 @@ public class ReportTask implements Task {
         try {
 	        switch(fileType) {
 	            case RP_TXT:
-	                textFormat = new PlainTextFormat(TextResource.getInstance());
+	                textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
 	                break;
 	            case RP_HTML:
-	                textFormat = new HtmlTextFormat(TextResource.getInstance());
+	                textFormat = new HtmlTextFormat(Factory.getInstance(TextResource.class));
 	                break;
 	            default:
 	                throw new IllegalArgumentException(
@@ -150,7 +151,7 @@ public class ReportTask implements Task {
     }
 
     private void printBalance(Balance balance) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
         Date date = balance.getDate();
 
         StringBuilder result = new StringBuilder(10000);
@@ -206,7 +207,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getEmptyRow());
 
-        String total = TextResource.getInstance().getString("gen.total").toUpperCase();
+        String total = tr.getString("gen.total").toUpperCase();
 
         values[0] = total;
         values[1] = textFormat.formatAmount(balance.getTotalAssets());
@@ -220,7 +221,7 @@ public class ReportTask implements Task {
     }
 
     private void printOperationalResult(OperationalResult operationalResult) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
         Date date = operationalResult.getDate();
 
         StringBuilder result = new StringBuilder(10000);
@@ -281,7 +282,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getEmptyRow());
 
-        String total = TextResource.getInstance().getString("gen.total").toUpperCase();
+        String total = tr.getString("gen.total").toUpperCase();
 
        values[0] = total;
        values[1] = textFormat.formatAmount(operationalResult.getTotalExpenses());
@@ -295,7 +296,7 @@ public class ReportTask implements Task {
     }
 
     private void printDebtors(Party[] debtors, Date date) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
 
         StringBuilder result = new StringBuilder(10000);
 
@@ -325,7 +326,7 @@ public class ReportTask implements Task {
             }
             result.append(textFormat.getEmptyRow());
 
-            values[0] = TextResource.getInstance().getString("gen.total").toUpperCase();
+            values[0] = tr.getString("gen.total").toUpperCase();
             values[1] = textFormat.formatAmount(total);
 
             result.append(textFormat.getRow(values));
@@ -335,7 +336,7 @@ public class ReportTask implements Task {
     }
 
     private void printCreditors(Party[] creditors, Date date) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
 
         StringBuilder result = new StringBuilder(10000);
 
@@ -365,7 +366,7 @@ public class ReportTask implements Task {
             }
             result.append(textFormat.getEmptyRow());
 
-            values[0] = TextResource.getInstance().getString("gen.total").toUpperCase();
+            values[0] = tr.getString("gen.total").toUpperCase();
             values[1] = textFormat.formatAmount(total);
 
             result.append(textFormat.getRow(values));
@@ -375,7 +376,7 @@ public class ReportTask implements Task {
     }
 
     private void printJournals(List<Journal> journals, Date startDate, Date endDate) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
 
         int startIndex = 0;
         int endIndex = 0;
@@ -454,7 +455,7 @@ public class ReportTask implements Task {
 
     private void printLedger(Account[] accounts, List<Journal> journals, Date startDate,
             Date endDate) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
 
         int startIndex = 0;
         int endIndex = 0;

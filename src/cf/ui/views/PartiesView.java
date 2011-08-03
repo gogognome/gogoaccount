@@ -52,7 +52,6 @@ import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -143,7 +142,6 @@ public class PartiesView extends View {
     @Override
     public void onInit() {
         // Create button panel
-        WidgetFactory widgetFactory = WidgetFactory.getInstance();
         JButton addButton = widgetFactory.createButton("partiesView.addParty", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
@@ -289,7 +287,7 @@ public class PartiesView extends View {
             new EmptyBorder(5, 12, 5, 12)));
 
         partiesTableModel = new PartiesTableModel(Collections.<Party>emptyList());
-        table = WidgetFactory.getInstance().createSortedTable(partiesTableModel);
+        table = widgetFactory.createSortedTable(partiesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
         TableRowSelectAction trsa = new TableRowSelectAction(table, new SelectionActionImpl());

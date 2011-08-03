@@ -33,9 +33,7 @@ import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Account;
 import cf.engine.Account.Type;
 
@@ -63,7 +61,7 @@ public class EditAccountView extends View {
 
 	@Override
 	public String getTitle() {
-        return TextResource.getInstance().getString(
+        return textResource.getString(
         		initialAccount != null ? "editAccountView.titleEdit" : "editAccountView.titleAdd");
 	}
 
@@ -74,8 +72,6 @@ public class EditAccountView extends View {
 	@Override
 	public void onInit() {
 		setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        WidgetFactory wf = WidgetFactory.getInstance();
 
         // Create panel with ID, issue date, concerning party, paying party and amount to be paid.
         GridBagLayout gbl = new GridBagLayout();
@@ -91,45 +87,46 @@ public class EditAccountView extends View {
         	description = "";
         }
 
-        tfId = wf.createTextField(id);
+        tfId = widgetFactory.createTextField(id);
         if (initialAccount != null) {
             tfId.setEditable(false); // prevent changing the id of an existing account
             tfId.setEnabled(false);
         }
         int row = 0;
-        JLabel label = wf.createLabel("editAccountView.id", tfId);
+        JLabel label = widgetFactory.createLabel("editAccountView.id", tfId);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
-        tfDescription = wf.createTextField(description);
-        label = wf.createLabel("editAccountView.description", tfDescription);
+        tfDescription = widgetFactory.createTextField(description);
+        label = widgetFactory.createLabel("editAccountView.description", tfDescription);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         cmType = new JComboBox();
-        TextResource tr = TextResource.getInstance();
         for (Account.Type type : types) {
-        	cmType.addItem(tr.getString("gen.TYPE_" + type.name()));
+        	cmType.addItem(textResource.getString("gen.TYPE_" + type.name()));
         }
-        label = wf.createLabel("editAccountView.type", cmType);
+        label = widgetFactory.createLabel("editAccountView.type", cmType);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(cmType, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
-        JButton button = wf.createButton("gen.ok", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+        JButton button = widgetFactory.createButton("gen.ok", new AbstractAction() {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 onOk();
             }
         });
         buttonPanel.add(button);
         setDefaultButton(button);
 
-        button = wf.createButton("gen.cancel", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
+        button = widgetFactory.createButton("gen.cancel", new AbstractAction() {
+            @Override
+			public void actionPerformed(ActionEvent e) {
                 onCancel();
             }
         });

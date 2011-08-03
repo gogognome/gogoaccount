@@ -33,6 +33,7 @@ import javax.swing.JTextField;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Party;
 import cf.ui.dialogs.PartySelectionDialog;
 
@@ -62,7 +63,7 @@ public class PartySelector extends JPanel {
      * Constructor.
      */
     public PartySelector() {
-        WidgetFactory wf = WidgetFactory.getInstance();
+        WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
         tfDescription = new JTextField();
@@ -75,7 +76,8 @@ public class PartySelector extends JPanel {
         btSelect.setText(null);
         btSelect.setPreferredSize(dimension);
         actionWrapper.setAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 selectParty();
             }
         });
@@ -85,7 +87,8 @@ public class PartySelector extends JPanel {
         btClear.setText(null);
         btClear.setPreferredSize(dimension);
         actionWrapper.setAction(new AbstractAction() {
-            public void actionPerformed(ActionEvent event) {
+            @Override
+			public void actionPerformed(ActionEvent event) {
                 setSelectedParty(null);
             }
         });

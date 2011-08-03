@@ -39,11 +39,9 @@ import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Journal;
@@ -141,8 +139,6 @@ public class EditJournalView extends View {
      * Adds components to the view.
      */
     private void addComponents() {
-        WidgetFactory wf = WidgetFactory.getInstance();
-
         ValuesEditPanel vep = new ValuesEditPanel();
         addCloseable(vep);
         vep.addField("gen.id", idModel);
@@ -211,7 +207,7 @@ public class EditJournalView extends View {
     }
 
     private JButton createAddButton() {
-	    return WidgetFactory.getInstance().createButton("ajd.addItem", new AbstractAction() {
+	    return widgetFactory.createButton("ajd.addItem", new AbstractAction() {
 	        @Override
 			public void actionPerformed(ActionEvent evt) {
 	            handleAddButtonPressed();
@@ -220,7 +216,7 @@ public class EditJournalView extends View {
     }
 
     private JButton createEditButton() {
-    	return WidgetFactory.getInstance().createButton("ajd.editItem", new AbstractAction() {
+    	return widgetFactory.createButton("ajd.editItem", new AbstractAction() {
     		@Override
 			public void actionPerformed(ActionEvent evt) {
 	            handleEditButtonPressed();
@@ -229,7 +225,7 @@ public class EditJournalView extends View {
     }
 
     private JButton createDeleteButton() {
-    	return WidgetFactory.getInstance().createButton("ajd.deleteItem", new AbstractAction() {
+    	return widgetFactory.createButton("ajd.deleteItem", new AbstractAction() {
 	        @Override
 			public void actionPerformed(ActionEvent evt) {
 	            handleDeleteButtonPressed();
@@ -238,7 +234,7 @@ public class EditJournalView extends View {
     }
 
     private JButton createOkButton() {
-    	return WidgetFactory.getInstance().createButton("gen.ok", new AbstractAction() {
+    	return widgetFactory.createButton("gen.ok", new AbstractAction() {
 	        @Override
 			public void actionPerformed(ActionEvent evt) {
 	            handleOkButtonPressed();
@@ -247,7 +243,7 @@ public class EditJournalView extends View {
     }
 
     private JButton createOkAndNextButton() {
-    	return WidgetFactory.getInstance().createButton("ajd.okAndNextJournal", new AbstractAction() {
+    	return widgetFactory.createButton("ajd.okAndNextJournal", new AbstractAction() {
 	        @Override
 			public void actionPerformed(ActionEvent evt) {
 	        	handleOkAndNextButtonPressed();
@@ -306,10 +302,9 @@ public class EditJournalView extends View {
      *          the input values.
      */
     private Journal getJournalFromDialog() {
-        TextResource tr = TextResource.getInstance();
         Date date = dateModel.getDate();
         if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError", tr.getString("gen.invalidDate"));
+            MessageDialog.showMessage(this, "gen.titleError", textResource.getString("gen.invalidDate"));
             return null;
         }
 
@@ -321,7 +316,7 @@ public class EditJournalView extends View {
             return new Journal(id, description, date, items, idOfCreatedInvoice);
         }
         catch (IllegalArgumentException e) {
-            MessageDialog.showMessage(this, "gen.titleError", tr.getString("gen.itemsNotInBalance"));
+            MessageDialog.showMessage(this, "gen.titleError", textResource.getString("gen.itemsNotInBalance"));
             return null;
         }
     }
@@ -380,7 +375,7 @@ public class EditJournalView extends View {
 
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString(titleId);
+        return textResource.getString(titleId);
     }
 
     @Override

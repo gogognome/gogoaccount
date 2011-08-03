@@ -26,6 +26,7 @@ import javax.swing.table.TableModel;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.JournalItem;
@@ -70,28 +71,32 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
-    public int getColumnCount() {
+    @Override
+	public int getColumnCount() {
         return 4;
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getRowCount()
      */
-    public int getRowCount() {
+    @Override
+	public int getRowCount() {
         return items.size();
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#isCellEditable(int, int)
      */
-    public boolean isCellEditable(int row, int col) {
+    @Override
+	public boolean isCellEditable(int row, int col) {
         return false;
     }
 
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnClass(int)
      */
-    public Class<?> getColumnClass(int col)
+    @Override
+	public Class<?> getColumnClass(int col)
     {
         Class<?> result;
         switch(col)
@@ -114,9 +119,10 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getValueAt(int, int)
      */
-    public Object getValueAt(int row, int col)
+    @Override
+	public Object getValueAt(int row, int col)
     {
-        AmountFormat af = TextResource.getInstance().getAmountFormat();
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         String result = null;
         JournalItem item = items.get(row);
         switch(col)
@@ -145,7 +151,8 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnName(int)
      */
-    public String getColumnName(int col)
+    @Override
+	public String getColumnName(int col)
     {
         String id = null;
         switch(col)
@@ -155,7 +162,7 @@ public class ItemsTableModel implements TableModel {
         case 2: id = "gen.credit"; break;
         case 3: id = "gen.invoice"; break;
         }
-        return TextResource.getInstance().getString(id);
+        return Factory.getInstance(TextResource.class).getString(id);
     }
 
     /**
@@ -172,7 +179,8 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#addTableModelListener(javax.swing.event.TableModelListener)
      */
-    public void addTableModelListener(TableModelListener listener)
+    @Override
+	public void addTableModelListener(TableModelListener listener)
     {
         itemTableModelListeners.add(listener);
     }
@@ -180,7 +188,8 @@ public class ItemsTableModel implements TableModel {
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#removeTableModelListener(javax.swing.event.TableModelListener)
      */
-    public void removeTableModelListener(TableModelListener listener)
+    @Override
+	public void removeTableModelListener(TableModelListener listener)
     {
         itemTableModelListeners.remove(listener);
     }
@@ -251,6 +260,7 @@ public class ItemsTableModel implements TableModel {
     }
 
     /** Should never be called since all methods are not editable. */
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    @Override
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     }
 }

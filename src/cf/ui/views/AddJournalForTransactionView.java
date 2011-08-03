@@ -23,8 +23,8 @@ import javax.swing.JLabel;
 import nl.gogognome.cf.services.ImportBankStatementService;
 import nl.gogognome.cf.services.importers.ImportedTransaction;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
-import nl.gogognome.lib.swing.WidgetFactory;
-import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
@@ -91,7 +91,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 		vep.addField("AddJournalForTransactionView.fromAccount", fromAccount);
 		vep.addField("AddJournalForTransactionView.amount", amount);
 		vep.addField("AddJournalForTransactionView.description", description);
-		vep.setBorder(WidgetFactory.getInstance().createTitleBorderWithMarginAndPadding("AddJournalForTransactionView.transaction"));
+		vep.setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("AddJournalForTransactionView.transaction"));
 
 		add(vep, BorderLayout.NORTH);
 	}
@@ -126,11 +126,10 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	private void updateLabelsForImportedTransaction(ImportedTransaction t) {
-		TextResource tr = TextResource.getInstance();
-		date.setText(tr.formatDate("gen.dateFormat", t.getDate()));
+		date.setText(textResource.formatDate("gen.dateFormat", t.getDate()));
 		fromAccount.setText(formatAccountAndName(t.getFromAccount(), t.getFromName()));
 		toAccount.setText(formatAccountAndName(t.getToAccount(), t.getToName()));
-		amount.setText(tr.getAmountFormat().formatAmount(t.getAmount()));
+		amount.setText(Factory.getInstance(AmountFormat.class).formatAmount(t.getAmount()));
 		description.setText(t.getDescription());
 	}
 

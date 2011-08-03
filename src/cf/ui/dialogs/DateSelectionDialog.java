@@ -30,6 +30,7 @@ import javax.swing.SpinnerDateModel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.OkCancelDialog;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 
 /**
  * This class implements a date selection dialog.
@@ -61,7 +62,7 @@ public class DateSelectionDialog extends OkCancelDialog
         super(frame, "ds.selectDate");
         this.parentFrame = frame;
 
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
 
         JComponent component = new JPanel();
         component.add(new JLabel(tr.getString(id)));

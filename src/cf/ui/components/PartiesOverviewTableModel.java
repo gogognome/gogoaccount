@@ -24,6 +24,7 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Party;
 
@@ -65,7 +66,8 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getColumnCount()
      */
-    public int getColumnCount()
+    @Override
+	public int getColumnCount()
     {
         return 3;
     }
@@ -73,7 +75,8 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getRowCount()
      */
-    public int getRowCount()
+    @Override
+	public int getRowCount()
     {
         return parties.length + 1;
     }
@@ -81,9 +84,10 @@ public class PartiesOverviewTableModel extends AbstractTableModel
     /* (non-Javadoc)
      * @see javax.swing.table.TableModel#getValueAt(int, int)
      */
-    public Object getValueAt(int row, int column)
+    @Override
+	public Object getValueAt(int row, int column)
     {
-        AmountFormat af = TextResource.getInstance().getAmountFormat();
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         String result;
         if (row < parties.length)
         {
@@ -122,7 +126,7 @@ public class PartiesOverviewTableModel extends AbstractTableModel
 	        switch(column)
 	        {
 	        case 0:
-	            result = TextResource.getInstance().getString("gen.total");
+	            result = Factory.getInstance(TextResource.class).getString("gen.total");
 	            break;
 
 	        case 1:
@@ -179,6 +183,6 @@ public class PartiesOverviewTableModel extends AbstractTableModel
         default:
             id = null;
         }
-        return TextResource.getInstance().getString(id);
+        return Factory.getInstance(TextResource.class).getString(id);
     }
 }

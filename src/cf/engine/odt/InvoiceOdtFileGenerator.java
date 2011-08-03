@@ -47,6 +47,7 @@ import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.xml.GNodeList;
 import nl.gogognome.lib.xml.XmlUtil;
 
@@ -253,7 +254,7 @@ public class InvoiceOdtFileGenerator implements Task {
      * @return the new node that is created by the substition process
      */
     private Node applySubstitutions(Node node, Invoice invoice, String concerning, Date dueDate) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
         Node result = node.cloneNode(true);
         LinkedList<Node> nodesToProcess = new LinkedList<Node>();
         nodesToProcess.add(result);
@@ -295,7 +296,7 @@ public class InvoiceOdtFileGenerator implements Task {
      * @return the list of nodes
      */
     private List<Node> getInvoiceItemNodes(Node invoiceItemNode, Invoice invoice) {
-        TextResource tr = TextResource.getInstance();
+        TextResource tr = Factory.getInstance(TextResource.class);
         List<Node> result = new ArrayList<Node>(10);
 
         String[] descriptions = invoice.getDescriptions();
@@ -376,7 +377,7 @@ public class InvoiceOdtFileGenerator implements Task {
      * @return the amount for Odt
      */
     private String formatAmountForOdt(Amount amount) {
-        AmountFormat af = TextResource.getInstance().getAmountFormat();
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         String currency = amount.getCurrency().getSymbol();
         if (currency.equals("EUR")) {
             currency = "\u20AC";

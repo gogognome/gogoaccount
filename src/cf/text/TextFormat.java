@@ -17,7 +17,9 @@
 package cf.text;
 
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 
 /**
  * This class offers functionality to format texts. Specific subclasses
@@ -156,7 +158,7 @@ public abstract class TextFormat {
     }
 
     public String formatAmount(Amount amount) {
-        return textResource.getAmountFormat().formatAmount(amount);
+        return Factory.getInstance(AmountFormat.class).formatAmount(amount);
     }
 
 }

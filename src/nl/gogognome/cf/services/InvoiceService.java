@@ -22,6 +22,7 @@ import java.util.List;
 
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.util.StringUtil;
 import cf.engine.Account;
 import cf.engine.Database;
@@ -62,28 +63,29 @@ public class InvoiceService {
 
         boolean amountToBePaidSelected = false;
         boolean changedDatabase = false;
-        for (InvoiceLineDefinition line : invoiceLineDefinitions) {
+        TextResource tr = Factory.getInstance(TextResource.class);
+		for (InvoiceLineDefinition line : invoiceLineDefinitions) {
             if (!amountToBePaidSelected) {
                 amountToBePaidSelected = line.isAmountToBePaid();
             } else {
                 if (line.isAmountToBePaid()) {
-                    throw new CreationException(TextResource.getInstance().getString("More than one amount to be paid has been specified!"));
+                    throw new CreationException(tr.getString("More than one amount to be paid has been specified!"));
                 }
             }
             if (line.getDebet() == null && line.getCredit() == null) {
-                throw new CreationException(TextResource.getInstance().getString("A line without amount has been found!"));
+                throw new CreationException(tr.getString("A line without amount has been found!"));
             }
             if (line.getDebet() != null && line.getCredit() != null) {
-                throw new CreationException(TextResource.getInstance().getString("A line with two amounts has been found!"));
+                throw new CreationException(tr.getString("A line with two amounts has been found!"));
             }
 
             if (line.getAccount() == null) {
-                throw new CreationException(TextResource.getInstance().getString("A line without an account has been found"));
+                throw new CreationException(tr.getString("A line without an account has been found"));
             }
         }
 
         if (!amountToBePaidSelected) {
-            throw new CreationException(TextResource.getInstance().getString("No amount to be paid has been specified"));
+            throw new CreationException(tr.getString("No amount to be paid has been specified"));
         }
 
         List<Party> partiesForWhichCreationFailed = new LinkedList<Party>();

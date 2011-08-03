@@ -30,7 +30,6 @@ import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.ui.components.BalanceComponent;
 
@@ -58,7 +57,7 @@ public class BalanceView extends View {
      */
     @Override
 	public String getTitle() {
-        return TextResource.getInstance().getString("balanceView.title");
+        return textResource.getString("balanceView.title");
     }
 
     /* (non-Javadoc)
@@ -69,12 +68,10 @@ public class BalanceView extends View {
         setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
 
-        TextResource tr = TextResource.getInstance();
-
         JPanel datePanel = new JPanel(new GridBagLayout());
         datePanel.setOpaque(false);
         datePanel.setBorder(new EmptyBorder(5, 10, 5, 5));
-        datePanel.add(new JLabel(tr.getString("balanceView.selectDate")),
+        datePanel.add(new JLabel(textResource.getString("balanceView.selectDate")),
                 SwingUtils.createLabelGBConstraints(0, 0));
 
         dateModel = new DateModel();

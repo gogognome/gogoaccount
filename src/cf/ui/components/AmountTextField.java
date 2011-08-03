@@ -23,7 +23,7 @@ import javax.swing.JTextField;
 
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 
 /**
  * This class implements a text field for <code>Amount</code>s.
@@ -32,7 +32,7 @@ import nl.gogognome.lib.text.TextResource;
  */
 public class AmountTextField extends JTextField {
 
-    private AmountFormat amountFormat = TextResource.getInstance().getAmountFormat();
+    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
     private Currency currency;
 

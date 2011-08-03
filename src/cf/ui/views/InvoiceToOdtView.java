@@ -26,14 +26,12 @@ import javax.swing.SwingConstants;
 import nl.gogognome.lib.gui.beans.ValuesEditPanel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.FileSelectionModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
-import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
 import cf.engine.odt.InvoiceOdtFileGenerator;
@@ -109,7 +107,7 @@ public class InvoiceToOdtView extends View {
                     ourReferenceModel.getString(), dueDate);
             try {
             	TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
-            			TextResource.getInstance().getString("invoiceToOdtView.progressDialogTitle"));
+            			textResource.getString("invoiceToOdtView.progressDialogTitle"));
             	progressDialog.execute(converter);
             } catch (Exception e) {
                 MessageDialog.showErrorMessage(this, e, "invoiceToOdtView.executeTaskException");
@@ -123,7 +121,7 @@ public class InvoiceToOdtView extends View {
      */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("invoiceToOdtView.title");
+        return textResource.getString("invoiceToOdtView.title");
     }
 
     /**
@@ -138,7 +136,6 @@ public class InvoiceToOdtView extends View {
      */
     @Override
     public void onInit() {
-        WidgetFactory wf = WidgetFactory.getInstance();
         ValuesEditPanel vep = new ValuesEditPanel();
         addCloseable(vep);
 
@@ -152,7 +149,7 @@ public class InvoiceToOdtView extends View {
 
         // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
-        buttonPanel.add(wf.createButton("invoiceToOdtView.generate", new AbstractAction() {
+        buttonPanel.add(widgetFactory.createButton("invoiceToOdtView.generate", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent e) {
                 generateInvoices();
@@ -164,6 +161,6 @@ public class InvoiceToOdtView extends View {
         add(vep, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        setBorder(wf.createTitleBorderWithMarginAndPadding("invoiceToOdtView.title"));
+        setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("invoiceToOdtView.title"));
     }
 }

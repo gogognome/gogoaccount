@@ -25,8 +25,10 @@ import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.Invoice;
@@ -165,7 +167,7 @@ public class AccountOverviewTableModel extends AbstractListTableModel<AccountOve
 	private void addTotalAmount() {
         LineInfo lineInfo = new LineInfo();
         lineInfo.date = date;
-        lineInfo.description = TextResource.getInstance().getString("gen.total");
+        lineInfo.description = Factory.getInstance(TextResource.class).getString("gen.total");
         lineInfo.debet = totalDebet;
         lineInfo.credit = totalCredit;
         addRow(lineInfo);
@@ -185,11 +187,11 @@ public class AccountOverviewTableModel extends AbstractListTableModel<AccountOve
         	return lineInfo.description;
         } else if (DEBET.equals(col)) {
         	if (lineInfo.debet != null) {
-        		return TextResource.getInstance().getAmountFormat().formatAmount(lineInfo.debet);
+        		return Factory.getInstance(AmountFormat.class).formatAmount(lineInfo.debet);
         	}
         } else if (CREDIT.equals(col)) {
         	if (lineInfo.credit != null) {
-        		return TextResource.getInstance().getAmountFormat().formatAmount(lineInfo.credit);
+        		return Factory.getInstance(AmountFormat.class).formatAmount(lineInfo.credit);
         	}
         } else if (INVOICE.equals(col)) {
         	return lineInfo.invoice;

@@ -38,6 +38,7 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
@@ -78,14 +79,16 @@ public class OperationalResultComponent extends JScrollPane {
         this.dateModel = dateModel;
 
         database.addListener(new DatabaseListener() {
-            public void databaseChanged(Database db) {
+            @Override
+			public void databaseChanged(Database db) {
                 initializeValues();
                 validateTree();
             }
         });
 
         dateModel.addModelChangeListener(new ModelChangeListener() {
-            public void modelChanged(AbstractModel model) {
+            @Override
+			public void modelChanged(AbstractModel model) {
                 if (((DateModel)(model)).getDate() != null) {
 	                initializeValues();
 	                validateTree();
@@ -111,8 +114,8 @@ public class OperationalResultComponent extends JScrollPane {
         }
 
         OperationalResult operationalResult = database.getOperationalResult(date);
-        TextResource tr = TextResource.getInstance();
-        AmountFormat af = tr.getAmountFormat();
+        TextResource tr = Factory.getInstance(TextResource.class);
+        AmountFormat af = Factory.getInstance(AmountFormat.class);
         Database database = Database.getInstance();
         Account[] expenses = database.getExpenses();
         Account[] revenues = database.getRevenues();
