@@ -51,12 +51,11 @@ import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.SwingUtils.SelectionAction;
+import nl.gogognome.lib.swing.TableRowSelectAction;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.text.TextResource;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Party;
@@ -135,7 +134,7 @@ public class PartiesView extends View {
      */
     @Override
     public String getTitle() {
-        return TextResource.getInstance().getString("partiesView.title");
+        return textResource.getString("partiesView.title");
     }
 
     /* (non-Javadoc)
@@ -144,27 +143,27 @@ public class PartiesView extends View {
     @Override
     public void onInit() {
         // Create button panel
-        WidgetFactory wf = WidgetFactory.getInstance();
-        JButton addButton = wf.createButton("partiesView.addParty", new AbstractAction() {
+        WidgetFactory widgetFactory = WidgetFactory.getInstance();
+        JButton addButton = widgetFactory.createButton("partiesView.addParty", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onAddParty();
             }
         });
 
-        JButton editButton = wf.createButton("partiesView.editParty", new AbstractAction() {
+        JButton editButton = widgetFactory.createButton("partiesView.editParty", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onEditParty();
             }
         });
-        JButton deleteButton = wf.createButton("partiesView.deleteParty", new AbstractAction() {
+        JButton deleteButton = widgetFactory.createButton("partiesView.deleteParty", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onDeleteParty();
             }
         });
-        btSelect = wf.createButton("partiesView.selectParty", new AbstractAction() {
+        btSelect = widgetFactory.createButton("partiesView.selectParty", new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent evt) {
                 onSelectParty();
@@ -196,13 +195,10 @@ public class PartiesView extends View {
      * @return the panel
      */
     private JPanel createPanel() {
-        WidgetFactory wf = WidgetFactory.getInstance();
-        TextResource tr =  TextResource.getInstance();
-
         // Create the criteria panel
         JPanel criteriaPanel = new JPanel(new GridBagLayout());
         criteriaPanel.setBorder(new TitledBorder(
-                tr.getString("partiesView.searchCriteria")));
+                textResource.getString("partiesView.searchCriteria")));
 
         focusListener = new FocusAdapter() {
             @Override
@@ -214,7 +210,7 @@ public class PartiesView extends View {
         int row = 0;
         tfId = new JTextField();
         tfId.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.id", tfId),
+        criteriaPanel.add(widgetFactory.createLabel("partiesView.id", tfId),
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfId,
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -222,7 +218,7 @@ public class PartiesView extends View {
 
         tfName = new JTextField();
         tfName.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.name", tfName),
+        criteriaPanel.add(widgetFactory.createLabel("partiesView.name", tfName),
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfName,
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -230,7 +226,7 @@ public class PartiesView extends View {
 
         tfAddress = new JTextField();
         tfAddress.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.address", tfAddress),
+        criteriaPanel.add(widgetFactory.createLabel("partiesView.address", tfAddress),
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfAddress,
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -238,7 +234,7 @@ public class PartiesView extends View {
 
         tfZipCode = new JTextField();
         tfZipCode.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.zipCode", tfZipCode),
+        criteriaPanel.add(widgetFactory.createLabel("partiesView.zipCode", tfZipCode),
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfZipCode,
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -246,7 +242,7 @@ public class PartiesView extends View {
 
         tfCity = new JTextField();
         tfCity.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.city", tfCity),
+        criteriaPanel.add(widgetFactory.createLabel("partiesView.city", tfCity),
                 SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(tfCity,
                 SwingUtils.createTextFieldGBConstraints(1, row));
@@ -255,7 +251,7 @@ public class PartiesView extends View {
         birthDateModel = new DateModel();
         dsbBirthDate = BeanFactory.getInstance().createDateSelectionBean(birthDateModel);
         dsbBirthDate.addFocusListener(focusListener);
-        criteriaPanel.add(wf.createLabel("partiesView.birthDate", dsbBirthDate),
+        criteriaPanel.add(widgetFactory.createLabel("partiesView.birthDate", dsbBirthDate),
             SwingUtils.createLabelGBConstraints(0, row));
         criteriaPanel.add(dsbBirthDate, SwingUtils.createLabelGBConstraints(1, row));
         row++;
@@ -267,14 +263,14 @@ public class PartiesView extends View {
             System.arraycopy(types, 0, typesInclEmptyType, 1, types.length);
             cmbType = new JComboBox(typesInclEmptyType);
             cmbType.addFocusListener(focusListener);
-            criteriaPanel.add(wf.createLabel("partiesView.type", cmbType),
+            criteriaPanel.add(widgetFactory.createLabel("partiesView.type", cmbType),
                 SwingUtils.createLabelGBConstraints(0, row));
             criteriaPanel.add(cmbType, SwingUtils.createTextFieldGBConstraints(1, row));
             row++;
         }
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        ActionWrapper actionWrapper = wf.createAction("partiesView.btnSearch");
+        ActionWrapper actionWrapper = widgetFactory.createAction("partiesView.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
             @Override
 			public void actionPerformed(ActionEvent event) {
@@ -289,15 +285,16 @@ public class PartiesView extends View {
 
         // Create the result panel
         JPanel resultPanel = new JPanel(new BorderLayout());
-        resultPanel.setBorder(new CompoundBorder(new TitledBorder(tr.getString("partiesView.foundParties")),
+        resultPanel.setBorder(new CompoundBorder(new TitledBorder(textResource.getString("partiesView.foundParties")),
             new EmptyBorder(5, 12, 5, 12)));
 
         partiesTableModel = new PartiesTableModel(Collections.<Party>emptyList());
         table = WidgetFactory.getInstance().createSortedTable(partiesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
-        SelectionAction sa = SwingUtils.addSelectionAction(table, new SelectionActionImpl());
-        addCloseable(sa);
+        TableRowSelectAction trsa = new TableRowSelectAction(table, new SelectionActionImpl());
+        addCloseable(trsa);
+        trsa.registerListeners();
 
         listSelectionListener = new ListSelectionListener() {
             @Override
@@ -311,7 +308,7 @@ public class PartiesView extends View {
             }
         };
         table.getSelectionModel().addListSelectionListener(listSelectionListener);
-        resultPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        resultPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
 
         // Create details panel
         JPanel detailPanel = new JPanel(new GridBagLayout());
@@ -320,7 +317,7 @@ public class PartiesView extends View {
         JScrollPane scrollPane = new JScrollPane(taRemarks);
         scrollPane.setPreferredSize(new Dimension(500, 100));
 
-        detailPanel.add(wf.createLabel("partiesView.remarks", taRemarks),
+        detailPanel.add(widgetFactory.createLabel("partiesView.remarks", taRemarks),
             SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 0, 0, 12));
         detailPanel.add(scrollPane, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,

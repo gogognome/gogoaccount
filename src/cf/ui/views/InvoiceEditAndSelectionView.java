@@ -44,7 +44,7 @@ import javax.swing.border.TitledBorder;
 
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.SwingUtils.SelectionAction;
+import nl.gogognome.lib.swing.TableRowSelectAction;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.TextResource;
@@ -252,8 +252,9 @@ public class InvoiceEditAndSelectionView extends View {
                 }
             }
         };
-        SelectionAction sa = SwingUtils.addSelectionAction(table, selectionAction);
-        addCloseable(sa);
+        TableRowSelectAction trsa = new TableRowSelectAction(table, selectionAction);
+        addCloseable(trsa);
+        trsa.registerListeners();
 
         resultPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
