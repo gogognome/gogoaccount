@@ -185,7 +185,7 @@ public class InvoicesPerPartyView extends View {
         sortInvoices(invoices, party);
         addInvoicesToPanel(invoices, party, date);
 
-        invoicesPanel.validate();
+        validate();
 	}
 
 	private void sortInvoices(Invoice[] invoices, Party party) {
