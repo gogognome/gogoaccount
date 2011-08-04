@@ -70,7 +70,7 @@ import cf.ui.views.EditJournalsView;
 import cf.ui.views.ImportBankStatementView;
 import cf.ui.views.InvoiceGeneratorView;
 import cf.ui.views.InvoiceToOdtView;
-import cf.ui.views.InvoicesSinglePartyView;
+import cf.ui.views.InvoicesPerPartyView;
 import cf.ui.views.PartiesView;
 
 /**
@@ -458,7 +458,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleViewPartyOverview() {
-		openView(InvoicesSinglePartyView.class);
+		openView(InvoicesPerPartyView.class);
 	}
 
 	private void handleViewPartiesOverview()
@@ -532,6 +532,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    	view.addViewListener(new ViewCloseListener());
             viewTabbedPane.openView(view);
             viewTabbedPane.selectView(view);
+
+            openViews.put(viewClass, view);
         } else {
             viewTabbedPane.selectView(view);
 	    }
