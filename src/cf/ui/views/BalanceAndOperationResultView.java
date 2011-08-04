@@ -18,13 +18,15 @@ package cf.ui.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
-import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
+import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
 import cf.engine.Database;
@@ -89,20 +91,26 @@ public class BalanceAndOperationResultView extends View {
 	}
 
     private JPanel createBalanceAndOperationalResultPanel() {
-        JPanel panel = new JPanel(new VerticalLayout(10, VerticalLayout.BOTH));
+        JPanel panel = new JPanel(new GridBagLayout());
 
         panel.setBackground(BACKGROUND_COLOR);
         BalanceComponent balanceComponent = new BalanceComponent(database, dateModel);
         addCloseable(balanceComponent);
         balanceComponent.setBackground(BACKGROUND_COLOR);
-        panel.add(balanceComponent);
+        panel.add(balanceComponent, createConstraints(0, 0));
 
         OperationalResultComponent operationalResultComponent =
             new OperationalResultComponent(database, dateModel);
         addCloseable(operationalResultComponent);
         operationalResultComponent.setBackground(BACKGROUND_COLOR);
-        panel.add(operationalResultComponent);
+        panel.add(operationalResultComponent, createConstraints(0, 1));
 
         return panel;
+    }
+
+    public static GridBagConstraints createConstraints( int gridx, int gridy) {
+    	return SwingUtils.createGBConstraints(gridx, gridy, 1, 1, 1.0, 1.0,
+    			GridBagConstraints.WEST, GridBagConstraints.BOTH,
+    			gridy == 0 ? 0 : 10, 0, 0, 0);
     }
 }

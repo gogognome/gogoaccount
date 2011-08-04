@@ -17,32 +17,26 @@
 package cf.ui.components;
 
 import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.lib.gui.Closeable;
-import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
-import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
 import cf.engine.OperationalResult;
+import cf.ui.components.BalanceSheet.Row;
 
 /**
  * This class implements a graphical component that shows an operational result.
@@ -53,12 +47,14 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
 	private static final long serialVersionUID = 1L;
 
-    private JPanel panel;
     private Database database;
     private DateModel dateModel;
+    private BalanceSheet balanceSheet;
 
     private DatabaseListener databaseListener;
     private ModelChangeListener modelChangeListener;
+
+    private TextResource textResource = Factory.getInstance(TextResource.class);
 
     /**
      * Creates a new <code>OperationalResultComponent</code>.
@@ -70,10 +66,11 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
         this.database = database;
         this.dateModel = dateModel;
 
-        panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false);
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        setViewportView(panel);
+        balanceSheet = new BalanceSheet(textResource.getString("gen.expenses"),
+        		textResource.getString("gen.revenues"), database.getCurrency());
+        balanceSheet.setOpaque(false);
+        balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
+        setViewportView(balanceSheet);
 
         initComponents();
         addListeners();
@@ -104,158 +101,29 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
         }
 
         OperationalResult operationalResult = database.getOperationalResult(date);
-        TextResource tr = Factory.getInstance(TextResource.class);
-        AmountFormat af = Factory.getInstance(AmountFormat.class);
-        Account[] expenses = database.getExpenses();
-        Account[] revenues = database.getRevenues();
-
-        String[] expenseNames = new String[expenses.length];
-        String[] expenseAmounts = new String[expenses.length];
-        for (int i=0; i<expenses.length; i++) {
-            expenseNames[i] = expenses[i].getId() + " " + expenses[i].getName();
-            expenseAmounts[i] = af.formatAmount(
-                BookkeepingService.getAccountBalance(database, expenses[i], operationalResult.getDate()));
-        }
-
-        String[] revenueNames = new String[revenues.length];
-        String[] revenueAmounts = new String[revenues.length];
-        for (int i=0; i<revenues.length; i++) {
-            revenueNames[i] = revenues[i].getId() + " " + revenues[i].getName();
-            revenueAmounts[i] = af.formatAmount(
-                BookkeepingService.getAccountBalance(database, revenues[i], operationalResult.getDate()));
-        }
-
-        String totalExpenses = af.formatAmount(operationalResult.getTotalExpenses());
-        String totalRevenues = af.formatAmount(operationalResult.getTotalRevenues());
-
-        // The component may have been initialized before. Therefore, remove all components.
-        panel.removeAll();
 
         setBorder(Factory.getInstance(WidgetFactory.class)
         		.createTitleBorder("operationalResultComponent.title", operationalResult.getDate()));
 
-        // Add labels for the table header
-        int row = 0;
-        Border bottomBorder = new LineBorder(LineBorder.LB_BOTTOM, 3);
-        JLabel label = new JLabel(tr.getString("gen.expenses"));
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
+        List<Row> leftRows = convertAccountsToRows(database.getExpenses(), date);
+        List<Row> rightRows = convertAccountsToRows(database.getRevenues(), date);
 
-        label = new JLabel();
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
+        balanceSheet.setLeftRows(leftRows);
+        balanceSheet.setRightRows(rightRows);
+        balanceSheet.update();
+    }
 
-        label = new JLabel();
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
+    private List<Row> convertAccountsToRows(Account[] accounts, Date date) {
+        List<Row> rows = new ArrayList<Row>();
 
-        label = new JLabel(tr.getString("gen.revenues"), SwingConstants.RIGHT);
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
-        row++;
-
-        // Add the table rows
-        int firstRow = row;
-        Border rightBorder = new CompoundBorder(new LineBorder(LineBorder.LB_RIGHT, 1),
-                new EmptyBorder(0, 0, 0, 5));
-        for (int i=0; i<expenseNames.length; i++) {
-            panel.add(new JLabel(expenseNames[i]),
-                    SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 20));
-            label = new JLabel(expenseAmounts[i], SwingConstants.RIGHT);
-            label.setBorder(rightBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row++;
+        for (int i=0; i<accounts.length; i++) {
+        	Row row = new Row();
+        	row.description = accounts[i].getId() + " " + accounts[i].getName();
+            row.amount = BookkeepingService.getAccountBalance(database, accounts[i], date);
+            rows.add(row);
         }
 
-        Border leftBorder = new CompoundBorder(new LineBorder(LineBorder.LB_LEFT, 1),
-                new EmptyBorder(0, 5, 0, 0));
-        int row2 = firstRow;
-        for (int i=0; i<revenueNames.length; i++)
-        {
-            label = new JLabel(revenueNames[i]);
-            label.setBorder(leftBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 20));
-            panel.add(new JLabel(revenueAmounts[i], SwingConstants.RIGHT),
-                    SwingUtils.createGBConstraints(3, row2, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row2++;
-        }
-
-        while (row < row2) {
-            label = new JLabel(" ", SwingConstants.RIGHT);
-            label.setBorder(rightBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row++;
-        }
-        while (row2 < row) {
-            label = new JLabel(" ");
-            label.setBorder(leftBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row2++;
-        }
-
-        Border topBorder = new LineBorder(LineBorder.LB_TOP, 1);
-        label = new JLabel(tr.getString("gen.total"));
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 10, 0));
-
-        label = new JLabel(totalExpenses, SwingConstants.RIGHT);
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 10, 5));
-
-        label = new JLabel(tr.getString("gen.total"));
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 5, 10, 0));
-
-        label = new JLabel(totalRevenues, SwingConstants.RIGHT);
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 10, 0));
-        row++;
-
-        // Add label to push other labels to the left and top.
-        panel.add(new JLabel(""),
-                SwingUtils.createGBConstraints(5, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                        0, 0, 0, 0));
+        return rows;
     }
 
     /**
@@ -266,8 +134,8 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
     public void setBackground(Color color) {
         super.setBackground(color);
         getViewport().setBackground(color);
-        if (panel != null) {
-            panel.setBackground(color);
+        if (balanceSheet != null) {
+            balanceSheet.setBackground(color);
         }
     }
 

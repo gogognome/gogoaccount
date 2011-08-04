@@ -18,15 +18,12 @@ package cf.ui.components;
 
 import java.awt.Color;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.lib.gui.Closeable;
@@ -42,6 +39,7 @@ import cf.engine.Account;
 import cf.engine.Balance;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
+import cf.ui.components.BalanceSheet.Row;
 
 /**
  * This class implements a graphical component that shows a balance.
@@ -52,12 +50,14 @@ public class BalanceComponent extends JScrollPane implements Closeable {
 
 	private static final long serialVersionUID = 1L;
 
-	private JPanel panel;
     private Database database;
     private DateModel dateModel;
+    private BalanceSheet balanceSheet;
 
     private DatabaseListener databaseListener;
     private ModelChangeListener modelChangeListener;
+
+    private TextResource textResource = Factory.getInstance(TextResource.class);
 
     /**
      * Creates a new <code>BalanceComponent</code>.
@@ -69,10 +69,11 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         this.database = database;
         this.dateModel = dateModel;
 
-        panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false);
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        setViewportView(panel);
+        balanceSheet = new BalanceSheet(textResource.getString("gen.assets"),
+        		textResource.getString("gen.liabilities"), database.getCurrency());
+        balanceSheet.setOpaque(false);
+        balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
+        setViewportView(balanceSheet);
 
         initComponents();
         addListeners();
@@ -98,171 +99,47 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         }
 
         Balance balance = database.getBalance(date);
-        TextResource tr = Factory.getInstance(TextResource.class);
-        AmountFormat af = Factory.getInstance(AmountFormat.class);
-        Account[] assets = balance.getAssets();
-        Account[] liabilities = balance.getLiabilities();
-
-        String[] assetNames = new String[assets.length];
-        String[] assetAmounts = new String[assets.length];
-        for (int i=0; i<assets.length; i++) {
-            assetNames[i] = assets[i].getId() + " " + assets[i].getName();
-            assetAmounts[i] = af.formatAmount(balance.getAmount(assets[i]));
-        }
-
-        String[] liabilityNames = new String[liabilities.length];
-        String[] liabilityAmounts = new String[liabilities.length];
-        for (int i=0; i<liabilities.length; i++) {
-            liabilityNames[i] = liabilities[i].getId() + " " + liabilities[i].getName();
-            liabilityAmounts[i] = af.formatAmount(balance.getAmount(liabilities[i]));
-        }
-
-        String totalAssets = af.formatAmount(balance.getTotalAssets());
-        String totalLiabilities = af.formatAmount(balance.getTotalLiabilities());
-
-        // The component may have been initialized before. Therefore, remove all components.
-        panel.removeAll();
 
         setBorder(Factory.getInstance(WidgetFactory.class)
         		.createTitleBorder("balanceComponent.title", balance.getDate()));
 
-        // Add labels for the table header
-        int row = 0;
-        Border bottomBorder = new LineBorder(LineBorder.LB_BOTTOM, 3);
-        JLabel label = new JLabel(tr.getString("gen.assets"));
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 0, 0));
+        List<Row> leftRows = convertAccountsToRows(balance.getAssets(), balance);
+        List<Row> rightRows = convertAccountsToRows(balance.getLiabilities(), balance);
 
-        label = new JLabel();
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 0, 0));
+        balanceSheet.setLeftRows(leftRows);
+        balanceSheet.setRightRows(rightRows);
+        balanceSheet.update();
 
-        label = new JLabel();
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 0, 0));
+        int row = 5 + Math.max(leftRows.size(), rightRows.size());
 
-        label = new JLabel(tr.getString("gen.liabilities"), SwingConstants.RIGHT);
-        label.setBorder(bottomBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 0, 0));
+        balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalDebtors")),
+            SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalDebtors(date))),
+            SwingUtils.createGBConstraints(2, row, 2, 1, 0.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
         row++;
 
-        // Add the table rows
-        int firstRow = row;
-        Border rightBorder = new CompoundBorder(new LineBorder(LineBorder.LB_RIGHT, 1),
-                new EmptyBorder(0, 0, 0, 5));
-        for (int i=0; i<assetNames.length; i++) {
-            panel.add(new JLabel(assetNames[i]),
-                    SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 20));
-            label = new JLabel(assetAmounts[i], SwingConstants.RIGHT);
-            label.setBorder(rightBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row++;
+        balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalCreditors")),
+            SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalCreditors(date))),
+            SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 0.0,
+                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+        row++;
+    }
+
+    private List<Row> convertAccountsToRows(Account[] accounts, Balance balance) {
+        List<Row> rows = new ArrayList<Row>();
+
+        for (int i=0; i<accounts.length; i++) {
+        	Row row = new Row();
+        	row.description = accounts[i].getId() + " " + accounts[i].getName();
+            row.amount = balance.getAmount(accounts[i]);
+            rows.add(row);
         }
 
-        Border leftBorder = new CompoundBorder(new LineBorder(LineBorder.LB_LEFT, 1),
-                new EmptyBorder(0, 5, 0, 0));
-        int row2 = firstRow;
-        for (int i=0; i<liabilityNames.length; i++)
-        {
-            label = new JLabel(liabilityNames[i]);
-            label.setBorder(leftBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 20));
-            panel.add(new JLabel(liabilityAmounts[i], SwingConstants.RIGHT),
-                    SwingUtils.createGBConstraints(3, row2, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row2++;
-        }
-
-        while (row < row2) {
-            label = new JLabel(" ", SwingConstants.RIGHT);
-            label.setBorder(rightBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row++;
-        }
-        while (row2 < row) {
-            label = new JLabel(" ");
-            label.setBorder(leftBorder);
-            panel.add(label,
-                    SwingUtils.createGBConstraints(2, row2, 1, 1, 1.0, 1.0,
-                            GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                            0, 0, 0, 0));
-            row2++;
-        }
-
-        Border topBorder = new LineBorder(LineBorder.LB_TOP, 1);
-        label = new JLabel(tr.getString("gen.total"));
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 10, 0));
-
-        label = new JLabel(totalAssets, SwingConstants.RIGHT);
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 10, 5));
-
-        label = new JLabel(tr.getString("gen.total"));
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 5, 10, 0));
-
-        label = new JLabel(totalLiabilities, SwingConstants.RIGHT);
-        label.setBorder(topBorder);
-        panel.add(label,
-                SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                        0, 0, 10, 0));
-        row++;
-
-        // Add label to push other labels to the left and top.
-        panel.add(new JLabel(""),
-                SwingUtils.createGBConstraints(5, row, 1, 1, 1.0, 1.0,
-                        GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-                        0, 0, 0, 0));
-        row++;
-        panel.add(new JLabel(tr.getString("balanceComponent.totalDebtors")),
-            SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 1.0,
-                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
-        panel.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalDebtors(date))),
-            SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 1.0,
-                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
-        row++;
-        panel.add(new JLabel(tr.getString("balanceComponent.totalCreditors")),
-            SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 1.0,
-                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
-        panel.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalCreditors(date))),
-            SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 1.0,
-                GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
-        row++;
+        return rows;
     }
 
     /**
@@ -273,8 +150,8 @@ public class BalanceComponent extends JScrollPane implements Closeable {
     public void setBackground(Color color) {
         super.setBackground(color);
         getViewport().setBackground(color);
-        if (panel != null) {
-            panel.setBackground(color);
+        if (balanceSheet != null) {
+            balanceSheet.setBackground(color);
         }
     }
 
