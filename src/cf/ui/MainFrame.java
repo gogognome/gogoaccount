@@ -57,9 +57,7 @@ import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
 import cf.engine.XMLParseException;
 import cf.print.AddressLabelPrinter;
-import cf.ui.dialogs.DateSelectionDialog;
 import cf.ui.dialogs.ReportDialog;
-import cf.ui.dialogs.ViewPartiesOverviewDialog;
 import cf.ui.views.AboutView;
 import cf.ui.views.AccountMutationsView;
 import cf.ui.views.BalanceAndOperationResultView;
@@ -167,8 +165,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		// the view menu
         JMenuItem miViewBalanceAndOpertaionalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
 		JMenuItem miViewAccountOverview = widgetFactory.createMenuItem("mi.viewAccountOverview", this);
-		JMenuItem miViewPartyOverview = widgetFactory.createMenuItem("mi.viewPartyOverview", this);
-		JMenuItem miViewPartiesOverview = widgetFactory.createMenuItem("mi.viewPartiesOverview", this);
+		JMenuItem miViewPartyOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", this);
 
 		// the reporting menu
 		JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", this);
@@ -197,7 +194,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         viewMenu.add(miViewBalanceAndOpertaionalResult);
 		viewMenu.add(miViewAccountOverview);
 		viewMenu.add(miViewPartyOverview);
-		viewMenu.add(miViewPartiesOverview);
 
 		reportingMenu.add(miGenerateInvoices);
 		reportingMenu.add(miGenerateReport);
@@ -233,8 +229,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if ("mi.exit".equals(command)) { handleExit(); }
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
 		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
-		if ("mi.viewPartyOverview".equals(command)) { handleViewPartyOverview(); }
-		if ("mi.viewPartiesOverview".equals(command)) { handleViewPartiesOverview(); }
+		if ("mi.viewInvoicesOverview".equals(command)) { handleViewPartyOverview(); }
 		if ("mi.addJournal".equals(command)) { handleAddJournal(); }
 		if ("mi.editJournals".equals(command)) { handleEditJournals(); }
 		if ("mi.addInvoices".equals(command)) { handleAddInvoices(); }
@@ -459,19 +454,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleViewPartyOverview() {
 		openView(InvoicesPerPartyView.class);
-	}
-
-	private void handleViewPartiesOverview()
-	{
-        DateSelectionDialog dateSelectionDialog =
-            new DateSelectionDialog(this, "mf.selectDateForPartiesOverview");
-        dateSelectionDialog.showDialog();
-        Date date = dateSelectionDialog.getDate();
-        if (date != null)
-        {
-            ViewPartiesOverviewDialog dialog = new ViewPartiesOverviewDialog(this, date);
-            dialog.showDialog();
-        }
 	}
 
 	private void handleAddJournal() {
