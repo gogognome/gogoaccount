@@ -18,16 +18,13 @@ package cf.ui.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagLayout;
 import java.util.Date;
 
-import javax.swing.JLabel;
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.lib.gui.beans.BeanFactory;
-import nl.gogognome.lib.gui.beans.DateSelectionBean;
-import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.awt.layout.VerticalLayout;
+import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
 import cf.engine.Database;
@@ -41,74 +38,71 @@ import cf.ui.components.OperationalResultComponent;
  */
 public class BalanceAndOperationResultView extends View {
 
-    private final static Color BACKGROUND_COLOR = new Color(255, 255, 209);
+	private static final long serialVersionUID = 1L;
 
-    private DateSelectionBean dateSelectionBean;
+	private final static Color BACKGROUND_COLOR = new Color(255, 255, 209);
 
     private Database database;
-
     private DateModel dateModel;
 
     public BalanceAndOperationResultView(Database database) {
         this.database = database;
     }
 
-    /* (non-Javadoc)
-     * @see nl.gogognome.framework.View#getTitle()
-     */
     @Override
 	public String getTitle() {
         return textResource.getString("balanceAndOperationalResultView.title");
     }
 
-    /* (non-Javadoc)
-     * @see nl.gogognome.framework.View#onInit()
-     */
     @Override
 	public void onInit() {
-        setLayout(new BorderLayout());
-        setBackground(BACKGROUND_COLOR);
+    	initModels();
+        addComponents();
+    }
 
-        JPanel datePanel = new JPanel(new GridBagLayout());
-        datePanel.setOpaque(false);
-        datePanel.setBorder(new EmptyBorder(5, 10, 5, 5));
-        datePanel.add(new JLabel(textResource.getString("balanceAndOperationalResultView.selectDate")),
-                SwingUtils.createLabelGBConstraints(0, 0));
+    @Override
+    public void onClose() {
+    }
 
+	private void initModels() {
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
+	}
 
-        dateSelectionBean = BeanFactory.getInstance().createDateSelectionBean(dateModel);
-        datePanel.add(dateSelectionBean,
-                SwingUtils.createLabelGBConstraints(1, 0));
+	private void addComponents() {
+		setLayout(new BorderLayout());
+        setBackground(BACKGROUND_COLOR);
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        datePanel.add(new JLabel(),
-                SwingUtils.createTextFieldGBConstraints(2, 0));
-        add(datePanel, BorderLayout.NORTH);
+        JPanel northPanel = createInputFieldsPanel();
+		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
 
-        JPanel balanceAndOperationResultPanel = new JPanel(new GridBagLayout());
-        balanceAndOperationResultPanel.setBackground(BACKGROUND_COLOR);
+        add(northPanel, BorderLayout.NORTH);
+        add(createBalanceAndOperationalResultPanel(), BorderLayout.CENTER);
+	}
+
+    private JPanel createInputFieldsPanel() {
+		InputFieldsRow row = new InputFieldsRow();
+		addCloseable(row);
+		row.addField("balanceAndOperationalResultView.selectDate", dateModel);
+		return row;
+	}
+
+    private JPanel createBalanceAndOperationalResultPanel() {
+        JPanel panel = new JPanel(new VerticalLayout(10, VerticalLayout.BOTH));
+
+        panel.setBackground(BACKGROUND_COLOR);
         BalanceComponent balanceComponent = new BalanceComponent(database, dateModel);
+        addCloseable(balanceComponent);
         balanceComponent.setBackground(BACKGROUND_COLOR);
-        balanceAndOperationResultPanel.add(balanceComponent,
-            SwingUtils.createPanelGBConstraints(0, 0));
+        panel.add(balanceComponent);
 
         OperationalResultComponent operationalResultComponent =
             new OperationalResultComponent(database, dateModel);
+        addCloseable(operationalResultComponent);
         operationalResultComponent.setBackground(BACKGROUND_COLOR);
-        balanceAndOperationResultPanel.add(operationalResultComponent,
-            SwingUtils.createPanelGBConstraints(0, 1));
+        panel.add(operationalResultComponent);
 
-        add(balanceAndOperationResultPanel, BorderLayout.CENTER);
+        return panel;
     }
-
-    /* (non-Javadoc)
-     * @see nl.gogognome.framework.View#onClose()
-     */
-    @Override
-	public void onClose() {
-        dateSelectionBean = null;
-        database = null;
-    }
-
 }

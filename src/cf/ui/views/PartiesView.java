@@ -46,7 +46,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -256,7 +255,7 @@ public class PartiesView extends View {
         row++;
 
         birthDateModel = new DateModel();
-        dsbBirthDate = BeanFactory.getInstance().createDateSelectionBean(birthDateModel);
+        dsbBirthDate = beanFactory.createDateSelectionBean(birthDateModel);
         dsbBirthDate.addFocusListener(focusListener);
         criteriaPanel.add(widgetFactory.createLabel("partiesView.birthDate", dsbBirthDate),
             SwingUtils.createLabelGBConstraints(0, row));

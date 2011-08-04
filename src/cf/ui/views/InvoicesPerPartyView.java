@@ -20,7 +20,6 @@ package cf.ui.views;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
@@ -33,7 +32,7 @@ import javax.swing.JScrollPane;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
-import nl.gogognome.lib.gui.beans.ValuesEditPanel;
+import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.BooleanModel;
@@ -106,28 +105,12 @@ public class InvoicesPerPartyView extends View {
 	}
 
 	private JPanel createInvoiceSelectionPanel() {
-		JPanel panel = new JPanel(new GridBagLayout());
-		int col = 0;
-
-		ValuesEditPanel vep = new ValuesEditPanel();
-		addCloseable(vep);
-		vep.addField("InvoicesSinglePartyView.party", new PartyBean(database, partyModel));
-		panel.add(vep, createConstraints(col++));
-
-		vep = new ValuesEditPanel();
-		addCloseable(vep);
-		vep.addField("InvoicesSinglePartyView.date", dateModel);
-		panel.add(vep, createConstraints(col++));
-
-		vep = new ValuesEditPanel();
-		addCloseable(vep);
-		vep.addField("InvoicesSinglePartyView.includeClosedInvoices", includeClosedInvoicesModel);
-		panel.add(vep, createConstraints(col++));
-
-		// Add empty label to push the rest of the components to the left of the panel.
-		panel.add(new JLabel(), SwingUtils.createTextFieldGBConstraints(col++, 0));
-
-		return panel;
+		InputFieldsRow row = new InputFieldsRow();
+		addCloseable(row);
+		row.addVariableSizeField("InvoicesSinglePartyView.party", new PartyBean(database, partyModel));
+		row.addField("InvoicesSinglePartyView.date", dateModel);
+		row.addField("InvoicesSinglePartyView.includeClosedInvoices", includeClosedInvoicesModel);
+		return row;
 	}
 
 	private GridBagConstraints createConstraints(int col) {

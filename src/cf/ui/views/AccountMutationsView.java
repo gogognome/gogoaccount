@@ -16,19 +16,17 @@
 */
 package cf.ui.views;
 
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.BorderLayout;
 import java.util.Arrays;
 import java.util.Date;
 
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
+import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
-import nl.gogognome.lib.gui.beans.ValuesEditPanel;
-import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
@@ -50,7 +48,7 @@ public class AccountMutationsView extends View {
 
 	private JTable table;
 	private JScrollPane tableScrollPane;
-	private AccountOverviewTableModel model;
+	private AccountOverviewTableModel tableModel;
 
 	private DateModel dateModel = new DateModel(new Date());
 	private ListModel<Account> accountListModel = new ListModel<Account>();
@@ -76,6 +74,8 @@ public class AccountMutationsView extends View {
 	}
 
 	private void initModels() {
+		tableModel = new AccountOverviewTableModel(database,
+				accountListModel.getSingleSelectedItem(), dateModel.getDate());
 		accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
 		if (!accountListModel.getItems().isEmpty()) {
 			accountListModel.setSelectedIndices(new int[] {0}, null);
@@ -83,28 +83,27 @@ public class AccountMutationsView extends View {
 	}
 
 	private void addComponents() {
-		model = new AccountOverviewTableModel(database, accountListModel.getSingleSelectedItem(), dateModel.getDate());
-		table = widgetFactory.createSortedTable(model);
+		JPanel northPanel = createInputFieldsPanel();
+		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
+
+		table = widgetFactory.createSortedTable(tableModel);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		tableScrollPane = widgetFactory.createScrollPane(table);
 
-		JPanel accountAndDatePanel = new JPanel(new FlowLayout());
-		ValuesEditPanel vep = new ValuesEditPanel();
-		addCloseable(vep);
-		vep.addComboBoxField("AccountMutationsView.account", accountListModel, new AccountFormatter());
-		accountAndDatePanel.add(vep);
+		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		setLayout(new BorderLayout());
+		add(northPanel, BorderLayout.NORTH);
+		add(tableScrollPane, BorderLayout.CENTER);
+	}
 
-		vep = new ValuesEditPanel();
-		addCloseable(vep);
-		vep.addField("AccountMutationsView.date", dateModel);
-		accountAndDatePanel.add(vep);
+	private JPanel createInputFieldsPanel() {
+		InputFieldsRow row = new InputFieldsRow();
+		addCloseable(row);
 
-		setLayout(new GridBagLayout());
-		add(accountAndDatePanel, SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
-                GridBagConstraints.WEST, GridBagConstraints.NONE,
-                10, 10, 10, 10));
-		tableScrollPane = widgetFactory.createScrollPane(table,
-				"AccountMutationsView.initialTableTitle");
-		add(tableScrollPane, SwingUtils.createPanelGBConstraints(0, 1));
+		row.addComboBoxField("AccountMutationsView.account", accountListModel, new AccountFormatter());
+		row.addField("AccountMutationsView.date", dateModel);
+
+		return row;
 	}
 
 	@Override
@@ -132,14 +131,14 @@ public class AccountMutationsView extends View {
 	private void updateTableModel() {
 		Account account = accountListModel.getSingleSelectedItem();
 		Date date = dateModel.getDate();
-		model.setAccountAndDate(account, date);
+		tableModel.setAccountAndDate(account, date);
 
 		if (account != null && date != null) {
 			tableScrollPane.setBorder(widgetFactory.createTitleBorder("vao.accountAtDate",
 			        account.getId() + " - " + account.getName(),
 			        textResource.formatDate("gen.dateFormat", date)));
 		} else {
-			model.clear();
+			tableModel.clear();
 			tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
 		}
 	}

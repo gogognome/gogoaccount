@@ -22,7 +22,7 @@ import javax.swing.JLabel;
 
 import nl.gogognome.cf.services.ImportBankStatementService;
 import nl.gogognome.cf.services.importers.ImportedTransaction;
-import nl.gogognome.lib.gui.beans.ValuesEditPanel;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
@@ -82,15 +82,15 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	private void addImportedTransactionComponent() {
-		ValuesEditPanel vep = new ValuesEditPanel();
+		InputFieldsColumn vep = new InputFieldsColumn();
 		addCloseable(vep);
-		vep.addField("AddJournalForTransactionView.date", date);
+		vep.addVariableSizeField("AddJournalForTransactionView.date", date);
 		// Order is "to account" and then "from account". This corresponds typically
 		// with values on the debet and credit sides respectively.
-		vep.addField("AddJournalForTransactionView.toAccount", toAccount);
-		vep.addField("AddJournalForTransactionView.fromAccount", fromAccount);
-		vep.addField("AddJournalForTransactionView.amount", amount);
-		vep.addField("AddJournalForTransactionView.description", description);
+		vep.addVariableSizeField("AddJournalForTransactionView.toAccount", toAccount);
+		vep.addVariableSizeField("AddJournalForTransactionView.fromAccount", fromAccount);
+		vep.addVariableSizeField("AddJournalForTransactionView.amount", amount);
+		vep.addVariableSizeField("AddJournalForTransactionView.description", description);
 		vep.setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("AddJournalForTransactionView.transaction"));
 
 		add(vep, BorderLayout.NORTH);

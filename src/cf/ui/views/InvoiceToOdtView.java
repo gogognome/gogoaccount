@@ -23,7 +23,7 @@ import java.util.Date;
 import javax.swing.AbstractAction;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.lib.gui.beans.ValuesEditPanel;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
@@ -136,7 +136,7 @@ public class InvoiceToOdtView extends View {
      */
     @Override
     public void onInit() {
-        ValuesEditPanel vep = new ValuesEditPanel();
+        InputFieldsColumn vep = new InputFieldsColumn();
         addCloseable(vep);
 
         vep.addField("invoiceToOdtView.templateFilename", templateFileModel);

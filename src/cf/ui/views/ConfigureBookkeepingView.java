@@ -43,7 +43,6 @@ import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.cf.services.DeleteException;
 import nl.gogognome.cf.services.ServiceException;
-import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -82,7 +81,7 @@ public class ConfigureBookkeepingView extends View {
 
     private JTextField tfDescription = new JTextField();
     private DateSelectionBean dsbStartDate =
-    	BeanFactory.getInstance().createDateSelectionBean(startDateModel);
+    	beanFactory.createDateSelectionBean(startDateModel);
     private JTextField tfCurrency = new JTextField();
 
     private JButton editAccountButton;

@@ -17,8 +17,6 @@
 package cf.ui.components;
 
 import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Date;
@@ -31,7 +29,9 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
+import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
@@ -48,24 +48,16 @@ import cf.engine.DatabaseListener;
  *
  * @author Sander Kooijmans
  */
-public class BalanceComponent extends JScrollPane {
+public class BalanceComponent extends JScrollPane implements Closeable {
 
-    /** The panel that contains the components of the <code>BalanceComponent</code>. */
-    private JPanel panel;
+	private static final long serialVersionUID = 1L;
 
-    private JPanel tempPanel;
-
-    /**
-     * The database used to create the balance. Changes in this database will
-     * lead to updates on this component.
-     */
+	private JPanel panel;
     private Database database;
-
-    /**
-     * The date model used to create the balance. Changes in this model will
-     * lead to updates on this component.
-     */
     private DateModel dateModel;
+
+    private DatabaseListener databaseListener;
+    private ModelChangeListener modelChangeListener;
 
     /**
      * Creates a new <code>BalanceComponent</code>.
@@ -77,37 +69,29 @@ public class BalanceComponent extends JScrollPane {
         this.database = database;
         this.dateModel = dateModel;
 
-        database.addListener(new DatabaseListener() {
-            @Override
-			public void databaseChanged(Database db) {
-                initializeValues();
-                validateTree();
-            }
-        });
-
-        dateModel.addModelChangeListener(new ModelChangeListener() {
-            @Override
-			public void modelChanged(AbstractModel model) {
-                if (((DateModel)(model)).getDate() != null) {
-	                initializeValues();
-	                validateTree();
-                }
-            }
-        });
-
         panel = new JPanel(new GridBagLayout());
-        panel.setBackground(getBackground());
+        panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        tempPanel.setBackground(getBackground());
-        tempPanel.add(panel);
-        setViewportView(tempPanel);
+        setViewportView(panel);
 
-        initializeValues();
+        initComponents();
+        addListeners();
     }
 
-    /** Initializes the components based on the values of the models. */
-    private void initializeValues() {
+    private void addListeners() {
+        databaseListener = new DatabaseListenerImpl();
+        database.addListener(databaseListener);
+
+        modelChangeListener = new ModelChangeListenerImpl();
+        dateModel.addModelChangeListener(modelChangeListener);
+    }
+
+    private void removeListeners() {
+    	dateModel.removeModelChangeListener(modelChangeListener);
+    	database.removeListener(databaseListener);
+    }
+
+    private void initComponents() {
         Date date = dateModel.getDate();
         if (date == null) {
             return; // do not change the current balance if the date is invalid
@@ -139,48 +123,39 @@ public class BalanceComponent extends JScrollPane {
         // The component may have been initialized before. Therefore, remove all components.
         panel.removeAll();
 
-        // Add label for the date
-        int row = 0;
-
-        JLabel titleLabel = new JLabel(tr.getString("balanceComponent.title", balance.getDate()));
-        Font f = titleLabel.getFont();
-        titleLabel.setFont(f.deriveFont(Font.BOLD).deriveFont(f.getSize() * 140.0f / 100.0f));
-
-        panel.add(titleLabel,
-                SwingUtils.createGBConstraints(0, row, 4, 1, 1.0, 0.0,
-                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                        10, 0, 10, 0));
-        row++;
+        setBorder(Factory.getInstance(WidgetFactory.class)
+        		.createTitleBorder("balanceComponent.title", balance.getDate()));
 
         // Add labels for the table header
+        int row = 0;
         Border bottomBorder = new LineBorder(LineBorder.LB_BOTTOM, 3);
         JLabel label = new JLabel(tr.getString("gen.assets"));
         label.setBorder(bottomBorder);
         panel.add(label,
                 SwingUtils.createGBConstraints(0, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
+                        0, 0, 0, 0));
 
         label = new JLabel();
         label.setBorder(bottomBorder);
         panel.add(label,
                 SwingUtils.createGBConstraints(1, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
+                        0, 0, 0, 0));
 
         label = new JLabel();
         label.setBorder(bottomBorder);
         panel.add(label,
                 SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
+                        0, 0, 0, 0));
 
         label = new JLabel(tr.getString("gen.liabilities"), SwingConstants.RIGHT);
         label.setBorder(bottomBorder);
         panel.add(label,
                 SwingUtils.createGBConstraints(3, row, 1, 1, 1.0, 1.0,
                         GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL,
-                        10, 0, 0, 0));
+                        0, 0, 0, 0));
         row++;
 
         // Add the table rows
@@ -301,8 +276,28 @@ public class BalanceComponent extends JScrollPane {
         if (panel != null) {
             panel.setBackground(color);
         }
-        if (tempPanel != null) {
-            tempPanel.setBackground(color);
-        }
     }
+
+    @Override
+    public void close() {
+    	removeListeners();
+    }
+
+    private final class ModelChangeListenerImpl implements ModelChangeListener {
+		@Override
+		public void modelChanged(AbstractModel model) {
+		    if (((DateModel)(model)).getDate() != null) {
+		        initComponents();
+		        validateTree();
+		    }
+		}
+	}
+
+	private final class DatabaseListenerImpl implements DatabaseListener {
+		@Override
+		public void databaseChanged(Database db) {
+		    initComponents();
+		    validateTree();
+		}
+	}
 }

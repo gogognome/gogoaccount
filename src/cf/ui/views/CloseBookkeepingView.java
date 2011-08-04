@@ -24,7 +24,7 @@ import java.util.Date;
 import javax.swing.AbstractAction;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.lib.gui.beans.ValuesEditPanel;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -58,7 +58,7 @@ public class CloseBookkeepingView extends View {
     private AccountComboBox accountComboBox;
 
     /** The value edit panel containig the input fields. */
-    private ValuesEditPanel valuesEditPanel;
+    private InputFieldsColumn valuesEditPanel;
 
     /** Indicates whether the user entered data successfully and selected the Ok action. */
     private boolean dataSuccessfullyEntered;
@@ -88,10 +88,10 @@ public class CloseBookkeepingView extends View {
     public void onInit() {
         dateModel.setDate(DateUtil.addYears(database.getStartOfPeriod(), 1), null);
 
-        valuesEditPanel = new ValuesEditPanel();
+        valuesEditPanel = new InputFieldsColumn();
         valuesEditPanel.addField("closeBookkeepingView.date", dateModel);
         accountComboBox = new AccountComboBox(database);
-        valuesEditPanel.addField("closeBookkeepingView.equityAccount", accountComboBox);
+        valuesEditPanel.addVariableSizeField("closeBookkeepingView.equityAccount", accountComboBox);
 
         initDescription();
         valuesEditPanel.addField("closeBookkeepingView.description", descriptionModel);

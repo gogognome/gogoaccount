@@ -36,7 +36,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.table.AbstractTableModel;
 
-import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -161,7 +160,7 @@ public class EditInvoiceView extends View {
 
         dateModel = new DateModel();
         dateModel.setDate(date, null);
-        DateSelectionBean sbDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
+        DateSelectionBean sbDate = beanFactory.createDateSelectionBean(dateModel);
         label = widgetFactory.createLabel("editInvoiceView.issueDate", sbDate);
         topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         topPanel.add(sbDate, SwingUtils.createLabelGBConstraints(1, row));

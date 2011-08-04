@@ -35,7 +35,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import nl.gogognome.lib.gui.beans.ValuesEditPanel;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -89,7 +89,7 @@ public class EditJournalView extends View {
     /** The journal edited by the journal. This will only be filled when the user is editing a journal. */
     protected Journal editedJournal;
 
-    private ValuesEditPanel valuesEditPanel;
+    private InputFieldsColumn valuesEditPanel;
 
     /**
      * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
@@ -139,7 +139,7 @@ public class EditJournalView extends View {
      * Adds components to the view.
      */
     private void addComponents() {
-        ValuesEditPanel vep = new ValuesEditPanel();
+        InputFieldsColumn vep = new InputFieldsColumn();
         addCloseable(vep);
         vep.addField("gen.id", idModel);
         vep.addField("gen.date", dateModel);

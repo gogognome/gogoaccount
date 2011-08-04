@@ -30,6 +30,7 @@ import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.ui.components.BalanceComponent;
 
@@ -77,7 +78,7 @@ public class BalanceView extends View {
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
 
-        dateSelectionBean = BeanFactory.getInstance().createDateSelectionBean(dateModel);
+        dateSelectionBean = Factory.getInstance(BeanFactory.class).createDateSelectionBean(dateModel);
         datePanel.add(dateSelectionBean,
                 SwingUtils.createLabelGBConstraints(1, 0));
 

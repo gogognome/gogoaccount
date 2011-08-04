@@ -20,6 +20,7 @@ import java.util.Locale;
 
 import javax.swing.JFrame;
 
+import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.plaf.DefaultLookAndFeel;
@@ -68,6 +69,7 @@ public class Start {
 		Factory.bindSingleton(TextResource.class, tr);
 		Factory.bindSingleton(WidgetFactory.class, new WidgetFactory(tr));
 		Factory.bindSingleton(AmountFormat.class, new AmountFormat(tr.getLocale()));
+		Factory.bindSingleton(BeanFactory.class, new BeanFactory());
 	}
 
 	/**

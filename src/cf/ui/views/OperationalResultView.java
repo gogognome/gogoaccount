@@ -25,7 +25,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
@@ -77,7 +76,7 @@ public class OperationalResultView extends View {
         dateModel = new DateModel();
         dateModel.setDate(new Date(), null);
 
-        dateSelectionBean = BeanFactory.getInstance().createDateSelectionBean(dateModel);
+        dateSelectionBean = beanFactory.createDateSelectionBean(dateModel);
         datePanel.add(dateSelectionBean,
                 SwingUtils.createLabelGBConstraints(1, 0));
 

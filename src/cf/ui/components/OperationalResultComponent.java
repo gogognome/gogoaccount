@@ -17,8 +17,6 @@
 package cf.ui.components;
 
 import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.Date;
@@ -32,7 +30,9 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
@@ -49,28 +49,20 @@ import cf.engine.OperationalResult;
  *
  * @author Sander Kooijmans
  */
-public class OperationalResultComponent extends JScrollPane {
+public class OperationalResultComponent extends JScrollPane implements Closeable {
 
-    /** The panel that contains the components of the <code>OperationalResultComponent</code>. */
+	private static final long serialVersionUID = 1L;
+
     private JPanel panel;
-
-    private JPanel tempPanel;
-
-    /**
-     * The database used to create the operational result. Changes in this database will
-     * lead to updates on this component.
-     */
     private Database database;
-
-    /**
-     * The date model used to create the operational result. Changes in this model will
-     * lead to updates on this component.
-     */
     private DateModel dateModel;
+
+    private DatabaseListener databaseListener;
+    private ModelChangeListener modelChangeListener;
 
     /**
      * Creates a new <code>OperationalResultComponent</code>.
-     * @param database the datebase used to create the operational result
+     * @param database the database used to create the operational result
      * @param dateModel the date model used to determine the date of the operational result
      */
     public OperationalResultComponent(Database database, DateModel dateModel) {
@@ -78,36 +70,34 @@ public class OperationalResultComponent extends JScrollPane {
         this.database = database;
         this.dateModel = dateModel;
 
-        database.addListener(new DatabaseListener() {
-            @Override
-			public void databaseChanged(Database db) {
-                initializeValues();
-                validateTree();
-            }
-        });
-
-        dateModel.addModelChangeListener(new ModelChangeListener() {
-            @Override
-			public void modelChanged(AbstractModel model) {
-                if (((DateModel)(model)).getDate() != null) {
-	                initializeValues();
-	                validateTree();
-                }
-            }
-        });
-
         panel = new JPanel(new GridBagLayout());
-        panel.setBackground(getBackground());
+        panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        tempPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        tempPanel.setBackground(getBackground());
-        tempPanel.add(panel);
-        setViewportView(tempPanel);
+        setViewportView(panel);
 
-        initializeValues();
+        initComponents();
+        addListeners();
     }
 
-    private void initializeValues() {
+    private void addListeners() {
+        databaseListener = new DatabaseListenerImpl();
+        database.addListener(databaseListener);
+
+        modelChangeListener = new ModelChangeListenerImpl();
+        dateModel.addModelChangeListener(modelChangeListener);
+    }
+
+    @Override
+    public void close() {
+    	removeListeners();
+    }
+
+    private void removeListeners() {
+    	dateModel.removeModelChangeListener(modelChangeListener);
+    	database.removeListener(databaseListener);
+    }
+
+    private void initComponents() {
         Date date = dateModel.getDate();
         if (date == null) {
             return; // do not change the current operational result if the date is invalid
@@ -116,7 +106,6 @@ public class OperationalResultComponent extends JScrollPane {
         OperationalResult operationalResult = database.getOperationalResult(date);
         TextResource tr = Factory.getInstance(TextResource.class);
         AmountFormat af = Factory.getInstance(AmountFormat.class);
-        Database database = Database.getInstance();
         Account[] expenses = database.getExpenses();
         Account[] revenues = database.getRevenues();
 
@@ -142,19 +131,11 @@ public class OperationalResultComponent extends JScrollPane {
         // The component may have been initialized before. Therefore, remove all components.
         panel.removeAll();
 
-        // Add label for the date
-        int row = 0;
-        JLabel titleLabel = new JLabel(tr.getString("operationalResultComponent.title", operationalResult.getDate()));
-        Font f = titleLabel.getFont();
-        titleLabel.setFont(f.deriveFont(Font.BOLD).deriveFont(f.getSize() * 140.0f / 100.0f));
-
-        panel.add(titleLabel,
-                SwingUtils.createGBConstraints(0, row, 4, 1, 1.0, 0.0,
-                        GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                        10, 0, 10, 0));
-        row++;
+        setBorder(Factory.getInstance(WidgetFactory.class)
+        		.createTitleBorder("operationalResultComponent.title", operationalResult.getDate()));
 
         // Add labels for the table header
+        int row = 0;
         Border bottomBorder = new LineBorder(LineBorder.LB_BOTTOM, 3);
         JLabel label = new JLabel(tr.getString("gen.expenses"));
         label.setBorder(bottomBorder);
@@ -288,8 +269,23 @@ public class OperationalResultComponent extends JScrollPane {
         if (panel != null) {
             panel.setBackground(color);
         }
-        if (tempPanel != null) {
-            tempPanel.setBackground(color);
-        }
     }
+
+    private final class ModelChangeListenerImpl implements ModelChangeListener {
+		@Override
+		public void modelChanged(AbstractModel model) {
+		    if (((DateModel)(model)).getDate() != null) {
+		        initComponents();
+		        validateTree();
+		    }
+		}
+	}
+
+	private final class DatabaseListenerImpl implements DatabaseListener {
+		@Override
+		public void databaseChanged(Database db) {
+		    initComponents();
+		    validateTree();
+		}
+	}
 }

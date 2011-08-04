@@ -31,7 +31,6 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
@@ -160,7 +159,7 @@ public class EditPartyView extends View {
         row++;
 
         dateModel = new DateModel();
-        DateSelectionBean dsbBirthDate = BeanFactory.getInstance().createDateSelectionBean(dateModel);
+        DateSelectionBean dsbBirthDate = beanFactory.createDateSelectionBean(dateModel);
         label = widgetFactory.createLabel("editPartyView.birthDate", dsbBirthDate);
         textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         textfieldPanel.add(dsbBirthDate, SwingUtils.createLabelGBConstraints(1, row));

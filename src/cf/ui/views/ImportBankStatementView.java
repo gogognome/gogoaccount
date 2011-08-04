@@ -40,7 +40,7 @@ import nl.gogognome.cf.services.importers.ImportedTransaction;
 import nl.gogognome.cf.services.importers.RabobankCSVImporter;
 import nl.gogognome.cf.services.importers.TransactionImporter;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
-import nl.gogognome.lib.gui.beans.ValuesEditPanel;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
@@ -86,7 +86,7 @@ public class ImportBankStatementView extends View
 
     Database database;
 
-    private ValuesEditPanel vep;
+    private InputFieldsColumn vep;
 
 	/**
 	 * Creates the view.
@@ -116,7 +116,7 @@ public class ImportBankStatementView extends View
 	}
 
 	private void addComponents() {
-		vep = new ValuesEditPanel();
+		vep = new InputFieldsColumn();
 		vep.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
 		vep.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
 				new ImporterFormatter());

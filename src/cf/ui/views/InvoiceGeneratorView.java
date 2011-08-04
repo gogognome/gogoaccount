@@ -41,7 +41,6 @@ import javax.swing.border.TitledBorder;
 import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.cf.services.InvoiceLineDefinition;
 import nl.gogognome.cf.services.InvoiceService;
-import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -138,7 +137,7 @@ public class InvoiceGeneratorView extends View {
         tfId.setToolTipText(textResource.getString("invoiceGeneratorView.tooltip"));
         invoiceGenerationDateModel = new DateModel();
         invoiceGenerationDateModel.setDate(new Date(), null);
-        DateSelectionBean dateSelectionBean = BeanFactory.getInstance().createDateSelectionBean(invoiceGenerationDateModel);
+        DateSelectionBean dateSelectionBean = beanFactory.createDateSelectionBean(invoiceGenerationDateModel);
         panel.add(widgetFactory.createLabel("invoiceGeneratorView.date", dateSelectionBean),
                 SwingUtils.createLabelGBConstraints(0, 1));
         panel.add(dateSelectionBean,
