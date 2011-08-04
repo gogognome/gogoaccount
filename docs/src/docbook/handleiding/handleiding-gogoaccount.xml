@@ -315,7 +315,7 @@
       </screenshot>
        
       <para>In dit scherm moeten een aantal gegevens worden ingevuld:
-      id is een korte code of omschrijving van de journaalp. Deze id hoeft niet 
+      id is een korte code of omschrijving van de journaal. Deze id hoeft niet 
       uniek te zijn voor alle journalen. Gebruik bijvoorbeeld een afkorting
       van een rekening gevolgd door het volgnummer van een bankafschrift voor
       journalen die u op basis van dat bankafschrift toevoegt. Dan kunt u later
@@ -353,13 +353,21 @@
       </screenshot>
 
     </section>
-    <section id="section-startbalans">
-	  <title>Relaties</title>
+  </chapter>
+  
+  <chapter id="chapter-relaties">
+  <title>Relaties</title>
+    <section id="section-relatiesintro">
+	  <title>Introductie</title>
        
       <para>Voordat we facturen kunnen genereren moeten we eerst de namen
       en adressen invoeren van de personen die de facturen moeten gaan betalen.
       Dergelijke personen, bedrijven of instanties worden in gogo account
       relaties genoemd.</para>
+
+    </section>
+    <section id="section-relatiescreatie">
+	  <title>Relaties aanmaken</title>
       
       <para>Om relaties aan te maken kiest u "Bewerken" en dan "Bewerken relaties...".
       Het volgende scherm verschijnt dan:</para>
@@ -403,4 +411,31 @@
       </screenshot>
     </section>
   </chapter>
+
+  <chapter id="chapter-facturen">
+  <title>Facturen</title>
+    <section id="section-facturenintro">
+	  <title>Introductie</title>
+       
+      <para>Nu de boekhouding voor de vereniging "Zet 'm op" opgezet is,
+      wordt het tijd om de leden een factuur te sturen voor de contributie.</para>
+      
+      <para>Facturen worden aangemaakt met speciale journalen. Als facturen eenmaal
+      zijn aangemaakt, dan kun je daarna een OpenDocument Text bestand genereren
+      voor de facturen. Met LibreOffice (voorheen heette dit OpenOffice) kun
+      je dan de facturen dan afdrukken op papier.</para>
+
+    </section>
+    <section id="section-facturenaanmaken">
+	  <title>Aanmaken facturen</title>
+      
+      <para>Facturen worden aangemaakt met speciale journalen. Dit gaat als volgt:
+      Kies in het menu voor "Bewerken" en daarna voor "Toevoegen facturen...".</para>
+
+      <screenshot>
+        <graphic fileref="images/screen-facturen1.png"></graphic>
+      </screenshot>
+    </section>
+  </chapter>
+        
 </book>
