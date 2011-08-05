@@ -349,7 +349,7 @@ public class EditInvoiceView extends View {
         try {
              amount = Factory.getInstance(AmountFormat.class).parse(tfAmount.getText(), database.getCurrency());
         } catch (ParseException e) {
-            MessageDialog.showMessage(this, "gen.warning", "ejid.invalidAmount");
+            MessageDialog.showMessage(this, "gen.warning", "gen.invalidAmount");
             return;
         }
         String[] descriptions = tableModel.getDescriptions();

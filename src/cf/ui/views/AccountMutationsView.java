@@ -26,7 +26,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
-import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
@@ -34,6 +33,7 @@ import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import cf.engine.Account;
 import cf.engine.Database;
+import cf.ui.components.AccountFormatter;
 
 /**
  * This view shows all mutations for an account.
@@ -100,7 +100,8 @@ public class AccountMutationsView extends View {
 		InputFieldsRow row = new InputFieldsRow();
 		addCloseable(row);
 
-		row.addComboBoxField("AccountMutationsView.account", accountListModel, new AccountFormatter());
+		row.addComboBoxField("AccountMutationsView.account", accountListModel,
+				new AccountFormatter());
 		row.addField("AccountMutationsView.date", dateModel);
 
 		return row;
@@ -141,14 +142,5 @@ public class AccountMutationsView extends View {
 			tableModel.clear();
 			tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
 		}
-	}
-
-	private static class AccountFormatter implements ObjectFormatter<Account> {
-
-		@Override
-		public String format(Account a) {
-			return a != null ? a.getId() + ' ' + a.getName() : "";
-		}
-
 	}
 }

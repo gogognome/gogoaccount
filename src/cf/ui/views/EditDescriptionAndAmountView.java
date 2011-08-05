@@ -134,7 +134,7 @@ public class EditDescriptionAndAmountView extends View {
         try {
             editedAmount = Factory.getInstance(AmountFormat.class).parse(tfAmount.getText(), currency);
         } catch (ParseException e) {
-            MessageDialog.showMessage(this, "gen.warning", textResource.getString("ejid.invalidAmount"));
+            MessageDialog.showMessage(this, "gen.warning", textResource.getString("gen.invalidAmount"));
             return;
         }
         editedDescription = tfDescription.getText();

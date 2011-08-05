@@ -65,7 +65,7 @@ public class InvoiceBean extends JPanel {
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
-        tfDescription = new JTextField();
+        tfDescription = new JTextField(20);
         tfDescription.setEditable(false);
         tfDescription.setFocusable(false);
 

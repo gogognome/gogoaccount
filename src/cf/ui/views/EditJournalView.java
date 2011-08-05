@@ -42,11 +42,11 @@ import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.swing.views.ViewDialog;
 import cf.engine.Database;
 import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
-import cf.ui.dialogs.EditJournalItemDialog;
 import cf.ui.dialogs.ItemsTableModel;
 
 /**
@@ -56,7 +56,9 @@ import cf.ui.dialogs.ItemsTableModel;
  */
 public class EditJournalView extends View {
 
-    /** The database. */
+	private static final long serialVersionUID = 1L;
+
+	/** The database. */
     protected Database database;
 
     /** The id of the title. */
@@ -324,10 +326,11 @@ public class EditJournalView extends View {
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() {
     	JournalItem defaultItem = createDefaultItemToBeAdded();
+    	EditJournalItemView view = new EditJournalItemView(database, defaultItem);
+    	ViewDialog dialog = new ViewDialog(this, view);
+    	dialog.showDialog();
 
-        EditJournalItemDialog dialog = new EditJournalItemDialog(this, database, "ajd.addJournalItem", defaultItem);
-        dialog.showDialog();
-        JournalItem item = dialog.getEnteredJournalItem();
+        JournalItem item = view.getEnteredJournalItem();
         if (item != null) {
             itemsTableModel.addItem(item);
         }
@@ -348,10 +351,11 @@ public class EditJournalView extends View {
         int row = itemsTable.getSelectedRow();
         JournalItem item = itemsTableModel.getItem(row);
         if (item != null) {
-	        EditJournalItemDialog dialog =
-	            new EditJournalItemDialog(this, database, "ajd.editJournalItem", item);
-	        dialog.showDialog();
-	        item = dialog.getEnteredJournalItem();
+        	EditJournalItemView view = new EditJournalItemView(database, item);
+        	ViewDialog dialog = new ViewDialog(this, view);
+        	dialog.showDialog();
+
+	        item = view.getEnteredJournalItem();
 	        if (item != null) {
 	            itemsTableModel.updateItem(row, item);
 	        }
