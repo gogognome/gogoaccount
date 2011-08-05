@@ -16,7 +16,6 @@
 */
 package cf.ui.views;
 
-import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
@@ -32,7 +31,6 @@ import javax.swing.SwingConstants;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
@@ -41,28 +39,20 @@ import nl.gogognome.lib.util.Factory;
  * This view allows the user to edit a description and amount. It is typically used
  * for creating or updating invoices.
  */
-public class EditDescriptionAndAmountView extends View {
+public class EditDescriptionAndAmountView extends OkCancelView {
 
-    /** The id of the title. */
+	private static final long serialVersionUID = 1L;
+
     private String titleId;
 
     private String initialDescription;
-
     private Amount initialAmount;
-
     private Currency currency;
 
     private JTextField tfDescription;
-
     private JTextField tfAmount;
 
-    /** The description as entered by the user or <code>null</code> if the user cancelled the view. */
     private String editedDescription;
-
-    /**
-     * The amount as entered by the user; <code>null</code> if the user cancelled the view or
-     * if the user did not enter an amount.
-     */
     private Amount editedAmount;
 
     public EditDescriptionAndAmountView(String titleId, Currency currency) {
@@ -88,15 +78,18 @@ public class EditDescriptionAndAmountView extends View {
 
     @Override
     public void onInit() {
-        // Create panel with ID, issue date, concerning party, paying party and amount to be paid.
-        GridBagLayout gbl = new GridBagLayout();
-        JPanel topPanel = new JPanel(gbl);
+    	addComponents();
+    }
+
+    @Override
+	protected java.awt.Component createCenterComponent() {
+        JPanel panel = new JPanel(new GridBagLayout());
 
         int row = 0;
         tfDescription = new JTextField(initialDescription);
         JLabel label = widgetFactory.createLabel("editDescriptionAndAmountView.description", tfDescription);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, row));
+        panel.add(label, SwingUtils.createLabelGBConstraints(0, row));
+        panel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         String amount;
@@ -107,8 +100,8 @@ public class EditDescriptionAndAmountView extends View {
         }
         tfAmount = new JTextField(amount);
         label = widgetFactory.createLabel("editDescriptionAndAmountView.amount", tfAmount);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(tfAmount, SwingUtils.createTextFieldGBConstraints(1, row));
+        panel.add(label, SwingUtils.createLabelGBConstraints(0, row));
+        panel.add(tfAmount, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
@@ -122,15 +115,11 @@ public class EditDescriptionAndAmountView extends View {
         button = widgetFactory.createButton("gen.cancel", closeAction);
         buttonPanel.add(button);
 
-        setLayout(new BorderLayout());
-        add(topPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
+        return panel;
     }
 
-    /**
-     * This method is called when the user selects the Ok action.
-     */
-    private void onOk() {
+    @Override
+	protected void onOk() {
         try {
             editedAmount = Factory.getInstance(AmountFormat.class).parse(tfAmount.getText(), currency);
         } catch (ParseException e) {

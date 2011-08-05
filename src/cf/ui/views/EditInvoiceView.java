@@ -17,6 +17,7 @@
 package cf.ui.views;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
@@ -41,7 +42,6 @@ import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
-import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
@@ -56,42 +56,29 @@ import cf.ui.components.PartySelectorListener;
 /**
  * This class lets the user edit an existing invoice.
  */
-public class EditInvoiceView extends View {
+public class EditInvoiceView extends OkCancelView {
 
-    /** The database. */
-    private Database database;
+	private static final long serialVersionUID = 1L;
 
-    /** The id of the title. */
+	private Database database;
+
     private String titleId;
 
-    /** The innvoice from which the initial values are taken. */
     private Invoice initialInvoice;
 
-    /** Text field for the id. */
     private JTextField tfId;
-
-    /** The date mdoel for the issue date. */
-    private DateModel dateModel;
-
-    /** The party selector for the party for whom the invoice is created. */
-    private PartySelector psConcerningParty;
-
-    /** The party selector for the  party that has to pay the invoice. */
-    private PartySelector psPayingParty;
-
-    /** Listener for changes in the concerning party. */
-    private PartySelectorListener concerningPartyListener;
-
-    /** The text field for the total amount to be paid. */
     private JTextField tfAmount;
 
-    /** The table with descriptions and amounts. */
-    private JTable table;
+    private DateModel dateModel;
 
-    /** The table model for the descriptions and amounts. */
+    private PartySelector psConcerningParty;
+    private PartySelector psPayingParty;
+
+    private PartySelectorListener concerningPartyListener;
+
+    private JTable table;
     private DescriptionAndAmountTableModel tableModel;
 
-    /** The invoice as entered by the user or <code>null</code> if the user cancelled the view. */
     private Invoice editedInvoice;
 
     /**
@@ -123,9 +110,27 @@ public class EditInvoiceView extends View {
 
     @Override
     public void onInit() {
-        // Create panel with ID, issue date, concerning party, paying party and amount to be paid.
-        GridBagLayout gbl = new GridBagLayout();
-        JPanel topPanel = new JPanel(gbl);
+    	addComponents();
+        addListeners();
+    }
+
+	private void addListeners() {
+		// Add listener that copies the concerning party to the paying party if the paying
+        // party has not been selected yet.
+        concerningPartyListener = new PartySelectorListener() {
+            @Override
+			public void onSelectedPartyChanged(Party newParty) {
+                if (psPayingParty.getSelectedParty() == null) {
+                    psPayingParty.setSelectedParty(newParty);
+                }
+            }
+        };
+        psConcerningParty.addListener(concerningPartyListener);
+	}
+
+    @Override
+    protected Component createNorthComponent() {
+        JPanel topPanel = new JPanel(new GridBagLayout());
 
         String id;
         Date date;
@@ -147,6 +152,7 @@ public class EditInvoiceView extends View {
             payingParty = null;
             amount = "";
         }
+
         tfId = widgetFactory.createTextField(id);
         if (initialInvoice != null) {
             tfId.setEditable(false); // prevent changing the id of an existing invoice
@@ -186,6 +192,11 @@ public class EditInvoiceView extends View {
         topPanel.add(tfAmount, SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
+    	return topPanel;
+    }
+
+    @Override
+	protected Component createCenterComponent() {
         // Create panel with descriptions and amounts table.
         JPanel middlePanel = new JPanel(new BorderLayout());
         List<String> descriptions = new LinkedList<String>();
@@ -226,35 +237,7 @@ public class EditInvoiceView extends View {
 
         middlePanel.add(buttonPanel, BorderLayout.EAST);
 
-        // Create button panel with ok and cancel buttons.
-        buttonPanel = new ButtonPanel(SwingConstants.CENTER);
-        button = widgetFactory.createButton("gen.ok", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent event) {
-                onOk();
-            }
-        });
-        buttonPanel.add(button);
-        button = widgetFactory.createButton("gen.cancel", closeAction);
-        buttonPanel.add(button);
-
-        // Put all panels on the view.
-        setLayout(new BorderLayout());
-        add(topPanel, BorderLayout.NORTH);
-        add(middlePanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        // Add listener that copies the concerning party to the paying party if the paying
-        // party has not been selected yet.
-        concerningPartyListener = new PartySelectorListener() {
-            @Override
-			public void onSelectedPartyChanged(Party newParty) {
-                if (psPayingParty.getSelectedParty() == null) {
-                    psPayingParty.setSelectedParty(newParty);
-                }
-            }
-        };
-        psConcerningParty.addListener(concerningPartyListener);
+        return middlePanel;
     }
 
     /**
@@ -318,10 +301,8 @@ public class EditInvoiceView extends View {
         }
     }
 
-    /**
-     * This method is called when the user has finished editing the invoice and accepts the new values.
-     */
-    private void onOk() {
+    @Override
+	protected void onOk() {
         String id = tfId.getText();
         if (id.length() == 0) {
             MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noIdEntered");

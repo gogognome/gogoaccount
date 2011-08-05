@@ -36,7 +36,15 @@ public abstract class OkCancelView extends View {
 		JPanel buttonPanel = createButtonPanel();
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
-		add(createCenterComponent(), BorderLayout.CENTER);
+		Component comp = createNorthComponent();
+		if (comp != null) {
+			add(comp, BorderLayout.NORTH);
+		}
+
+		comp = createCenterComponent();
+		if (comp != null) {
+			add(comp, BorderLayout.CENTER);
+		}
 		add(buttonPanel, BorderLayout.SOUTH);
 	}
 
@@ -48,7 +56,16 @@ public abstract class OkCancelView extends View {
 
 	/**
 	 * This method must create the component to be placed
-	 * above the ok and cancel buttons.
+	 * at the top of the view.
+	 * @return the component
+	 */
+	protected Component createNorthComponent() {
+		return null;
+	}
+
+	/**
+	 * This method must create the component to be placed
+	 * above the ok and cancel buttons (in the center of the view).
 	 * @return the component
 	 */
 	protected abstract Component createCenterComponent();

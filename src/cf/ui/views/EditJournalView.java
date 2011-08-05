@@ -306,7 +306,7 @@ public class EditJournalView extends View {
     private Journal getJournalFromDialog() {
         Date date = dateModel.getDate();
         if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError", textResource.getString("gen.invalidDate"));
+            MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
             return null;
         }
 
@@ -318,7 +318,7 @@ public class EditJournalView extends View {
             return new Journal(id, description, date, items, idOfCreatedInvoice);
         }
         catch (IllegalArgumentException e) {
-            MessageDialog.showMessage(this, "gen.titleError", textResource.getString("gen.itemsNotInBalance"));
+            MessageDialog.showMessage(this, "gen.titleError", "gen.itemsNotInBalance");
             return null;
         }
     }
