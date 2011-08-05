@@ -42,6 +42,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.cf.services.CreationException;
+import nl.gogognome.gogoaccount.controllers.GenerateReportController;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
@@ -57,7 +58,6 @@ import cf.engine.XMLFileReader;
 import cf.engine.XMLFileWriter;
 import cf.engine.XMLParseException;
 import cf.print.AddressLabelPrinter;
-import cf.ui.dialogs.ReportDialog;
 import cf.ui.views.AboutView;
 import cf.ui.views.AccountMutationsView;
 import cf.ui.views.BalanceAndOperationResultView;
@@ -479,8 +479,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleGenerateReport() {
-	    ReportDialog dialog = new ReportDialog(this, database);
-	    dialog.showDialog();
+	    GenerateReportController controller = new GenerateReportController(database, this);
+	    controller.execute();
 	}
 
 	private void handlePrintAddressLabels() {

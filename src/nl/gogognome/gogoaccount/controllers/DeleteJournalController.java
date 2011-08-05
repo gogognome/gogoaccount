@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package cf.ui.controllers;
+package nl.gogognome.gogoaccount.controllers;
 
 import java.awt.Component;
 

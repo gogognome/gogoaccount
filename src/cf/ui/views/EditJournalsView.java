@@ -32,6 +32,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumnModel;
 
+import nl.gogognome.gogoaccount.controllers.DeleteJournalController;
+import nl.gogognome.gogoaccount.controllers.EditJournalController;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -40,8 +42,6 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
 import cf.engine.Journal;
-import cf.ui.controllers.DeleteJournalController;
-import cf.ui.controllers.EditJournalController;
 import cf.ui.dialogs.ItemsTableModel;
 
 /**

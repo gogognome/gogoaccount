@@ -17,25 +17,16 @@
 
 package cf.ui.views;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
+import java.awt.Component;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
-import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
@@ -50,7 +41,7 @@ import cf.ui.components.AccountFormatter;
  *
  * @author Sander Kooijmans
  */
-public class EditJournalItemView extends View {
+public class EditJournalItemView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
@@ -111,18 +102,8 @@ public class EditJournalItemView extends View {
 		invoiceBean.setSelectedInvoice(invoice);
 	}
 
-	private void addComponents() {
-		setLayout(new BorderLayout());
-		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-		JPanel buttonPanel = createButtonPanel();
-		buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-
-		add(createInputFieldsPanel(), BorderLayout.CENTER);
-		add(buttonPanel, BorderLayout.SOUTH);
-	}
-
-	private JPanel createInputFieldsPanel() {
+	@Override
+	protected Component createCenterComponent() {
 		InputFieldsColumn column = new InputFieldsColumn();
 		addCloseable(column);
 
@@ -135,17 +116,6 @@ public class EditJournalItemView extends View {
 		return column;
 	}
 
-	private JPanel createButtonPanel() {
-		ButtonPanel panel = new ButtonPanel(SwingConstants.CENTER);
-
-		JButton okButton = panel.addButton("gen.ok", new OkAction());
-		panel.addButton("gen.cancel", new CancelAction());
-
-		setDefaultButton(okButton);
-
-		return panel;
-	}
-
     /**
      * Gets the journal item has has been entered.
      * Its value will be set when the user presses the ok button and the input fields
@@ -156,7 +126,8 @@ public class EditJournalItemView extends View {
         return enteredJournalItem;
     }
 
-	private void onOk() {
+	@Override
+	protected void onOk() {
         Amount amount;
         try {
             amount = amountFormat.parse(amountModel.getString(), database.getCurrency());
@@ -193,20 +164,6 @@ public class EditJournalItemView extends View {
 
 	@Override
 	public void onClose() {
-	}
-
-	private class OkAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent actionevent) {
-			onOk();
-		}
-	}
-
-	private class CancelAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent actionevent) {
-			requestClose();
-		}
 	}
 
 }

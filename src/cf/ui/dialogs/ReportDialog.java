@@ -47,7 +47,7 @@ import cf.text.ReportTask;
 
 /**
  * This class implements the report dialog. This dialog can generate
- * a report consisting of balance, operational result and overviews of
+ * a report consisting of balance sheet, operational result and overviews of
  * debtors and creditors, journals and ledger in different file formats.
  *
  * @author Sander Kooijmans

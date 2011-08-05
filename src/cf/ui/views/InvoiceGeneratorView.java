@@ -61,7 +61,9 @@ import cf.ui.components.AmountTextField;
  */
 public class InvoiceGeneratorView extends View {
 
-    /** The database used to get data from and to which the generated invoices are added. */
+	private static final long serialVersionUID = 1L;
+
+	/** The database used to get data from and to which the generated invoices are added. */
     private Database database;
 
     /** Text field containing the description of the generated invoices. */

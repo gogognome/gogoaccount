@@ -39,6 +39,8 @@ import nl.gogognome.cf.services.ImportBankStatementService;
 import nl.gogognome.cf.services.importers.ImportedTransaction;
 import nl.gogognome.cf.services.importers.RabobankCSVImporter;
 import nl.gogognome.cf.services.importers.TransactionImporter;
+import nl.gogognome.gogoaccount.controllers.DeleteJournalController;
+import nl.gogognome.gogoaccount.controllers.EditJournalController;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -46,7 +48,7 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.AbstractModel;
-import nl.gogognome.lib.swing.models.FileSelectionModel;
+import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
@@ -56,8 +58,6 @@ import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
-import cf.ui.controllers.DeleteJournalController;
-import cf.ui.controllers.EditJournalController;
 import cf.ui.dialogs.ItemsTableModel;
 
 /**
@@ -69,7 +69,7 @@ import cf.ui.dialogs.ItemsTableModel;
 public class ImportBankStatementView extends View
 	implements ModelChangeListener, ListSelectionListener, AddJournalForTransactionView.Plugin{
 
-    private FileSelectionModel fileSelectionModel = new FileSelectionModel();
+    private FileModel fileSelectionModel = new FileModel();
 
     private JTable itemsTable;
     private ItemsTableModel itemsTableModel;

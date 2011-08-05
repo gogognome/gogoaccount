@@ -27,7 +27,7 @@ import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
-import nl.gogognome.lib.swing.models.FileSelectionModel;
+import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -46,9 +46,9 @@ public class InvoiceToOdtView extends View {
 	/** The database used to determine the invoices. */
     private Database database;
 
-    private FileSelectionModel templateFileModel = new FileSelectionModel();
+    private FileModel templateFileModel = new FileModel();
 
-    private FileSelectionModel odtFileModel = new FileSelectionModel();
+    private FileModel odtFileModel = new FileModel();
 
     private DateModel dateModel = new DateModel(new Date());
 
