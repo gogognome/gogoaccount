@@ -17,10 +17,13 @@
 package nl.gogognome.cf.services;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.ReportBuilder;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Account;
@@ -336,5 +339,32 @@ public class BookkeepingService {
     	}
     }
 
-
+    /**
+     * Creates a report for the specified date.
+     * @param database contains the bookkeeping
+     * @param date the date
+     * @return the report
+     * @throws ServiceException if a problem occurs
+     */
+    public static Report createReport(Database database, Date date) throws ServiceException {
+    	ReportBuilder rb = new ReportBuilder(database, date);
+    	rb.setAssets(Arrays.asList(database.getAssets()));
+    	rb.setLiabilities(Arrays.asList(database.getLiabilities()));
+    	rb.setExpenses(Arrays.asList(database.getExpenses()));
+    	rb.setRevenues(Arrays.asList(database.getRevenues()));
+    	
+    	for (Journal j : database.getJournals()) {
+    		if (DateUtil.compareDayOfYear(j.getDate(), date) <= 0) {
+    			rb.addJournal(j);
+    		}
+    	}
+    	
+    	for (Invoice invoice : database.getInvoices()) {
+    		if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
+    			rb.addInvoice(invoice);
+    		}
+    	}
+    	
+    	return rb.build();
+    }
 }

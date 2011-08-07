@@ -20,12 +20,15 @@ import java.awt.Window;
 import java.io.File;
 import java.util.Date;
 
+import nl.gogognome.gogoaccount.reportgenerators.OdtGeneratorTask;
+import nl.gogognome.gogoaccount.reportgenerators.ReportTask;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
-import cf.text.ReportTask;
 import cf.ui.views.GenerateReportView;
 
 /**
@@ -49,17 +52,36 @@ public class GenerateReportController {
 		ViewDialog dialog = new ViewDialog(parentWindow, view);
 		dialog.showDialog();
 
-		if (view.getDate() != null && view.getReportFile() != null) {
-			startTask(view.getDate(), view.getReportFile(), ReportTask.RP_TXT);
+		Date date = view.getDate();
+		File reportFile = view.getReportFile();
+		if (date != null && reportFile != null) {
+	        Task task;
+	        
+			switch (view.getReportType()) {
+			case PLAING_TEXT:
+			    task = new ReportTask(database, date, reportFile.getAbsolutePath(), view.getReportType());
+				break;
+				
+			case ODT_DOCUMENT:
+				task = new OdtGeneratorTask(database, date, reportFile, view.getTemplateFile());
+				break;
+				
+			default:
+				MessageDialog.showErrorMessage(parentWindow, 
+						new Exception("Unknown report type: " + view.getReportType()), 
+						"gen.internalError");
+				return;
+			}
+	
+			startTask(task);
 		}
 	}
 
-	private void startTask(Date date, File reportFile, int type) {
+	private void startTask(Task task) {
         String description = Factory.getInstance(TextResource.class)
         	.getString("genreport.progress");
-	    TaskWithProgressDialog taskWithProgressDialog =
-	    	new TaskWithProgressDialog(parentWindow, description);
-	    ReportTask task = new ReportTask(database, date, reportFile.getAbsolutePath(), type);
-	    taskWithProgressDialog.execute(task);
+        TaskWithProgressDialog taskWithProgressDialog =
+        	new TaskWithProgressDialog(parentWindow, description);
+		taskWithProgressDialog.execute(task);
 	}
 }

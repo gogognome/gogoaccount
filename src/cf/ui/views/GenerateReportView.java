@@ -24,6 +24,7 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
+import nl.gogognome.gogoaccount.businessobjects.ReportType;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.RadioButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -54,7 +55,8 @@ public class GenerateReportView extends OkCancelView {
     private Date selectedDate;
     private File selectedReportFile;
     private File selectedTemplateFile;
-
+    private ReportType reportType;
+    
     private ModelChangeListener odtSelectionListener;
 
 	@Override
@@ -134,7 +136,8 @@ public class GenerateReportView extends OkCancelView {
         selectedDate = date;
         selectedReportFile = reportFile;
         selectedTemplateFile = templateFile;
-
+        reportType = txtModel.getBoolean() ? ReportType.PLAING_TEXT : ReportType.ODT_DOCUMENT;
+        
         requestClose();
 	}
 
@@ -150,6 +153,10 @@ public class GenerateReportView extends OkCancelView {
 		return selectedTemplateFile;
 	}
 
+	public ReportType getReportType() {
+		return reportType;
+	}
+	
 	private void updateTemplateSelectionModel() {
 		templateFileModel.setEnabled(odtModel.getBoolean(), odtSelectionListener);
 	}

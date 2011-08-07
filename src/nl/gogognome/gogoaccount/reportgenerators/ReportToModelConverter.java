@@ -1,0 +1,200 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
+package nl.gogognome.gogoaccount.reportgenerators;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
+import cf.engine.Account;
+import cf.engine.Database;
+import cf.engine.Party;
+
+/**
+ * Converts a Report to a model for ODT generation.
+ * 
+ * @author Sander Kooijmans
+ */
+public class ReportToModelConverter {
+
+	private final Database database;
+    private final Report report;
+
+    private Map<String, Object> model;
+
+    private TextResource textResource = Factory.getInstance(TextResource.class);
+    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
+
+	public ReportToModelConverter(Database database, Report report) {
+		super();
+		this.database = database;
+		this.report = report;
+		
+		createModel();
+	}
+
+	private void createModel() {
+		model = new HashMap<String, Object>();
+		
+		model.put("date", textResource.formatDate("gen.dateFormatFull", report.getDate()));
+		model.put("balance", createBalanceLines());
+		model.put("operationalResult", createOperationalResultLines());
+		model.put("debtors", createDebtors());
+		model.put("creditors", createCreditors());
+		model.put("accounts", createAccounts());
+	}
+
+	private Object createBalanceLines() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		addBalanceSheetLines(lines, report.getAssets(), report.getLiabilities());
+		return lines;
+	}
+
+	private Object createOperationalResultLines() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		addBalanceSheetLines(lines, report.getExpenses(), report.getRevenues());
+		return lines;
+	}
+
+	private void addBalanceSheetLines(List<Map<String, Object>> lines, 
+			List<Account> leftAccounts, List<Account> rightAccounts) {
+		
+		Amount leftTotal = Amount.getZero(database.getCurrency());
+		Amount rightTotal = Amount.getZero(database.getCurrency());
+		
+		Iterator<Account> leftIter = leftAccounts.iterator();
+		Iterator<Account> rightIter = rightAccounts.iterator();
+		
+		while (leftIter.hasNext() || rightIter.hasNext()) {
+			Account leftAccount = leftIter.hasNext() ? leftIter.next() : null;
+			String leftName = getAccountName(leftAccount);
+			String leftAmount = getAmount(report.getAmount(leftAccount));
+			leftTotal = leftTotal.add(report.getAmount(leftAccount));
+			
+			Account rightAccount = rightIter.hasNext()? rightIter.next() : null;
+			String rightName = getAccountName(rightAccount);
+			String rightAmount = getAmount(report.getAmount(rightAccount));
+			rightTotal = rightTotal.add(report.getAmount(rightAccount));
+			
+			lines.add(createLine(leftName, leftAmount, rightName, rightAmount));
+		}
+		
+		lines.add(createLine("", "", "", ""));
+		String total = textResource.getString("gen.total");
+		lines.add(createLine(total, amountFormat.formatAmountWithoutCurrency(leftTotal),
+				total, amountFormat.formatAmountWithoutCurrency(rightTotal)));
+	}
+
+	private String getAccountName(Account account) {
+		StringBuilder sb = new StringBuilder(30);
+		if (account != null) {
+			sb.append(account.getId()).append(' ').append(account.getName());
+		}
+		return sb.toString();
+	}
+	
+	private String getAmount(Amount amount) {
+		StringBuilder sb = new StringBuilder();
+		if (amount != null) {
+			sb.append(amountFormat.formatAmountWithoutCurrency(amount));
+		}
+		return sb.toString();
+	}
+
+	private Map<String, Object> createLine(String name1, 
+			String amount1, String name2, String amount2) {
+		Map<String,Object> line = new HashMap<String, Object>();
+		line.put("name1", name1);
+		line.put("amount1", amount1);
+		line.put("name2", name2);
+		line.put("amount2", amount2);
+		return line;
+	}
+
+	private Object createDebtors() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		for (Party p : report.getDebtors()) {
+			Amount amount = report.getBalanceForDebtor(p);
+			lines.add(createLine(p, amountFormat.formatAmountWithoutCurrency(amount)));
+		}
+		return lines;
+	}
+
+	private Object createCreditors() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		for (Party p : report.getCreditors()) {
+			Amount amount = report.getBalanceForCreditor(p);
+			lines.add(createLine(p, amountFormat.formatAmountWithoutCurrency(amount)));
+		}
+		return lines;
+	}
+
+	private Map<String, Object> createLine(Party party, String amount) {
+		Map<String,Object> line = new HashMap<String, Object>();
+		line.put("name", party.getId() + ' ' + party.getName());
+		line.put("amount", amount);
+		return line;
+	}
+
+	private Object createAccounts() {
+		List<Map<String, Object>> accounts = new ArrayList<Map<String,Object>>();
+		for (Account account : database.getAllAccounts()) {
+			accounts.add(createAccount(account));
+		}
+		return accounts;
+	}
+
+	private Map<String, Object> createAccount(Account account) {
+		Map<String,Object> map = new HashMap<String, Object>();
+		map.put("title", account.getId() + ' ' + account.getName());
+		map.put("lines", createAccountLines(account));
+		return map;
+	}
+
+	private Object createAccountLines(Account account) {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		for (LedgerLine line: report.getLedgerLinesForAccount(account)) {
+			lines.add(createLine(line));
+		}
+		return lines;
+	}
+
+	private Map<String, Object> createLine(LedgerLine line) {
+		Map<String,Object> map = new HashMap<String, Object>();
+		map.put("date", textResource.formatDate("gen.dateFormat", line.date));
+		map.put("description", line.description);
+		map.put("debet", line.debetAmount != null ? 
+				amountFormat.formatAmountWithoutCurrency(line.debetAmount) : "");
+		map.put("credit", line.creditAmount != null ? 
+				amountFormat.formatAmountWithoutCurrency(line.creditAmount) : "");
+		map.put("invoice", line.invoice != null ? 
+				line.invoice.getId() + " (" + line.invoice.getPayingParty().getName() + ')' : "");
+		return map;
+	}
+
+	public Map<String, Object> getModel() {
+		return model;
+	}
+}

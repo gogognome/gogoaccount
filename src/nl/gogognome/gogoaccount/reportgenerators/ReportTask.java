@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package cf.text;
+package nl.gogognome.gogoaccount.reportgenerators;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.gogoaccount.businessobjects.ReportType;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
@@ -69,16 +70,12 @@ public class ReportTask implements Task {
 
     private String fileName;
 
-    private int fileType;
+    private ReportType fileType;
 
     /** A report progress listener that monitors the progress of report creation. */
     private TaskProgressListener progressListener;
 
-    /**
-     * Constructor.
-     * @param locale the locale used to format the report.
-     */
-    public ReportTask(Database database, Date date, String fileName, int fileType) {
+    public ReportTask(Database database, Date date, String fileName, ReportType fileType) {
         this.database = database;
         this.date = date;
         this.fileName = fileName;
@@ -102,15 +99,11 @@ public class ReportTask implements Task {
     	progressListener.onProgressUpdate(0);
         try {
 	        switch(fileType) {
-	            case RP_TXT:
+	            case PLAING_TEXT:
 	                textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
 	                break;
-	            case RP_HTML:
-	                textFormat = new HtmlTextFormat(Factory.getInstance(TextResource.class));
-	                break;
 	            default:
-	                throw new IllegalArgumentException(
-	                        "Illegal file type: " + fileType);
+	                throw new IllegalArgumentException("Illegal file type: " + fileType);
 	        }
 	        writer = new PrintWriter(new FileWriter(fileName));
 	        printReport();

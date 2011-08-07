@@ -62,7 +62,7 @@ public class Start {
 		}
 	}
 
-	private void initFactory(Locale locale) {
+	public void initFactory(Locale locale) {
 		TextResource tr = new TextResource(locale);
 		tr.loadResourceBundle("stringresources");
 

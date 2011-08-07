@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package cf.text;
+package nl.gogognome.gogoaccount.reportgenerators;
 
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
