@@ -24,7 +24,7 @@ import java.util.Date;
  *
  * @author Sander Kooijmans
  */
-public class Party implements Comparable {
+public class Party implements Comparable<Party> {
     /**  The id of the party. The id must be unique for all parties. */
     private String id;
 
@@ -182,11 +182,7 @@ public class Party implements Comparable {
         return id + " " + name + " " + address + " "  + zipCode + " " + city + " " + birthDate + " ";
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
-    public int compareTo(Object o) {
-        Party that = (Party)o;
+    public int compareTo(Party that) {
         return this.id.compareTo(that.id);
     }
 }
