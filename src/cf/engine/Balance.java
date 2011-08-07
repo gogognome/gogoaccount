@@ -77,9 +77,10 @@ public class Balance {
         // in balance.
         resultOfOperations = totalAssets.subtract(totalLiabilities);
 
+        TextResource tr = Factory.getInstance(TextResource.class);
         if (resultOfOperations.isPositive()) {
             // add a profit
-            Account profitAccount = new ResultAccount(false, resultOfOperations, Type.LIABILITY);
+            Account profitAccount = new Account("",  tr.getString("gen.profit"), false, Type.LIABILITY);
             Account[] newLiabilities = new Account[liabilities.length+1];
             System.arraycopy(liabilities, 0, newLiabilities, 0, liabilities.length);
             newLiabilities[liabilities.length] = profitAccount;
@@ -88,8 +89,7 @@ public class Balance {
             accountsToAmountsMap.put(profitAccount, resultOfOperations);
         } else if (resultOfOperations.isNegative()) {
             // add a loss
-            Account lossAccount = new ResultAccount(true,
-                    resultOfOperations.negate(), Type.ASSET);
+            Account lossAccount = new Account("", tr.getString("gen.loss"), true, Type.ASSET);
             Account[] newAssets = new Account[assets.length+1];
             System.arraycopy(assets, 0, newAssets, 0, assets.length);
             newAssets[assets.length] = lossAccount;
@@ -246,38 +246,5 @@ public class Balance {
         result.append('\n');
 
         return result.toString();
-    }
-
-    /**
-     * This class represents a profit or a loss on the balance.
-     *
-     * @author Sander Kooijmans
-     */
-    private class ResultAccount extends Account {
-
-        private Amount amount;
-
-        /**
-         * Constructs a result acount.
-         * @param debet Indicates whether this account is on the debet of the balance.
-         *         <code>true</code> indicates this account is a loss,
-         *         <code>false</code> indicates this account is a profit.
-         * @param amount the amount of result
-         */
-        public ResultAccount(boolean debet, Amount amount, Type type) {
-            super("", Factory.getInstance(TextResource.class).getString(
-                    debet ? "gen.loss" : "gen.profit"),
-                    debet, type);
-            this.amount = amount;
-        }
-
-        /**
-         * Gets the balance of this account at the specified date.
-         * @param date the date
-         * @return the balance of this account at the specified date
-         */
-        public Amount getBalance(Date date) {
-            return amount;
-        }
     }
 }
