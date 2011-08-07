@@ -25,11 +25,12 @@ import java.util.List;
 import java.util.Map;
 
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Invoice;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
 import cf.engine.Party;
+import cf.engine.Account.Type;
 
 /**
  * This class contains the financial report for a specific date. 
@@ -51,14 +52,16 @@ public class Report {
 		public Amount creditAmount;
 		public Invoice invoice;
 	}
-	
-	private final Date date;
+
+	private final Date endDate;
 	private final Currency currency;
 	
 	private List<Account> assets;
 	private List<Account> liabilities;
 	private List<Account> expenses;
 	private List<Account> revenues;
+	
+	private Amount resultOfOperations;
 	
 	private List<Invoice> invoices = new ArrayList<Invoice>();
 	
@@ -76,14 +79,16 @@ public class Report {
 	private Map<Party, Amount> creditorToRemainingAmount =
 		new HashMap<Party, Amount>();
 
-	public Report(Date date, Currency currency) {
+	private TextResource textResource = Factory.getInstance(TextResource.class);
+
+	public Report(Date endDate, Currency currency) {
 		super();
-		this.date = date;
+		this.endDate = endDate;
 		this.currency = currency;
 	}
 
-	public Date getDate() {
-		return date;
+	public Date getEndDate() {
+		return endDate;
 	}
 	
 	public List<Account> getAssets() {
@@ -91,7 +96,7 @@ public class Report {
 	}
 	
 	void setAssets(List<Account> assets) {
-		this.assets = assets;
+		this.assets = new ArrayList<Account>(assets);
 	}
 	
 	public List<Account> getLiabilities() {
@@ -99,7 +104,7 @@ public class Report {
 	}
 	
 	void setLiabilities(List<Account> liabilities) {
-		this.liabilities = liabilities;
+		this.liabilities = new ArrayList<Account>(liabilities);
 	}
 	
 	public List<Account> getExpenses() {
@@ -130,13 +135,7 @@ public class Report {
 		accountToAmount.put(account, amount);
 	}
 	
-	void addLedgerLineForAccount(Account account, Journal journal, JournalItem item, Invoice invoice) {
-		LedgerLine line = new LedgerLine();
-		line.date = journal.getDate();
-		line.description = journal.getDescription();
-		line.debetAmount = item.isDebet() ? item.getAmount() : null;
-		line.creditAmount = item.isCredit() ? item.getAmount() : null;
-		line.invoice = invoice;
+	void addLedgerLineForAccount(Account account, LedgerLine line) {
 		getLedgerLinesForAccount(account).add(line);
 	}
 	
@@ -171,6 +170,36 @@ public class Report {
 		for (Invoice invoice : invoicesToBeRemoved) {
 			invoiceToRemainingAmount.remove(invoice);
 		}
+	}
+	
+	void determineResultOfOperations() {
+        resultOfOperations = Amount.getZero(currency);
+        for (Account a : assets) {
+        	resultOfOperations = resultOfOperations.add(getAmount(a));
+        }
+        for (Account a : liabilities) {
+        	resultOfOperations = resultOfOperations.subtract(getAmount(a));
+        }
+        
+        if (resultOfOperations.isPositive()) {
+            addProfitAccount();
+        } else if (resultOfOperations.isNegative()) {
+            addLossAccount();
+        }
+	}
+
+	private void addProfitAccount() {
+		Account profitAccount = 
+			new Account("", textResource.getString("gen.profit"), false, Type.LIABILITY);
+		liabilities.add(profitAccount);
+		setAmount(profitAccount, resultOfOperations);
+	}
+
+	private void addLossAccount() {
+		Account lossAccount = 
+			new Account("", textResource.getString("gen.loss"), true, Type.ASSET);
+		assets.add(lossAccount);
+		setAmount(lossAccount, resultOfOperations.negate());
 	}
 	
 	public Amount getRemaingAmountForInvoice(Invoice invoice) {

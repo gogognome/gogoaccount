@@ -58,7 +58,7 @@ public class ReportToModelConverter {
 	private void createModel() {
 		model = new HashMap<String, Object>();
 		
-		model.put("date", textResource.formatDate("gen.dateFormatFull", report.getDate()));
+		model.put("date", textResource.formatDate("gen.dateFormatFull", report.getEndDate()));
 		model.put("balance", createBalanceLines());
 		model.put("operationalResult", createOperationalResultLines());
 		model.put("debtors", createDebtors());
@@ -90,12 +90,12 @@ public class ReportToModelConverter {
 		while (leftIter.hasNext() || rightIter.hasNext()) {
 			Account leftAccount = leftIter.hasNext() ? leftIter.next() : null;
 			String leftName = getAccountName(leftAccount);
-			String leftAmount = getAmount(report.getAmount(leftAccount));
+			String leftAmount = formatAmount(leftAccount); 
 			leftTotal = leftTotal.add(report.getAmount(leftAccount));
 			
 			Account rightAccount = rightIter.hasNext()? rightIter.next() : null;
 			String rightName = getAccountName(rightAccount);
-			String rightAmount = getAmount(report.getAmount(rightAccount));
+			String rightAmount = formatAmount(rightAccount);
 			rightTotal = rightTotal.add(report.getAmount(rightAccount));
 			
 			lines.add(createLine(leftName, leftAmount, rightName, rightAmount));
@@ -105,6 +105,10 @@ public class ReportToModelConverter {
 		String total = textResource.getString("gen.total");
 		lines.add(createLine(total, amountFormat.formatAmountWithoutCurrency(leftTotal),
 				total, amountFormat.formatAmountWithoutCurrency(rightTotal)));
+	}
+
+	private String formatAmount(Account account) {
+		return account != null ? getAmount(report.getAmount(account)) : "";
 	}
 
 	private String getAccountName(Account account) {
@@ -183,7 +187,7 @@ public class ReportToModelConverter {
 
 	private Map<String, Object> createLine(LedgerLine line) {
 		Map<String,Object> map = new HashMap<String, Object>();
-		map.put("date", textResource.formatDate("gen.dateFormat", line.date));
+		map.put("date", line.date != null ? textResource.formatDate("gen.dateFormat", line.date) : "");
 		map.put("description", line.description);
 		map.put("debet", line.debetAmount != null ? 
 				amountFormat.formatAmountWithoutCurrency(line.debetAmount) : "");

@@ -1,14 +1,3 @@
-import java.io.File;
-import java.util.Date;
-import java.util.Locale;
-
-import nl.gogognome.gogoaccount.reportgenerators.OdtGeneratorTask;
-import nl.gogognome.lib.task.TaskProgressListener;
-import nl.gogognome.lib.util.DateUtil;
-import cf.engine.Database;
-import cf.engine.XMLFileReader;
-import cf.ui.Start;
-
 /*
     This file is part of gogo account.
 
@@ -25,6 +14,18 @@ import cf.ui.Start;
     You should have received a copy of the GNU General Public Licensen
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
+package nl.gogognome.test.tools;
+
+import java.io.File;
+import java.util.Date;
+import java.util.Locale;
+
+import nl.gogognome.gogoaccount.reportgenerators.OdtGeneratorTask;
+import nl.gogognome.lib.task.TaskProgressListener;
+import nl.gogognome.lib.util.DateUtil;
+import cf.engine.Database;
+import cf.engine.XMLFileReader;
+import cf.ui.Start;
 
 /**
  * Tests generation of an ODT report.
