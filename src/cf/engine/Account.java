@@ -89,6 +89,16 @@ public class Account implements Comparable<Account> {
     }
 
     /**
+     * Checks whether this account is on the credit side of a balance or
+     * of the results.
+     * <code>true</code> indicates this account is a liability or a revenue;
+     * <code>false</code> indicates this account is a asset or an expense.
+     */
+    public boolean isCredit() {
+    	return !isDebet();
+    }
+    
+    /**
      * Gets the type of this account.
      * @return the type
      */
