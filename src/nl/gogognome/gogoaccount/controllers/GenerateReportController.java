@@ -48,7 +48,7 @@ public class GenerateReportController {
 	}
 
 	public void execute() {
-		GenerateReportView view = new GenerateReportView();
+		GenerateReportView view = new GenerateReportView(database);
 		ViewDialog dialog = new ViewDialog(parentWindow, view);
 		dialog.showDialog();
 
@@ -56,23 +56,23 @@ public class GenerateReportController {
 		File reportFile = view.getReportFile();
 		if (date != null && reportFile != null) {
 	        Task task;
-	        
+
 			switch (view.getReportType()) {
 			case PLAING_TEXT:
 			    task = new ReportTask(database, date, reportFile.getAbsolutePath(), view.getReportType());
 				break;
-				
+
 			case ODT_DOCUMENT:
 				task = new OdtGeneratorTask(database, date, reportFile, view.getTemplateFile());
 				break;
-				
+
 			default:
-				MessageDialog.showErrorMessage(parentWindow, 
-						new Exception("Unknown report type: " + view.getReportType()), 
+				MessageDialog.showErrorMessage(parentWindow,
+						new Exception("Unknown report type: " + view.getReportType()),
 						"gen.internalError");
 				return;
 			}
-	
+
 			startTask(task);
 		}
 	}

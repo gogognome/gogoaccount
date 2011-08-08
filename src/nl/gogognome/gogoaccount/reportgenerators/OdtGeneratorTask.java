@@ -31,14 +31,11 @@ import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
-import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
-import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 
 /**
  * Generates a report as an ODT document based on a template file.
- *  
+ *
  * @author Sander Kooijmans
  */
 public class OdtGeneratorTask implements Task {
@@ -47,13 +44,10 @@ public class OdtGeneratorTask implements Task {
 	private final Date date;
 	private final File reportFile;
 	private final File templateFile;
-	
+
     private Report report;
     private Map<String, Object> model;
 
-    private TextResource textResource = Factory.getInstance(TextResource.class);
-    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
-    
 	public OdtGeneratorTask(Database database, Date date, File reportFile, File templateFile) {
 		super();
 		this.database = database;
@@ -65,16 +59,16 @@ public class OdtGeneratorTask implements Task {
 	@Override
 	public Object execute(TaskProgressListener progressListener) throws Exception {
     	progressListener.onProgressUpdate(0);
-    	
+
     	report = BookkeepingService.createReport(database, date);
     	progressListener.onProgressUpdate(33);
-    	
+
     	createModel();
     	progressListener.onProgressUpdate(67);
-    	
+
     	createDocument();
     	progressListener.onProgressUpdate(100);
-    	
+
 		return null;
 	}
 

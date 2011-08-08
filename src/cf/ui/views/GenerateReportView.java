@@ -34,6 +34,8 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.OkCancelView;
+import nl.gogognome.lib.util.DateUtil;
+import cf.engine.Database;
 
 /**
  * This view lets the user fill in parameters to generate a report.
@@ -46,6 +48,8 @@ public class GenerateReportView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
+	private Database database;
+
 	private DateModel dateModel;
     private FileModel reportFileModel;
     private FileModel templateFileModel;
@@ -56,8 +60,12 @@ public class GenerateReportView extends OkCancelView {
     private File selectedReportFile;
     private File selectedTemplateFile;
     private ReportType reportType;
-    
+
     private ModelChangeListener odtSelectionListener;
+
+    public GenerateReportView(Database database) {
+    	this.database = database;
+    }
 
 	@Override
 	public String getTitle() {
@@ -73,7 +81,8 @@ public class GenerateReportView extends OkCancelView {
 	}
 
 	private void initModels() {
-		dateModel = new DateModel(new Date());
+		dateModel = new DateModel(DateUtil.addYears(database.getStartOfPeriod(), 1));
+
 		reportFileModel = new FileModel();
 		templateFileModel = new FileModel();
 		txtModel = new BooleanModel();
@@ -137,7 +146,7 @@ public class GenerateReportView extends OkCancelView {
         selectedReportFile = reportFile;
         selectedTemplateFile = templateFile;
         reportType = txtModel.getBoolean() ? ReportType.PLAING_TEXT : ReportType.ODT_DOCUMENT;
-        
+
         requestClose();
 	}
 
@@ -156,7 +165,7 @@ public class GenerateReportView extends OkCancelView {
 	public ReportType getReportType() {
 		return reportType;
 	}
-	
+
 	private void updateTemplateSelectionModel() {
 		templateFileModel.setEnabled(odtModel.getBoolean(), odtSelectionListener);
 	}

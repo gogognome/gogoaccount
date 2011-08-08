@@ -34,7 +34,7 @@ import cf.engine.Party;
 
 /**
  * Converts a Report to a model for ODT generation.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class ReportToModelConverter {
@@ -51,13 +51,13 @@ public class ReportToModelConverter {
 		super();
 		this.database = database;
 		this.report = report;
-		
+
 		createModel();
 	}
 
 	private void createModel() {
 		model = new HashMap<String, Object>();
-		
+
 		model.put("date", textResource.formatDate("gen.dateFormatFull", report.getEndDate()));
 		model.put("balance", createBalanceLines());
 		model.put("operationalResult", createOperationalResultLines());
@@ -78,29 +78,29 @@ public class ReportToModelConverter {
 		return lines;
 	}
 
-	private void addBalanceSheetLines(List<Map<String, Object>> lines, 
+	private void addBalanceSheetLines(List<Map<String, Object>> lines,
 			List<Account> leftAccounts, List<Account> rightAccounts) {
-		
+
 		Amount leftTotal = Amount.getZero(database.getCurrency());
 		Amount rightTotal = Amount.getZero(database.getCurrency());
-		
+
 		Iterator<Account> leftIter = leftAccounts.iterator();
 		Iterator<Account> rightIter = rightAccounts.iterator();
-		
+
 		while (leftIter.hasNext() || rightIter.hasNext()) {
 			Account leftAccount = leftIter.hasNext() ? leftIter.next() : null;
 			String leftName = getAccountName(leftAccount);
-			String leftAmount = formatAmount(leftAccount); 
+			String leftAmount = formatAmount(leftAccount);
 			leftTotal = leftTotal.add(report.getAmount(leftAccount));
-			
+
 			Account rightAccount = rightIter.hasNext()? rightIter.next() : null;
 			String rightName = getAccountName(rightAccount);
 			String rightAmount = formatAmount(rightAccount);
 			rightTotal = rightTotal.add(report.getAmount(rightAccount));
-			
+
 			lines.add(createLine(leftName, leftAmount, rightName, rightAmount));
 		}
-		
+
 		lines.add(createLine("", "", "", ""));
 		String total = textResource.getString("gen.total");
 		lines.add(createLine(total, amountFormat.formatAmountWithoutCurrency(leftTotal),
@@ -118,7 +118,7 @@ public class ReportToModelConverter {
 		}
 		return sb.toString();
 	}
-	
+
 	private String getAmount(Amount amount) {
 		StringBuilder sb = new StringBuilder();
 		if (amount != null) {
@@ -127,7 +127,7 @@ public class ReportToModelConverter {
 		return sb.toString();
 	}
 
-	private Map<String, Object> createLine(String name1, 
+	private Map<String, Object> createLine(String name1,
 			String amount1, String name2, String amount2) {
 		Map<String,Object> line = new HashMap<String, Object>();
 		line.put("name1", name1);
@@ -139,25 +139,42 @@ public class ReportToModelConverter {
 
 	private Object createDebtors() {
 		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		Amount total = Amount.getZero(database.getCurrency());
 		for (Party p : report.getDebtors()) {
 			Amount amount = report.getBalanceForDebtor(p);
-			lines.add(createLine(p, amountFormat.formatAmountWithoutCurrency(amount)));
+			total = total.add(amount);
+			lines.add(createLine(p, amount));
 		}
+
+		lines.add(createLine("", ""));
+		lines.add(createLine(textResource.getString("gen.total"),
+			amountFormat.formatAmountWithoutCurrency(total)));
 		return lines;
 	}
 
 	private Object createCreditors() {
 		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		Amount total = Amount.getZero(database.getCurrency());
 		for (Party p : report.getCreditors()) {
 			Amount amount = report.getBalanceForCreditor(p);
-			lines.add(createLine(p, amountFormat.formatAmountWithoutCurrency(amount)));
+			total = total.add(amount);
+			lines.add(createLine(p, amount));
 		}
+
+		lines.add(createLine("", ""));
+		lines.add(createLine(textResource.getString("gen.total"),
+			amountFormat.formatAmountWithoutCurrency(total)));
 		return lines;
 	}
 
-	private Map<String, Object> createLine(Party party, String amount) {
+	private Map<String, Object> createLine(Party party, Amount amount) {
+		return createLine(party.getId() + ' ' + party.getName(),
+				amountFormat.formatAmountWithoutCurrency(amount));
+	}
+
+	private Map<String, Object> createLine(String partyName, String amount) {
 		Map<String,Object> line = new HashMap<String, Object>();
-		line.put("name", party.getId() + ' ' + party.getName());
+		line.put("name", partyName);
 		line.put("amount", amount);
 		return line;
 	}
@@ -189,11 +206,11 @@ public class ReportToModelConverter {
 		Map<String,Object> map = new HashMap<String, Object>();
 		map.put("date", line.date != null ? textResource.formatDate("gen.dateFormat", line.date) : "");
 		map.put("description", line.description);
-		map.put("debet", line.debetAmount != null ? 
+		map.put("debet", line.debetAmount != null ?
 				amountFormat.formatAmountWithoutCurrency(line.debetAmount) : "");
-		map.put("credit", line.creditAmount != null ? 
+		map.put("credit", line.creditAmount != null ?
 				amountFormat.formatAmountWithoutCurrency(line.creditAmount) : "");
-		map.put("invoice", line.invoice != null ? 
+		map.put("invoice", line.invoice != null ?
 				line.invoice.getId() + " (" + line.invoice.getPayingParty().getName() + ')' : "");
 		return map;
 	}
