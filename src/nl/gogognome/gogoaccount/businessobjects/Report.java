@@ -254,6 +254,10 @@ public class Report {
 		Collections.<Party>sort(parties);
 	}
 
+	public Amount getResultOfOperations() {
+		return resultOfOperations;
+	}
+
 	public Amount getTotalAssets() {
 		return getTotalOfAccounts(getAssets());
 	}
@@ -262,16 +266,20 @@ public class Report {
 		return getTotalOfAccounts(getLiabilities());
 	}
 
+	public Amount getTotalExpenses() {
+		return getTotalOfAccounts(getExpenses());
+	}
+
+	public Amount getTotalRevenues() {
+		return getTotalOfAccounts(getRevenues());
+	}
+
 	public Amount getTotalOfAccounts(List<Account> accounts) {
 		Amount total = Amount.getZero(currency);
 		for (Account a : accounts) {
 			total = total.add(getAmount(a));
 		}
 		return total;
-	}
-
-	public Amount getResultOfOperations() {
-		return resultOfOperations;
 	}
 }
 

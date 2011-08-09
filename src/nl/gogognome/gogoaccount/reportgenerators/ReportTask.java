@@ -38,7 +38,6 @@ import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
-import cf.engine.OperationalResult;
 import cf.engine.Party;
 
 /**
@@ -122,11 +121,11 @@ public class ReportTask implements Task {
         progressListener.onProgressUpdate(20);
         printBalance();
         progressListener.onProgressUpdate(30);
-        printOperationalResult(database.getOperationalResult(date));
+        printOperationalResult();
         progressListener.onProgressUpdate(40);
-        printDebtors(database.getDebtors(date), date);
+        printDebtors();
         progressListener.onProgressUpdate(50);
-        printCreditors(database.getCreditors(date), date);
+        printCreditors();
         progressListener.onProgressUpdate(60);
 
         List<Journal> journals = database.getJournals();
@@ -214,8 +213,8 @@ public class ReportTask implements Task {
     	return amountFormat.formatAmountWithoutCurrency(report.getAmount(account));
 	}
 
-	private void printOperationalResult(OperationalResult operationalResult) {
-        Date date = operationalResult.getDate();
+	private void printOperationalResult() {
+        Date date = report.getEndDate();
 
         StringBuilder result = new StringBuilder(10000);
 
@@ -241,32 +240,23 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getHorizontalSeparator());
 
-        Account[] expenses = operationalResult.getExpenses();
-        Account[] revenues = operationalResult.getRevenues();
+        List<Account> expenses = report.getExpenses();
+        List<Account> revenues = report.getRevenues();
 
-        int n = Math.max(expenses.length, revenues.length);
-        for (int i=0; i<n; i++)
-        {
-            if (i < expenses.length)
-            {
-                values[0] = expenses[i].getId() + ' ' + expenses[i].getName();
-                values[1] = textFormat.formatAmount(
-                    BookkeepingService.getAccountBalance(database, expenses[i], date));
-            }
-            else
-            {
+        int n = Math.max(expenses.size(), revenues.size());
+        for (int i=0; i<n; i++) {
+            if (i < expenses.size()) {
+                values[0] = formatAccount(expenses.get(i));
+                values[1] = formatAmount(expenses.get(i));
+            } else {
                 values[0] = "";
                 values[1] = "";
             }
 
-            if (i < revenues.length)
-            {
-                values[3] = revenues[i].getId() + ' ' + revenues[i].getName();
-                values[4] = textFormat.formatAmount(
-                    BookkeepingService.getAccountBalance(database, revenues[i], date));
-            }
-            else
-            {
+            if (i < revenues.size()) {
+                values[3] = formatAccount(revenues.get(i));
+                values[4] = formatAmount(revenues.get(i));
+            } else {
                 values[3] = "";
                 values[4] = "";
             }
@@ -278,9 +268,9 @@ public class ReportTask implements Task {
         String total = textResource.getString("gen.total").toUpperCase();
 
        values[0] = total;
-       values[1] = textFormat.formatAmount(operationalResult.getTotalExpenses());
+       values[1] = amountFormat.formatAmountWithoutCurrency(report.getTotalExpenses());
        values[3] = total;
-       values[4] = textFormat.formatAmount(operationalResult.getTotalRevenues());
+       values[4] = amountFormat.formatAmountWithoutCurrency(report.getTotalRevenues());
        result.append(textFormat.getRow(values));
 
        result.append(textFormat.getEndOfTable());
@@ -288,7 +278,7 @@ public class ReportTask implements Task {
         writer.println(result.toString());
     }
 
-    private void printDebtors(Party[] debtors, Date date) {
+    private void printDebtors() {
         StringBuilder result = new StringBuilder(10000);
 
         result.append(textFormat.getNewParagraph());
@@ -298,21 +288,22 @@ public class ReportTask implements Task {
                 }));
         result.append(textFormat.getNewLine());
 
-        if (debtors.length == 0) {
+        List<Party> debtors = report.getDebtors();
+        if (debtors.isEmpty()) {
             result.append(textResource.getString("rep.noDebtors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = null;
+            Amount total = Amount.getZero(database.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
             String[] values = new String[2];
 
-            for (int i=0; i<debtors.length; i++) {
-                values[0] = debtors[i].getId() + " - " + debtors[i].getName();
-                Amount amount = database.getTotalDebetForParty(debtors[i], date);
-                values[1] = textFormat.formatAmount(amount);
-                total = total == null ? amount : total.add(amount);
+            for (Party debtor : debtors) {
+                values[0] = formatParty(debtor);
+                Amount amount = report.getBalanceForDebtor(debtor);
+                values[1] = amountFormat.formatAmountWithoutCurrency(amount);
+                total = total.add(amount);
                 result.append(textFormat.getRow(values));
             }
             result.append(textFormat.getEmptyRow());
@@ -326,7 +317,7 @@ public class ReportTask implements Task {
         writer.println(result.toString());
     }
 
-    private void printCreditors(Party[] creditors, Date date) {
+    private void printCreditors() {
         StringBuilder result = new StringBuilder(10000);
 
         result.append(textFormat.getNewParagraph());
@@ -336,21 +327,22 @@ public class ReportTask implements Task {
                 }));
         result.append(textFormat.getNewLine());
 
-        if (creditors.length == 0) {
+        List<Party> creditors = report.getCreditors();
+        if (creditors.isEmpty()) {
             result.append(textResource.getString("rep.noCreditors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = null;
+            Amount total = Amount.getZero(database.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
             String[] values = new String[2];
 
-            for (int i=0; i<creditors.length; i++) {
-                values[0] = creditors[i].getId() + " - " + creditors[i].getName();
-                Amount amount = database.getTotalCreditForParty(creditors[i], date);
-                values[1] = textFormat.formatAmount(amount);
-                total = total == null ? amount : total.add(amount);
+            for (Party creditor : creditors) {
+                values[0] = formatParty(creditor);
+                Amount amount = report.getBalanceForCreditor(creditor);
+                values[1] = amountFormat.formatAmountWithoutCurrency(amount);
+                total = total.add(amount);
                 result.append(textFormat.getRow(values));
             }
             result.append(textFormat.getEmptyRow());
@@ -364,7 +356,11 @@ public class ReportTask implements Task {
         writer.println(result.toString());
     }
 
-    private void printJournals(List<Journal> journals, Date startDate, Date endDate) {
+    private String formatParty(Party party) {
+		return party.getId() + " - " + party.getName();
+	}
+
+	private void printJournals(List<Journal> journals, Date startDate, Date endDate) {
         int startIndex = 0;
         int endIndex = 0;
         for (int i=0; i<journals.size(); i++) {
@@ -412,7 +408,7 @@ public class ReportTask implements Task {
                 String idOfCreatedInvoice = journals.get(i).getIdOfCreatedInvoice();
                 if (idOfCreatedInvoice != null) {
                     Invoice invoice = database.getInvoice(idOfCreatedInvoice);
-                    values[8] = amountFormat.formatAmount(invoice.getAmountToBePaid())
+                    values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid())
                         + " " + invoice.getId() + " (" + invoice.getConcerningParty().getName() + ')';
                 } else {
                     values[8] = "";

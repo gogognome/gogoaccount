@@ -25,7 +25,10 @@ import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.cf.services.ServiceException;
+import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.lib.gui.Closeable;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
@@ -35,7 +38,6 @@ import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
-import cf.engine.OperationalResult;
 import cf.ui.components.BalanceSheet.Row;
 
 /**
@@ -51,10 +53,13 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
     private DateModel dateModel;
     private BalanceSheet balanceSheet;
 
+    private Report report;
+
     private DatabaseListener databaseListener;
     private ModelChangeListener modelChangeListener;
 
     private TextResource textResource = Factory.getInstance(TextResource.class);
+    private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
     /**
      * Creates a new <code>OperationalResultComponent</code>.
@@ -100,26 +105,31 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
             return; // do not change the current operational result if the date is invalid
         }
 
-        OperationalResult operationalResult = database.getOperationalResult(date);
+        try {
+			report = BookkeepingService.createReport(database, date);
+		} catch (ServiceException e) {
+			MessageDialog.showErrorMessage(this, e, "gen.internalError");
+			return;
+		}
 
-        setBorder(Factory.getInstance(WidgetFactory.class)
-        		.createTitleBorder("operationalResultComponent.title", operationalResult.getDate()));
+        setBorder(widgetFactory.createTitleBorder("operationalResultComponent.title",
+        		report.getEndDate()));
 
-        List<Row> leftRows = convertAccountsToRows(database.getExpenses(), date);
-        List<Row> rightRows = convertAccountsToRows(database.getRevenues(), date);
+        List<Row> leftRows = convertAccountsToRows(report.getExpenses());
+        List<Row> rightRows = convertAccountsToRows(report.getRevenues());
 
         balanceSheet.setLeftRows(leftRows);
         balanceSheet.setRightRows(rightRows);
         balanceSheet.update();
     }
 
-    private List<Row> convertAccountsToRows(Account[] accounts, Date date) {
+    private List<Row> convertAccountsToRows(List<Account> accounts) {
         List<Row> rows = new ArrayList<Row>();
 
-        for (int i=0; i<accounts.length; i++) {
+        for (Account a : accounts) {
         	Row row = new Row();
-        	row.description = accounts[i].getId() + " " + accounts[i].getName();
-            row.amount = BookkeepingService.getAccountBalance(database, accounts[i], date);
+        	row.description = a.getId() + ' ' + a.getName();
+            row.amount = report.getAmount(a);
             rows.add(row);
         }
 

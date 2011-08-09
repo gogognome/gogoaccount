@@ -679,15 +679,6 @@ public class Database {
         idsToAccountsMap.putAll(revenues);
     }
 
-    /**
-     * Gets the operation result for the specified date.
-     * @param date the date
-     * @return the operation result
-     */
-    public OperationalResult getOperationalResult(Date date) {
-        return new OperationalResult(this, date);
-    }
-
     public String getFileName()
     {
         return fileName;
