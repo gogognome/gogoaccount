@@ -61,6 +61,7 @@ public class Report {
 	private List<Account> expenses;
 	private List<Account> revenues;
 
+	private Account resultOfOperationsAccount;
 	private Amount resultOfOperations;
 
 	private List<Invoice> invoices = new ArrayList<Invoice>();
@@ -95,16 +96,36 @@ public class Report {
 		return assets;
 	}
 
+	public List<Account> getAssetsInclLossAccount() {
+		if (resultOfOperationsAccount != null && resultOfOperationsAccount.isDebet()) {
+			List<Account> assets = new ArrayList<Account>(getAssets());
+			assets.add(resultOfOperationsAccount);
+			return assets;
+		} else {
+			return getAssets();
+		}
+	}
+
 	void setAssets(List<Account> assets) {
-		this.assets = new ArrayList<Account>(assets);
+		this.assets = assets;
 	}
 
 	public List<Account> getLiabilities() {
 		return liabilities;
 	}
 
+	public List<Account> getLiabilitiesInclProfitAccount() {
+		if (resultOfOperationsAccount != null && resultOfOperationsAccount.isCredit()) {
+			List<Account> liabilities = new ArrayList<Account>(getLiabilities());
+			liabilities.add(resultOfOperationsAccount);
+			return liabilities;
+		} else {
+			return getLiabilities();
+		}
+	}
+
 	void setLiabilities(List<Account> liabilities) {
-		this.liabilities = new ArrayList<Account>(liabilities);
+		this.liabilities = liabilities;
 	}
 
 	public List<Account> getExpenses() {
@@ -121,6 +142,14 @@ public class Report {
 
 	void setRevenues(List<Account> revenues) {
 		this.revenues = revenues;
+	}
+
+	public List<Account> getAllAccounts() {
+		List<Account> accounts = new ArrayList<Account>(getAssets());
+		accounts.addAll(getLiabilities());
+		accounts.addAll(getExpenses());
+		accounts.addAll(getRevenues());
+		return accounts;
 	}
 
 	public Amount getAmount(Account account) {
@@ -182,24 +211,13 @@ public class Report {
         }
 
         if (resultOfOperations.isPositive()) {
-            addProfitAccount();
+    		resultOfOperationsAccount =
+    			new Account("", textResource.getString("gen.profit"), false, Type.LIABILITY);
         } else if (resultOfOperations.isNegative()) {
-            addLossAccount();
+        	resultOfOperationsAccount =
+    			new Account("", textResource.getString("gen.loss"), true, Type.ASSET);
+    		setAmount(resultOfOperationsAccount, resultOfOperations.negate());
         }
-	}
-
-	private void addProfitAccount() {
-		Account profitAccount =
-			new Account("", textResource.getString("gen.profit"), false, Type.LIABILITY);
-		liabilities.add(profitAccount);
-		setAmount(profitAccount, resultOfOperations);
-	}
-
-	private void addLossAccount() {
-		Account lossAccount =
-			new Account("", textResource.getString("gen.loss"), true, Type.ASSET);
-		assets.add(lossAccount);
-		setAmount(lossAccount, resultOfOperations.negate());
 	}
 
 	public Amount getRemaingAmountForInvoice(Invoice invoice) {
@@ -259,11 +277,11 @@ public class Report {
 	}
 
 	public Amount getTotalAssets() {
-		return getTotalOfAccounts(getAssets());
+		return getTotalOfAccounts(getAssetsInclLossAccount());
 	}
 
 	public Amount getTotalLiabilities() {
-		return getTotalOfAccounts(getLiabilities());
+		return getTotalOfAccounts(getLiabilitiesInclProfitAccount());
 	}
 
 	public Amount getTotalExpenses() {
@@ -281,5 +299,6 @@ public class Report {
 		}
 		return total;
 	}
+
 }
 

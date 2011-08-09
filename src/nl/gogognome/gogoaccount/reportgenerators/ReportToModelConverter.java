@@ -68,7 +68,8 @@ public class ReportToModelConverter {
 
 	private Object createBalanceLines() {
 		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
-		addBalanceSheetLines(lines, report.getAssets(), report.getLiabilities());
+		addBalanceSheetLines(lines, report.getAssetsInclLossAccount(),
+				report.getLiabilitiesInclProfitAccount());
 		return lines;
 	}
 

@@ -25,6 +25,7 @@ import java.util.List;
 
 import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.businessobjects.ReportType;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
@@ -132,7 +133,7 @@ public class ReportTask implements Task {
         progressListener.onProgressUpdate(70);
         printJournals(journals, database.getStartOfPeriod(), date);
         progressListener.onProgressUpdate(80);
-        printLedger(database.getAllAccounts(), journals, database.getStartOfPeriod(), date);
+        printLedger();
 
         writer.println(textFormat.getEndOfDocument());
     }
@@ -163,8 +164,8 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getHorizontalSeparator());
 
-        List<Account> assets = report.getAssets();
-        List<Account> liabilities = report.getLiabilities();
+        List<Account> assets = report.getAssetsInclLossAccount();
+        List<Account> liabilities = report.getLiabilitiesInclProfitAccount();
 
         int n = Math.max(assets.size(), liabilities.size());
         for (int i=0; i<n; i++)
@@ -435,122 +436,49 @@ public class ReportTask implements Task {
         writer.println(result.toString());
     }
 
-    private void printLedger(Account[] accounts, List<Journal> journals, Date startDate,
-            Date endDate) {
-        int startIndex = 0;
-        int endIndex = 0;
-        for (int i=0; i<journals.size(); i++) {
-            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), endDate) <= 0) {
-                endIndex = i+1;
-            }
-            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), startDate) < 0) {
-                startIndex = i+1;
-            }
-        }
-
+    private void printLedger() {
         StringBuilder result = new StringBuilder(10000);
 
         result.append(textFormat.getNewParagraph());
 
         result.append(textResource.getString("rep.ledger"));
 
-        if (endIndex - startIndex <= 0) {
-            result.append(textResource.getString("rep.noJournals"));
+        for (Account account : report.getAllAccounts()) {
+            result.append(textFormat.getNewParagraph());
+            result.append(formatAccount(account));
             result.append(textFormat.getNewLine());
-        } else {
-            for (int accountNr=0; accountNr < accounts.length; accountNr++) {
-                Account account = accounts[accountNr];
-                result.append(textFormat.getNewParagraph());
-                result.append(account.getId() + " " + account.getName());
-                result.append(textFormat.getNewLine());
-	            result.append(textFormat.getStartOfTable(("l|l|r|r|l"),
-	                    new int[] { 10, 1, 45, 1, 10, 1, 10, 1, 40 }));
+            result.append(textFormat.getStartOfTable(("l|l|r|r|l"),
+                    new int[] { 10, 1, 45, 1, 10, 1, 10, 1, 40 }));
 
-	            String[] values = new String[9];
-	            values[0] = textResource.getString("gen.date");
-	            values[1] = "";
-	            values[2] = textResource.getString("gen.description");
-	            values[3] = "";
-	            values[4] = textResource.getString("gen.debet");
-	            values[5] = "";
-	            values[6] = textResource.getString("gen.credit");
-	            values[7] = "";
-	            values[8] = textResource.getString("gen.invoice");
-	            result.append(textFormat.getHeaderRow(values));
+            String[] values = new String[9];
+            values[0] = textResource.getString("gen.date");
+            values[1] = "";
+            values[2] = textResource.getString("gen.description");
+            values[3] = "";
+            values[4] = textResource.getString("gen.debet");
+            values[5] = "";
+            values[6] = textResource.getString("gen.credit");
+            values[7] = "";
+            values[8] = textResource.getString("gen.invoice");
+            result.append(textFormat.getHeaderRow(values));
 
-	            result.append(textFormat.getHorizontalSeparator());
+            result.append(textFormat.getHorizontalSeparator());
 
-	            // Append the start balance
-	            values[0] = "";
-	            values[2] = textResource.getString("rep.startBalance");
-	            Amount startAmount = BookkeepingService.getStartBalance(database, account);
-                values[4] = "";
-                values[6] = "";
-                values[account.isDebet() ? 4 : 6] =
-                    amountFormat.formatAmountWithoutCurrency(startAmount);
+            // Append the items of 'account'.
+            for (LedgerLine line : report.getLedgerLinesForAccount(account)) {
+                values[0] = textResource.formatDate("gen.dateFormat", line.date);
+                values[2] = line.description;
+                values[4] = amountFormat.formatAmountWithoutCurrency(line.debetAmount);
+                values[6] = amountFormat.formatAmountWithoutCurrency(line.creditAmount);
                 values[8] = "";
+
+                Invoice invoice = line.invoice;
+                values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
+
                 result.append(textFormat.getRow(values));
-
-                // Convert the start amount to a debet value if it is a credit value.
-                if (!account.isDebet()) {
-                    startAmount = startAmount.negate();
-                }
-
-                // Append the items of 'account'.
-                Amount totalDebetMutations = Amount.getZero(startAmount.getCurrency());
-                Amount totalCreditMutations = Amount.getZero(startAmount.getCurrency());
-
-	            for (int i=startIndex; i<endIndex; i++) {
-	                values[0] = textResource.formatDate("gen.dateFormat", journals.get(i).getDate());
-	                values[2] = journals.get(i).getId() + " - " + journals.get(i).getDescription();
-	                values[4] = "";
-	                values[6] = "";
-	                values[8] = "";
-
-	                JournalItem[] items = journals.get(i).getItems();
-	                for (int j = 0; j < items.length; j++) {
-	                    if (account.equals(items[j].getAccount())) {
-		                    values[4] = "";
-		                    values[6] = "";
-		                    Amount amount = items[j].getAmount();
-		                    if (items[j].isDebet()) {
-			                    values[4] = amountFormat.formatAmountWithoutCurrency(amount);
-			                    totalDebetMutations = totalDebetMutations.add(amount);
-		                    } else {
-			                    values[6] = amountFormat.formatAmountWithoutCurrency(amount);
-			                    totalCreditMutations = totalCreditMutations.add(amount);
-		                    }
-		                    Invoice invoice = database.getInvoice(items[j].getInvoiceId());
-		                    values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
-		                    result.append(textFormat.getRow(values));
-	                    }
-	                }
-	            }
-
-	            // Append the mutations
-	            values[0] = "";
-	            values[2] = textResource.getString("rep.totalMutations");
-                values[4] = amountFormat.formatAmountWithoutCurrency(totalDebetMutations);
-                values[6] = amountFormat.formatAmountWithoutCurrency(totalCreditMutations);
-                values[8] = "";
-                result.append(textFormat.getRow(values));
-
-                Amount endBalance = startAmount.add(totalDebetMutations).subtract(totalCreditMutations);
-	            values[0] = "";
-	            values[2] = textResource.getString("rep.endBalance");
-                values[4] = "";
-                values[6] = "";
-                if (endBalance.isPositive()) {
-                    values[4] = amountFormat.formatAmountWithoutCurrency(endBalance);
-                    values[6] = "";
-                } else {
-                    values[4] = "";
-                    values[6] = amountFormat.formatAmountWithoutCurrency(endBalance.negate());
-                }
-                result.append(textFormat.getRow(values));
-
-                result.append(textFormat.getHorizontalSeparator());
             }
+
+            result.append(textFormat.getHorizontalSeparator());
         }
         writer.println(result.toString());
     }

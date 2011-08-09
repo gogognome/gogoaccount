@@ -113,8 +113,8 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         setBorder(Factory.getInstance(WidgetFactory.class)
         		.createTitleBorder("balanceComponent.title", report.getEndDate()));
 
-        List<Row> leftRows = convertAccountsToRows(report.getAssets());
-        List<Row> rightRows = convertAccountsToRows(report.getLiabilities());
+        List<Row> leftRows = convertAccountsToRows(report.getAssetsInclLossAccount());
+        List<Row> rightRows = convertAccountsToRows(report.getLiabilitiesInclProfitAccount());
 
         balanceSheet.setLeftRows(leftRows);
         balanceSheet.setRightRows(rightRows);
