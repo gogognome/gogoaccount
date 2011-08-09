@@ -23,6 +23,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -121,14 +122,17 @@ public class EditJournalsView extends View {
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
+
         JScrollPane scrollPane = widgetFactory.createScrollPane(journalsTable, "editJournalsView.journals");
 		tablesPanel.add(scrollPane, SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
-            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 10, 10, 10, 10));
+            GridBagConstraints.CENTER, GridBagConstraints.BOTH, 0, 0, 0, 0));
 
         scrollPane = widgetFactory.createScrollPane(itemsTable, "editJournalsView.journalItems");
         tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
 
         setLayout(new BorderLayout());
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
 		add(tablesPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
