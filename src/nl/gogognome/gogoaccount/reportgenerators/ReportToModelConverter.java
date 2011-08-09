@@ -206,13 +206,14 @@ public class ReportToModelConverter {
 	private Map<String, Object> createLine(LedgerLine line) {
 		Map<String,Object> map = new HashMap<String, Object>();
 		map.put("date", line.date != null ? textResource.formatDate("gen.dateFormat", line.date) : "");
+		map.put("id", line.id);
 		map.put("description", line.description);
 		map.put("debet", line.debetAmount != null ?
 				amountFormat.formatAmountWithoutCurrency(line.debetAmount) : "");
 		map.put("credit", line.creditAmount != null ?
 				amountFormat.formatAmountWithoutCurrency(line.creditAmount) : "");
 		map.put("invoice", line.invoice != null ?
-				line.invoice.getId() + " (" + line.invoice.getPayingParty().getName() + ')' : "");
+				line.invoice.getId() + " (" + line.invoice.getConcerningParty().getName() + ')' : "");
 		return map;
 	}
 
