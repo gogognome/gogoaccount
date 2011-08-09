@@ -17,42 +17,40 @@
 package cf.ui.views;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JLabel;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.table.AbstractTableModel;
 
-import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.gogoaccount.gui.beans.PartyBean;
+import nl.gogognome.gogoaccount.models.PartyModel;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
+import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ButtonPanel;
+import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.models.ModelChangeListener;
+import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+import nl.gogognome.lib.util.Tuple;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Party;
-import cf.ui.components.PartySelector;
-import cf.ui.components.PartySelectorListener;
 
 /**
  * This class lets the user edit an existing invoice.
@@ -67,20 +65,20 @@ public class EditInvoiceView extends OkCancelView {
 
     private Invoice initialInvoice;
 
-    private JTextField tfId;
-    private JTextField tfAmount;
+    private StringModel idModel = new StringModel();
+    private StringModel amountModel = new StringModel();
+    private DateModel dateModel = new DateModel();
+    private PartyModel concerningPartyModel = new PartyModel();
+    private PartyModel payingPartyModel = new PartyModel();
 
-    private DateModel dateModel;
-
-    private PartySelector psConcerningParty;
-    private PartySelector psPayingParty;
-
-    private PartySelectorListener concerningPartyListener;
+    private ModelChangeListener concerningPartyListener;
 
     private JTable table;
     private DescriptionAndAmountTableModel tableModel;
 
     private Invoice editedInvoice;
+
+    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
     /**
      * Constructor. To edit an existing invoice, give <code>invoice</code> a non-<code>null</code> value.
@@ -104,137 +102,75 @@ public class EditInvoiceView extends OkCancelView {
 
     @Override
     public void onClose() {
-        if (psConcerningParty != null && concerningPartyListener != null) {
-            psConcerningParty.removeListener(concerningPartyListener);
-        }
+        concerningPartyModel.removeModelChangeListener(concerningPartyListener);
     }
 
     @Override
     public void onInit() {
+    	initModels();
     	addComponents();
         addListeners();
     }
 
+	private void initModels() {
+        if (initialInvoice != null) {
+            idModel.setString(initialInvoice.getId());
+            idModel.setEnabled(false, null);
+            dateModel.setDate(initialInvoice.getIssueDate());
+            concerningPartyModel.setParty(initialInvoice.getConcerningParty());
+            payingPartyModel.setParty(initialInvoice.getPayingParty());
+            amountModel.setString(amountFormat.formatAmountWithoutCurrency(
+                initialInvoice.getAmountToBePaid()));
+        } else {
+            dateModel.setDate(new Date());
+            idModel.setString(database.suggestNewInvoiceId(
+                textResource.formatDate("editInvoiceView.dateFormatForNewId", dateModel.getDate())));
+        }
+
+	}
+
 	private void addListeners() {
-		// Add listener that copies the concerning party to the paying party if the paying
-        // party has not been selected yet.
-        concerningPartyListener = new PartySelectorListener() {
-            @Override
-			public void onSelectedPartyChanged(Party newParty) {
-                if (psPayingParty.getSelectedParty() == null) {
-                    psPayingParty.setSelectedParty(newParty);
-                }
-            }
-        };
-        psConcerningParty.addListener(concerningPartyListener);
+        concerningPartyListener = new CopyConceringPartyToPayingPartyListener();
+        concerningPartyModel.addModelChangeListener(concerningPartyListener);
 	}
 
     @Override
-    protected Component createNorthComponent() {
-        JPanel topPanel = new JPanel(new GridBagLayout());
+    protected JComponent createNorthComponent() {
+        InputFieldsColumn ifc = new InputFieldsColumn();
+        addCloseable(ifc);
 
-        String id;
-        Date date;
-        Party concerningParty;
-        Party payingParty;
-        String amount;
-        if (initialInvoice != null) {
-            id = initialInvoice.getId();
-            date = initialInvoice.getIssueDate();
-            concerningParty = initialInvoice.getConcerningParty();
-            payingParty = initialInvoice.getPayingParty();
-            amount = Factory.getInstance(AmountFormat.class).formatAmountWithoutCurrency(
-                initialInvoice.getAmountToBePaid());
-        } else {
-            date = new Date();
-            id = database.suggestNewInvoiceId(
-                textResource.formatDate("editInvoiceView.dateFormatForNewId", date));
-            concerningParty = null;
-            payingParty = null;
-            amount = "";
-        }
+        ifc.addField("editInvoiceView.id", idModel);
+        ifc.addField("editInvoiceView.issueDate", dateModel);
+        ifc.addVariableSizeField("editInvoiceView.concerningParty",
+        		new PartyBean(database, concerningPartyModel));
+        ifc.addVariableSizeField("editInvoiceView.payingParty",
+        		new PartyBean(database, payingPartyModel));
+        ifc.addField("editInvoiceView.amount", amountModel);
 
-        tfId = widgetFactory.createTextField(id);
-        if (initialInvoice != null) {
-            tfId.setEditable(false); // prevent changing the id of an existing invoice
-            tfId.setEnabled(false);
-        }
-        int row = 0;
-        JLabel label = widgetFactory.createLabel("editInvoiceView.id", tfId);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
-
-        dateModel = new DateModel();
-        dateModel.setDate(date, null);
-        DateSelectionBean sbDate = beanFactory.createDateSelectionBean(dateModel);
-        label = widgetFactory.createLabel("editInvoiceView.issueDate", sbDate);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(sbDate, SwingUtils.createLabelGBConstraints(1, row));
-        row++;
-
-        psConcerningParty = new PartySelector();
-        psConcerningParty.setSelectedParty(concerningParty);
-        label = widgetFactory.createLabel("editInvoiceView.concerningParty", psConcerningParty);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(psConcerningParty, SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
-
-        psPayingParty = new PartySelector();
-        psPayingParty.setSelectedParty(payingParty);
-        label = widgetFactory.createLabel("editInvoiceView.payingParty", psPayingParty);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(psPayingParty, SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
-
-        tfAmount = new JTextField(amount);
-        label = widgetFactory.createLabel("editInvoiceView.amount", tfAmount);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(tfAmount, SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
-
-    	return topPanel;
+    	return ifc;
     }
 
     @Override
-	protected Component createCenterComponent() {
+	protected JComponent createCenterComponent() {
         // Create panel with descriptions and amounts table.
         JPanel middlePanel = new JPanel(new BorderLayout());
-        List<String> descriptions = new LinkedList<String>();
-        List<Amount> amounts = new LinkedList<Amount>();
+        List<Tuple<String, Amount>> tuples = new ArrayList<Tuple<String,Amount>>();
         if (initialInvoice != null) {
-            descriptions.addAll(Arrays.asList(initialInvoice.getDescriptions()));
-            amounts.addAll(Arrays.asList(initialInvoice.getAmounts()));
+        	String[] descriptions = initialInvoice.getDescriptions();
+        	Amount[] amounts = initialInvoice.getAmounts();
+        	for (int i=0; i<descriptions.length; i++) {
+        		tuples.add(new Tuple<String, Amount>(descriptions[i], amounts[i]));
+        	}
         }
-        tableModel = new DescriptionAndAmountTableModel(descriptions, amounts);
-        table = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(table);
+        tableModel = new DescriptionAndAmountTableModel(tuples);
+        table = widgetFactory.createTable(tableModel);
+        JScrollPane scrollPane =widgetFactory.createScrollPane(table);
         middlePanel.add(scrollPane, BorderLayout.CENTER);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
-        JButton button = widgetFactory.createButton("editInvoiceView.addRow", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent e) {
-                onAddRow();
-            }
-        });
-        buttonPanel.add(button);
-
-        button = widgetFactory.createButton("editInvoiceView.editRow", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent e) {
-                onEditRow();
-            }
-        });
-        buttonPanel.add(button);
-
-        button = widgetFactory.createButton("editInvoiceView.deleteRow", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent e) {
-                onDeleteRow();
-            }
-        });
-        buttonPanel.add(button);
+        buttonPanel.addButton("editInvoiceView.addRow", new AddAction());
+        buttonPanel.addButton("editInvoiceView.editRow", new EditAction());
+        buttonPanel.addButton("editInvoiceView.deleteRow", new DeleteAction());
 
         middlePanel.add(buttonPanel, BorderLayout.EAST);
 
@@ -269,16 +205,15 @@ public class EditInvoiceView extends OkCancelView {
     private void onEditRow() {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
-            MessageDialog.showMessage(this, "gen.titleWarning",
-                textResource.getString("editInvoiceView.noRowsSelectedToEdit"));
+            MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedToEdit");
         } else if (rows.length == 0) {
-            MessageDialog.showMessage(this, "gen.titleWarning",
-                textResource.getString("editInvoiceView.multipleRowsSelectedToEdit"));
+            MessageDialog.showInfoMessage(this, "editInvoiceView.multipleRowsSelectedToEdit");
         } else {
+        	Tuple<String, Amount> tuple = tableModel.getRow(rows[0]);
             EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
                 "editInvoiceView.editRowTileId",
-                tableModel.getDescription(rows[0]),
-                tableModel.getAmount(rows[0]),
+                tuple.getFirst(),
+                tuple.getSecond(),
                 database.getCurrency());
             ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
             dialog.showDialog();
@@ -295,16 +230,15 @@ public class EditInvoiceView extends OkCancelView {
     private void onDeleteRow() {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
-            MessageDialog.showMessage(this, "gen.titleWarning",
-                textResource.getString("editInvoiceView.noRowsSelectedForDeletion"));
+            MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedForDeletion");
         } else {
-            tableModel.deleteRows(rows);
+            tableModel.removeRows(rows);
         }
     }
 
     @Override
 	protected void onOk() {
-        String id = tfId.getText();
+        String id = idModel.getString();
         if (id.length() == 0) {
             MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noIdEntered");
             return;
@@ -315,74 +249,89 @@ public class EditInvoiceView extends OkCancelView {
             return;
         }
 
-        Party concerningParty = psConcerningParty.getSelectedParty();
+        Party concerningParty = concerningPartyModel.getParty();
         if (concerningParty == null) {
             MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noConcerningPartyEntered");
             return;
         }
 
-        Party payingParty = psPayingParty.getSelectedParty();
-        if (concerningParty == null) {
+        Party payingParty = payingPartyModel.getParty();
+        if (payingParty == null) {
             MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noPayingPartyEntered");
             return;
         }
 
         Amount amount;
         try {
-             amount = Factory.getInstance(AmountFormat.class).parse(tfAmount.getText(), database.getCurrency());
+             amount = amountFormat.parse(amountModel.getString(), database.getCurrency());
         } catch (ParseException e) {
             MessageDialog.showMessage(this, "gen.warning", "gen.invalidAmount");
             return;
         }
-        String[] descriptions = tableModel.getDescriptions();
-        Amount[] amounts = tableModel.getAmounts();
+
+        List<Tuple<String, Amount>> tuples = tableModel.getRows();
+        String[] descriptions = new String[tuples.size()];
+        Amount[] amounts = new Amount[tuples.size()];
+        for (int i=0; i<tuples.size(); i++) {
+        	descriptions[i] = tuples.get(i).getFirst();
+        	amounts[i] = tuples.get(i).getSecond();
+        	if (amounts[i] != null && amounts[i].isZero()) {
+        		amounts[i] = null;
+        	}
+        }
+
         editedInvoice = new Invoice(id, payingParty, concerningParty, amount, issueDate, descriptions, amounts);
         closeAction.actionPerformed(null);
     }
 
-    /**
+    private final class DeleteAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+		    onDeleteRow();
+		}
+	}
+
+	private final class EditAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+		    onEditRow();
+		}
+	}
+
+	private final class AddAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+		    onAddRow();
+		}
+	}
+
+	private final class CopyConceringPartyToPayingPartyListener implements
+			ModelChangeListener {
+		@Override
+		public void modelChanged(AbstractModel model) {
+		    if (payingPartyModel.getParty() == null) {
+		        payingPartyModel.setParty(concerningPartyModel.getParty());
+		    }
+		}
+	}
+
+	/**
      * Table model for the table containing descriptions and models.
      */
-    private static class DescriptionAndAmountTableModel extends AbstractTableModel {
+    private static class DescriptionAndAmountTableModel
+    		extends AbstractListTableModel<Tuple<String, Amount>> {
 
-        private List<String> descriptions;
+    	private final static ColumnDefinition DESCRIPTIONS =
+    		new ColumnDefinition("editInvoiceView.tableHeader.descriptions", String.class, 300);
 
-        private List<Amount> amounts;
+    	private final static ColumnDefinition AMOUNTS =
+    		new ColumnDefinition("editInvoiceView.tableHeader.amounts", String.class, 100);
 
-        /**
-         * Constructor. Precondition: <code>descriptions.size() == amounts.size()</code>.
-         * @param descriptions the descriptions
-         * @param amounts the amounts.
-         */
-        public DescriptionAndAmountTableModel(List<String> descriptions, List<Amount> amounts) {
-            this.descriptions = new ArrayList<String>(descriptions);
-            this.amounts = new ArrayList<Amount>(amounts);
-        }
+    	private final static List<ColumnDefinition> COLUMN_DEFINITIONS =
+    		Arrays.asList(DESCRIPTIONS, AMOUNTS);
 
-        /**
-         * Gets the description of the specified row.
-         * @param row the row index
-         * @return the description
-         */
-        public String getDescription(int row) {
-            return descriptions.get(row);
-        }
-
-        public String[] getDescriptions() {
-            return descriptions.toArray(new String[descriptions.size()]);
-        }
-
-        /**
-         * Gets the amount of the specified row.
-         * @param row the row index
-         * @return the amount
-         */
-        public Amount getAmount(int row) {
-            return amounts.get(row);
-        }
-
-        public Amount[] getAmounts() {
-            return amounts.toArray(new Amount[amounts.size()]);
+        public DescriptionAndAmountTableModel(List<Tuple<String, Amount>> tuples) {
+        	super(COLUMN_DEFINITIONS, tuples);
         }
 
         /**
@@ -391,9 +340,7 @@ public class EditInvoiceView extends OkCancelView {
          * @param amount the amount of the row; can be <code>null</code>
          */
         public void addRow(String description, Amount amount) {
-            descriptions.add(description);
-            amounts.add(amount);
-            fireTableRowsInserted(descriptions.size()-1, descriptions.size()-1);
+            addRow(new Tuple<String, Amount>(description, amount));
         }
 
         /**
@@ -403,74 +350,25 @@ public class EditInvoiceView extends OkCancelView {
          * @param amount the new amount of the row; can be <code>null</code>
          */
         public void updateRow(int index, String description, Amount amount) {
-            descriptions.set(index, description);
-            amounts.set(index, amount);
-            fireTableRowsUpdated(index, index);
-        }
-
-        /**
-         * Deletes a number of rows.
-         * @param indexes the indexes of the rows to be deleted
-         */
-        public void deleteRows(int[] indexes) {
-            Arrays.sort(indexes);
-            for (int i=0; i<indexes.length; i++) {
-                descriptions.remove(indexes[i] - i);
-                amounts.remove(indexes[i] - i);
-            }
-            fireTableDataChanged();
-        }
-
-        @Override
-        public String getColumnName(int columnIndex) {
-            String result;
-            switch(columnIndex) {
-            case 0:
-                result = Factory.getInstance(TextResource.class).getString("editInvoiceView.tableHeader.descriptions");
-                break;
-
-            case 1:
-                result = Factory.getInstance(TextResource.class).getString("editInvoiceView.tableHeader.amounts");
-                break;
-
-            default:
-                result = "???";
-            }
-            return result;
-
-        }
-
-        @Override
-		public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-		public int getRowCount() {
-            return descriptions.size();
+            updateRow(index, new Tuple<String, Amount>(description, amount));
         }
 
         @Override
 		public Object getValueAt(int rowIndex, int columnIndex) {
-            Object result;
-            switch(columnIndex) {
-            case 0:
-                result = descriptions.get(rowIndex);
-                break;
+        	ColumnDefinition colDef = COLUMN_DEFINITIONS.get(columnIndex);
+        	Tuple<String, Amount> tuple = getRow(rowIndex);
+            Object result = null;
 
-            case 1:
-                Amount a = amounts.get(rowIndex);
-                if (a != null) {
+            if (DESCRIPTIONS == colDef) {
+                result = tuple.getFirst();
+            } else if (AMOUNTS == colDef) {
+                Amount a = tuple.getSecond();
+                if (a != null && !a.isZero()) {
                     result = Factory.getInstance(AmountFormat.class)
                     	.formatAmountWithoutCurrency(a);
-                } else {
-                    result = "";
                 }
-                break;
-
-            default:
-                result = "???";
             }
+
             return result;
         }
 

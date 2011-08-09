@@ -17,10 +17,11 @@
 
 package cf.ui.views;
 
-import java.awt.Component;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.JComponent;
 
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -106,7 +107,7 @@ public class EditJournalItemView extends OkCancelView {
 	}
 
 	@Override
-	protected Component createCenterComponent() {
+	protected JComponent createCenterComponent() {
 		InputFieldsColumn column = new InputFieldsColumn();
 		addCloseable(column);
 

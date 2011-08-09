@@ -17,11 +17,11 @@
 package cf.ui.views;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.io.File;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import nl.gogognome.gogoaccount.businessobjects.ReportType;
@@ -91,7 +91,7 @@ public class GenerateReportView extends OkCancelView {
 	}
 
 	@Override
-	protected Component createCenterComponent() {
+	protected JComponent createCenterComponent() {
 		InputFieldsColumn column = new InputFieldsColumn();
 		addCloseable(column);
 

@@ -23,6 +23,7 @@ import java.util.Currency;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -83,11 +84,11 @@ public class EditDescriptionAndAmountView extends OkCancelView {
     }
 
     @Override
-	protected java.awt.Component createCenterComponent() {
+	protected JComponent createCenterComponent() {
         JPanel panel = new JPanel(new GridBagLayout());
 
         int row = 0;
-        tfDescription = new JTextField(initialDescription);
+        tfDescription = new JTextField(initialDescription, 30);
         JLabel label = widgetFactory.createLabel("editDescriptionAndAmountView.description", tfDescription);
         panel.add(label, SwingUtils.createLabelGBConstraints(0, row));
         panel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, row));
@@ -124,7 +125,7 @@ public class EditDescriptionAndAmountView extends OkCancelView {
         try {
             editedAmount = Factory.getInstance(AmountFormat.class).parse(tfAmount.getText(), currency);
         } catch (ParseException e) {
-            MessageDialog.showMessage(this, "gen.warning", textResource.getString("gen.invalidAmount"));
+            MessageDialog.showWarningMessage(this, "gen.invalidAmount");
             return;
         }
         editedDescription = tfDescription.getText();

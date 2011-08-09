@@ -80,7 +80,7 @@ class InvoicePanel extends JPanel {
 		JPanel titlePanel = new JPanel(new GridBagLayout());
 		titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		titlePanel.setBackground(
-				totalDebet.equals(totalCredit) ? CLOSED_INVOICE_COLOR : OPEN_INVOICE_COLOR);
+				isInvoicePaid() ? CLOSED_INVOICE_COLOR : OPEN_INVOICE_COLOR);
 		StringBuilder sb = new StringBuilder(invoice.getId());
 		Amount[] amounts = invoice.getAmounts();
 		String[] descriptions = invoice.getDescriptions();
@@ -89,6 +89,14 @@ class InvoicePanel extends JPanel {
 				sb.append(' ').append(descriptions[i]);
 			}
 		}
+
+		if (mustPayingPartyBeShown()) {
+			sb.append(' ');
+			String payingParty = invoice.getPayingParty().getId() + ' '
+				+ invoice.getPayingParty().getName();
+			sb.append(textResource.getString("InvoicesSinglePartyView.paidBy", payingParty));
+		}
+
 		titlePanel.add(new JLabel(sb.toString()), SwingUtils.createLabelGBConstraints(0, 0));
 		titlePanel.add(new JLabel(""), SwingUtils.createTextFieldGBConstraints(1, 0));
 
@@ -102,6 +110,16 @@ class InvoicePanel extends JPanel {
 		}
 		titlePanel.add(new JLabel(amountText), SwingUtils.createLabelGBConstraints(2, 0));
 		return titlePanel;
+	}
+
+	private boolean mustPayingPartyBeShown() {
+		return !isInvoicePaid()
+			&& !invoice.getConcerningParty().equals(invoice.getPayingParty())
+			&& invoice.getPayingParty() != null;
+	}
+
+	private boolean isInvoicePaid() {
+		return totalDebet.equals(totalCredit);
 	}
 
 	private void addHeader() {

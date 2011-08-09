@@ -66,7 +66,9 @@ import cf.engine.PartySearchCriteria;
  */
 public class PartiesView extends View {
 
-    private PartiesTableModel partiesTableModel;
+	private static final long serialVersionUID = 1L;
+
+	private PartiesTableModel partiesTableModel;
 
     private JTable table;
     private ListSelectionListener listSelectionListener;

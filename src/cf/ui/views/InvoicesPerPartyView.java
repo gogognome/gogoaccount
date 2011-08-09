@@ -208,7 +208,7 @@ public class InvoicesPerPartyView extends View {
 		Arrays.sort(invoices, new Comparator<Invoice>() {
             @Override
 			public int compare(Invoice o1, Invoice o2) {
-                return o1.getPayingParty().getId().compareTo(o2.getPayingParty().getId());
+                return o1.getConcerningParty().getId().compareTo(o2.getConcerningParty().getId());
             }
         });
 	}
@@ -218,18 +218,18 @@ public class InvoicesPerPartyView extends View {
         Party prevParty = null;
         for (Invoice invoice : invoices) {
         	if (mustInvoiceBeIncluded(invoice, date)) {
-        		Party payingParty = invoice.getPayingParty();
+        		Party concerningParty = invoice.getConcerningParty();
         		boolean addInvoice = false;
             	if (party == null) {
             		addInvoice = true;
-            		if (prevParty == null || !prevParty.equals(payingParty)) {
-            			JLabel label = new JLabel(payingParty.getId() + " - " + payingParty.getName());
+            		if (prevParty == null || !prevParty.equals(concerningParty)) {
+            			JLabel label = new JLabel(concerningParty.getId() + " - " + concerningParty.getName());
             			label.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
             			invoicesPanel.add(label,
             					SwingUtils.createPanelGBConstraints(0, row));
-            			prevParty = payingParty;
+            			prevParty = concerningParty;
             		}
-            	} else if (party.equals(payingParty)) {
+            	} else if (party.equals(concerningParty)) {
             		addInvoice = true;
             	}
 

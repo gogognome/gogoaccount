@@ -46,7 +46,9 @@ import cf.engine.Party;
  */
 public class EditPartyView extends View {
 
-    private JTextField tfId;
+	private static final long serialVersionUID = 1L;
+
+	private JTextField tfId;
     private JTextField tfName;
     private JTextField tfAddress;
     private JTextField tfZipCode;
