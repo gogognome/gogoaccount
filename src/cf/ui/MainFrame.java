@@ -406,7 +406,6 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         database.removeListener(this);
 
         database = newDatabase;
-        Database.setInstance(database);
         database.addListener(this);
         viewTabbedPane.closeAllViews();
 

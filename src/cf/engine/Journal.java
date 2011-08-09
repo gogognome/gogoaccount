@@ -17,7 +17,6 @@
 package cf.engine;
 
 import java.util.Arrays;
-import java.util.Currency;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -83,18 +82,17 @@ public class Journal implements Comparable<Journal> {
         this.items = items;
         this.idOfCreatedInvoice = idOfCreatedInvoice;
 
-        Currency currency = Database.getInstance().getCurrency();
-        Amount totalDebet = Amount.getZero(currency);
-        Amount totalCredit = totalDebet;
+        Amount totalDebet = null;
+        Amount totalCredit = null;
         for (int i=0; i<items.length; i++) {
             if (items[i].isDebet()) {
-                totalDebet = totalDebet.add(items[i].getAmount());
+                totalDebet = addNullable(totalDebet, items[i].getAmount());
             } else {
-                totalCredit = totalCredit.add(items[i].getAmount());
+                totalCredit = addNullable(totalCredit, items[i].getAmount());
             }
         }
 
-        if (totalDebet.compareTo(totalCredit) != 0) {
+        if (!nullableAmountsEqual(totalDebet, totalCredit)) {
             AmountFormat af = new AmountFormat(Locale.getDefault());
             throw new IllegalArgumentException(
                     "The sum of debet and credit amounts differ for journal " + id
@@ -103,7 +101,28 @@ public class Journal implements Comparable<Journal> {
         }
     }
 
-    /**
+	private Amount addNullable(Amount a, Amount b) {
+		if (a == null) {
+			return b;
+		} else if (b == null) {
+			return a;
+		} else {
+			return a.add(b);
+		}
+	}
+
+    private boolean nullableAmountsEqual(Amount a, Amount b) {
+		if (a == null && b == null) {
+			return true;
+		} else if (a != null && b != null) {
+			return a.equals(b);
+		} else {
+			return false;
+		}
+	}
+
+
+	/**
      * Gets the date of this journal.
      * @return the date of this journal.
      */

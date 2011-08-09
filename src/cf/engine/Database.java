@@ -43,9 +43,6 @@ import nl.gogognome.lib.util.DateUtil;
  */
 public class Database {
 
-    /** The singleton instance of this class. */
-    private static Database instance;
-
     /** Description of the bookkeeping represented by this database. */
     private String description = "";
 
@@ -117,7 +114,7 @@ public class Database {
 		for (int i=0; i<listeners.size(); i++)
 		{
 			DatabaseListener l = listeners.get(i);
-			l.databaseChanged(instance);
+			l.databaseChanged(this);
 		}
 	}
 
@@ -128,9 +125,7 @@ public class Database {
 	 */
 	public void notifyChange() {
         changed = true;
-		if (instance == this) {
-			notifyListeners();
-		}
+		notifyListeners();
 	}
 
 	/**
@@ -145,32 +140,6 @@ public class Database {
 		// not been changed since the last load or save action.
 		notifyListeners();
 	}
-
-    /**
-     * Gets the singleton instance of this class.
-     * @return the singleton instance of this class
-     * @deprecated do not use this anymore
-     */
-    @Deprecated
-    public static synchronized Database getInstance()
-    {
-        if (instance == null)
-        {
-            instance = new Database();
-        }
-        return instance;
-    }
-
-    /**
-     * Sets the singleton instance of this class.
-     * @param instance the singleton instance of this class
-     * @deprecated do not use this method anymore
-     */
-    @Deprecated
-    public static synchronized void setInstance(Database instance)
-    {
-        Database.instance = instance;
-    }
 
     public boolean hasUnsavedChanges()
     {
