@@ -25,7 +25,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
+import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.cf.services.ServiceException;
+import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
@@ -33,6 +37,7 @@ import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import cf.engine.Account;
 import cf.engine.Database;
+import cf.engine.DatabaseListener;
 import cf.ui.components.AccountFormatter;
 
 /**
@@ -53,7 +58,10 @@ public class AccountMutationsView extends View {
 	private DateModel dateModel = new DateModel(new Date());
 	private ListModel<Account> accountListModel = new ListModel<Account>();
 
-	private ModelChangeListener listener;
+	private ModelChangeListener modelListener;
+	private DatabaseListener databaseListener;
+
+	private Report report;
 
 	public AccountMutationsView(Database database) {
 		super();
@@ -71,15 +79,15 @@ public class AccountMutationsView extends View {
 		addComponents();
 		addListeners();
 		updateTableModel();
+
+		if (!accountListModel.getItems().isEmpty()) {
+			accountListModel.setSelectedIndex(0, null);
+		}
 	}
 
 	private void initModels() {
-		tableModel = new AccountOverviewTableModel(database,
-				accountListModel.getSingleSelectedItem(), dateModel.getDate());
-		accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
-		if (!accountListModel.getItems().isEmpty()) {
-			accountListModel.setSelectedIndices(new int[] {0}, null);
-		}
+		tableModel = new AccountOverviewTableModel();
+		setAccountsInListModel();
 	}
 
 	private void addComponents() {
@@ -113,34 +121,74 @@ public class AccountMutationsView extends View {
 	}
 
 	private void addListeners() {
-		listener = new ModelChangeListener() {
-			@Override
-			public void modelChanged(AbstractModel model) {
-				updateTableModel();
-			}
-		};
+		modelListener = new ModelChangeListenerImpl();
+		dateModel.addModelChangeListener(modelListener);
+		accountListModel.addModelChangeListener(modelListener);
 
-		dateModel.addModelChangeListener(listener);
-		accountListModel.addModelChangeListener(listener);
+		databaseListener = new DatabaseListenerImpl();
+		database.addListener(databaseListener);
 	}
 
 	private void removeListeners() {
-		dateModel.removeModelChangeListener(listener);
-		accountListModel.removeModelChangeListener(listener);
+		database.removeListener(databaseListener);
+		dateModel.removeModelChangeListener(modelListener);
+		accountListModel.removeModelChangeListener(modelListener);
+	}
+
+	private void updateReportAndTableModel() {
+		Date date = dateModel.getDate();
+		if (date != null) {
+			updateReport(date);
+		} else {
+			report = null;
+		}
+
+		updateTableModel();
+	}
+
+	private void updateReport(Date date) {
+		try {
+			report = BookkeepingService.createReport(database, date);
+		} catch (ServiceException e) {
+			report = null;
+			MessageDialog.showErrorMessage(this, e, "gen.internalError");
+		}
 	}
 
 	private void updateTableModel() {
 		Account account = accountListModel.getSingleSelectedItem();
-		Date date = dateModel.getDate();
-		tableModel.setAccountAndDate(account, date);
+		tableModel.setAccountAndDate(report, account);
 
-		if (account != null && date != null) {
+		if (account != null && report != null) {
 			tableScrollPane.setBorder(widgetFactory.createTitleBorder("vao.accountAtDate",
 			        account.getId() + " - " + account.getName(),
-			        textResource.formatDate("gen.dateFormat", date)));
+			        textResource.formatDate("gen.dateFormat", report.getEndDate())));
 		} else {
 			tableModel.clear();
 			tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
+		}
+	}
+
+	private void setAccountsInListModel() {
+		accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
+	}
+
+	private final class ModelChangeListenerImpl implements ModelChangeListener {
+		@Override
+		public void modelChanged(AbstractModel model) {
+			if (model == accountListModel && report != null) {
+				updateTableModel();
+			} else {
+				updateReportAndTableModel();
+			}
+		}
+	}
+
+	private final class DatabaseListenerImpl implements DatabaseListener {
+		@Override
+		public void databaseChanged(Database db) {
+			setAccountsInListModel();
+			updateReportAndTableModel();
 		}
 	}
 }

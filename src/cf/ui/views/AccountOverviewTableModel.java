@@ -21,19 +21,16 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
-import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
-import cf.engine.Database;
 import cf.engine.Invoice;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
 
 /**
  * This class implements a model for a <code>JTable</code> that shows an overview
@@ -69,14 +66,8 @@ public class AccountOverviewTableModel extends AbstractListTableModel<AccountOve
         DATE, ID, DESCRIPTION, DEBET, CREDIT, INVOICE
     );
 
-    /** The database used to obtain the invoices for journal items. */
-    private Database database;
-
-    /** The account to be shown. */
+    private Report report;
     private Account account;
-
-    /** The date. */
-    private Date date;
 
     /** This class contains the information to be shown in a single row of the table. */
     class LineInfo {
@@ -88,89 +79,46 @@ public class AccountOverviewTableModel extends AbstractListTableModel<AccountOve
         String invoice;
     }
 
-    private Amount totalDebet;
-
-    private Amount totalCredit;
-
     /**
      * Constructs a new <code>AccountOverviewComponent</code>.
      * @param database the database
      * @param account the account to be shown
      * @param date the date
      */
-    public AccountOverviewTableModel(Database database, Account account, Date date) {
+    public AccountOverviewTableModel() {
         super(COLUMN_DEFINITIONS, Collections.<LineInfo>emptyList());
-        this.database = database;
-        this.account = account;
-        this.date = date;
         initializeValues();
     }
 
-    public void setAccountAndDate(Account account, Date date) {
+    public void setAccountAndDate(Report report, Account account) {
+    	this.report = report;
         this.account = account;
-        this.date = date;
         clear();
         initializeValues();
     }
 
     private void initializeValues() {
-        if (account != null && date != null) {
-	        totalDebet = Amount.getZero(database.getCurrency());
-	        totalCredit = totalDebet;
-
-	        List<Journal> journals = database.getJournals();
-	        for (Journal journal : journals) {
-	            if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
-	            	addLineInfoForJournal(journal);
-	            }
+        if (account != null && report != null) {
+        	for (LedgerLine line : report.getLedgerLinesForAccount(account)) {
+	            LineInfo lineInfo = new LineInfo();
+	            lineInfo.date = line.date;
+	            lineInfo.id = line.id;
+	            lineInfo.description = line.description;
+	            lineInfo.debet = line.debetAmount;
+	            lineInfo.credit = line.creditAmount;;
+	            lineInfo.invoice = createInvoiceText(line.invoice);
+	            addRow(lineInfo);
 	        }
-
-	        addTotalAmount();
         }
     }
 
-    private void addLineInfoForJournal(Journal journal) {
-        JournalItem[] items = journal.getItems();
-        for (int j = 0; j < items.length; j++) {
-            if (items[j].getAccount().equals(account)) {
-                LineInfo lineInfo = new LineInfo();
-                lineInfo.date = journal.getDate();
-                lineInfo.id = journal.getId();
-                lineInfo.description = journal.getDescription();
-                lineInfo.debet = items[j].isDebet() ? items[j].getAmount() : null;
-                lineInfo.credit = items[j].isCredit() ? items[j].getAmount() : null;
-                lineInfo.invoice = createInvoiceText(journal, items[j]);
-                addRow(lineInfo);
-                if (lineInfo.debet != null) {
-                    totalDebet = totalDebet.add(lineInfo.debet);
-                } else {
-                    totalCredit = totalCredit.add(lineInfo.credit);
-                }
-            }
-        }
-	}
-
-	private String createInvoiceText(Journal journal, JournalItem item) {
+	private String createInvoiceText(Invoice invoice) {
     	StringBuilder sb = new StringBuilder(100);
-        Invoice invoice = database.getInvoice(item.getInvoiceId());
-        Invoice createdInvoice = database.getInvoice(journal.getIdOfCreatedInvoice());
         if (invoice != null) {
-            sb.append(invoice.getId()).append(" (").append(invoice.getPayingParty().getName()).append(")");
-        }
-        if (createdInvoice != null) {
-        	sb.append("<").append(createdInvoice.getId());
-        	sb.append(" (").append(createdInvoice.getPayingParty().getName()).append(")>");
+            sb.append(invoice.getId());
+            sb.append(" (").append(invoice.getPayingParty().getName()).append(")");
         }
 		return sb.toString();
-	}
-
-	private void addTotalAmount() {
-        LineInfo lineInfo = new LineInfo();
-        lineInfo.date = date;
-        lineInfo.description = Factory.getInstance(TextResource.class).getString("gen.total");
-        lineInfo.debet = totalDebet;
-        lineInfo.credit = totalCredit;
-        addRow(lineInfo);
 	}
 
     @Override
