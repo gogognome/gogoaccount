@@ -21,6 +21,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -31,9 +32,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumnModel;
 
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -131,7 +129,7 @@ public class EditJournalView extends View {
             descriptionModel.setString(initialValuesJournal.getDescription());
 
             for (JournalItem item : initialValuesJournal.getItems()) {
-                itemsTableModel.addItem(item);
+                itemsTableModel.addRow(item);
             }
         }
 		initValuesForNextJournal();
@@ -149,28 +147,7 @@ public class EditJournalView extends View {
         valuesEditPanel = vep;
 
         // Create table of items
-        itemsTable = new JTable(itemsTableModel);
-        itemsTable.setRowSelectionAllowed(true);
-        itemsTable.setColumnSelectionAllowed(false);
-
-        // Set column widths
-        TableColumnModel columnModel = itemsTable.getColumnModel();
-        columnModel.getColumn(0).setPreferredWidth(300);
-        columnModel.getColumn(1).setPreferredWidth(100);
-        columnModel.getColumn(2).setPreferredWidth(100);
-        columnModel.getColumn(3).setPreferredWidth(500);
-
-        // Set renderers for column 1 and 2.
-        TableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer() {
-            @Override
-			public void setValue(Object value) {
-                super.setValue(value);
-                setHorizontalAlignment(SwingConstants.RIGHT);
-            }
-        };
-
-        columnModel.getColumn(1).setCellRenderer(rightAlignedRenderer);
-        columnModel.getColumn(2).setCellRenderer(rightAlignedRenderer);
+        itemsTable = widgetFactory.createTable(itemsTableModel);
 
         JPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
@@ -312,7 +289,7 @@ public class EditJournalView extends View {
 
         String id = idModel.getString();
         String description = descriptionModel.getString();
-        JournalItem[] items = itemsTableModel.getItems();
+        List<JournalItem> items = itemsTableModel.getRows();
 
         try {
             return new Journal(id, description, date, items, idOfCreatedInvoice);
@@ -332,7 +309,7 @@ public class EditJournalView extends View {
 
         JournalItem item = view.getEnteredJournalItem();
         if (item != null) {
-            itemsTableModel.addItem(item);
+            itemsTableModel.addRow(item);
         }
     }
 
@@ -349,7 +326,7 @@ public class EditJournalView extends View {
 	/** Handles the edit button. Lets the user edit a journal item. */
     private void handleEditButtonPressed() {
         int row = itemsTable.getSelectedRow();
-        JournalItem item = itemsTableModel.getItem(row);
+        JournalItem item = itemsTableModel.getRow(row);
         if (item != null) {
         	EditJournalItemView view = new EditJournalItemView(database, item);
         	ViewDialog dialog = new ViewDialog(this, view);
@@ -357,14 +334,14 @@ public class EditJournalView extends View {
 
 	        item = view.getEnteredJournalItem();
 	        if (item != null) {
-	            itemsTableModel.updateItem(row, item);
+	            itemsTableModel.updateRow(row, item);
 	        }
         }
     }
 
     /** Handles the delete button. Deletes a journal item. */
     private void handleDeleteButtonPressed() {
-        itemsTableModel.deleteItem(itemsTable.getSelectedRow());
+        itemsTableModel.removeRow(itemsTable.getSelectedRow());
     }
 
     /**

@@ -17,7 +17,6 @@
 package cf.ui.views;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -31,12 +30,10 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableColumnModel;
 
 import nl.gogognome.gogoaccount.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.controllers.EditJournalController;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -53,8 +50,6 @@ import cf.ui.dialogs.ItemsTableModel;
 public class EditJournalsView extends View {
 
 	private static final long serialVersionUID = 1L;
-
-	private final static Color BACKGROUND_COLOR = new Color(255, 230, 230);
 
     private JTable itemsTable;
     private ItemsTableModel itemsTableModel;
@@ -79,28 +74,15 @@ public class EditJournalsView extends View {
      */
     @Override
     public void onInit() {
-        setBackground(BACKGROUND_COLOR);
-
         // Create table of journals
         journalsTableModel = new JournalsTableModel(database);
 		journalsTable = widgetFactory.createSortedTable(journalsTableModel);
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
-		itemsTable = new JTable(itemsTableModel);
+		itemsTable = widgetFactory.createTable(itemsTableModel);
 		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
-
-		// Set column widths
-		TableColumnModel columnModel = itemsTable.getColumnModel();
-		columnModel.getColumn(0).setPreferredWidth(300);
-		columnModel.getColumn(1).setPreferredWidth(100);
-		columnModel.getColumn(2).setPreferredWidth(100);
-		columnModel.getColumn(3).setPreferredWidth(300);
-
-		// Set renderers for column 1 and 2.
-		columnModel.getColumn(1).setCellRenderer(new RightAlignedRenderer());
-		columnModel.getColumn(2).setCellRenderer(new RightAlignedRenderer());
 
 		// Let items table be updated when another row is selected in the journals table.
 		listSelectionListener = new ListSelectionListenerImpl();

@@ -16,251 +16,79 @@
 */
 package cf.ui.dialogs;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.TableModel;
-
-import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.swing.AbstractListTableModel;
+import nl.gogognome.lib.swing.ColumnDefinition;
+import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.JournalItem;
 
-public class ItemsTableModel implements TableModel {
+/**
+ * Table model for journal items.
+ *
+ * @author Sander Kooijmans
+ */
+public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
+
+	private static final long serialVersionUID = 1L;
+
+	private final static ColumnDefinition ACCOUNT =
+		new ColumnDefinition("gen.account", String.class, 300);
+
+	private final static ColumnDefinition DEBET =
+		new ColumnDefinition.Builder("gen.debet", String.class, 100)
+			.add(new RightAlignedRenderer()).build();
+
+	private final static ColumnDefinition CREDIT =
+		new ColumnDefinition.Builder("gen.credit", String.class, 100)
+			.add(new RightAlignedRenderer()).build();
+
+	private final static ColumnDefinition INVOICE =
+		new ColumnDefinition("gen.invoice", String.class, 300);
+
+	private final static List<ColumnDefinition> COLUMN_DEFINTIIONS =
+		Arrays.asList(ACCOUNT, DEBET, CREDIT, INVOICE);
 
     private Database database;
-
-    /** Contains the items shown in the table. */
-    private ArrayList<JournalItem> items = new ArrayList<JournalItem>();
-
-    /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
-    private ArrayList<TableModelListener> itemTableModelListeners = new ArrayList<TableModelListener>();
 
     /**
      * Constructor.
      * @param database the database
      */
     public ItemsTableModel(Database database) {
+    	super(COLUMN_DEFINTIIONS, Collections.<JournalItem>emptyList());
         this.database = database;
     }
 
     public void setJournalItems(JournalItem[] itemsArray) {
-        items.clear();
-        for (int i=0; i<itemsArray.length; i++) {
-            items.add(itemsArray[i]);
-        }
-        notifyListeners(new TableModelEvent(this));
+    	replaceRows(Arrays.asList(itemsArray));
     }
 
-    /**
-     * Notifies the listeners of a change in the table.
-     * @param event describes the change.
-     */
-    private void notifyListeners(TableModelEvent event) {
-        for (Iterator<TableModelListener> iter = itemTableModelListeners.iterator(); iter.hasNext();) {
-            TableModelListener listener = iter.next();
-            listener.tableChanged(event);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getColumnCount()
-     */
     @Override
-	public int getColumnCount() {
-        return 4;
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getRowCount()
-     */
-    @Override
-	public int getRowCount() {
-        return items.size();
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#isCellEditable(int, int)
-     */
-    @Override
-	public boolean isCellEditable(int row, int col) {
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getColumnClass(int)
-     */
-    @Override
-	public Class<?> getColumnClass(int col)
-    {
-        Class<?> result;
-        switch(col)
-        {
-        case 0:
-        case 3:
-            result = String.class;
-            break;
-
-        case 1:
-        case 2:
-            result = Amount.class;
-            break;
-        default:
-            result = null;
-        }
-        return result;
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getValueAt(int, int)
-     */
-    @Override
-	public Object getValueAt(int row, int col)
-    {
+	public Object getValueAt(int row, int col) {
+    	ColumnDefinition colDef = COLUMN_DEFINTIIONS.get(col);
         AmountFormat af = Factory.getInstance(AmountFormat.class);
         String result = null;
-        JournalItem item = items.get(row);
-        switch(col)
-        {
-        case 0:
+        JournalItem item = getRow(row);
+
+        if (ACCOUNT == colDef) {
             result = item.getAccount().getId() + " " + item.getAccount().getName();
-            break;
-
-        case 1:
+        } else if (DEBET == colDef) {
             result = item.isDebet() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
-            break;
-
-        case 2:
+        } else if (CREDIT == colDef) {
             result = item.isCredit() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
-            break;
-
-        case 3:
+        } else if (INVOICE == colDef) {
             Invoice invoice = database.getInvoice(item.getInvoiceId());
             result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getId()
                 + " - " + invoice.getPayingParty().getName() + ")" : "";
-            break;
         }
         return result;
     }
 
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getColumnName(int)
-     */
-    @Override
-	public String getColumnName(int col)
-    {
-        String id = null;
-        switch(col)
-        {
-        case 0: id = "gen.account"; break;
-        case 1: id = "gen.debet"; break;
-        case 2: id = "gen.credit"; break;
-        case 3: id = "gen.invoice"; break;
-        }
-        return Factory.getInstance(TextResource.class).getString(id);
-    }
-
-    /**
-     * Gets the journal items of this model.
-     * @return the journal items of this model.
-     */
-    public JournalItem[] getItems()
-    {
-        JournalItem[] result = new JournalItem[items.size()];
-        items.toArray(result);
-        return result;
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#addTableModelListener(javax.swing.event.TableModelListener)
-     */
-    @Override
-	public void addTableModelListener(TableModelListener listener)
-    {
-        itemTableModelListeners.add(listener);
-    }
-
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#removeTableModelListener(javax.swing.event.TableModelListener)
-     */
-    @Override
-	public void removeTableModelListener(TableModelListener listener)
-    {
-        itemTableModelListeners.remove(listener);
-    }
-
-    /**
-     * Adds an item to the table.
-     * @param item the item to be added.
-     */
-    public void addItem(JournalItem item)
-    {
-        items.add(item);
-        notifyListeners(new TableModelEvent(this));
-    }
-
-    /**
-     * Gets a specified item from the table model.
-     * @param row the row in which the item is shown
-     * @return the specified item or <code>null</code> if the specified row
-     *         does not exist.
-     */
-    public JournalItem getItem(int row)
-    {
-        JournalItem result = null;
-        if (0 <= row && row < items.size())
-        {
-            result = items.get(row);
-        }
-        return result;
-    }
-
-    /**
-     * Updates the item at the specified row in the table model.
-     * @param row the row.
-     * @param item the new value for the specified row.
-     * @throws IllegalArgumentException if the specified row does not exist.
-     */
-    public void updateItem(int row, JournalItem item)
-    {
-        if (0 <= row && row < items.size())
-        {
-            items.set(row, item);
-            notifyListeners(new TableModelEvent(this));
-        }
-        else
-        {
-            throw new IllegalArgumentException("Row " + row + " does not exist!");
-        }
-    }
-
-    /**
-     * Deletes a row from the model.
-     * @param row the row to be deleted. If <code>row</code> is not an existing
-     *        row number, then this method returns without changing the model.
-     */
-    public void deleteItem(int row)
-    {
-        if (0 <= row && row < items.size())
-        {
-            items.remove(row);
-            notifyListeners(new TableModelEvent(this));
-        }
-    }
-
-    /** Removes all rows from the model. */
-    public void clear() {
-        items.clear();
-        notifyListeners(new TableModelEvent(this));
-    }
-
-    /** Should never be called since all methods are not editable. */
-    @Override
-	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-    }
 }

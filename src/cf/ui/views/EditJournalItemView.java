@@ -138,8 +138,8 @@ public class EditJournalItemView extends OkCancelView {
         	amount = null;
         }
 
-        Account account = accountListModel.getSingleSelectedItem();
-        boolean debet = sideListModel.getSingleSelectedIndex() == 0;
+        Account account = accountListModel.getSelectedItem();
+        boolean debet = sideListModel.getSelectedIndex() == 0;
         Invoice invoice = invoiceBean.getSelectedInvoice();
 
         if (!validateInput(amount, account)) {

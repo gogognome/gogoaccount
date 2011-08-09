@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -33,7 +34,6 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableColumnModel;
 
 import nl.gogognome.cf.services.ImportBankStatementService;
 import nl.gogognome.cf.services.importers.ImportedTransaction;
@@ -41,11 +41,10 @@ import nl.gogognome.cf.services.importers.RabobankCSVImporter;
 import nl.gogognome.cf.services.importers.TransactionImporter;
 import nl.gogognome.gogoaccount.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.controllers.EditJournalController;
-import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
+import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.FileModel;
@@ -66,10 +65,12 @@ import cf.ui.dialogs.ItemsTableModel;
  *
  * @author Sander Kooijmans
  */
-public class ImportBankStatementView extends View
-	implements ModelChangeListener, ListSelectionListener, AddJournalForTransactionView.Plugin{
+public class ImportBankStatementView extends View implements ModelChangeListener,
+		ListSelectionListener, AddJournalForTransactionView.Plugin{
 
-    private FileModel fileSelectionModel = new FileModel();
+	private static final long serialVersionUID = 1L;
+
+	private FileModel fileSelectionModel = new FileModel();
 
     private JTable itemsTable;
     private ItemsTableModel itemsTableModel;
@@ -86,7 +87,7 @@ public class ImportBankStatementView extends View
 
     Database database;
 
-    private InputFieldsColumn vep;
+    private InputFieldsColumn ifc;
 
 	/**
 	 * Creates the view.
@@ -116,71 +117,51 @@ public class ImportBankStatementView extends View
 	}
 
 	private void addComponents() {
-		vep = new InputFieldsColumn();
-		vep.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
-		vep.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
+		ifc = new InputFieldsColumn();
+		addCloseable(ifc);
+		ifc.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
+		ifc.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
 				new ImporterFormatter());
 
 		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
-		importButton = widgetFactory.createButton("importBankStatementView.import", new AbstractAction() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				handleImport();
-			}
-		});
-		buttonPanel.add(importButton);
+		importButton = buttonPanel.addButton("importBankStatementView.import", new ImportAction());
 
 		JPanel importPanel = new JPanel(new BorderLayout());
-		importPanel.add(vep, BorderLayout.NORTH);
+		importPanel.add(ifc, BorderLayout.NORTH);
 		importPanel.add(buttonPanel, BorderLayout.SOUTH);
-		importPanel.setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("importBankStatementView.importSettings"));
+		importPanel.setBorder(widgetFactory.createTitleBorderWithPadding("importBankStatementView.importSettings"));
 
 		// Create table of journals
 		transactionJournalsTableModel = new TransactionsJournalsTableModel(
 				Collections.<Transaction>emptyList(), database);
 		transactionsJournalsTable = widgetFactory.createSortedTable(transactionJournalsTableModel);
-        transactionsJournalsTable.setBorder(widgetFactory.createTitleBorderWithPadding("importBankStatementView.transactionsJournals"));
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(database);
-		itemsTable = new JTable(itemsTableModel);
+		itemsTable = widgetFactory.createTable(itemsTableModel);
 		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
 
-		// Set column widths
-		TableColumnModel columnModel = itemsTable.getColumnModel();
-		columnModel.getColumn(0).setPreferredWidth(300);
-		columnModel.getColumn(1).setPreferredWidth(100);
-		columnModel.getColumn(2).setPreferredWidth(100);
-		columnModel.getColumn(3).setPreferredWidth(300);
-
-		// Set renderers for column 1 and 2.
-		columnModel.getColumn(1).setCellRenderer(new RightAlignedRenderer());
-		columnModel.getColumn(2).setCellRenderer(new RightAlignedRenderer());
-
 		// Create button panel
-		JPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
+		ButtonPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonsPanel.setOpaque(false);
 
-		editButton = widgetFactory.createButton("ejd.editJournal", new EditAction());
-		buttonsPanel.add(editButton);
-
-		addButton = widgetFactory.createButton("ejd.addJournal", new AddAction());
-		buttonsPanel.add(addButton);
-
-		deleteButton = widgetFactory.createButton("ejd.deleteJournal", new DeleteAction());
-		buttonsPanel.add(deleteButton);
+		editButton = buttonsPanel.addButton("ejd.editJournal", new EditAction());
+		addButton = buttonsPanel.addButton("ejd.addJournal", new AddAction());
+		deleteButton = buttonsPanel.addButton("ejd.deleteJournal", new DeleteAction());
 
 		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
-		tablesPanel.add(new JScrollPane(transactionsJournalsTable),
+		tablesPanel.add(widgetFactory.createScrollPane(transactionsJournalsTable,
+				"importBankStatementView.transactionsJournals"),
 				SwingUtils.createPanelGBConstraints(0, 1));
 
         JScrollPane scrollPane = new JScrollPane(itemsTable);
         tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 2));
 
         setLayout(new BorderLayout());
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(importPanel, BorderLayout.NORTH);
 		add(tablesPanel, BorderLayout.CENTER);
         add(buttonsPanel, BorderLayout.SOUTH);
@@ -206,7 +187,6 @@ public class ImportBankStatementView extends View
 
     @Override
     public void onClose() {
-    	vep.close();
     	removeListeners();
     }
 
@@ -229,7 +209,7 @@ public class ImportBankStatementView extends View
 	private void handleImport() {
 		File file = fileSelectionModel.getFile();
 		try {
-			TransactionImporter importer = importersModel.getSingleSelectedItem();
+			TransactionImporter importer = importersModel.getSelectedItem();
 			List<ImportedTransaction> transactions = importer.importTransactions(file);
 			fileSelectionModel.setEnabled(false, this);
 			importersModel.setEnabled(false, this);
@@ -315,7 +295,7 @@ public class ImportBankStatementView extends View
 	private boolean canImportBeStarted() {
 		return fileSelectionModel.getFile() != null
 				&& fileSelectionModel.getFile().isFile()
-				&& importersModel.getSingleSelectedIndex() != -1;
+				&& importersModel.getSelectedIndex() != -1;
 	}
 
 	@Override
@@ -347,7 +327,6 @@ public class ImportBankStatementView extends View
 		ImportBankStatementService service = new ImportBankStatementService(database);
 		if (items.length == 2) {
 			for (JournalItem item : items) {
-				String importedAccount;
 				if (item.isDebet()) {
 					service.setImportedToAccount(transaction, item.getAccount());
 				} else {
@@ -377,6 +356,13 @@ public class ImportBankStatementView extends View
 			importedTransaction = transactionJournalsTableModel.getRow(row).getImportedTransaction();
 		}
 		return importedTransaction;
+	}
+
+	private final class ImportAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			handleImport();
+		}
 	}
 
 	private class AddAction extends AbstractAction {

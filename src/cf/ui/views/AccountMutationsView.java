@@ -156,7 +156,7 @@ public class AccountMutationsView extends View {
 	}
 
 	private void updateTableModel() {
-		Account account = accountListModel.getSingleSelectedItem();
+		Account account = accountListModel.getSelectedItem();
 		tableModel.setAccountAndDate(report, account);
 
 		if (account != null && report != null) {

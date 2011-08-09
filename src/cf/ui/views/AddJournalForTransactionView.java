@@ -120,8 +120,8 @@ public class AddJournalForTransactionView extends EditJournalView {
 		Account debetAccount = service.getFromAccount(t);
 		Account creditAccount = service.getToAccount(t);
 		if (debetAccount != null && creditAccount != null) {
-			itemsTableModel.addItem(createDefaultItemToBeAdded());
-			itemsTableModel.addItem(createDefaultItemToBeAdded());
+			itemsTableModel.addRow(createDefaultItemToBeAdded());
+			itemsTableModel.addRow(createDefaultItemToBeAdded());
 		}
 	}
 
