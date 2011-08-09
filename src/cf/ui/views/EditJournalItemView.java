@@ -87,6 +87,8 @@ public class EditJournalItemView extends OkCancelView {
 		List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
 				textResource.getString("gen.credit"));
 		sideListModel.setItems(sides);
+		sideListModel.setSelectedIndex(0, null);
+
 		invoiceBean = new InvoiceBean(database);
 
 		if (itemToBeEdited != null) {
