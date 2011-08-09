@@ -47,9 +47,10 @@ public class BookkeepingService {
         throw new IllegalStateException();
     }
 
-    public static Database closeBookkeeping(Database database, String description, Date date, Account equity) throws CreationException {
+    public static Database closeBookkeeping(Database database, String description, Date date,
+    		Account equity) throws ServiceException {
         if (database.hasUnsavedChanges()) {
-            throw new CreationException("The bookkeeping contains unsaved changes. " +
+            throw new ServiceException("The bookkeeping contains unsaved changes. " +
             		"First save the changes before closing the bookkeeping.");
         }
 
@@ -63,7 +64,7 @@ public class BookkeepingService {
         try {
             newDatabase.setParties(database.getParties());
         } catch (DatabaseModificationFailedException e) {
-            throw new CreationException("Failed to copy parties to the new bookkeeping.", e);
+            throw new ServiceException("Failed to copy parties to the new bookkeeping.", e);
         }
 
         // Copy the accounts
@@ -73,7 +74,7 @@ public class BookkeepingService {
             newDatabase.setExpenses(copyAccounts(database.getExpenses(), newDatabase));
             newDatabase.setRevenues(copyAccounts(database.getRevenues(), newDatabase));
         } catch (DatabaseModificationFailedException e) {
-            throw new CreationException("Can't set accounts for the new bookkeeping.", e);
+            throw new ServiceException("Can't set accounts for the new bookkeeping.", e);
         }
 
         // Create start balance
@@ -96,7 +97,8 @@ public class BookkeepingService {
         }
 
         // Add the result of operations to the specified account.
-        Amount resultOfOperations = database.getBalance(dayBeforeStart).getResultOfOperations();
+        Report report = createReport(newDatabase, dayBeforeStart);
+        Amount resultOfOperations = report.getResultOfOperations();
         if (resultOfOperations.isPositive()) {
             journalItems.add(new JournalItem(resultOfOperations, newDatabase.getAccount(equity.getId()), false, null, null));
         } else if (resultOfOperations.isNegative()) {
@@ -107,9 +109,9 @@ public class BookkeepingService {
                 journalItems.toArray(new JournalItem[journalItems.size()]), null);
             newDatabase.addJournal(startBalance, false);
         } catch (IllegalArgumentException e) {
-            throw new CreationException("Failed to create journal for start balance.", e);
+            throw new ServiceException("Failed to create journal for start balance.", e);
         } catch (DatabaseModificationFailedException e) {
-            throw new CreationException("Failed to create journal for start balance.", e);
+            throw new ServiceException("Failed to create journal for start balance.", e);
         }
 
         // Copy journals starting from the specified date
@@ -118,7 +120,7 @@ public class BookkeepingService {
                 try {
                     newDatabase.addJournal(copyJournal(journal, newDatabase), false);
                 } catch (DatabaseModificationFailedException e) {
-                    throw new CreationException("Failed to copy a journal to the new bookkeeping.", e);
+                    throw new ServiceException("Failed to copy a journal to the new bookkeeping.", e);
                 }
             }
         }
@@ -139,7 +141,7 @@ public class BookkeepingService {
                 }
             }
         } catch (DatabaseModificationFailedException e) {
-            throw new CreationException("Failed to copy open invoices to the new bookkeeping.", e);
+            throw new ServiceException("Failed to copy open invoices to the new bookkeeping.", e);
         }
 
         // Notify unsaved changes in the new database.
@@ -352,19 +354,19 @@ public class BookkeepingService {
     	rb.setLiabilities(Arrays.asList(database.getLiabilities()));
     	rb.setExpenses(Arrays.asList(database.getExpenses()));
     	rb.setRevenues(Arrays.asList(database.getRevenues()));
-    	
+
     	for (Journal j : database.getJournals()) {
     		if (DateUtil.compareDayOfYear(j.getDate(), date) <= 0) {
     			rb.addJournal(j);
     		}
     	}
-    	
+
     	for (Invoice invoice : database.getInvoices()) {
     		if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
     			rb.addInvoice(invoice);
     		}
     	}
-    	
+
     	return rb.build();
     }
 }

@@ -680,15 +680,6 @@ public class Database {
     }
 
     /**
-     * Gets the balance for the specified date.
-     * @param date the date
-     * @return the balance
-     */
-    public Balance getBalance(Date date) {
-        return new Balance(this, date);
-    }
-
-    /**
      * Gets the operation result for the specified date.
      * @param date the date
      * @return the operation result

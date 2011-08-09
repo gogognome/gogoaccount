@@ -58,8 +58,8 @@ public class GenerateReportController {
 	        Task task;
 
 			switch (view.getReportType()) {
-			case PLAING_TEXT:
-			    task = new ReportTask(database, date, reportFile.getAbsolutePath(), view.getReportType());
+			case PLAIN_TEXT:
+			    task = new ReportTask(database, date, reportFile, view.getReportType());
 				break;
 
 			case ODT_DOCUMENT:

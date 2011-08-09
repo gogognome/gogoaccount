@@ -41,7 +41,7 @@ import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.CreationException;
+import nl.gogognome.cf.services.ServiceException;
 import nl.gogognome.gogoaccount.controllers.GenerateReportController;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -369,7 +369,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             try {
                 Database newDatabase = BookkeepingService.closeBookkeeping(database, description, date, accountToAddResultTo);
                 setDatabase(newDatabase);
-            } catch (CreationException e) {
+            } catch (ServiceException e) {
                 MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");
             }
         }

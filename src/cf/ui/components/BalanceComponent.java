@@ -26,7 +26,11 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
+import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.cf.services.ServiceException;
+import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.lib.gui.Closeable;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
@@ -36,7 +40,6 @@ import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
-import cf.engine.Balance;
 import cf.engine.Database;
 import cf.engine.DatabaseListener;
 import cf.ui.components.BalanceSheet.Row;
@@ -53,6 +56,8 @@ public class BalanceComponent extends JScrollPane implements Closeable {
     private Database database;
     private DateModel dateModel;
     private BalanceSheet balanceSheet;
+
+    private Report report;
 
     private DatabaseListener databaseListener;
     private ModelChangeListener modelChangeListener;
@@ -98,13 +103,18 @@ public class BalanceComponent extends JScrollPane implements Closeable {
             return; // do not change the current balance if the date is invalid
         }
 
-        Balance balance = database.getBalance(date);
+        try {
+			report = BookkeepingService.createReport(database, date);
+		} catch (ServiceException e) {
+			MessageDialog.showErrorMessage(this, e, "gen.internalError");
+			return;
+		}
 
         setBorder(Factory.getInstance(WidgetFactory.class)
-        		.createTitleBorder("balanceComponent.title", balance.getDate()));
+        		.createTitleBorder("balanceComponent.title", report.getEndDate()));
 
-        List<Row> leftRows = convertAccountsToRows(balance.getAssets(), balance);
-        List<Row> rightRows = convertAccountsToRows(balance.getLiabilities(), balance);
+        List<Row> leftRows = convertAccountsToRows(report.getAssets());
+        List<Row> rightRows = convertAccountsToRows(report.getLiabilities());
 
         balanceSheet.setLeftRows(leftRows);
         balanceSheet.setRightRows(rightRows);
@@ -129,13 +139,13 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         row++;
     }
 
-    private List<Row> convertAccountsToRows(Account[] accounts, Balance balance) {
+    private List<Row> convertAccountsToRows(List<Account> accounts) {
         List<Row> rows = new ArrayList<Row>();
 
-        for (int i=0; i<accounts.length; i++) {
+        for (Account a : accounts) {
         	Row row = new Row();
-        	row.description = accounts[i].getId() + " " + accounts[i].getName();
-            row.amount = balance.getAmount(accounts[i]);
+        	row.description = a.getId() + ' ' + a.getName();
+            row.amount = report.getAmount(a);
             rows.add(row);
         }
 

@@ -22,6 +22,6 @@ package nl.gogognome.gogoaccount.businessobjects;
  * @author Sander Kooijmans
  */
 public enum ReportType {
-	PLAING_TEXT,
+	PLAIN_TEXT,
 	ODT_DOCUMENT
 }

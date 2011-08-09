@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<cfbookkeeping currency="EUR" description="Boekhouding Zet 'm op" startdate="2011.01.01">
+<gogoAccountBookkeeping currency="EUR" description="Boekhouding Zet 'm op" fileversion="1.0" startdate="2011.01.01">
     <assets>
         <account id="100" name="Kas"/>
         <account id="101" name="Betaalrekening"/>
@@ -16,7 +16,66 @@
     <revenues>
         <account id="300" name="Contributie"/>
     </revenues>
-    <parties/>
-    <journals/>
-    <invoices/>
-</cfbookkeeping>
+    <parties>
+        <party address="Sesamstraat 3" city="Hilversum" id="001" name="Piet Puk" zip="1234 AB"/>
+        <party address="Boerstraat 4" city="Tilburg" id="002" name="Mark Freriks"/>
+    </parties>
+    <journals>
+        <journal createdInvoice="decl21-001" date="2011.06.01" description="Declaratie ALV" id="decl21-001">
+            <item amount="EUR 30.00" id="100" side="debet"/>
+            <item amount="EUR 30.00" id="190" side="credit"/>
+        </journal>
+        <journal createdInvoice="decl21-002" date="2011.06.01" description="Declaratie ALV" id="decl21-002">
+            <item amount="EUR 20.00" id="400" side="debet"/>
+            <item amount="EUR 20.00" id="290" side="credit"/>
+        </journal>
+        <journal createdInvoice="decl-001" date="2011.07.01" description="testjr" id="decl-001">
+            <item amount="EUR 75.00" id="190" side="debet"/>
+            <item amount="EUR 75.00" id="400" side="credit"/>
+        </journal>
+        <journal createdInvoice="decl-002" date="2011.07.01" description="testjr" id="decl-002">
+            <item amount="EUR 75.00" id="190" side="debet"/>
+            <item amount="EUR 75.00" id="400" side="credit"/>
+        </journal>
+        <journal createdInvoice="decl" date="2011.08.02" description="test" id="decl">
+            <item amount="EUR 100.00" id="190" side="debet"/>
+            <item amount="EUR 100.00" id="400" side="credit"/>
+        </journal>
+        <journal createdInvoice="decl-1" date="2011.08.02" description="test" id="decl-1">
+            <item amount="EUR 100.00" id="190" side="debet"/>
+            <item amount="EUR 100.00" id="400" side="credit"/>
+        </journal>
+        <journal date="2011.08.03" description="Contributie bla" id="test">
+            <item amount="EUR 100.00" id="101" invoice="decl-1" payment="p1" side="debet"/>
+            <item amount="EUR 100.00" id="190" side="credit"/>
+        </journal>
+    </journals>
+    <invoices>
+        <invoice amountToBePaid="EUR 100.00" concerningParty="002" id="decl" issueDate="2011.08.02" payingParty="002">
+            <line description="test"/>
+            <line amount="EUR 100.00" description="Zaalhuur"/>
+        </invoice>
+        <invoice amountToBePaid="EUR 75.00" concerningParty="001" id="decl-001" issueDate="2011.07.01" payingParty="001">
+            <line description="testjr"/>
+            <line amount="EUR 75.00" description="Zaalhuur"/>
+        </invoice>
+        <invoice amountToBePaid="EUR 75.00" concerningParty="002" id="decl-002" issueDate="2011.07.01" payingParty="002">
+            <line description="testjr"/>
+            <line amount="EUR 75.00" description="Zaalhuur"/>
+        </invoice>
+        <invoice amountToBePaid="EUR 100.00" concerningParty="001" id="decl-1" issueDate="2011.08.02" payingParty="001">
+            <line description="test"/>
+            <line amount="EUR 100.00" description="Zaalhuur"/>
+            <payment amount="EUR 100.00" date="2011.08.03" description="Betaalrekening" id="p1"/>
+        </invoice>
+        <invoice amountToBePaid="-/- EUR 20.00" concerningParty="001" id="decl21-001" issueDate="2011.06.01" payingParty="001">
+            <line amount="EUR 0.00" description="Declaratie ALV 2011"/>
+            <line amount="-/- EUR 20.00" description="Zaalhuur"/>
+        </invoice>
+        <invoice amountToBePaid="-/- EUR 20.00" concerningParty="002" id="decl21-002" issueDate="2011.06.01" payingParty="002">
+            <line description="Declaratie ALV"/>
+            <line amount="-/- EUR 20.00" description="Zaalhuur"/>
+        </invoice>
+    </invoices>
+    <importedaccounts/>
+</gogoAccountBookkeeping>

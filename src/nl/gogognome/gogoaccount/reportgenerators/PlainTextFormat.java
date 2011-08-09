@@ -32,34 +32,21 @@ public class PlainTextFormat extends TextFormat {
         super(textResource);
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getNewLine()
-     */
     @Override
 	public String getNewLine() {
         return "\n";
     }
 
-
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#endOfTable()
-     */
     @Override
 	public String getEndOfTable() {
         return "";
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getStartOfRow()
-     */
     @Override
 	public String getStartOfRow() {
         return "";
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getEndOfRow()
-     */
     @Override
 	public String getEndOfRow() {
         return getNewLine();
@@ -125,25 +112,16 @@ public class PlainTextFormat extends TextFormat {
         return sb.toString();
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getColumnSeparator()
-     */
     @Override
 	public String getColumnSeparator() {
         return " | ";
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getInvisibleColumnSeparator()
-     */
     @Override
 	public String getInvisibleColumnSeparator() {
         return "   ";
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getHorizontalSeparator()
-     */
     @Override
 	public String getHorizontalSeparator() {
         StringBuffer sb = new StringBuffer(100);
@@ -160,17 +138,11 @@ public class PlainTextFormat extends TextFormat {
         return sb.toString();
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getStartOfDocument()
-     */
     @Override
 	public String getStartOfDocument() {
         return "";
     }
 
-    /* (non-Javadoc)
-     * @see cf.text.TextFormat#getEndOfDocument()
-     */
     @Override
 	public String getEndOfDocument() {
         return "";

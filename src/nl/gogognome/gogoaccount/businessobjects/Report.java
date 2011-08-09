@@ -28,19 +28,19 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
+import cf.engine.Account.Type;
 import cf.engine.Invoice;
 import cf.engine.Party;
-import cf.engine.Account.Type;
 
 /**
- * This class contains the financial report for a specific date. 
- * 
+ * This class contains the financial report for a specific date.
+ *
  * It contains:
  * - the balance sheet
  * - the operational result
  * - all mutations of all accounts
  * - the debtors and creditors that have open invoices
- *   
+ *
  * @author Sander Kooijmans
  */
 public class Report {
@@ -55,24 +55,24 @@ public class Report {
 
 	private final Date endDate;
 	private final Currency currency;
-	
+
 	private List<Account> assets;
 	private List<Account> liabilities;
 	private List<Account> expenses;
 	private List<Account> revenues;
-	
+
 	private Amount resultOfOperations;
-	
+
 	private List<Invoice> invoices = new ArrayList<Invoice>();
-	
+
 	private Map<Account, Amount> accountToAmount = new HashMap<Account, Amount>();
-	
-	private Map<Account, List<LedgerLine>> accountToLedgerLines = 
+
+	private Map<Account, List<LedgerLine>> accountToLedgerLines =
 		new HashMap<Account, List<LedgerLine>>();
 
-	private Map<Invoice, Amount> invoiceToRemainingAmount = 
+	private Map<Invoice, Amount> invoiceToRemainingAmount =
 		new HashMap<Invoice, Amount>();
-	
+
 	private Map<Party, Amount> debtorToRemainingAmount =
 		new HashMap<Party, Amount>();
 
@@ -90,39 +90,39 @@ public class Report {
 	public Date getEndDate() {
 		return endDate;
 	}
-	
+
 	public List<Account> getAssets() {
 		return assets;
 	}
-	
+
 	void setAssets(List<Account> assets) {
 		this.assets = new ArrayList<Account>(assets);
 	}
-	
+
 	public List<Account> getLiabilities() {
 		return liabilities;
 	}
-	
+
 	void setLiabilities(List<Account> liabilities) {
 		this.liabilities = new ArrayList<Account>(liabilities);
 	}
-	
+
 	public List<Account> getExpenses() {
 		return expenses;
 	}
-	
+
 	void setExpenses(List<Account> expenses) {
 		this.expenses = expenses;
 	}
-	
+
 	public List<Account> getRevenues() {
 		return revenues;
 	}
-	
+
 	void setRevenues(List<Account> revenues) {
 		this.revenues = revenues;
 	}
-	
+
 	public Amount getAmount(Account account) {
 		Amount a = accountToAmount.get(account);
 		if (a == null) {
@@ -130,15 +130,15 @@ public class Report {
 		}
 		return a;
 	}
-	
+
 	void setAmount(Account account, Amount amount) {
 		accountToAmount.put(account, amount);
 	}
-	
+
 	void addLedgerLineForAccount(Account account, LedgerLine line) {
 		getLedgerLinesForAccount(account).add(line);
 	}
-	
+
 	public List<LedgerLine> getLedgerLinesForAccount(Account account) {
 		List<LedgerLine> items = accountToLedgerLines.get(account);
 		if (items == null) {
@@ -147,12 +147,12 @@ public class Report {
 		}
 		return items;
 	}
-	
+
 	void addInvoice(Invoice invoice) {
 		invoices.add(invoice);
 		invoiceToRemainingAmount.put(invoice, invoice.getAmountToBePaid());
 	}
-	
+
 	public void addPayment(Invoice invoice, Amount amount) {
 		Amount curAmount = invoiceToRemainingAmount.get(invoice);
 		Amount newAmount = curAmount.subtract(amount);
@@ -166,12 +166,12 @@ public class Report {
 				invoicesToBeRemoved.add(entry.getKey());
 			}
 		}
-		
+
 		for (Invoice invoice : invoicesToBeRemoved) {
 			invoiceToRemainingAmount.remove(invoice);
 		}
 	}
-	
+
 	void determineResultOfOperations() {
         resultOfOperations = Amount.getZero(currency);
         for (Account a : assets) {
@@ -180,7 +180,7 @@ public class Report {
         for (Account a : liabilities) {
         	resultOfOperations = resultOfOperations.subtract(getAmount(a));
         }
-        
+
         if (resultOfOperations.isPositive()) {
             addProfitAccount();
         } else if (resultOfOperations.isNegative()) {
@@ -189,19 +189,19 @@ public class Report {
 	}
 
 	private void addProfitAccount() {
-		Account profitAccount = 
+		Account profitAccount =
 			new Account("", textResource.getString("gen.profit"), false, Type.LIABILITY);
 		liabilities.add(profitAccount);
 		setAmount(profitAccount, resultOfOperations);
 	}
 
 	private void addLossAccount() {
-		Account lossAccount = 
+		Account lossAccount =
 			new Account("", textResource.getString("gen.loss"), true, Type.ASSET);
 		assets.add(lossAccount);
 		setAmount(lossAccount, resultOfOperations.negate());
 	}
-	
+
 	public Amount getRemaingAmountForInvoice(Invoice invoice) {
 		Amount amount = invoiceToRemainingAmount.get(invoice);
 		if (amount == null) {
@@ -209,11 +209,11 @@ public class Report {
 		}
 		return amount;
 	}
-	
+
 	public List<Invoice> getInvoices() {
 		return invoices;
 	}
-	
+
 	public Amount getBalanceForDebtor(Party debtor) {
 		Amount amount = debtorToRemainingAmount.get(debtor);
 		if (amount == null) {
@@ -221,11 +221,11 @@ public class Report {
 		}
 		return amount;
 	}
-	
+
 	void setBalanceForDebtor(Party debtor, Amount amount) {
 		debtorToRemainingAmount.put(debtor, amount);
 	}
-	
+
 	public Amount getBalanceForCreditor(Party creditor) {
 		Amount amount = creditorToRemainingAmount.get(creditor);
 		if (amount == null) {
@@ -237,13 +237,13 @@ public class Report {
 	void setBalanceForCreditor(Party creditor, Amount amount) {
 		creditorToRemainingAmount.put(creditor, amount);
 	}
-	
+
 	public List<Party> getDebtors() {
 		List<Party> debtors = new ArrayList<Party>(debtorToRemainingAmount.keySet());
 		sortParties(debtors);
 		return debtors;
 	}
-	
+
 	public List<Party> getCreditors() {
 		List<Party> creditors = new ArrayList<Party>(creditorToRemainingAmount.keySet());
 		sortParties(creditors);
@@ -252,6 +252,26 @@ public class Report {
 
 	private void sortParties(List<Party> parties) {
 		Collections.<Party>sort(parties);
+	}
+
+	public Amount getTotalAssets() {
+		return getTotalOfAccounts(getAssets());
+	}
+
+	public Amount getTotalLiabilities() {
+		return getTotalOfAccounts(getLiabilities());
+	}
+
+	public Amount getTotalOfAccounts(List<Account> accounts) {
+		Amount total = Amount.getZero(currency);
+		for (Account a : accounts) {
+			total = total.add(getAmount(a));
+		}
+		return total;
+	}
+
+	public Amount getResultOfOperations() {
+		return resultOfOperations;
 	}
 }
 

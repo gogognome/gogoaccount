@@ -145,7 +145,7 @@ public class GenerateReportView extends OkCancelView {
         selectedDate = date;
         selectedReportFile = reportFile;
         selectedTemplateFile = templateFile;
-        reportType = txtModel.getBoolean() ? ReportType.PLAING_TEXT : ReportType.ODT_DOCUMENT;
+        reportType = txtModel.getBoolean() ? ReportType.PLAIN_TEXT : ReportType.ODT_DOCUMENT;
 
         requestClose();
 	}
