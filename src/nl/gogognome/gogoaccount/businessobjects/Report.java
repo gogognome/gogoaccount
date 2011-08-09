@@ -47,6 +47,7 @@ public class Report {
 
 	public static class LedgerLine {
 		public Date date;
+		public String id;
 		public String description;
 		public Amount debetAmount;
 		public Amount creditAmount;

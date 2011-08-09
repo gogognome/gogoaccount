@@ -36,26 +36,26 @@ import cf.engine.Payment;
 
 /**
  * Class to build Report instances.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class ReportBuilder {
 
 	private final Database database;
 	private final Report report;
-	
+
 	private Map<Account, Amount> accountToTotalDebet = new HashMap<Account, Amount>();
 	private Map<Account, Amount> accountToTotalCredit = new HashMap<Account, Amount>();
 	private Map<Account, Amount> accountToStartDebet = new HashMap<Account, Amount>();
 	private Map<Account, Amount> accountToStartCredit = new HashMap<Account, Amount>();
-	
+
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 
 	public ReportBuilder(Database database, Date date) {
 		this.database = database;
 		this.report = new Report(date, database.getCurrency());
 	}
-	
+
 	public Report build() {
 		report.removeCompletedInvoices();
 		report.determineResultOfOperations();
@@ -83,7 +83,7 @@ public class ReportBuilder {
 	public void setAssets(List<Account> assets) {
 		report.setAssets(assets);
 	}
-	
+
 	public void setLiabilities(List<Account> liabilities) {
 		report.setLiabilities(liabilities);
 	}
@@ -118,7 +118,7 @@ public class ReportBuilder {
 		} else {
 			accountAmount = accountAmount.subtract(item.getAmount());
 		}
-		
+
 		report.setAmount(account, accountAmount);
 	}
 
@@ -129,7 +129,7 @@ public class ReportBuilder {
 				addStartLedgerLineForAccount(account, accountToTotalDebet.get(account),
 						accountToTotalCredit.get(account));
 			}
-			Invoice invoice = database.getInvoice(item.getInvoiceId()); 
+			Invoice invoice = database.getInvoice(item.getInvoiceId());
 			addLedgerLineForAccount(account, journal, item, invoice);
 		}
 	}
@@ -139,7 +139,7 @@ public class ReportBuilder {
 		line.description = textResource.getString("rep.startBalance");
 		setAmountInLedgerLine(line, account, debetAmount, creditAmount);
 		report.addLedgerLineForAccount(account, line);
-		
+
 		accountToStartDebet.put(account, nullToZero(debetAmount));
 		accountToStartCredit.put(account, nullToZero(creditAmount));
 	}
@@ -150,10 +150,11 @@ public class ReportBuilder {
 		line.debetAmount = balance.isPositive() || (balance.isZero() && account.isDebet()) ? balance : null;
 		line.creditAmount = balance.isNegative() || (balance.isZero() && account.isCredit()) ? balance.negate() : null;
 	}
-	
+
 	void addLedgerLineForAccount(Account account, Journal journal, JournalItem item, Invoice invoice) {
 		LedgerLine line = new LedgerLine();
 		line.date = journal.getDate();
+		line.id = journal.getId();
 		line.description = journal.getDescription();
 		line.debetAmount = item.isDebet() ? item.getAmount() : null;
 		line.creditAmount = item.isCredit() ? item.getAmount() : null;
@@ -178,7 +179,7 @@ public class ReportBuilder {
 
 	public void addInvoice(Invoice invoice) {
 		report.addInvoice(invoice);
-		
+
 		for (Payment p : invoice.getPayments()) {
 			if (DateUtil.compareDayOfYear(p.getDate(), report.getEndDate()) <= 0) {
 				report.addPayment(invoice, p.getAmount());
@@ -192,11 +193,11 @@ public class ReportBuilder {
 		}
 		return amount;
 	}
-	
+
 	private void addFootersToLedgerLines() {
 		for (Account account : database.getAllAccounts()) {
 			if (!hasStartBalanceLineBeenAdded(account)) {
-				addStartLedgerLineForAccount(account, 
+				addStartLedgerLineForAccount(account,
 						accountToTotalDebet.get(account), accountToTotalCredit.get(account));
 			}
 			addLedgerLineWithTotalMutations(account);
@@ -211,11 +212,11 @@ public class ReportBuilder {
 		line.creditAmount = nullToZero(accountToTotalCredit.get(a)).subtract(accountToStartCredit.get(a));
 		report.addLedgerLineForAccount(a, line);
 	}
-	
+
 	private void addEndLedgerLineForAccount(Account account) {
 		LedgerLine line = new LedgerLine();
 		line.description = textResource.getString("rep.endBalance");
-		setAmountInLedgerLine(line, account, 
+		setAmountInLedgerLine(line, account,
 				accountToTotalDebet.get(account), accountToTotalCredit.get(account));
 		report.addLedgerLineForAccount(account, line);
 	}
