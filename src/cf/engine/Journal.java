@@ -19,6 +19,7 @@ package cf.engine;
 import java.util.Arrays;
 import java.util.Currency;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import nl.gogognome.lib.text.Amount;
@@ -48,7 +49,24 @@ public class Journal implements Comparable<Journal> {
 
     /**
      * Creates a journal.
-     * @param id the id of the jounal
+     * @param id the id of the journal
+     * @param description the description of the journal
+     * @param date the date of the journal
+     * @param items the items of the journal. The sums of the debet
+     *        and credit amounts must be equal!
+     * @param idOfCreatedInvoice if not <code>null</code>, then this contains the id of the invoice
+     *        that is created by this journal
+     * @throws IllegalArgumentException if the sum of debet and credit amounts differ
+     *          or if more than one item with a party has been specified.
+     */
+    public Journal(String id, String description, Date date, List<JournalItem> items, String idOfCreatedInvoice) {
+    	this(id, description, date, items.toArray(new JournalItem[items.size()]),
+    			idOfCreatedInvoice);
+    }
+
+    /**
+     * Creates a journal.
+     * @param id the id of the journal
      * @param description the description of the journal
      * @param date the date of the journal
      * @param items the items of the journal. The sums of the debet
@@ -141,7 +159,8 @@ public class Journal implements Comparable<Journal> {
     /**
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Journal that) {
+    @Override
+	public int compareTo(Journal that) {
         return this.date.compareTo(that.date);
     }
 
