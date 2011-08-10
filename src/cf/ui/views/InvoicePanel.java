@@ -44,6 +44,8 @@ import cf.engine.Payment;
  */
 class InvoicePanel extends JPanel {
 
+	private static final long serialVersionUID = 1L;
+
 	private final static Color CLOSED_INVOICE_COLOR = new Color(128, 255, 128);
 	private final static Color OPEN_INVOICE_COLOR = new Color(255, 128, 128);
 
@@ -106,7 +108,7 @@ class InvoicePanel extends JPanel {
 				amountFormat.formatAmount(invoice.getAmountToBePaid()));
 		} else {
 			amountText = textResource.getString("InvoicesSinglePartyView.creditInvoice",
-					amountFormat.formatAmount(invoice.getAmountToBePaid().negate()));
+				amountFormat.formatAmount(invoice.getAmountToBePaid().negate()));
 		}
 		titlePanel.add(new JLabel(amountText), SwingUtils.createLabelGBConstraints(2, 0));
 		return titlePanel;
@@ -212,6 +214,10 @@ class InvoicePanel extends JPanel {
 					GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0);
 		} else {
 			constraints = SwingUtils.createGBConstraints(col, row);
+			if (col == 2 || col == 3) {
+				constraints.anchor = GridBagConstraints.EAST;
+				constraints.fill = GridBagConstraints.NONE;
+			}
 		}
 		linesPanel.add(c, constraints);
 	}
