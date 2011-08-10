@@ -17,7 +17,6 @@
 package cf.ui.views;
 
 import java.awt.BorderLayout;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,13 +28,9 @@ import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -43,7 +38,8 @@ import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.cf.services.DeleteException;
 import nl.gogognome.cf.services.ServiceException;
-import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
+import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.ColumnDefinition;
@@ -52,10 +48,13 @@ import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
+import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.CurrencyUtil;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Database;
@@ -73,16 +72,18 @@ import cf.engine.Database;
  */
 public class ConfigureBookkeepingView extends View {
 
-    private Database database;
+	private static final long serialVersionUID = 1L;
 
+	private Database database;
+
+    private StringModel descriptionModel = new StringModel();
+    private ListModel<Currency> currencyModel = new ListModel<Currency>();
     private DateModel startDateModel = new DateModel();
+
     private AccountTableModel tableModel;
     private JTable table;
 
-    private JTextField tfDescription = new JTextField();
-    private DateSelectionBean dsbStartDate =
-    	beanFactory.createDateSelectionBean(startDateModel);
-    private JTextField tfCurrency = new JTextField();
+    private ModelChangeListener modelChangeListener;
 
     private JButton editAccountButton;
     private JButton deleteAccountButton;
@@ -95,72 +96,46 @@ public class ConfigureBookkeepingView extends View {
         this.database = database;
     }
 
-    /** {@inheritDoc} */
     @Override
     public String getTitle() {
         return textResource.getString("ConfigureBookkeepingView.title");
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public void onClose() {
-    }
-
-    /** {@inheritDoc} */
     @Override
     public void onInit() {
+    	initModels();
+    	addComponents();
+        updateButtonState();
+    	addListeners();
+    }
+
+	private void initModels() {
+    	startDateModel.setDate(database.getStartOfPeriod());
+    	descriptionModel.setString(database.getDescription());
+
+    	currencyModel.setItems(CurrencyUtil.getAllCurrencies());
+       	currencyModel.setSelectedItem(database.getCurrency(), null);
+	}
+
+    private void addListeners() {
+		modelChangeListener = new ModelChangeListenerImpl();
+		startDateModel.addModelChangeListener(modelChangeListener);
+		descriptionModel.addModelChangeListener(modelChangeListener);
+		currencyModel.addModelChangeListener(modelChangeListener);
+	}
+
+	private void addComponents() {
         setLayout(new BorderLayout());
 
-        // Create panel with general settings
-        JPanel generalSettingsPanel = new JPanel(new GridBagLayout());
-        generalSettingsPanel.setBorder(BorderFactory.createCompoundBorder(
-        		BorderFactory.createTitledBorder(textResource.getString("ConfigureBookkeepingView.generalSettings")),
-        		BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        InputFieldsColumn ifc = new InputFieldsColumn();
+        addCloseable(ifc);
+        ifc.setBorder(widgetFactory.createTitleBorderWithPadding(
+        		"ConfigureBookkeepingView.generalSettings"));
 
-        int row = 0;
-        tfDescription.setText(database.getDescription());
-        generalSettingsPanel.add(widgetFactory.createLabel("ConfigureBookkeepingView.description", tfDescription),
-            SwingUtils.createLabelGBConstraints(0, row));
-        generalSettingsPanel.add(tfDescription,
-            SwingUtils.createTextFieldGBConstraints(1, row));
-        tfDescription.getDocument().addDocumentListener(new DocumentListener() {
-			@Override
-			public void removeUpdate(DocumentEvent e) { onDescriptionChanged(); }
-			@Override
-			public void insertUpdate(DocumentEvent e) { onDescriptionChanged(); }
-			@Override
-			public void changedUpdate(DocumentEvent e) { onDescriptionChanged(); }
-		});
-        row++;
-
-        startDateModel.setDate(database.getStartOfPeriod(), null);
-        generalSettingsPanel.add(widgetFactory.createLabel("ConfigureBookkeepingView.startDate", dsbStartDate),
-            SwingUtils.createLabelGBConstraints(0, row));
-        generalSettingsPanel.add(dsbStartDate,
-            SwingUtils.createTextFieldGBConstraints(1, row));
-        startDateModel.addModelChangeListener(new ModelChangeListener() {
-			@Override
-			public void modelChanged(AbstractModel model) {
-				onStartDateChanged();
-			}
-		});
-        row++;
-
-        tfCurrency.setText(database.getCurrency().getCurrencyCode());
-        tfCurrency.setColumns(4);
-        generalSettingsPanel.add(widgetFactory.createLabel("ConfigureBookkeepingView.currency", tfCurrency),
-            SwingUtils.createLabelGBConstraints(0, row));
-        generalSettingsPanel.add(tfCurrency,
-            SwingUtils.createLabelGBConstraints(1, row));
-        tfCurrency.getDocument().addDocumentListener(new DocumentListener() {
-			@Override
-			public void removeUpdate(DocumentEvent e) { onCurrencyChanged(); }
-			@Override
-			public void insertUpdate(DocumentEvent e) { onCurrencyChanged(); }
-			@Override
-			public void changedUpdate(DocumentEvent e) { onCurrencyChanged(); }
-		});
-        row++;
+        ifc.addField("ConfigureBookkeepingView.description", descriptionModel);
+        ifc.addField("ConfigureBookkeepingView.startDate", startDateModel);
+        ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel,
+        		new CurrencyFormatter());
 
         // Create panel with accounts table
         JPanel accountsAndButtonsPanel = new JPanel(new BorderLayout());
@@ -177,56 +152,47 @@ public class ConfigureBookkeepingView extends View {
 				updateButtonState();
 			}
 		});
-        accountsAndButtonsPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        accountsAndButtonsPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
-        buttonPanel.add(widgetFactory.createButton("ConfigureBookkeepingView.addAccount", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent evt) {
-                onAddAccount();
-            }
-        }));
-        editAccountButton = widgetFactory.createButton("ConfigureBookkeepingView.editAccount", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent evt) {
-                onEditAccount();
-            }
-        });
-        buttonPanel.add(editAccountButton);
-        deleteAccountButton = widgetFactory.createButton("ConfigureBookkeepingView.deleteAccount", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent evt) {
-                onDeleteAccount();
-            }
-        });
-        buttonPanel.add(deleteAccountButton);
+        buttonPanel.addButton("ConfigureBookkeepingView.addAccount", new AddAccountAction());
+        editAccountButton = buttonPanel.addButton("ConfigureBookkeepingView.editAccount",
+        		new EditAccountAction());
+        deleteAccountButton = buttonPanel.addButton("ConfigureBookkeepingView.deleteAccount",
+        		new DeleteAccountAction());
         accountsAndButtonsPanel.add(buttonPanel, BorderLayout.EAST);
 
         // Add panels to view
-        add(generalSettingsPanel, BorderLayout.NORTH);
+        add(ifc, BorderLayout.NORTH);
         add(accountsAndButtonsPanel, BorderLayout.CENTER);
-
-        updateButtonState();
     }
 
-    private void onDescriptionChanged() {
-		database.setDescription(tfDescription.getText());
+    @Override
+    public void onClose() {
+    	removeListeners();
+    }
+
+    private void removeListeners() {
+		startDateModel.removeModelChangeListener(modelChangeListener);
+		descriptionModel.removeModelChangeListener(modelChangeListener);
+		currencyModel.removeModelChangeListener(modelChangeListener);
 	}
 
-    private void onStartDateChanged() {
+	private void updateDatabaseWithEnteredValues() {
+		database.setDescription(descriptionModel.getString());
     	if (startDateModel.getDate() != null) {
     		database.setStartOfPeriod(startDateModel.getDate());
     	}
-    }
 
-    private void onCurrencyChanged() {
     	try {
-	    	Currency currency = Currency.getInstance(tfCurrency.getText());
-	    	database.setCurrency(currency);
+	    	Currency currency = currencyModel.getSelectedItem();
+	    	if (currency != null) {
+	    		database.setCurrency(currency);
+	    	}
     	} catch (Exception e) {
     		// Probably an invalid currency was entered
     	}
-    }
+	}
 
 	private void updateButtonState() {
     	AccountDefinition accountDefinition = getSelectedAccountDefinition();
@@ -314,10 +280,45 @@ public class ConfigureBookkeepingView extends View {
     	return result;
     }
 
-    private static class AccountDefinition {
+	private final class AddAccountAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+		    onAddAccount();
+		}
+	}
+
+	private final class EditAccountAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+		    onEditAccount();
+		}
+	}
+
+	private final class DeleteAccountAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent evt) {
+		    onDeleteAccount();
+		}
+	}
+
+	private static class AccountDefinition {
         public Account account;
         public boolean used;
     }
+
+	private class ModelChangeListenerImpl implements ModelChangeListener {
+		@Override
+		public void modelChanged(AbstractModel model) {
+			updateDatabaseWithEnteredValues();
+		}
+	}
+
+	private static class CurrencyFormatter implements ObjectFormatter<Currency> {
+		@Override
+		public String format(Currency currency) {
+			return currency.getCurrencyCode();
+		}
+	}
 
     private static class AccountTableModel extends AbstractListTableModel<AccountDefinition> {
 

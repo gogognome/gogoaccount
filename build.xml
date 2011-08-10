@@ -30,6 +30,10 @@
 	<property name="distdir" value="${generateddir}/dist" />
 	<property name="mainClass" value="cf.ui.Start" />
 	<property name="productname" value="gogoaccount" />
+
+	<path id="classpath">
+		<fileset dir="${libdir}" includes="*.jar" />
+	</path>
 	
 	<target name="init" description="initialisation used by other targets">
 		<!-- Create the time stamp -->
@@ -38,17 +42,19 @@
 
 	<target name="compile" depends="init"
 		description="compiles the application">
+
 		<!-- Create the build directory structure used by compile -->
 		<mkdir dir="${classdir}"/>
 
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${srcdir}" classpath="${classpath};${libdir}/gogolib.jar;${libdir}/opencsv-2.3.jar" 
-			destdir="${classdir}" source="1.5" target="1.5" debug="true" />
+		<javac srcdir="${srcdir}"  destdir="${classdir}" source="1.5" target="1.5" debug="true">
+			<classpath refid="classpath" />
+		</javac>			
 		
 		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${testdir}" classpath="${classpath};${libdir}/gogolib.jar;${libdir}/opencsv-2.3.jar" 
-			destdir="${classdir}" source="1.5" target="1.5" debug="true" />
-		
+		<javac srcdir="${testdir}" destdir="${classdir}" source="1.5" target="1.5" debug="true">
+			<classpath refid="classpath" />
+		</javac>		
 		<copy todir="${classdir}">
 			<fileset dir="${resourcedir}">
 			</fileset>
@@ -94,7 +100,11 @@
 	</target>
 
 	<target name="run" depends="compile" description="runs the application">
-		<java classname="${mainClass}" classpath="${classdir}:${libdir}/gogolib.jar:${classpath}" fork="yes">
+		<java classname="${mainClass}" fork="yes">
+			<classpath>
+				<path refid="classpath" />
+				<pathelement location="${classdir}"/>
+			</classpath>
 			<arg line="-lang=nl" />
 		</java>
 	</target>
