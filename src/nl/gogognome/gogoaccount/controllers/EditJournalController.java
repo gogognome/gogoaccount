@@ -68,7 +68,7 @@ public class EditJournalController {
             try {
                 database.updateJournal(journal, updatedJournal);
             } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showErrorMessage(owner, e, "editJournalsView.updateJournalException");
+                MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateJournalException");
             }
         }
 	}
@@ -85,8 +85,9 @@ public class EditJournalController {
 	}
 
 	private void updateInvoiceCreatedByJournal() {
-		EditInvoiceView editInvoiceView = new EditInvoiceView(database, "ejd.editInvoiceTitle",
-		    database.getInvoice(journal.getIdOfCreatedInvoice()));
+		EditInvoiceView editInvoiceView = new EditInvoiceView(database,
+				"EditJournalController.editInvoiceTitle",
+				database.getInvoice(journal.getIdOfCreatedInvoice()));
 		ViewDialog editInvoiceDialog = new ViewDialog(owner, editInvoiceView);
 		editInvoiceDialog.showDialog();
 		Invoice newInvoice = editInvoiceView.getEditedInvoice();
@@ -94,7 +95,7 @@ public class EditJournalController {
 		    try {
 		        database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
 		    } catch (DatabaseModificationFailedException e) {
-		        MessageDialog.showErrorMessage(owner, e, "editJournalsView.updateInvoiceException");
+		        MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateInvoiceException");
 		    }
 		}
 	}

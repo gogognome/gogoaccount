@@ -68,18 +68,13 @@ import cf.engine.Payment;
  */
 public class InvoiceOdtFileGenerator implements Task {
 
-    /** The inputstream of the template. */
     private ZipInputStream zipInputStream;
-
-    /** The outputstream of the ODT file. */
     private ZipOutputStream zipOutputStream;
 
     private File templateFile;
     private File odtFile;
     private Invoice[] invoices;
-    private Date date;
     private String concerning;
-    private String ourReference;
     private Date dueDate;
 
     /**
@@ -98,9 +93,7 @@ public class InvoiceOdtFileGenerator implements Task {
     	this.templateFile = templateFile;
     	this.odtFile = odtFile;
     	this.invoices = invoices;
-    	this.date = date;
     	this.concerning = concerning;
-    	this.ourReference = ourReference;
     	this.dueDate = dueDate;
     }
 

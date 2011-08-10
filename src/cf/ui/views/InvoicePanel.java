@@ -21,6 +21,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Currency;
 import java.util.Date;
 
@@ -28,6 +33,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.Amount;
@@ -42,12 +48,16 @@ import cf.engine.Payment;
  * This class implements a component that displays an invoice.
  * @author Sander Kooijmans
  */
-class InvoicePanel extends JPanel {
+class InvoicePanel extends JPanel implements Closeable {
 
 	private static final long serialVersionUID = 1L;
 
-	private final static Color CLOSED_INVOICE_COLOR = new Color(128, 255, 128);
-	private final static Color OPEN_INVOICE_COLOR = new Color(255, 128, 128);
+	private final static Color CLOSED_INVOICE_COLOR_UNSELECTED = new Color(128, 255, 128);
+	private final static Color OPEN_INVOICE_COLOR_UNFOCUSED = new Color(255, 128, 128);
+	private final static Color CLOSED_INVOICE_COLOR_SELECTED = new Color(60, 255, 60);
+	private final static Color OPEN_INVOICE_COLOR_FOCUSED = new Color(255, 60, 60);
+	private final static Color LINES_BACKGROUND_UNSELECTED = new Color(233, 233, 233);
+	private final static Color LINES_BACKGROUND_SELECTED = new Color(181, 181, 181);
 
 	private Invoice invoice;
 	private JPanel linesPanel;
@@ -56,9 +66,14 @@ class InvoicePanel extends JPanel {
 	private Amount totalDebet;
 	private Amount totalCredit;
 
+	private JPanel titlePanel;
+
     private TextResource textResource = Factory.getInstance(TextResource.class);
     private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 	private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
+
+	private MouseListener mouseListener;
+	private FocusListener focusListener;
 
 	public InvoicePanel(Invoice invoice, Date date, Currency currency) {
 		super(new BorderLayout());
@@ -76,13 +91,18 @@ class InvoicePanel extends JPanel {
 		add(linesPanel, BorderLayout.CENTER);
 
 		add(createTitleBar(), BorderLayout.NORTH);
+
+		setEnabled(true);
+		setFocusable(true);
+
+		onSelectionLost();
+		onFocusLost();
+		addListeners();
 	}
 
 	private JPanel createTitleBar() {
-		JPanel titlePanel = new JPanel(new GridBagLayout());
+		titlePanel = new JPanel(new GridBagLayout());
 		titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		titlePanel.setBackground(
-				isInvoicePaid() ? CLOSED_INVOICE_COLOR : OPEN_INVOICE_COLOR);
 		StringBuilder sb = new StringBuilder(invoice.getId());
 		Amount[] amounts = invoice.getAmounts();
 		String[] descriptions = invoice.getDescriptions();
@@ -221,4 +241,67 @@ class InvoicePanel extends JPanel {
 		}
 		linesPanel.add(c, constraints);
 	}
+
+	private void onFocusGained() {
+		setBorder(BorderFactory.createLineBorder(Color.BLUE));
+	}
+
+	private void onFocusLost() {
+		setBorder(BorderFactory.createLineBorder(Color.WHITE));
+	}
+
+	public void onSelectionLost() {
+		titlePanel.setBackground(isInvoicePaid() ? CLOSED_INVOICE_COLOR_UNSELECTED
+				: OPEN_INVOICE_COLOR_UNFOCUSED);
+		linesPanel.setBackground(LINES_BACKGROUND_UNSELECTED);
+	}
+
+	public void onSelectionGained() {
+		titlePanel.setBackground(isInvoicePaid() ? CLOSED_INVOICE_COLOR_SELECTED
+				: OPEN_INVOICE_COLOR_FOCUSED);
+		linesPanel.setBackground(LINES_BACKGROUND_SELECTED);
+	}
+
+	private void addListeners() {
+		focusListener = new FocusListenerImpl();
+		addFocusListener(focusListener);
+
+		mouseListener = new MouseListenerImpl();
+		addMouseListener(mouseListener);
+	}
+
+	private void removeListeners() {
+		removeMouseListener(mouseListener);
+		removeFocusListener(focusListener);
+	}
+
+	@Override
+	public void close() {
+		removeListeners();
+	}
+
+	public Invoice getInvoice() {
+		return invoice;
+	}
+
+	private class MouseListenerImpl extends MouseAdapter {
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			requestFocus();
+		}
+	}
+
+	private class FocusListenerImpl implements FocusListener {
+		@Override
+		public void focusGained(FocusEvent e) {
+			onFocusGained();
+		}
+
+		@Override
+		public void focusLost(FocusEvent e) {
+			onFocusLost();
+		}
+	}
+
 }

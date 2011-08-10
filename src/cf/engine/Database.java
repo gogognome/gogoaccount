@@ -949,6 +949,22 @@ public class Database {
     }
 
     /**
+     * Gets the journal that creates the specified invoice.
+     * @param invoiceId the id of the invoice
+     * @return the journal or null if no creating journal exists. The latter
+     *         typically happens when the invoice was created in the previous
+     *         year.
+     */
+	public Journal getCreatingJournal(String invoiceId) {
+		for (Journal j : journals) {
+			if (invoiceId.equals(j.getIdOfCreatedInvoice())) {
+				return j;
+			}
+		}
+		return null;
+	}
+
+    /**
      * Adds a payment to an invoice.
      * @param invoiceId the invoice
      * @param payment the payment
@@ -1126,4 +1142,5 @@ public class Database {
     	cal.set(Calendar.MILLISECOND, 0);
     	return cal.getTime();
     }
+
 }

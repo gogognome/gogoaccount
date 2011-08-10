@@ -19,20 +19,31 @@ package cf.ui.views;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
+import java.awt.DefaultFocusTraversalPolicy;
+import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 
+import nl.gogognome.gogoaccount.controllers.EditInvoiceController;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
+import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.BooleanModel;
@@ -63,6 +74,9 @@ public class InvoicesPerPartyView extends View {
 	private PartyModel partyModel;
 	private DateModel dateModel;
 	private BooleanModel includeClosedInvoicesModel;
+
+	private InvoicePanel selectedInvoicePanel;
+	private JButton editInvoiceButton;
 
 	private ModelChangeListener listener;
 
@@ -96,12 +110,18 @@ public class InvoicesPerPartyView extends View {
 
 		JPanel northPanel = createInvoiceSelectionPanel();
 		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
-		add(northPanel, BorderLayout.NORTH);
 
 		invoicesPanel = createInvoicesPanel();
 		invoicesScrollPane = widgetFactory.createScrollPane(invoicesPanel);
 		invoicesScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
+		editInvoiceButton = buttonPanel.addButton("InvoicesSinglePartyView.edit",
+				new EditInvoiceAction());
+
+		add(northPanel, BorderLayout.NORTH);
 		add(invoicesScrollPane, BorderLayout.CENTER);
+		add(buttonPanel, BorderLayout.SOUTH);
 	}
 
 	private JPanel createInvoiceSelectionPanel() {
@@ -113,16 +133,12 @@ public class InvoicesPerPartyView extends View {
 		return row;
 	}
 
-	private GridBagConstraints createConstraints(int col) {
-		GridBagConstraints gbc = SwingUtils.createLabelGBConstraints(col, 0);
-		gbc.insets.right = 10;
-		return gbc;
-	}
-
 	private JPanel createInvoicesPanel() {
 		JPanel panel = new JPanel(new VerticalLayout(10, VerticalLayout.BOTH));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.setBackground(Color.WHITE);
+		panel.setFocusCycleRoot(true);
+		panel.setFocusTraversalPolicy(new DefaultFocusTraversalPolicy());
 
 		return panel;
 	}
@@ -140,6 +156,12 @@ public class InvoicesPerPartyView extends View {
 
 		databaseListener = new DatabaseListenerImpl();
 		database.addListener(databaseListener);
+
+		KeyboardFocusManager focusManager =
+		    KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		focusManager.addPropertyChangeListener(
+		    new InvoicePanelFocusListener()
+		);
 	}
 
 	private void removeListeners() {
@@ -259,6 +281,38 @@ public class InvoicesPerPartyView extends View {
 		}
 	}
 
+	private void editSelectedInvoice() {
+		EditInvoiceController controller =
+			new EditInvoiceController(this, database, selectedInvoicePanel.getInvoice());
+		controller.execute();
+	}
+
+	private void setSelectedInvoicePanel(InvoicePanel invoicePanel) {
+		if (invoicePanel != null) {
+			if (selectedInvoicePanel != null) {
+				selectedInvoicePanel.onSelectionLost();
+			}
+			selectedInvoicePanel = invoicePanel;
+			invoicePanel.onSelectionGained();
+			Rectangle bounds = selectedInvoicePanel.getBounds();
+			invoicesScrollPane.getViewport().scrollRectToVisible(bounds);
+
+			// Work around for scrolling upwards. JViewPort seems to contain a bug.
+			if (!invoicesScrollPane.getViewport().getViewRect().contains(bounds)) {
+				invoicesScrollPane.getViewport().setViewPosition(new Point(0, 0));
+				invoicesScrollPane.getViewport().scrollRectToVisible(bounds);
+			}
+		}
+		editInvoiceButton.setEnabled(selectedInvoicePanel != null);
+	}
+
+	private class EditInvoiceAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			editSelectedInvoice();
+		}
+	}
+
 	private final class ModelChangeListenerImpl implements ModelChangeListener {
 		@Override
 		public void modelChanged(AbstractModel model) {
@@ -272,6 +326,19 @@ public class InvoicesPerPartyView extends View {
 		public void databaseChanged(Database db) {
 			updateInvoicesInPanel();
 		}
+	}
 
+	private final class InvoicePanelFocusListener implements PropertyChangeListener {
+		@Override
+		public void propertyChange(PropertyChangeEvent e) {
+		    String prop = e.getPropertyName();
+		    if ("focusOwner".equals(prop)) {
+		    	InvoicePanel invoicePanel = null;
+		         if (e.getNewValue() instanceof InvoicePanel) {
+				    invoicePanel = (InvoicePanel)e.getNewValue();
+		         }
+		         setSelectedInvoicePanel(invoicePanel);
+		    }
+		}
 	}
 }
