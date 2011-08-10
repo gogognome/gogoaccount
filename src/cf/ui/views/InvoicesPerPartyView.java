@@ -295,13 +295,9 @@ public class InvoicesPerPartyView extends View {
 			selectedInvoicePanel = invoicePanel;
 			invoicePanel.onSelectionGained();
 			Rectangle bounds = selectedInvoicePanel.getBounds();
+			Point p = invoicesScrollPane.getViewport().getViewPosition();
+			bounds.translate(-p.x, -p.y);
 			invoicesScrollPane.getViewport().scrollRectToVisible(bounds);
-
-			// Work around for scrolling upwards. JViewPort seems to contain a bug.
-			if (!invoicesScrollPane.getViewport().getViewRect().contains(bounds)) {
-				invoicesScrollPane.getViewport().setViewPosition(new Point(0, 0));
-				invoicesScrollPane.getViewport().scrollRectToVisible(bounds);
-			}
 		}
 		editInvoiceButton.setEnabled(selectedInvoicePanel != null);
 	}
