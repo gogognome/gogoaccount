@@ -26,6 +26,7 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+import nl.gogognome.lib.util.StringUtil;
 import cf.engine.Invoice;
 import cf.engine.Payment;
 
@@ -62,10 +63,10 @@ public class InvoicesToModelConverter {
 	}
 
 	private void addGeneralProperties() {
-		model.put("concerning", parameters.getConcerning());
-		model.put("date", textResource.formatDate("gen.dateFormatFull", parameters.getDate()));
-		model.put("dueDate", textResource.formatDate("gen.dateFormatFull", parameters.getDueDate()));
-		model.put("ourReference", parameters.getOurReference());
+		putNullable(model, "concerning", parameters.getConcerning());
+		putNullable(model, "date", textResource.formatDate("gen.dateFormatFull", parameters.getDate()));
+		putNullable(model, "dueDate", textResource.formatDate("gen.dateFormatFull", parameters.getDueDate()));
+		putNullable(model, "ourReference", parameters.getOurReference());
 	}
 
 	private void addInvoicesToModel() {
@@ -79,13 +80,16 @@ public class InvoicesToModelConverter {
 	private Map<String, Object> createInvoiceModel(Invoice invoice) {
 		Map<String, Object> map = new HashMap<String, Object>();
 
-		map.put("ourReference", invoice.getId());
+		putNullable(map, "ourReference", invoice.getId());
 
-		map.put("partyName", invoice.getConcerningParty().getName());
-		map.put("partyAddress", invoice.getConcerningParty().getName());
-		map.put("partyZip", invoice.getConcerningParty().getName());
-		map.put("partyCity", invoice.getConcerningParty().getName());
+		putNullable(map, "partyName", invoice.getConcerningParty().getName());
+		putNullable(map, "partyAddress", invoice.getConcerningParty().getAddress());
+		putNullable(map, "partyZip", invoice.getConcerningParty().getZipCode());
+		putNullable(map, "partyCity", invoice.getConcerningParty().getCity());
 
+		Amount totalAmount = invoice.getRemainingAmountToBePaid(parameters.getDate());
+		putNullable(map, "totalAmount", amountFormat.formatAmount(totalAmount));
+		
 		map.put("lines", createLinesForInvoice(invoice));
 
 		return map;
@@ -110,11 +114,14 @@ public class InvoicesToModelConverter {
 	private Map<String, Object> createLine(Date date, String description, Amount amount) {
 		Map<String, Object> map = new HashMap<String, Object>();
 
-		map.put("date", textResource.formatDate("gen.dateFormat", date));
-		map.put("description", description);
-		map.put("amount", amountFormat.formatAmount(amount));
+		putNullable(map, "date", textResource.formatDate("gen.dateFormat", date));
+		putNullable(map, "description", description);
+		putNullable(map, "amount", amountFormat.formatAmount(amount));
 
 		return map;
 	}
 
+	private void putNullable(Map<String, Object> map, String key, String nullableValue) {
+		map.put(key, StringUtil.nullToEmptyString(nullableValue));
+	}
 }

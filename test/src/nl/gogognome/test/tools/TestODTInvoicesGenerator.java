@@ -17,10 +17,12 @@
 package nl.gogognome.test.tools;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
-import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
+import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
+import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
@@ -28,11 +30,12 @@ import cf.engine.XMLFileReader;
 import cf.ui.Start;
 
 /**
- * Tests generation of an ODT report.
+ * Tests generation of ODT invoices.
  *
  * @author Sander Kooijmans
  */
-public class TestODTReportGenerator {
+public class TestODTInvoicesGenerator {
+
 	public static void main(String[] args) throws Exception {
 		new Start().initFactory(new Locale("nl"));
 
@@ -43,9 +46,14 @@ public class TestODTReportGenerator {
 		XMLFileReader reader = new XMLFileReader(bookkeepingFile);
 		Database database = reader.createDatabaseFromFile();
 
-		Date date = DateUtil.addYears(database.getStartOfPeriod(), 1);
-
-		OdtReportGeneratorTask task = new OdtReportGeneratorTask(database, date, reportFile, templateFile);
+		OdtInvoiceParameters parameters = new OdtInvoiceParameters(database, 
+				Arrays.asList(database.getInvoices()));
+		parameters.setConcerning("Contributie seizoen 2011-2011");
+		parameters.setDate(new Date());
+		parameters.setDueDate(DateUtil.addMonths(new Date(), 1));
+		parameters.setOurReference("co2053");
+		
+		OdtInvoiceGeneratorTask task = new OdtInvoiceGeneratorTask(parameters, reportFile, templateFile);
 		task.execute(new TaskProgressListener() {
 			@Override
 			public void onProgressUpdate(int percentageCompleted) {
