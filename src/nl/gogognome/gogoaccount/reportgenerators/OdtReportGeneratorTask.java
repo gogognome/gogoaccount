@@ -17,16 +17,9 @@
 package nl.gogognome.gogoaccount.reportgenerators;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 
-import net.sf.jooreports.templates.DocumentTemplate;
-import net.sf.jooreports.templates.DocumentTemplateException;
-import net.sf.jooreports.templates.UnzippedDocumentTemplate;
-import net.sf.jooreports.templates.ZippedDocumentTemplate;
 import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.lib.task.Task;
@@ -38,7 +31,7 @@ import cf.engine.Database;
  *
  * @author Sander Kooijmans
  */
-public class OdtGeneratorTask implements Task {
+public class OdtReportGeneratorTask implements Task {
 
 	private final Database database;
 	private final Date date;
@@ -48,7 +41,7 @@ public class OdtGeneratorTask implements Task {
     private Report report;
     private Map<String, Object> model;
 
-	public OdtGeneratorTask(Database database, Date date, File reportFile, File templateFile) {
+	public OdtReportGeneratorTask(Database database, Date date, File reportFile, File templateFile) {
 		super();
 		this.database = database;
 		this.date = date;
@@ -66,7 +59,7 @@ public class OdtGeneratorTask implements Task {
     	createModel();
     	progressListener.onProgressUpdate(67);
 
-    	createDocument();
+    	JodReportsUtil.createDocument(templateFile, reportFile, model);
     	progressListener.onProgressUpdate(100);
 
 		return null;
@@ -75,16 +68,5 @@ public class OdtGeneratorTask implements Task {
 	private void createModel() {
 		ReportToModelConverter converter = new ReportToModelConverter(database, report);
 		model = converter.getModel();
-	}
-
-	private void createDocument() throws FileNotFoundException, IOException, DocumentTemplateException {
-		DocumentTemplate template = null;
-		if (templateFile.isDirectory()) {
-			template = new UnzippedDocumentTemplate(templateFile);
-		} else {
-			template = new ZippedDocumentTemplate(templateFile);
-		}
-
-		template.createDocument(model, new FileOutputStream(reportFile));
 	}
 }

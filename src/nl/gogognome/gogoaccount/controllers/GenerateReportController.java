@@ -20,7 +20,7 @@ import java.awt.Window;
 import java.io.File;
 import java.util.Date;
 
-import nl.gogognome.gogoaccount.reportgenerators.OdtGeneratorTask;
+import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.ReportTask;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -63,7 +63,7 @@ public class GenerateReportController {
 				break;
 
 			case ODT_DOCUMENT:
-				task = new OdtGeneratorTask(database, date, reportFile, view.getTemplateFile());
+				task = new OdtReportGeneratorTask(database, date, reportFile, view.getTemplateFile());
 				break;
 
 			default:

@@ -20,7 +20,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.Locale;
 
-import nl.gogognome.gogoaccount.reportgenerators.OdtGeneratorTask;
+import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Database;
@@ -29,30 +29,30 @@ import cf.ui.Start;
 
 /**
  * Tests generation of an ODT report.
- * 
+ *
  * @author Sander Kooijmans
  */
 public class TestODTReportGenerator {
 
 	public static void main(String[] args) throws Exception {
 		new Start().initFactory(new Locale("nl"));
-		
+
 		File bookkeepingFile = new File(args[0]);
 		File templateFile = new File(args[1]);
 		File reportFile = new File(args[2]);
-		
+
 		XMLFileReader reader = new XMLFileReader(bookkeepingFile);
 		Database database = reader.createDatabaseFromFile();
-		
+
 		Date date = DateUtil.addYears(database.getStartOfPeriod(), 1);
-		
-		OdtGeneratorTask task = new OdtGeneratorTask(database, date, reportFile, templateFile);
+
+		OdtReportGeneratorTask task = new OdtReportGeneratorTask(database, date, reportFile, templateFile);
 		task.execute(new TaskProgressListener() {
 			@Override
 			public void onProgressUpdate(int percentageCompleted) {
 			}
 		});
-		
+
 		System.out.println("Done!");
 	}
 }
