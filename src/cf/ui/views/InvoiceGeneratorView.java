@@ -41,16 +41,19 @@ import javax.swing.border.TitledBorder;
 import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.cf.services.InvoiceLineDefinition;
 import nl.gogognome.cf.services.InvoiceService;
+import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import cf.engine.Account;
 import cf.engine.Database;
 import cf.engine.Party;
-import cf.ui.components.AccountComboBox;
+import cf.ui.components.AccountFormatter;
 import cf.ui.components.AmountTextField;
 
 /**
@@ -63,31 +66,22 @@ public class InvoiceGeneratorView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	/** The database used to get data from and to which the generated invoices are added. */
     private Database database;
 
-    /** Text field containing the description of the generated invoices. */
     private JTextField tfDescription = new JTextField();
-
-    /** The date model for the date when the invoices are generated. */
     private DateModel invoiceGenerationDateModel;
-
-    /** Text field containing the ID of the generated invoices. */
     private JTextField tfId = new JTextField();
 
     /** Instances of this class represent a single line of the invoice template. */
     private class TemplateLine {
         JRadioButton rbAmountToBePaid = new JRadioButton();
-        AccountComboBox cbAccount =
-            new AccountComboBox(database);
-        AmountTextField tfDebet =
-            new AmountTextField(database.getCurrency());
-        AmountTextField tfCredit =
-            new AmountTextField(database.getCurrency());
+    	private ListModel<Account> accountListModel = new ListModel<Account>();
+        AmountTextField tfDebet = new AmountTextField(database.getCurrency());
+        AmountTextField tfCredit = new AmountTextField(database.getCurrency());
 
         public TemplateLine() {
             radioButtonGroup.add(rbAmountToBePaid);
-            cbAccount.selectAccount(null);
+            accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
         }
     }
 
@@ -208,7 +202,9 @@ public class InvoiceGeneratorView extends View {
                     SwingUtils.createGBConstraints(0, row, 1, 1, 0.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.NONE,
                             top, 0, bottom, 5));
-            templateLinesPanel.add(line.cbAccount,
+            ComboBoxBean<Account> cbAccount = beanFactory.createComboBoxBean(line.accountListModel);
+            cbAccount.setItemFormatter(new AccountFormatter());
+            templateLinesPanel.add(cbAccount,
                     SwingUtils.createGBConstraints(1, row, 1, 1, 3.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 0, bottom, 5));
@@ -280,7 +276,7 @@ public class InvoiceGeneratorView extends View {
         List<InvoiceLineDefinition> invoiceLines = new ArrayList<InvoiceLineDefinition>(templateLines.size());
         for (TemplateLine line : templateLines) {
             invoiceLines.add(new InvoiceLineDefinition(line.tfDebet.getAmount(), line.tfCredit.getAmount(),
-                line.cbAccount.getSelectedAccount(), line.rbAmountToBePaid.isSelected()));
+                line.accountListModel.getSelectedItem(), line.rbAmountToBePaid.isSelected()));
         }
 
         boolean amountToBePaidSelected = false;
