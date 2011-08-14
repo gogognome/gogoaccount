@@ -16,27 +16,25 @@
 */
 package cf.ui.views;
 
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import javax.swing.JComponent;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
-import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
-import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.swing.models.ListModel;
+import nl.gogognome.lib.swing.models.ModelChangeListener;
+import nl.gogognome.lib.swing.models.StringModel;
+import nl.gogognome.lib.swing.views.OkCancelView;
 import cf.engine.Database;
 import cf.engine.Party;
+import cf.ui.components.PartyTypeBean;
 
 /**
  * This class implements a view to edit a party. Either an existing party or
@@ -44,34 +42,26 @@ import cf.engine.Party;
  *
  * @author Sander Kooijmans
  */
-public class EditPartyView extends View {
+public class EditPartyView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-	private JTextField tfId;
-    private JTextField tfName;
-    private JTextField tfAddress;
-    private JTextField tfZipCode;
-    private JTextField tfCity;
-    private JTextField tfType;
-    private JTextArea taRemarks;
-    private DateModel dateModel;
-    private JTextField lbIdRemark;
-
-    /** The database to which the party has to be added. */
     private Database database;
 
-    /**
-     * The party that was entered by the user. If the user cancels this dialog,
-     * then <code>resultParty</code> is <code>null</code>.
-     */
+    private StringModel idModel = new StringModel();
+    private StringModel nameModel = new StringModel();
+    private StringModel addressModel = new StringModel();
+    private StringModel zipCodeModel = new StringModel();
+    private StringModel cityModel = new StringModel();
+    private ListModel<String> typeListModel = new ListModel<String>();
+    private DateModel birthDateModel = new DateModel();
+    private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
+    private JTextArea taRemarks;
+
+    private Party initialParty;
     private Party resultParty;
 
-    /** The party used to initialize the view. */
-    private Party initialParty;
-
-    /** The ok button. */
-    private JButton okButton;
+    private ModelChangeListener idUpdateListener;
 
     /**
      * Constructor.
@@ -83,141 +73,72 @@ public class EditPartyView extends View {
         this.initialParty = party;
     }
 
-    /** This method is called when the view is to be shown. */
     @Override
 	public void onInit() {
-        add(createPanel());
-        setDefaultButton(okButton);
+    	initModels();
+        addComponents();
+        addListeners();
+        updateIdMessage();
     }
 
-    /** This method is called when the view is to be closed. */
+    private void initModels() {
+    	List<String> items = new ArrayList<String>();
+    	items.add("");
+    	items.addAll(Arrays.asList(database.getPartyTypes()));
+    	typeListModel.setItems(items);
+
+    	if (initialParty != null) {
+            idModel.setString(initialParty.getId());
+            idModel.setEnabled(false, null);
+            nameModel.setString(initialParty.getName());
+            addressModel.setString(initialParty.getAddress());
+            zipCodeModel.setString(initialParty.getZipCode());
+            cityModel.setString(initialParty.getCity());
+            typeListModel.setSelectedItem(initialParty.getType(), null);
+            taRemarks.setText(initialParty.getRemarks());
+            birthDateModel.setDate(initialParty.getBirthDate(), null);
+        } else {
+            idModel.setString(suggestNewId());
+        }
+	}
+
     @Override
-	public void onClose() {
+    protected JComponent createCenterComponent() {
+        InputFieldsColumn ifc = new InputFieldsColumn();
+        addCloseable(ifc);
 
-    }
-
-    /**
-     * Gets the panel for editing a party.
-     * @return the panel
-     */
-    private JPanel createPanel() {
-        // Create the panel with labels and text fields
-        JPanel textfieldPanel = new JPanel(new GridBagLayout());
-
-        int row = 0;
-        tfId = widgetFactory.createTextField(10);
-        JLabel label = widgetFactory.createLabel("editPartyView.id", tfId);
-        textfieldPanel.add(label,
-                SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
+        ifc.addField("editPartyView.id", idModel);
         lbIdRemark = new JTextField(20);
         lbIdRemark.setEditable(false);
         lbIdRemark.setEnabled(false);
         lbIdRemark.setBorder(null);
-        textfieldPanel.add(lbIdRemark, SwingUtils.createTextFieldGBConstraints(2, row));
-        row++;
+        ifc.add(lbIdRemark, SwingUtils.createTextFieldGBConstraints(2, 0));
 
-        tfName = widgetFactory.createTextField(30);
-        label = widgetFactory.createLabel("editPartyView.name", tfName);
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfName, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
-            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
-        row++;
-
-        tfAddress = widgetFactory.createTextField(30);
-        label = widgetFactory.createLabel("editPartyView.address", tfAddress);
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfAddress, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
-            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
-        row++;
-
-        tfZipCode = widgetFactory.createTextField(30);
-        label = widgetFactory.createLabel("editPartyView.zipCode", tfZipCode);
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfZipCode, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
-            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
-        row++;
-
-        tfCity = widgetFactory.createTextField(30);
-        label = widgetFactory.createLabel("editPartyView.city", tfCity);
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfCity, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
-            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
-        row++;
-
-        tfType = widgetFactory.createTextField(30);
-        label = widgetFactory.createLabel("editPartyView.type", tfType);
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(tfType, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
-            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
-        row++;
+        ifc.addField("editPartyView.name", nameModel);
+        ifc.addField("editPartyView.address", addressModel);
+        ifc.addField("editPartyView.zipCode", zipCodeModel);
+        ifc.addField("editPartyView.city", cityModel);
+        ifc.addField("editPartyView.birthDate", birthDateModel);
+        PartyTypeBean typesBean = new PartyTypeBean(typeListModel);
+        ifc.addVariableSizeField("editPartyView.type", typesBean);
 
         taRemarks = new JTextArea(5, 30);
-        label = widgetFactory.createLabel("editPartyView.remarks", taRemarks);
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        JScrollPane remarksPane = new JScrollPane(taRemarks);
-        textfieldPanel.add(remarksPane, SwingUtils.createGBConstraints(1, row, 2, 1, 1.0, 0.0,
-            GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 3, 0));
-        row++;
+        ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
 
-        dateModel = new DateModel();
-        DateSelectionBean dsbBirthDate = beanFactory.createDateSelectionBean(dateModel);
-        label = widgetFactory.createLabel("editPartyView.birthDate", dsbBirthDate);
-        textfieldPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        textfieldPanel.add(dsbBirthDate, SwingUtils.createLabelGBConstraints(1, row));
+        return ifc;
+    }
 
-        if (initialParty != null) {
-            tfId.setText(initialParty.getId());
-            tfId.setEditable(false);
-            tfId.setEnabled (false);
-            tfName.setText(initialParty.getName());
-            tfAddress.setText(initialParty.getAddress());
-            tfZipCode.setText(initialParty.getZipCode());
-            tfCity.setText(initialParty.getCity());
-            tfType.setText(initialParty.getType());
-            taRemarks.setText(initialParty.getRemarks());
-            dateModel.setDate(initialParty.getBirthDate(), null);
-        } else {
-            tfId.setText(suggestNewId());
-            tfId.getDocument().addDocumentListener(new DocumentListener() {
-                @Override
-				public void changedUpdate(DocumentEvent e) {
-                    onIdChange();
-                }
+    private void addListeners() {
+    	idUpdateListener = new IdChangeListener();
+        idModel.addModelChangeListener(idUpdateListener);
+    }
 
-                @Override
-				public void insertUpdate(DocumentEvent e) {
-                    onIdChange();
-                }
-
-                @Override
-				public void removeUpdate(DocumentEvent e) {
-                    onIdChange();
-                }
-            });
-            onIdChange();
-        }
-
-        // Create panel with buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        okButton = widgetFactory.createButton("gen.ok", new AbstractAction() {
-            @Override
-			public void actionPerformed(ActionEvent event) {
-                resultParty = new Party(tfId.getText(), tfName.getText(),
-                    tfAddress.getText(), tfZipCode.getText(), tfCity.getText(), dateModel.getDate(),
-                    tfType.getText(), taRemarks.getText());
-                closeAction.actionPerformed(event);
-            }
-        });
-        buttonPanel.add(okButton);
-        buttonPanel.add(widgetFactory.createButton("gen.cancel", closeAction));
-
-        // Create overall panel
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(textfieldPanel, SwingUtils.createPanelGBConstraints(0, 0));
-        panel.add(buttonPanel, SwingUtils.createPanelGBConstraints(0, 1));
-
-        return panel;
+    @Override
+    protected void onOk() {
+        resultParty = new Party(idModel.getString(), nameModel.getString(),
+                addressModel.getString(), zipCodeModel.getString(), cityModel.getString(),
+                birthDateModel.getDate(), typeListModel.getSelectedItem(), taRemarks.getText());
+        requestClose();
     }
 
     /**
@@ -237,13 +158,9 @@ public class EditPartyView extends View {
         return textResource.getString(initialParty != null ? "editPartyView.titleEdit" : "editPartyView.titleAdd");
     }
 
-    /**
-     * This method is called when the user content of tfId has changed.
-     * If the ID is not valid, then this is shown to the user.
-     */
-    private void onIdChange() {
+    private void updateIdMessage() {
         String remark = "";
-        String id = tfId.getText();
+        String id = idModel.getString();
         if (initialParty == null && database.getParty(id) != null ) {
             remark = textResource.getString("editPartyView.idExistsAlready");
         } else if (id.length() == 0) {
@@ -252,10 +169,6 @@ public class EditPartyView extends View {
         lbIdRemark.setText(remark);
     }
 
-    /**
-     * Generates an ID that does not exist yet.
-     * @return the suggested ID
-     */
     private String suggestNewId() {
         Party[] parties = database.getParties();
 
@@ -298,4 +211,20 @@ public class EditPartyView extends View {
         }
         return suggestion;
     }
+
+	@Override
+	public void onClose() {
+		removeListeners();
+    }
+
+	private void removeListeners() {
+		idModel.removeModelChangeListener(idUpdateListener);
+	}
+
+	private final class IdChangeListener implements ModelChangeListener {
+		@Override
+		public void modelChanged(AbstractModel model) {
+			updateIdMessage();
+		}
+	}
 }

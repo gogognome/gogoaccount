@@ -315,7 +315,9 @@ public class InvoiceGeneratorView extends View {
         }
 
 	    // Let the user select the parties.
-        PartiesView partiesView = new PartiesView(database, true, true);
+        PartiesView partiesView = new PartiesView(database);
+        partiesView.setSelectioEnabled(true);
+        partiesView.setMultiSelectionEnabled(true);
         ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
         dialog.showDialog();
         Party[] parties = partiesView.getSelectedParties();

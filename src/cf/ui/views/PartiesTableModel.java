@@ -69,6 +69,8 @@ public class PartiesTableModel extends AbstractListTableModel<Party> {
 			result = party.getCity();
 		} else if (BIRTH_DATE == colDef) {
 			result = party.getBirthDate();
+		} else if (TYPE == colDef) {
+			result = party.getType();
 		} else if (REMARKS == colDef) {
             String remarks = party.getRemarks();
             if (remarks != null && remarks.length() > 30) {

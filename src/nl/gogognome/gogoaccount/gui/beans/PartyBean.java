@@ -103,12 +103,13 @@ public class PartyBean extends JPanel implements Closeable {
     }
 
     /**
-     * Lets the user select an party in a dialog.
+     * Lets the user select a party in a dialog.
      */
     public void selectParty() {
         Container parent = SwingUtils.getTopLevelContainer(this);
 
-        PartiesView partiesView = new PartiesView(database, true, false);
+        PartiesView partiesView = new PartiesView(database);
+        partiesView.setSelectioEnabled(true);
         ViewDialog dialog = new ViewDialog(parent, partiesView);
         dialog.showDialog();
         Party[] parties = partiesView.getSelectedParties();

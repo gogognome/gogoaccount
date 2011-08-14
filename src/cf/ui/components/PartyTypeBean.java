@@ -16,12 +16,15 @@
 */
 package cf.ui.components;
 
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 
+import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -29,7 +32,7 @@ import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.OkCancelView;
-import nl.gogognome.lib.swing.views.ViewPopup;
+import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.util.StringUtil;
 
@@ -39,42 +42,52 @@ import nl.gogognome.lib.util.StringUtil;
  *
  * @author Sander Kooijmans
  */
-public class PartyTypeBean extends ComboBoxBean<String> {
+public class PartyTypeBean extends JPanel {
 
 	private static final long serialVersionUID = 1L;
 
 	private ListModel<String> types;
 
 	public PartyTypeBean(ListModel<String> types) {
-		super(types);
 		this.types = types;
+		initBean();
 	}
 
-	@Override
-	public void initBean() {
-		super.initBean();
+	private void initBean() {
+        setLayout(new GridBagLayout());
+        BeanFactory beanFactory = Factory.getInstance(BeanFactory.class);
+        ComboBoxBean<String> comboboxBean = beanFactory.createComboBoxBean(types);
 
+        add(comboboxBean, SwingUtils.createTextFieldGBConstraints(0, 0));
     	WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
-    	JButton button = wf.createIconButton("gen.btnCalendar", new NewPartyTypeAction(), 21);
+    	JButton button = wf.createIconButton("gen.btnNew", new NewPartyTypeAction(), 21);
     	add(button);
 	}
 
-	private void showNewPartyTypePopup() {
+	private void showNewPartyTypeDialog() {
 		NewPartyView view = new NewPartyView();
-		ViewPopup viewPopup = new ViewPopup(view);
-		viewPopup.show(this, SwingUtils.getCoordinatesRelativeToTopLevelContainer(this));
+		ViewDialog dialog = new ViewDialog(this, view);
+		dialog.showDialog();
+
+		String newParty = view.getEnteredType();
+		if (newParty != null) {
+			types.addItem(newParty, null);
+			types.setSelectedItem(newParty, null);
+		}
 	}
 
 	private final class NewPartyTypeAction extends AbstractAction {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			showNewPartyTypePopup();
+			showNewPartyTypeDialog();
 		}
 	}
 
 	private class NewPartyView extends OkCancelView {
 
-		private StringModel newPartyTypeModel;
+		private StringModel newPartyTypeModel = new StringModel();
+
+		private String enteredType;
 
 		@Override
 		public String getTitle() {
@@ -94,7 +107,7 @@ public class PartyTypeBean extends ComboBoxBean<String> {
 		protected JComponent createCenterComponent() {
 			InputFieldsColumn ifc = new InputFieldsColumn();
 			addCloseable(ifc);
-			ifc.addField("PartyTypeBean.newPartyType", newPartyTypeModel);
+			ifc.addField("PartyTypeBean.newPartyType", newPartyTypeModel, 20);
 			return ifc;
 		}
 
@@ -102,10 +115,13 @@ public class PartyTypeBean extends ComboBoxBean<String> {
 		protected void onOk() {
 			String newParty = newPartyTypeModel.getString();
 			if (!StringUtil.isNullOrEmpty(newParty)) {
-				types.addItem(newParty, null);
+				enteredType = newParty;
 				requestClose();
 			}
 		}
 
+		public String getEnteredType() {
+			return enteredType;
+		}
 	}
 }

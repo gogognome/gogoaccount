@@ -61,6 +61,7 @@ import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.util.StringUtil;
 import cf.engine.Database;
+import cf.engine.DatabaseListener;
 import cf.engine.DatabaseModificationFailedException;
 import cf.engine.Party;
 import cf.engine.PartySearchCriteria;
@@ -95,6 +96,7 @@ public class PartiesView extends View {
     private JButton btSearch;
     private JButton btSelect;
 
+    private DatabaseListener databaseListener;
     private ListSelectionListener listSelectionListener;
     private FocusListener focusListener;
 
@@ -108,32 +110,16 @@ public class PartiesView extends View {
      * @param database
      */
     public PartiesView(Database database) {
-        this(database, false);
-    }
-
-    /**
-     * Constructor for a parties view in which at most one party can be selected.
-     * @param database the database used to search for parties and to add, delete or update parties from.
-     * @param selectioEnabled <code>true</code> if the user should be able to select a party;
-     *         <code>false</code> if the user cannot select a party
-     */
-    public PartiesView(Database database, boolean selectionEnabled) {
-        this(database, selectionEnabled, false);
-    }
-
-    /**
-     * Constructor.
-     * @param database the database used to search for parties and to add, delete or update parties from.
-     * @param selectioEnabled <code>true</code> if the user should be able to select a party;
-     *         <code>false</code> if the user cannot select a party
-     * @param multiSelectionEnabled indicates that multiple parties can be selected (<code>true</code>) or
-     *         at most one party (<code>false</code>)
-     */
-    public PartiesView(Database database, boolean selectionEnabled, boolean multiSelectionEnabled) {
         this.database = database;
-        this.selectioEnabled = selectionEnabled;
-        this.multiSelectionEnabled = multiSelectionEnabled;
     }
+
+    public void setSelectioEnabled(boolean selectioEnabled) {
+		this.selectioEnabled = selectioEnabled;
+	}
+
+    public void setMultiSelectionEnabled(boolean multiSelectionEnabled) {
+		this.multiSelectionEnabled = multiSelectionEnabled;
+	}
 
     @Override
     public String getTitle() {
@@ -148,10 +134,7 @@ public class PartiesView extends View {
     }
 
     private void initModels() {
-    	List<String> items = new ArrayList<String>();
-    	items.add("");
-    	items.addAll(Arrays.asList(database.getPartyTypes()));
-    	typeListModel.setItems(items);
+    	updateTypeListModel();
     }
 
     private void addComponents() {
@@ -246,7 +229,17 @@ public class PartiesView extends View {
 		return detailPanel;
 	}
 
+    private void updateTypeListModel() {
+    	List<String> items = new ArrayList<String>();
+    	items.add("\u00a0");
+    	items.addAll(Arrays.asList(database.getPartyTypes()));
+    	typeListModel.setItems(items);
+    }
+
     private void addListeners() {
+    	databaseListener = new DatabaseListenerImpl();
+    	database.addListener(databaseListener);
+
         listSelectionListener = new RemarksUpdateSelectionListener();
         table.getSelectionModel().addListSelectionListener(listSelectionListener);
 
@@ -270,6 +263,7 @@ public class PartiesView extends View {
     }
 
     private void removeListeners() {
+    	database.removeListener(databaseListener);
     	table.getSelectionModel().removeListSelectionListener(listSelectionListener);
     	removeListeners(ifc);
     }
@@ -475,4 +469,11 @@ public class PartiesView extends View {
             }
 		}
     }
+
+	private class DatabaseListenerImpl implements DatabaseListener {
+		@Override
+		public void databaseChanged(Database db) {
+			updateTypeListModel();
+		}
+	}
 }
