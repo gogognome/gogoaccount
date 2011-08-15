@@ -34,6 +34,7 @@ import java.util.TreeMap;
 
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
+import cf.engine.Account.Type;
 
 /**
  * This class maintains all accounts, journals, debtors and
@@ -167,9 +168,8 @@ public class Database {
         return idsToAccountsMap.get(id);
     }
 
-    public Account[] getAssets()
-    {
-        return assets.values().toArray(new Account[assets.size()]);
+    public List<Account> getAssets() {
+        return new ArrayList<Account>(assets.values());
     }
 
     /**
@@ -178,15 +178,8 @@ public class Database {
      * @throws DatabaseModificationFailedException if there is an asset for which holds
      *         <code>!asset.isDebet()</code>.
      */
-    public void setAssets(Account[] assets) throws DatabaseModificationFailedException
-    {
-        for (int i=0; i<assets.length; i++)
-        {
-            if (!assets[i].isDebet())
-            {
-                throw new DatabaseModificationFailedException("Assets must have debet equal to true!");
-            }
-        }
+    public void setAssets(List<Account> assets) throws DatabaseModificationFailedException {
+        checkAccountTypes(assets, Type.ASSET);
 
         this.assets = new TreeMap<String, Account>();
         for (Account account : assets) {
@@ -195,9 +188,18 @@ public class Database {
         updateIdsToAccountsMap();
     }
 
-    public Account[] getExpenses()
-    {
-        return expenses.values().toArray(new Account[expenses.size()]);
+	private void checkAccountTypes(List<Account> accounts, Type expectedType)
+			throws DatabaseModificationFailedException {
+		for (Account a : accounts){
+            if (a.getType() != expectedType) {
+                throw new DatabaseModificationFailedException("Account found with type "
+                		+ a.getType() + " instead of " + expectedType + ".");
+            }
+        }
+	}
+
+    public List<Account> getExpenses() {
+    	return new ArrayList<Account>(expenses.values());
     }
 
     /**
@@ -206,15 +208,8 @@ public class Database {
      * @throws DatabaseModificationFailedException if there is an expense for which holds
      *         <code>!expense.isDebet()</code>
      */
-    public void setExpenses(Account[] expenses) throws DatabaseModificationFailedException
-    {
-        for (int i=0; i<expenses.length; i++)
-        {
-            if (!expenses[i].isDebet())
-            {
-                throw new DatabaseModificationFailedException("Expenses must have debet equal to true!");
-            }
-        }
+    public void setExpenses(List<Account> expenses) throws DatabaseModificationFailedException {
+        checkAccountTypes(expenses, Type.EXPENSE);
 
         this.expenses = new TreeMap<String, Account>();
         for (Account account : expenses) {
@@ -223,20 +218,12 @@ public class Database {
         updateIdsToAccountsMap();
     }
 
-    public Account[] getLiabilities()
-    {
-        return liabilities.values().toArray(new Account[liabilities.size()]);
+    public List<Account> getLiabilities() {
+        return new ArrayList<Account>(liabilities.values());
     }
 
-    public void setLiabilities(Account[] liabilities) throws DatabaseModificationFailedException
-    {
-        for (int i=0; i<liabilities.length; i++)
-        {
-            if (liabilities[i].isDebet())
-            {
-                throw new DatabaseModificationFailedException("Liabilities must have debet equal to false!");
-            }
-        }
+    public void setLiabilities(List<Account> liabilities) throws DatabaseModificationFailedException {
+    	checkAccountTypes(liabilities, Type.LIABILITY);
 
         this.liabilities = new TreeMap<String, Account>();
         for (Account account : liabilities) {
@@ -245,16 +232,12 @@ public class Database {
         updateIdsToAccountsMap();
     }
 
-    public Account[] getRevenues() {
-        return revenues.values().toArray(new Account[revenues.size()]);
+    public List<Account> getRevenues() {
+        return new ArrayList<Account>(revenues.values());
     }
 
-    public void setRevenues(Account[] revenues) throws DatabaseModificationFailedException {
-        for (int i=0; i<revenues.length; i++) {
-            if (revenues[i].isDebet()) {
-                throw new DatabaseModificationFailedException("Revenues must have debet equal to false!");
-            }
-        }
+    public void setRevenues(List<Account> revenues) throws DatabaseModificationFailedException {
+    	checkAccountTypes(revenues, Type.REVENUE);
 
         this.revenues = new TreeMap<String, Account>();
         for (Account account : revenues) {
@@ -268,16 +251,11 @@ public class Database {
      * assets, liabilities, expenses and revenues.
      * @return all accounts of this database
      */
-    public Account[] getAllAccounts() {
-        Account[] assets = getAssets();
-        Account[] liabilities = getLiabilities();
-        Account[] expenses = getExpenses();
-        Account[] revenues = getRevenues();
-        Account[] accounts = new Account[assets.length + liabilities.length + expenses.length + revenues.length];
-        System.arraycopy(assets, 0, accounts, 0, assets.length);
-        System.arraycopy(liabilities, 0, accounts, assets.length, liabilities.length);
-        System.arraycopy(expenses, 0, accounts, assets.length + liabilities.length, expenses.length);
-        System.arraycopy(revenues, 0, accounts, assets.length + liabilities.length + expenses.length, revenues.length);
+    public List<Account> getAllAccounts() {
+    	List<Account> accounts = getAssets();
+    	accounts.addAll(getLiabilities());
+    	accounts.addAll(getExpenses());
+    	accounts.addAll(getRevenues());
         return accounts;
     }
 

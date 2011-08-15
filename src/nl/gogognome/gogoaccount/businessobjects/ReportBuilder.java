@@ -130,6 +130,9 @@ public class ReportBuilder {
 						accountToTotalCredit.get(account));
 			}
 			Invoice invoice = database.getInvoice(item.getInvoiceId());
+			if (invoice == null) {
+				invoice = database.getInvoice(journal.getIdOfCreatedInvoice());
+			}
 			addLedgerLineForAccount(account, journal, item, invoice);
 		}
 	}

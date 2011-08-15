@@ -156,7 +156,7 @@ public class XMLFileWriter {
 		return doc;
 	}
 
-	private Element createElementForAccounts(String groupName, Account[] accounts) {
+	private Element createElementForAccounts(String groupName, List<Account> accounts) {
 		Element groupElem = doc.createElement(groupName);
 		for (Account account : accounts) {
 		    Element elem = doc.createElement("account");

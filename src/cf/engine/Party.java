@@ -52,8 +52,7 @@ public class Party implements Comparable<Party> {
     /**
      * Constructs a party.
      * @param name the name of the party.
-     * @param journals the journals that modify the balance of this debtor or
-     *                 creditor.
+     * @param name the name of the party.
      */
     public Party(String id, String name) {
         this.id = id;
@@ -179,10 +178,11 @@ public class Party implements Comparable<Party> {
 
     @Override
 	public String toString() {
-        return id + " " + name + " " + address + " "  + zipCode + " " + city + " " + birthDate + " ";
+        return id + ' ' + name;
     }
 
-    public int compareTo(Party that) {
+    @Override
+	public int compareTo(Party that) {
         return this.id.compareTo(that.id);
     }
 }

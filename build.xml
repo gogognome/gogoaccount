@@ -16,76 +16,103 @@
 -->
 <project name="gogo account" default="dist" basedir=".">
 
-    <!-- Load our properties -->
-	<property file="project.properties"/>
-
-	<!-- set global properties for this build -->
-	<property name="srcdir" value="src" />
-	<property name="testdir" value="test/src" />
-	<property name="libdir" value="lib" />
-	<property name="resourcedir" value="resources" />
-	<property name="generateddir" value="generated" />
-	<property name="classdir" value="${generateddir}/classes" />
-	<property name="libclassesdir" value="${generateddir}/libclasses" />
-	<property name="distdir" value="${generateddir}/dist" />
-	<property name="mainClass" value="cf.ui.Start" />
 	<property name="productname" value="gogoaccount" />
+	
+	<property name="main.class" value="cf.ui.Start" />
+	
+	<!-- Include properties file. Define your deviating properties there. --> 
+	<property file="build.properties" />
+	
+	<!-- path to this project -->
+	<property name="project.dir" location="." />
 
-	<path id="classpath">
-		<fileset dir="${libdir}" includes="*.jar" />
+	<!-- directory in which all output from ant is generated -->
+	<property name="output.dir" location="${project.dir}/ant_output" />
+	
+	<!-- directory in which classes and other non-distribution files are created -->  
+	<property name="build.dir" location="${output.dir}/build" />
+	
+	<!-- path where the class files will be created during compilation -->
+	<property name="classes.dir" location="${build.dir}/classes" />
+	
+	<!-- path to build support tools -->
+	<property name="buildsupport.dir" location="${project.dir}/buildsupport" />
+
+	<!-- path where Emma stores instrumented class files -->
+	<property name="emma.instr.dir" location="${build.dir}/emma/instr" />
+
+	<!-- directory used for unit tests -->
+	<property name="test.dir" location="${output.dir}/test" />
+
+	<!-- path where Emma stores coverage information -->
+	<property name="emma.coverage.dir" location="${test.dir}/coverage" />
+
+	<!-- directory used by JUnit to store its report -->
+	<property name="junit.report.dir" location="${test.dir}/junit-report" />
+	
+	<!-- directory where the jar files are generated -->
+	<property name="deploy.dir" location="${output.dir}/deploy" />
+	
+	<!-- define the user library -->
+	<path id="lib.path">
+		<fileset dir="${project.dir}/lib">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!-- Path voor junit -->
+	<path id="junitlibrary.path">
+    	<pathelement location="${buildsupport.dir}/lib/junit-4.9b2.jar" />
 	</path>
 	
-	<target name="init" description="initialisation used by other targets">
-		<!-- Create the time stamp -->
-		<tstamp/>
+	<!-- Path to Emma libraries and task definition for Emma -->
+	<path id="emma.lib" >
+		<fileset dir="${buildsupport.dir}/lib">
+			<include name="emma.jar" />
+			<include name="emma_ant.jar" />
+		</fileset>
+  	</path>
+
+ 	<taskdef resource="emma_ant.properties" classpathref="emma.lib" />
+
+	<target name="init">
+		<mkdir dir="${output.dir}"/> 
 	</target>
 
-	<target name="compile" depends="init"
-		description="compiles the application">
-
-		<!-- Create the build directory structure used by compile -->
-		<mkdir dir="${classdir}"/>
-
-		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${srcdir}"  destdir="${classdir}" source="1.5" target="1.5" debug="true">
-			<classpath refid="classpath" />
-		</javac>			
-		
-		<!-- Compile the java code from ${src} into ${build} -->
-		<javac srcdir="${testdir}" destdir="${classdir}" source="1.5" target="1.5" debug="true">
-			<classpath refid="classpath" />
-		</javac>		
-		<copy todir="${classdir}">
-			<fileset dir="${resourcedir}">
-			</fileset>
-		</copy>
+	<target name="compile" depends="init">
+		<mkdir dir="${classes.dir}" />
+		<javac srcdir="${project.dir}/src" destdir="${classes.dir}" 
+				includeantruntime="false" debug="true">
+			<classpath>
+				<pathelement location="${classes.dir}" />
+				<path refid="lib.path" />
+			</classpath>
+		</javac>
 	</target>
 
-	<target name="dist" depends="clean,compile"
+	<target name="dist" depends="clean,compile,test"
 		description="creates a distribution of the project">
-		<!-- Create the distribution directory -->
-		<mkdir dir="${distdir}"/>
+		<mkdir dir="${deploy.dir}"/>
 
-		<!-- Extract libraries -->
-		<mkdir dir="${libclassesdir}"/>
-		<unzip dest="${libclassesdir}" src="${libdir}/gogolib.jar" />
-		<unzip dest="${libclassesdir}" src="${libdir}/opencsv-2.3.jar" />
+		<unzip dest="${classes.dir}">
+			<fileset dir="${project.dir}/lib" includes="*.jar" />
+		</unzip>
 		
 		<!-- Put everything in ${build} into the jar file -->
-		<jar jarfile="${distdir}/${productname}.jar">
-			<fileset dir="${classdir}" />
-			<fileset dir="${libclassesdir}" />
+		<jar jarfile="${deploy.dir}/${productname}.jar">
+			<fileset dir="${classes.dir}" />
+			<fileset dir="${project.dir}/resources" />
 			<manifest>
-				<attribute name="Main-Class" value="${mainClass}" />
+				<attribute name="Main-Class" value="${main.class}" />
 				<attribute name="SplashScreen-Image" value="splash.png" />
 			</manifest>
 		</jar>
 
 		<!-- Create a zip file containing all sources, build.xml and the jar file -->
-		<zip destfile="${distdir}/${productname}.zip">
-			<fileset dir="${distdir}" includes="${productname}.jar" />
+		<zip destfile="${deploy.dir}/${productname}.zip">
+			<fileset dir="${deploy.dir}" includes="${productname}.jar" />
 			<fileset dir=".">
-				<exclude name="${generateddir}/**"/>
+				<exclude name="${output.dir}/**"/>
 				<exclude name="bin/**"/>
 				<exclude name="sketches/**"/>
 				<exclude name=".*/**"/>
@@ -94,21 +121,102 @@
 	</target>
 
 	<target name="clean"
-		description="cleans up the build and distribution directories">
-		<!-- Delete the ${build} and ${dist} directory trees -->
-		<delete dir="${generateddir}"/>
+			description="cleans up the build and distribution directories">
+		<delete dir="${output.dir}"/>
 	</target>
 
 	<target name="run" depends="compile" description="runs the application">
-		<java classname="${mainClass}" fork="yes">
+		<java classname="${main.class}" fork="yes">
 			<classpath>
-				<path refid="classpath" />
-				<pathelement location="${classdir}"/>
+				<path refid="lib.path" />
+				<pathelement location="${classes.dir}"/>
+				<pathelement location="${project.dir}/resources"/>
 			</classpath>
 			<arg line="-lang=nl" />
 		</java>
 	</target>
 
+	<target name="test" depends="compile" description="Performs unit tests">
+		<property name="test.build.dir" value="${build.dir}/test" />
+		<property name="test.classes" value="${test.build.dir}/classes" />
+		<property name="junit.xml.dir" value="${test.build.dir}/junit" />
+		
+		<mkdir dir="${test.classes}" />
+		<mkdir dir="${junit.report.dir}" />
+		<mkdir dir="${junit.xml.dir}" />
+
+		<!-- Compile unit tests -->
+		<javac srcdir="${project.dir}/test/src" destdir="${test.classes}" 
+				includeantruntime="false" debug="true">
+			<classpath>
+				<path refid="lib.path" />
+				<path refid="junitlibrary.path" />
+				<pathelement location="${classes.dir}" />
+			</classpath>
+		</javac>
+		
+		<!-- Instrument the server code for Emma -->
+		<mkdir dir="${emma.instr.dir}" />
+		<mkdir dir="${emma.coverage.dir}" />
+
+		<path id="classes.path">
+			<pathelement location="${classes.dir}" />
+		</path>
+
+		<emma>
+		      <instr instrpathref="classes.path"
+		             destdir="${emma.instr.dir}"	
+		             metadatafile="${emma.coverage.dir}/metadata.emma"
+		             merge="true" />
+		</emma>
+
+		<!-- Execute integration tests -->
+		<junit printsummary="on" showoutput="false" fork="true" forkmode="once"
+				newenvironment="true" dir="${project.dir}" errorproperty="test.failed" failureproperty="test.failed">
+			<sysproperty key="java.util.logging.config.file" value="${project.dir}/config/logging.properties" />
+			<sysproperty key="emma.coverage.out.file" value="${emma.coverage.dir}/coverage.emma" />
+			<sysproperty key="emma.coverage.out.merge" value="true" />
+			
+			<classpath>
+				<path refid="emma.lib" />
+				<path refid="junitlibrary.path" />
+				<path refid="lib.path" />
+				<pathelement location="${project.dir}/resources" />
+				<pathelement location="${emma.instr.dir}" />
+				<pathelement location="${classes.dir}" />
+				<pathelement location="${test.classes}" />
+			</classpath>
+			<batchtest todir="${junit.xml.dir}">
+				<fileset dir="${test.classes}" includes="**/Test*.class" >
+					<exclude name="**/Test*$*.class" />
+				</fileset>
+				<formatter type="xml" usefile="true"/>
+			</batchtest>
+		</junit>
+		
+		<!-- Generate unit test report -->
+		<mkdir dir="${junit.report.dir}" />
+		<junitreport todir="${junit.report.dir}">
+			<fileset dir="${junit.xml.dir}">
+				<include name="TEST-*.xml"/>
+			</fileset>
+			<report format="frames" todir="${junit.report.dir}/html"/>
+		</junitreport>
+		
+		<!-- Generate code coverage report --> 
+		<emma>
+			<report sourcepath="${project.dir}/src" >
+				<fileset dir="${emma.coverage.dir}" >
+					<include name="*.emma" />
+				</fileset>
+
+				<html outfile="${emma.coverage.dir}/coverage.html" />
+			</report>
+		</emma>
+		
+		<fail if="test.failed" message="The tests have not all succeeded!" />
+	</target>
+	
     <target name="doc" description="Build all documentation">
       <!-- Build the Users Guide -->
       <ant antfile="${dbf.basedir}/build-docbook.xml" target="all">

@@ -34,7 +34,7 @@ import nl.gogognome.lib.swing.views.ViewListener;
  *
  * @author Sander Kooijmans
  */
-public class TestPartyCsvReader {
+public class PartyCsvReader {
 
     static ViewFrame frame;
     static ViewContainer viewContainer;

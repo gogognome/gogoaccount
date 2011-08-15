@@ -28,37 +28,19 @@ public class Account implements Comparable<Account> {
         ASSET, LIABILITY, EXPENSE, REVENUE
     }
 
-    /** The id of this account. The id's of all accounts must be unique. */
     private String id;
-
-    /** The name of this account. */
     private String name;
-
-    /**
-     * Indicates whether this account is on the debet side of a balance or
-     * of the results.
-     * <code>true</code> indicates this account is an asset or a expense;
-     * <code>false</code> indicates this account is a liability or a revenue.
-     */
-    private boolean debet;
-
-    /** The type of this account. */
     private Type type;
 
     /**
-     * Constructs an acount.
+     * Constructs an account.
      * @param id the id of this account
      * @param name the name of this account
-     * @param debet Indicates whether this account is on the debet side of a balance or
-     *              of the results.
-     * <code>true</code> indicates this account is an asset or a expense;
-     * <code>false</code> indicates this account is a liability or a revenue.
      * @param type the type of this account
      */
-    public Account(String id, String name, boolean debet, Type type) {
+    public Account(String id, String name, Type type) {
         this.id = id;
         this.name = name;
-        this.debet = debet;
         this.type = type;
     }
 
@@ -85,7 +67,7 @@ public class Account implements Comparable<Account> {
      * <code>false</code> indicates this account is a liability or a revenue.
      */
     public boolean isDebet() {
-        return debet;
+        return type == Type.ASSET || type == Type.EXPENSE;
     }
 
     /**
@@ -97,7 +79,7 @@ public class Account implements Comparable<Account> {
     public boolean isCredit() {
     	return !isDebet();
     }
-    
+
     /**
      * Gets the type of this account.
      * @return the type
@@ -106,13 +88,11 @@ public class Account implements Comparable<Account> {
         return type;
     }
 
-    /** {@inheritDoc} */
     @Override
     public int hashCode() {
         return id.hashCode();
     }
 
-    /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
         if (o instanceof Account) {
@@ -122,9 +102,13 @@ public class Account implements Comparable<Account> {
         }
     }
 
-    /** {@inheritDoc} */
-    public int compareTo(Account that) {
+    @Override
+	public int compareTo(Account that) {
         return this.id.compareTo(that.id);
     }
 
+    @Override
+    public String toString() {
+    	return id + ' ' + name;
+    }
 }

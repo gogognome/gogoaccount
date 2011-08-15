@@ -26,6 +26,7 @@ import java.util.Map;
 
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
 import cf.engine.Account;
 import cf.engine.Account.Type;
@@ -52,6 +53,13 @@ public class Report {
 		public Amount debetAmount;
 		public Amount creditAmount;
 		public Invoice invoice;
+
+		@Override
+		public String toString() {
+			return DateUtil.formatDateYYYYMMDD(date) + ' ' + id + ' ' + description
+				+ ' ' + debetAmount + ' ' + creditAmount
+				+ (invoice != null ? ' ' + invoice.getId() : "");
+		}
 	}
 
 	private final Date endDate;
@@ -183,7 +191,7 @@ public class Report {
 		invoiceToRemainingAmount.put(invoice, invoice.getAmountToBePaid());
 	}
 
-	public void addPayment(Invoice invoice, Amount amount) {
+	void addPayment(Invoice invoice, Amount amount) {
 		Amount curAmount = invoiceToRemainingAmount.get(invoice);
 		Amount newAmount = curAmount.subtract(amount);
 		invoiceToRemainingAmount.put(invoice, newAmount);
@@ -213,10 +221,11 @@ public class Report {
 
         if (resultOfOperations.isPositive()) {
     		resultOfOperationsAccount =
-    			new Account("", textResource.getString("gen.profit"), false, Type.LIABILITY);
+    			new Account("", textResource.getString("gen.profit"), Type.LIABILITY);
+    		setAmount(resultOfOperationsAccount, resultOfOperations);
         } else if (resultOfOperations.isNegative()) {
         	resultOfOperationsAccount =
-    			new Account("", textResource.getString("gen.loss"), true, Type.ASSET);
+    			new Account("", textResource.getString("gen.loss"), Type.ASSET);
     		setAmount(resultOfOperationsAccount, resultOfOperations.negate());
         }
 	}
@@ -300,6 +309,4 @@ public class Report {
 		}
 		return total;
 	}
-
 }
-

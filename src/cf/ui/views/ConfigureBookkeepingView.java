@@ -269,8 +269,8 @@ public class ConfigureBookkeepingView extends View {
 	}
 
 	private static List<AccountDefinition> getAccountDefinitions(Database database) {
-    	Account[] accounts = database.getAllAccounts();
-    	List<AccountDefinition> result = new ArrayList<AccountDefinition>(accounts.length);
+    	List<Account> accounts = database.getAllAccounts();
+    	List<AccountDefinition> result = new ArrayList<AccountDefinition>(accounts.size());
     	for (Account account : accounts) {
     		AccountDefinition accountDefinition = new AccountDefinition();
     		accountDefinition.account = account;

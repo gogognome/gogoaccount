@@ -29,7 +29,7 @@ import nl.gogognome.cf.services.importers.RabobankCSVImporter;
  *
  * @author Sander Kooijmans
  */
-public class TestRabobankCSVImporter {
+public class RabobankCSVImportTool {
 
 	public static void main(String[] args) throws Exception {
 		for (String fileName : args) {

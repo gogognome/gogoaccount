@@ -83,7 +83,7 @@ public class EditJournalItemView extends OkCancelView {
 	}
 
 	private void initModels() {
-		accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
+		accountListModel.setItems(database.getAllAccounts());
 
 		List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
 				textResource.getString("gen.credit"));

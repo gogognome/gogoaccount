@@ -81,7 +81,7 @@ public class InvoiceGeneratorView extends View {
 
         public TemplateLine() {
             radioButtonGroup.add(rbAmountToBePaid);
-            accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
+            accountListModel.setItems(database.getAllAccounts());
         }
     }
 

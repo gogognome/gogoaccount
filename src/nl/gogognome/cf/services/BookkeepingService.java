@@ -17,7 +17,6 @@
 package nl.gogognome.cf.services;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -69,10 +68,10 @@ public class BookkeepingService {
 
         // Copy the accounts
         try {
-            newDatabase.setAssets(copyAccounts(database.getAssets(), newDatabase));
-            newDatabase.setLiabilities(copyAccounts(database.getLiabilities(), newDatabase));
-            newDatabase.setExpenses(copyAccounts(database.getExpenses(), newDatabase));
-            newDatabase.setRevenues(copyAccounts(database.getRevenues(), newDatabase));
+            newDatabase.setAssets(database.getAssets());
+            newDatabase.setLiabilities(database.getLiabilities());
+            newDatabase.setExpenses(database.getExpenses());
+            newDatabase.setRevenues(database.getRevenues());
         } catch (DatabaseModificationFailedException e) {
             throw new ServiceException("Can't set accounts for the new bookkeeping.", e);
         }
@@ -160,7 +159,7 @@ public class BookkeepingService {
         Account[] newAccounts = new Account[accounts.length];
         for (int i=0; i<accounts.length; i++) {
             newAccounts[i] = new Account(accounts[i].getId(), accounts[i].getName(),
-                accounts[i].isDebet(), accounts[i].getType());
+                accounts[i].getType());
         }
         return newAccounts;
     }
@@ -350,10 +349,10 @@ public class BookkeepingService {
      */
     public static Report createReport(Database database, Date date) throws ServiceException {
     	ReportBuilder rb = new ReportBuilder(database, date);
-    	rb.setAssets(Arrays.asList(database.getAssets()));
-    	rb.setLiabilities(Arrays.asList(database.getLiabilities()));
-    	rb.setExpenses(Arrays.asList(database.getExpenses()));
-    	rb.setRevenues(Arrays.asList(database.getRevenues()));
+    	rb.setAssets(database.getAssets());
+    	rb.setLiabilities(database.getLiabilities());
+    	rb.setExpenses(database.getExpenses());
+    	rb.setRevenues(database.getRevenues());
 
     	for (Journal j : database.getJournals()) {
     		if (DateUtil.compareDayOfYear(j.getDate(), date) <= 0) {

@@ -150,7 +150,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 			Account account = new ImportBankStatementService(database)
 				.getToAccount(importedTransaction);
 			if (account == null) {
-				account = database.getAllAccounts()[0];
+				account = database.getAllAccounts().get(0);
 			}
 			return new JournalItem(importedTransaction.getAmount(), account, true);
 		}
@@ -159,7 +159,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 			Account account = new ImportBankStatementService(database)
 				.getFromAccount(importedTransaction);
 			if (account == null) {
-				account = database.getAllAccounts()[0];
+				account = database.getAllAccounts().get(0);
 			}
 			return new JournalItem(importedTransaction.getAmount(), account, false);
 		}

@@ -34,7 +34,7 @@ import cf.ui.Start;
  *
  * @author Sander Kooijmans
  */
-public class TestODTInvoicesGenerator {
+public class ODTInvoicesGenerator {
 
 	public static void main(String[] args) throws Exception {
 		new Start().initFactory(new Locale("nl"));

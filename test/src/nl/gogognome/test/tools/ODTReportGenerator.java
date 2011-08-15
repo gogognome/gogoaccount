@@ -32,7 +32,7 @@ import cf.ui.Start;
  *
  * @author Sander Kooijmans
  */
-public class TestODTReportGenerator {
+public class ODTReportGenerator {
 	public static void main(String[] args) throws Exception {
 		new Start().initFactory(new Locale("nl"));
 

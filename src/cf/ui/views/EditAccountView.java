@@ -35,7 +35,6 @@ import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.views.View;
 import cf.engine.Account;
-import cf.engine.Account.Type;
 
 /**
  * This view is used to edit a new or existing account.
@@ -140,8 +139,7 @@ public class EditAccountView extends View {
 
 	private void onOk() {
 		Account.Type type = types.get(cmType.getSelectedIndex());
-		editedAccount = new Account(tfId.getText(), tfDescription.getText(),
-				type == Type.ASSET || type == Type.EXPENSE, type);
+		editedAccount = new Account(tfId.getText(), tfDescription.getText(), type);
 		closeAction.actionPerformed(null);
 	}
 

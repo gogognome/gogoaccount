@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Currency;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -90,20 +91,20 @@ public class XMLFileReader {
 		    database.setStartOfPeriod(startDate);
 
 			// parse accounts
-			Account[] assets = parseAccounts(rootElement.getElementsByTagName("assets"),
-					true, Type.ASSET);
+			List<Account> assets = parseAccounts(rootElement.getElementsByTagName("assets"),
+					Type.ASSET);
 			database.setAssets(assets);
 
-			Account[] liabilities = parseAccounts(rootElement.getElementsByTagName("liabilities"),
-					false, Type.LIABILITY);
+			List<Account> liabilities = parseAccounts(rootElement.getElementsByTagName("liabilities"),
+					Type.LIABILITY);
 			database.setLiabilities(liabilities);
 
-			Account[] expenses = parseAccounts(rootElement.getElementsByTagName("expenses"),
-					true, Type.EXPENSE);
+			List<Account> expenses = parseAccounts(rootElement.getElementsByTagName("expenses"),
+					Type.EXPENSE);
 			database.setExpenses(expenses);
 
-			Account[] revenues = parseAccounts(rootElement.getElementsByTagName("revenues"),
-					false, Type.REVENUE);
+			List<Account> revenues = parseAccounts(rootElement.getElementsByTagName("revenues"),
+					Type.REVENUE);
 			database.setRevenues(revenues);
 
 			parseAndAddParties(rootElement.getElementsByTagName("parties"));
@@ -180,12 +181,10 @@ public class XMLFileReader {
 	/**
 	 * Parses accounts.
 	 * @param nodes a node list containing accounts
-	 * @param debet indicates whether the accounts in the list are on the
-	 *              debet side (<code>true</code>) or credit side (<code>false</code>).
 	 * @param type the type of the account
 	 * @return the accounts
 	 */
-	private Account[] parseAccounts(NodeList nodes, boolean debet, Account.Type type) {
+	private List<Account> parseAccounts(NodeList nodes, Account.Type type) {
 	    ArrayList<Account> accounts = new ArrayList<Account>();
 	    for (int i=0; i<nodes.getLength(); i++)
 	    {
@@ -196,10 +195,10 @@ public class XMLFileReader {
 	            Element accountElem = (Element)accountNodes.item(j);
 	            String id = accountElem.getAttribute("id");
 	            String name = accountElem.getAttribute("name");
-	            accounts.add(new Account(id, name, debet, type));
+	            accounts.add(new Account(id, name, type));
 	        }
 	    }
-	    return accounts.toArray(new Account[accounts.size()]);
+	    return accounts;
 	}
 
 	/**

@@ -16,7 +16,6 @@
 */
 package cf.ui.components;
 
-import java.util.Arrays;
 import java.util.List;
 
 import nl.gogognome.lib.swing.JComboBoxWithKeyboardInput;
@@ -44,7 +43,7 @@ public class AccountSelectionBean extends JComboBoxWithKeyboardInput
     public AccountSelectionBean(Database database, Account account) {
         super();
 
-        accounts = Arrays.asList(database.getAllAccounts());
+        accounts = database.getAllAccounts();
 		for (Account a : accounts) {
 		    addItem(a.getId() + ' ' + a.getName());
 		}

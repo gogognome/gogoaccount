@@ -17,7 +17,6 @@
 package cf.ui.views;
 
 import java.awt.BorderLayout;
-import java.util.Arrays;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
@@ -170,7 +169,7 @@ public class AccountMutationsView extends View {
 	}
 
 	private void setAccountsInListModel() {
-		accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
+		accountListModel.setItems(database.getAllAccounts());
 	}
 
 	private final class ModelChangeListenerImpl implements ModelChangeListener {

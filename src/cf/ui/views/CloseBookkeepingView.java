@@ -18,7 +18,6 @@ package cf.ui.views;
 
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -83,7 +82,7 @@ public class CloseBookkeepingView extends View {
 		InputFieldsColumn ifc = new InputFieldsColumn();
         addCloseable(ifc);
         ifc.addField("closeBookkeepingView.date", dateModel);
-		accountListModel.setItems(Arrays.asList(database.getAllAccounts()));
+		accountListModel.setItems(database.getAllAccounts());
         ifc.addComboBoxField("closeBookkeepingView.equityAccount", accountListModel,
         		new AccountFormatter());
 
