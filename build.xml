@@ -16,10 +16,12 @@
 -->
 <project name="gogo account" default="dist" basedir=".">
 
+	<property file="project.properties"/>
+
 	<property name="productname" value="gogoaccount" />
 	
 	<property name="main.class" value="cf.ui.Start" />
-	
+
 	<!-- Include properties file. Define your deviating properties there. --> 
 	<property file="build.properties" />
 	
