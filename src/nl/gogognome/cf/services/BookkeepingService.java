@@ -96,7 +96,7 @@ public class BookkeepingService {
         }
 
         // Add the result of operations to the specified account.
-        Report report = createReport(newDatabase, dayBeforeStart);
+        Report report = createReport(database, dayBeforeStart);
         Amount resultOfOperations = report.getResultOfOperations();
         if (resultOfOperations.isPositive()) {
             journalItems.add(new JournalItem(resultOfOperations, newDatabase.getAccount(equity.getId()), false, null, null));

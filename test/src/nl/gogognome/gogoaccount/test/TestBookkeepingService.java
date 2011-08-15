@@ -29,6 +29,7 @@ import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import cf.engine.Account;
+import cf.engine.Database;
 import cf.engine.Account.Type;
 
 /**
@@ -133,6 +134,43 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 				"null totaal mutaties 0 0,  " +
 				"null eindsaldo 30000 null]",
 				report.getLedgerLinesForAccount(database.getAccount("101")).toString());
+
+		checkTotalsOfReport(report);
+	}
+
+	@Test
+	public void testCloseBookkeeping() throws Exception {
+		Database newDatabase = BookkeepingService.closeBookkeeping(database, "new bookkeeping",
+				DateUtil.createDate(2012, 1, 1), database.getAccount("200"));
+
+		assertEquals("new bookkeeping", newDatabase.getDescription());
+		assertEquals(database.getAllAccounts().toString(), newDatabase.getAllAccounts().toString());
+		assertEquals(0, DateUtil.compareDayOfYear(DateUtil.createDate(2012, 1, 1),
+				newDatabase.getStartOfPeriod()));
+
+		Report report = BookkeepingService.createReport(newDatabase,
+				DateUtil.createDate(2011, 12, 31));
+
+		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
+				"200 Eigen vermogen, 290 Crediteuren, " +
+				"400 Zaalhuur, 490 Onvoorzien, " +
+				"300 Contributie, 390 Onvoorzien]",
+			report.getAllAccounts().toString());
+
+		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
+			report.getAssetsInclLossAccount().toString());
+
+		assertEquals("[200 Eigen vermogen, 290 Crediteuren]",
+				report.getLiabilitiesInclProfitAccount().toString());
+
+		assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
+		assertEquals("[]", report.getCreditors().toString());
+
+		checkAmount(10, report.getBalanceForDebtor(database.getParty("1101")));
+		checkAmount(0, report.getBalanceForCreditor(database.getParty("1101")));
+
+		checkAmount(420, report.getAmount(newDatabase.getAccount("200")));
+		checkAmount(0, report.getAmount(newDatabase.getAccount("300")));
 
 		checkTotalsOfReport(report);
 	}

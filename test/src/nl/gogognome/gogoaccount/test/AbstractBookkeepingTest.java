@@ -34,12 +34,12 @@ import nl.gogognome.lib.util.Factory;
 import org.junit.Before;
 
 import cf.engine.Account;
-import cf.engine.Account.Type;
 import cf.engine.Database;
 import cf.engine.Invoice;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
 import cf.engine.Party;
+import cf.engine.Account.Type;
 
 /**
  * Abstract class that sets up a test account.
@@ -69,6 +69,8 @@ public class AbstractBookkeepingTest {
 
 		addStartBalance();
 		addJournals();
+
+		database.databaseConsistentWithFile();
 
 		zero = Amount.getZero(database.getCurrency());
 	}

@@ -240,24 +240,24 @@ public class EditInvoiceView extends OkCancelView {
 	protected void onOk() {
         String id = idModel.getString();
         if (id.length() == 0) {
-            MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noIdEntered");
+            MessageDialog.showWarningMessage(this, "editInvoiceView.noIdEntered");
             return;
         }
         Date issueDate = dateModel.getDate();
         if (issueDate == null) {
-            MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noDateEntered");
+            MessageDialog.showWarningMessage(this, "editInvoiceView.noDateEntered");
             return;
         }
 
         Party concerningParty = concerningPartyModel.getParty();
         if (concerningParty == null) {
-            MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noConcerningPartyEntered");
+            MessageDialog.showWarningMessage(this, "editInvoiceView.noConcerningPartyEntered");
             return;
         }
 
         Party payingParty = payingPartyModel.getParty();
         if (payingParty == null) {
-            MessageDialog.showMessage(this, "gen.warning", "editInvoiceView.noPayingPartyEntered");
+            MessageDialog.showWarningMessage(this, "editInvoiceView.noPayingPartyEntered");
             return;
         }
 
@@ -265,7 +265,7 @@ public class EditInvoiceView extends OkCancelView {
         try {
              amount = amountFormat.parse(amountModel.getString(), database.getCurrency());
         } catch (ParseException e) {
-            MessageDialog.showMessage(this, "gen.warning", "gen.invalidAmount");
+            MessageDialog.showWarningMessage(this, "gen.invalidAmount");
             return;
         }
 

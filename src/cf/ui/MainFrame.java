@@ -457,7 +457,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleAddJournal() {
 	    if (!database.hasAccounts()) {
-	        MessageDialog.showMessage(this, "gen.warning", "mf.noAccountsPresent");
+	        MessageDialog.showWarningMessage(this, "mf.noAccountsPresent");
 	    } else {
             EditJournalView view = new EditJournalView(database, "ajd.title", null);
             ViewDialog dialog = new ViewDialog(this, view);
@@ -467,7 +467,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleEditJournals() {
 	    if (!database.hasAccounts()) {
-	        MessageDialog.showMessage(this, "gen.warning", "mf.noAccountsPresent");
+	        MessageDialog.showWarningMessage(this, "mf.noAccountsPresent");
 	    } else {
 	    	openView(EditJournalsView.class);
 	    }

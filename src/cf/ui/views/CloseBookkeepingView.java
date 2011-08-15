@@ -16,22 +16,17 @@
 */
 package cf.ui.views;
 
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
 import java.util.Calendar;
 import java.util.Date;
 
-import javax.swing.AbstractAction;
-import javax.swing.SwingConstants;
+import javax.swing.JComponent;
 
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
-import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.util.DateUtil;
 import cf.engine.Account;
 import cf.engine.Database;
@@ -44,7 +39,7 @@ import cf.ui.components.AccountFormatter;
  *
  * @author Sander Kooijmans
  */
-public class CloseBookkeepingView extends View {
+public class CloseBookkeepingView extends OkCancelView {
 	private static final long serialVersionUID = 1L;
 
 	private Database database;
@@ -78,32 +73,29 @@ public class CloseBookkeepingView extends View {
         addComponents();
     }
 
-	private void addComponents() {
+    @Override
+    protected JComponent createCenterComponent() {
 		InputFieldsColumn ifc = new InputFieldsColumn();
         addCloseable(ifc);
+
         ifc.addField("closeBookkeepingView.date", dateModel);
-		accountListModel.setItems(database.getAllAccounts());
         ifc.addComboBoxField("closeBookkeepingView.equityAccount", accountListModel,
         		new AccountFormatter());
 
         ifc.addField("closeBookkeepingView.description", descriptionModel);
-        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
-        buttonPanel.addButton("gen.ok", new OkAction());
-        buttonPanel.addButton("gen.cancel", closeAction);
 
-        setLayout(new GridBagLayout());
-        add(ifc, SwingUtils.createPanelGBConstraints(0, 0));
-        add(buttonPanel, SwingUtils.createPanelGBConstraints(0, 1));
-	}
+    	return ifc;
+    }
 
-    private void onOk() {
+    @Override
+	protected void onOk() {
         if (dateModel.getDate() == null) {
-            MessageDialog.showMessage(this, "gen.warning", "closeBookkeepingView.enterDate");
+            MessageDialog.showWarningMessage(this, "closeBookkeepingView.enterDate");
             return;
         }
 
         if (accountListModel.getSelectedIndex() == -1) {
-            MessageDialog.showMessage(this, "gen.warning", "closeBookkeepingView.selectAccount");
+            MessageDialog.showWarningMessage(this, "closeBookkeepingView.selectAccount");
             return;
         }
 
@@ -145,6 +137,7 @@ public class CloseBookkeepingView extends View {
 
     private void initModels() {
         dateModel.setDate(DateUtil.addYears(database.getStartOfPeriod(), 1), null);
+		accountListModel.setItems(database.getAllAccounts());
 
         String description = database.getDescription();
         int year = DateUtil.getField(database.getStartOfPeriod(), Calendar.YEAR);
@@ -152,12 +145,4 @@ public class CloseBookkeepingView extends View {
         description = description.replace(Integer.toString(year), Integer.toString(nextYear));
         descriptionModel.setString(description, null);
     }
-
-    private final class OkAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-		    onOk();
-		}
-	}
-
 }

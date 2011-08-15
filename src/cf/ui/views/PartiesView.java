@@ -373,7 +373,7 @@ public class PartiesView extends View {
         }
 
         Party party = partiesTableModel.getRow(row);
-        int choice = MessageDialog.showYesNoQuestion(this, "gen.warning",
+        int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
             "partiesView.areYouSurePartyIsDeleted", party.getName());
         if (choice == MessageDialog.YES_OPTION) {
             try {
