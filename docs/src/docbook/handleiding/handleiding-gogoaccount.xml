@@ -11,7 +11,7 @@
       <holder>Sander Kooijmans</holder>
     </copyright>
 
-    <releaseinfo>V 1.0</releaseinfo>
+    <releaseinfo>V 2.0</releaseinfo>
 
     <productname>gogo account</productname>
 
@@ -390,6 +390,9 @@
       of "sponsor". Bij het zoeken van relaties kunt u dan snel alle competitiespelers
       terugvinden door te zoeken op relaties met type "competitie".</para>
       
+      <para>om een nieuwe type relatie te cre&euml;ren kunt u op het knopje drukken
+      met het sterretje.</para>
+      
       <para>Tot slot heeft iedere relatie een id. Dit is een getal waarmee de relatie
       binnen het programma wordt gerepresenteerd. De id moet uniek zijn voor iedere
       relatie. U kunt later alles wijzigingen van een relatie, behalve zijn id.</para>
@@ -435,6 +438,83 @@
       <screenshot>
         <graphic fileref="images/screen-facturen1.png"></graphic>
       </screenshot>
+      
+      <para>Dit scherm is een sjabloon voor de journalen en facturen. De id, datum
+      en omschrijving worden gebruikt bij de journaal en voor de factuur.</para>
+      
+      <para>Dit sjabloon
+      wordt gebruikt om voor een of meerdere relaties facturen aan te maken. Om
+      een de id uniek te maken voor iedere relatie kan je "{id}" toevoegen aan de
+      id. Bij het genereren van de facturen en journalen wordt dit vervangen door
+      het id van de relatie. Ook kun je "{name}" gebruiken. Dit wordt vervangen
+      door de naam van de relatie. 
+      </para>
+      
+      <para>In het middelste deel van het scherm kun je de journaal items defini&euml;ren.
+      Typisch zal een van deze posten de post debiteuren zijn. (Voor een creditfactuur
+      zal dit de post crediteuren zijn.) De radioknop voor deze post moet aangezet
+      worden. Hiermee wordt aangegeven dat de overige items de bedragen
+      bevatten die door de relatie betaald moeten worden.</para>
+
+      <para>Het volgende scherm toont als voorbeeld een factuur voor de contributie
+      van EUR 75,-.</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-facturen2.png"></graphic>
+      </screenshot>
+      
+      <para>Als het sjabloon klaar is, dan kun je de speciale journalen en facturen
+      genereren voor een of meerdere relaties. Druk hiervoor op de knop
+      "Toevoegen facturen aan boekhouding". Het relatie-zoekscherm verschijnt:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-relatie-zoekscherm.png"></graphic>
+      </screenshot>
+      
+      <para>Selecteer alle competitie spelers door bij type "competitie" te selecteren
+      en daarna op de zoek-knop te drukken.</para>
+
+      <screenshot>
+        <graphic fileref="images/screen-facturen3.png"></graphic>
+      </screenshot>
+      
+      <para>Selecteer de relaties in de tabel "Gevonden relaties".
+      Druk vervolgens op "Selecteer relatie" om voor ieder van de geselecteerde
+      relaties een journaal en factuur te laten genereren.</para>
+      
+      <para>Gogo account vraagt of je zeker weet dat de facturen worden
+      toegevoegd.</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-facturen4.png"></graphic>
+      </screenshot>
+      
+      <para>Klik op "Ja" om de facturen te laten genreren. Vervolgens verschijnt
+      de melding dat de facturen zijn toegevoegd aan de boekhouding:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-facturen5.png"></graphic>
+      </screenshot>
+
+      <para>Laten we kijken hoe de gegenereerde journaal eruit ziet.
+      Kies in het menu voor "Bewerken" en dan "Bewerken journalen".
+      Alle journalen worden getoond. Ik heb de journaal van de factuur
+      geselecteerd. Merk op dat de id van de journaal eindigt op de id
+      van de relatie (001) en dat de naam van de relatie voorkomt
+      in de omschrijving. Tevens wordt in de kolom "Factuur" ook het
+      factuurnummer en de naam van de relatie getoond. In de onderste
+      tabel staan de journaal items die gegenereerd zijn.</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-facturen6.png"></graphic>
+      </screenshot>
+      
+      <para>Bij de balans zien we dat er nu EUR 75,- winst is gemaakt.
+      Onder de balans staat bij totaal debiteuren EUR 75,-. Dit bedrag
+      is het totaalbedrag dat relaties nog moeten betalen voor openstaande
+      facturen. Als je consequent omgaat met de post "190 Debiteuren"
+      dan is het bedrag bij "Totaal debiteuren" altijd gelijk aan de post
+      "190 Debiteuren".</para>    
     </section>
   </chapter>
         
