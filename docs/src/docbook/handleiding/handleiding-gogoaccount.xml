@@ -514,7 +514,69 @@
       is het totaalbedrag dat relaties nog moeten betalen voor openstaande
       facturen. Als je consequent omgaat met de post "190 Debiteuren"
       dan is het bedrag bij "Totaal debiteuren" altijd gelijk aan de post
-      "190 Debiteuren".</para>    
+      "190 Debiteuren".</para>
+
+      <screenshot>
+        <graphic fileref="images/screen-facturen7.png"></graphic>
+      </screenshot>
+
+    </section>
+    <section id="section-overzichtfacturen">
+	  <title>Overzicht facturen</title>
+      
+      <para>Ik voeg nog twee facturen toe voor twee andere relaties. 
+      Laten we de gegenereerde facturen bekijken. Kies in het menu
+      voor "Overzicht" en dan "Facturen...". Het volgende scherm verschijnt:</para>
+
+      <screenshot>
+        <graphic fileref="images/screen-facturen8.png"></graphic>
+      </screenshot>
+      
+      <para>Er zijn drie facturen zichtbaar. De rode balken geven aan dat deze facturen
+      nog niet voldaan zijn.</para>
+      
+      <para>Een factuur die voldaan is noemen we gesloten. Gesloten facturen worden
+      standaard verborgen. Gesloten facturen kunnen zichtbaar gemaakt worden door
+      het vakje achter "Toon gesloten facturen" aan te vinken. Gesloten facturen
+      hebben een groene balk.</para>
+       
+      <para>Het is mogelijk om de facturen van een enkele relatie te bekijken.
+      Door bovenin het scherm op de zoekknop te drukken (achter relatie), verschijnt
+      het relatie-zoekscherm. Kies bijvoorbeeld voor Piet Puk. Nu worden alleen
+      de facturen van Piet Puk getoond:</para>
+      
+      <screenshot>
+        <graphic fileref="images/screen-facturen9.png"></graphic>
+      </screenshot>
+    </section>
+    
+    <section id="section-afdrukkenfacturen">
+	  <title>Afdrukken facturen</title>
+	  
+	  <para>We hebben een aantal facturen aan de boekhouding toegevoegd.
+	  Nu moeten we nog facturen afdrukken op papier, zodat we ze aan de relaties
+	  kunnen geven.</para>
+	  
+	  <para>Het afdrukken gaat in twee stappen. Eerst genereren we een 
+	  OpenOffice Text document. Met LibreOffice (voorheen OpenOffice) kan dit
+	  document worden geopend en worden afgedrukt.</para>
+	  
+	  <para>Kies in het menu voor "Rapportage" en dan "Genereer facturen...".
+	  Het volgende scherm verschijnt:</para>
+	  
+      <screenshot>
+        <graphic fileref="images/screen-odt-facturen1.png"></graphic>
+      </screenshot>
+	  
+	  <para>Er moeten een aantal dingen worden ingevuld alvorens het OpenOffice
+	  Text document gegenereerd kan worden. Ten eerste moet er een sjabloon-bestand
+	  worden geselecteerd. Dit is een OpenOffic Text document dat een factuur
+	  bevat. Echter, op de plaatsen waar de naam, het adres en de factuurregels
+	  moeten verschijnen, staan speciale sleutelwoorden. Bij het genereren
+	  van het facturen-documenten wordt per factuur het sjabloon gebruikt
+	  en worden de sleutelwoorden vervangen door de betreffende gegevens
+	  van de factuur. Een voorbeeld sjabloon is meegeleverd bij gogo account
+	  in de samples folder.</para>
     </section>
   </chapter>
         
