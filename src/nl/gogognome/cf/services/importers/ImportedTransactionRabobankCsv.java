@@ -50,8 +50,8 @@ public class ImportedTransactionRabobankCsv implements ImportedTransaction {
 			Amount amount, Date date, String toAccount, String toName,
 			String description) {
 		super();
-		this.fromAccount = fromAccount;
-		this.fromName = UNKNOWN_ACCOUNT.equals(fromAccount) ? null : fromAccount;
+		this.fromAccount = UNKNOWN_ACCOUNT.equals(fromAccount) ? null : fromAccount;
+		this.fromName = fromName;
 		this.amount = amount;
 		this.date = date;
 		this.toAccount = UNKNOWN_ACCOUNT.equals(toAccount) ? null : toAccount;

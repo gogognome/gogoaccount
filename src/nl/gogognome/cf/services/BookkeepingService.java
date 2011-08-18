@@ -41,9 +41,7 @@ import cf.engine.Payment;
  */
 public class BookkeepingService {
 
-    /** Private constructor to avoid instantiation. */
     private BookkeepingService() {
-        throw new IllegalStateException();
     }
 
     public static Database closeBookkeeping(Database database, String description, Date date,
@@ -149,21 +147,6 @@ public class BookkeepingService {
         return newDatabase;
     }
 
-    /**
-     * Copies an array of accounts.
-     * @param accounts the accounts to be copied
-     * @param newDatabase the new database to which the new accounts belong
-     * @return the copied accounts
-     */
-    private static Account[] copyAccounts(Account[] accounts, Database newDatabase) {
-        Account[] newAccounts = new Account[accounts.length];
-        for (int i=0; i<accounts.length; i++) {
-            newAccounts[i] = new Account(accounts[i].getId(), accounts[i].getName(),
-                accounts[i].getType());
-        }
-        return newAccounts;
-    }
-
     private static Journal copyJournal(Journal journal, Database newDatabase) {
         return new Journal(journal.getId(), journal.getDescription(), journal.getDate(),
             copyJournalItems(journal.getItems(), newDatabase), journal.getIdOfCreatedInvoice());
@@ -178,19 +161,18 @@ public class BookkeepingService {
         return newItems;
     }
 
-
     /**
      * Removes a journal from the database. Payments booked in the journal or invoices created
      * by the journal are also removed.
      * @param database the database from which the journal has to be removed
      * @param journal the journal to be deleted
-     * @throws DeleteException if a problem occurs while deleting the journal
+     * @throws ServiceException if a problem occurs while deleting the journal
      */
-    public static void removeJournal(Database database, Journal journal) throws DeleteException {
+    public static void removeJournal(Database database, Journal journal) throws ServiceException {
         // Check for payments without payment ID.
         for (JournalItem item : journal.getItems()) {
             if (item.getInvoiceId() != null && item.getPaymentId() == null) {
-                throw new DeleteException("The journal has a payment without an id. Therefore, it cannot be removed.");
+                throw new ServiceException("The journal has a payment without an id. Therefore, it cannot be removed.");
             }
         }
 
@@ -203,7 +185,7 @@ public class BookkeepingService {
                     try {
                         database.removePayment(invoiceId, paymentId);
                     } catch (DatabaseModificationFailedException e) {
-                        throw new DeleteException("Could not delete payment " + paymentId, e);
+                        throw new ServiceException("Could not delete payment " + paymentId, e);
                     }
                 }
             }
@@ -213,7 +195,7 @@ public class BookkeepingService {
                 try {
                     database.removeInvoice(journal.getIdOfCreatedInvoice());
                 } catch (DatabaseModificationFailedException e) {
-                    throw new DeleteException("Could not delete the invoice " + journal.getIdOfCreatedInvoice()
+                    throw new ServiceException("Could not delete the invoice " + journal.getIdOfCreatedInvoice()
                         + " created by the journal.", e);
                 }
             }
@@ -221,7 +203,7 @@ public class BookkeepingService {
             try {
                 database.removeJournal(journal);
             } catch (DatabaseModificationFailedException e) {
-                throw new DeleteException("Could not delete journal.", e);
+                throw new ServiceException("Could not delete journal.", e);
             }
         } finally {
             database.notifyChange();
@@ -301,13 +283,13 @@ public class BookkeepingService {
      * Adds an account to the database.
      * @param database the database
      * @param account the account
-     * @throws CreationException if a problem occurs while creating the account
+     * @throws ServiceException if a problem occurs while creating the account
      */
-	public static void addAccount(Database database, Account account) throws CreationException {
+	public static void addAccount(Database database, Account account) throws ServiceException {
 		try {
 			database.addAccount(account);
     	} catch (DatabaseModificationFailedException e) {
-    		throw new CreationException("Could not add account " + account.getId() + " to the database", e);
+    		throw new ServiceException("Could not add account " + account.getId() + " to the database", e);
     	}
 	}
 
@@ -330,13 +312,13 @@ public class BookkeepingService {
      * Deletes an account from the database. Only unused accounts can be deleted.
      * @param database the database
      * @param account the account
-     * @throws DeleteException if a problem occurs while deleting the account
+     * @throws ServiceException if a problem occurs while deleting the account
      */
-    public static void deleteAccount(Database database, Account account) throws DeleteException {
+    public static void deleteAccount(Database database, Account account) throws ServiceException {
     	try {
     		database.removeAccount(account.getId());
     	} catch (DatabaseModificationFailedException e) {
-    		throw new DeleteException("Could not delete account " + account.getId() + " from the database", e);
+    		throw new ServiceException("Could not delete account " + account.getId() + " from the database", e);
     	}
     }
 

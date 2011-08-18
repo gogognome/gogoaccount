@@ -17,11 +17,17 @@
 package nl.gogognome.gogoaccount.test;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+
+import java.util.Arrays;
+import java.util.List;
+
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.DeleteException;
+import nl.gogognome.cf.services.ServiceException;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
@@ -29,8 +35,10 @@ import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import cf.engine.Account;
-import cf.engine.Database;
 import cf.engine.Account.Type;
+import cf.engine.Database;
+import cf.engine.Journal;
+import cf.engine.JournalItem;
 
 /**
  * Tests the bookkeeping service.
@@ -60,7 +68,7 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		try {
 			BookkeepingService.deleteAccount(database, database.getAccount("190"));
 			fail("Expected exception was not thrown");
-		} catch (DeleteException e) {
+		} catch (ServiceException e) {
 			assertNotNull(database.getAccount("190"));
 		}
 	}
@@ -91,7 +99,7 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		checkAmount(0, report.getBalanceForCreditor(database.getParty("1101")));
 
 		assertEquals("[ null beginsaldo 30000 null, " +
-				"20110510 t1 Payment 1000 null inv1,  " +
+				"20110510 t2 Payment 1000 null inv1,  " +
 				"null totaal mutaties 1000 0,  " +
 				"null eindsaldo 31000 null]",
 				report.getLedgerLinesForAccount(database.getAccount("101")).toString());
@@ -173,6 +181,112 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		checkAmount(0, report.getAmount(newDatabase.getAccount("300")));
 
 		checkTotalsOfReport(report);
+	}
+
+	@Test
+	public void testCloseBookkeepingWithUnsavedChangesFails() throws Exception {
+		List<JournalItem> items = Arrays.asList(
+				createItem(20, "100", true),
+				createItem(20, "101", false));
+		Journal journal = new Journal("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
+
+		database.addJournal(journal, false);
+		try {
+			BookkeepingService.closeBookkeeping(database, "new bookkeeping",
+					DateUtil.createDate(2012, 1, 1), database.getAccount("200"));
+			fail("Expected exception was not thrown");
+		} catch (ServiceException e) {
+		}
+	}
+
+	@Test
+	public void testCloseBookkeepingWithJournalsCopiedToNewBookkeeping() throws Exception {
+		List<JournalItem> items = Arrays.asList(
+				createItem(20, "100", true),
+				createItem(20, "101", false));
+		Journal journal = new Journal("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
+
+		database.addJournal(journal, false);
+		database.databaseConsistentWithFile();
+		Database newDatabase = BookkeepingService.closeBookkeeping(database, "new bookkeeping",
+				DateUtil.createDate(2012, 1, 1), database.getAccount("200"));
+
+		assertEquals("[20111231 start start balance, 20120110 ABC Test]",
+				newDatabase.getJournals().toString());
+	}
+
+	@Test
+	public void checkInUseForUsedAccount() {
+		assertTrue(BookkeepingService.inUse(database, database.getAccount("190")));
+		assertTrue(BookkeepingService.inUse(database, database.getAccount("200")));
+	}
+
+	@Test
+	public void checkInUseForUnusedAccount() {
+		assertFalse(BookkeepingService.inUse(database, database.getAccount("400")));
+	}
+
+	@Test
+	public void removeJournalThatCreatesInvoice() throws Exception {
+		assertNotNull(findJournal("t1"));
+		assertNotNull(database.getInvoice("inv1"));
+
+		BookkeepingService.removeJournal(database, findJournal("t1"));
+
+		assertNull(findJournal("t1"));
+		assertNull(database.getInvoice("inv1"));
+	}
+
+	@Test
+	public void removeJournalWithPayment() throws Exception {
+		assertNotNull(findJournal("t2"));
+		assertEquals("[20110510 pay1 Betaalrekening]",
+				database.getInvoice("inv1").getPayments().toString());
+
+		BookkeepingService.removeJournal(database, findJournal("t2"));
+
+		assertNull(findJournal("t2"));
+		assertEquals("[]", database.getInvoice("inv1").getPayments().toString());
+	}
+
+	@Test
+	public void addNewAccount() throws Exception {
+		BookkeepingService.addAccount(database,
+				new Account("103", "Spaarrekening", Type.ASSET));
+		Account a = database.getAccount("103");
+		assertEquals("103", a.getId());
+		assertEquals("Spaarrekening", a.getName());
+		assertEquals(Type.ASSET, a.getType());
+	}
+
+	@Test
+	public void addAccountWithExistingIdFails() throws Exception {
+		try {
+			BookkeepingService.addAccount(database,
+					new Account("101", "Spaarrekening", Type.ASSET));
+			fail("Expected exception was not thrown");
+		} catch (ServiceException e) {
+		}
+	}
+
+	@Test
+	public void addUpdateAccount() throws Exception {
+		BookkeepingService.updateAccount(database,
+				new Account("101", "Spaarrekening", Type.ASSET));
+		Account a = database.getAccount("101");
+		assertEquals("101", a.getId());
+		assertEquals("Spaarrekening", a.getName());
+		assertEquals(Type.ASSET, a.getType());
+	}
+
+	@Test
+	public void updateNonExistingAccountFails() throws Exception {
+		try {
+			BookkeepingService.updateAccount(database,
+					new Account("103", "Spaarrekening", Type.ASSET));
+			fail("Expected exception was not thrown");
+		} catch (ServiceException e) {
+		}
 	}
 
 	private void checkTotalsOfReport(Report report) {

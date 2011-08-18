@@ -125,7 +125,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalDebtors")),
             SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalDebtors(date))),
+        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalDebtors())),
             SwingUtils.createGBConstraints(2, row, 2, 1, 0.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
         row++;
@@ -133,7 +133,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalCreditors")),
             SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(database.getTotalCreditors(date))),
+        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalCreditors())),
             SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 0.0,
                 GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
         row++;

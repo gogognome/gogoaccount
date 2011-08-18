@@ -309,4 +309,28 @@ public class Report {
 		}
 		return total;
 	}
+
+    /**
+     * Gets the total amount of the debtors.
+     * @return the total amount.
+     */
+    public Amount getTotalDebtors() {
+        Amount total = Amount.getZero(currency);
+        for (Amount a : debtorToRemainingAmount.values()) {
+        	total = total.add(a);
+        }
+        return total;
+    }
+
+    /**
+     * Gets the total amount of the creditors.
+     * @return the total amount.
+     */
+    public Amount getTotalCreditors() {
+        Amount total = Amount.getZero(currency);
+        for (Amount a : creditorToRemainingAmount.values()) {
+        	total = total.add(a);
+        }
+        return total;
+    }
 }

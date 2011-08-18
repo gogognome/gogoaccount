@@ -178,17 +178,6 @@ public class Invoice implements Comparable<Invoice> {
     }
 
     /**
-     * Creates a new invoice that consists of this invoice from which the amounts to be paid
-     * has been set to zero.
-     *
-     * @return the new invoice
-     */
-    public Invoice removeAmountToBePaid() {
-        return new Invoice(id, payingParty, concerningParty, amountToBePaid.subtract(amountToBePaid),
-            issueDate, new String[0], new Amount[0]);
-    }
-
-    /**
      * Compares another invoice to this invoice. Invoices are ordered by their identifier.
      * @param that the other invoice
      * @return a negative number, zero or a positive number if this invoice is smaller than,

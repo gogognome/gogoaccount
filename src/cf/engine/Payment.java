@@ -110,4 +110,9 @@ public class Payment {
         return id.hashCode() * 51 + amount.hashCode() + DateUtil.getField(date, Calendar.YEAR) * 23
             + DateUtil.getField(date, Calendar.DAY_OF_YEAR) + description.hashCode();
     }
+
+    @Override
+    public String toString() {
+    	return DateUtil.formatDateYYYYMMDD(date) + ' ' + id + ' ' + description;
+    }
 }

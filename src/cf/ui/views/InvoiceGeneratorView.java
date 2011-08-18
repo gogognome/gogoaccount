@@ -38,9 +38,9 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
-import nl.gogognome.cf.services.CreationException;
 import nl.gogognome.cf.services.InvoiceLineDefinition;
 import nl.gogognome.cf.services.InvoiceService;
+import nl.gogognome.cf.services.ServiceException;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -337,7 +337,7 @@ public class InvoiceGeneratorView extends View {
         try {
             InvoiceService.createInvoiceAndJournalForParties(database, tfId.getText(), Arrays.asList(parties), date,
                 tfDescription.getText(), invoiceLines);
-        } catch (CreationException e) {
+        } catch (ServiceException e) {
             MessageDialog.showMessage(this, "gen.titleError",
                 e.getMessage());
             return;

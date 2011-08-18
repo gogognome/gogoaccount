@@ -19,7 +19,7 @@ package nl.gogognome.gogoaccount.controllers;
 import java.awt.Component;
 
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.DeleteException;
+import nl.gogognome.cf.services.ServiceException;
 import nl.gogognome.lib.swing.MessageDialog;
 import cf.engine.Database;
 import cf.engine.Journal;
@@ -65,8 +65,8 @@ public class DeleteJournalController {
 	    try {
 	        BookkeepingService.removeJournal(database, journal);
 	        journalDeleted = true;
-	    } catch (DeleteException e) {
-	        MessageDialog.showErrorMessage(owner, e, "DeleteJournalController.deleteException");
+	    } catch (ServiceException e) {
+	        MessageDialog.showErrorMessage(owner, e, "DeleteJournalController.serviceException");
 	    }
 	}
 

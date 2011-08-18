@@ -52,13 +52,13 @@ public class InvoiceService {
      * @param issueDate the date of issue of the invoices
      * @param description an optional description for the invoices
      * @param invoiceLineDefinitions the lines of a single invoice
-     * @throws CreationException if a problem occurs while creating invoices for one or more of the parties
+     * @throws ServiceException if a problem occurs while creating invoices for one or more of the parties
      */
     public static void createInvoiceAndJournalForParties(Database database, String id, List<Party> parties,
-            Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws CreationException {
+            Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
         // Validate the input.
         if (issueDate == null) {
-            throw new CreationException("No date has been specified!");
+            throw new ServiceException("No date has been specified!");
         }
 
         boolean amountToBePaidSelected = false;
@@ -69,23 +69,23 @@ public class InvoiceService {
                 amountToBePaidSelected = line.isAmountToBePaid();
             } else {
                 if (line.isAmountToBePaid()) {
-                    throw new CreationException(tr.getString("More than one amount to be paid has been specified!"));
+                    throw new ServiceException(tr.getString("InvoiceService.moreThanOneAmountToBePaid"));
                 }
             }
             if (line.getDebet() == null && line.getCredit() == null) {
-                throw new CreationException(tr.getString("A line without amount has been found!"));
+                throw new ServiceException(tr.getString("InvoiceService.lineWithoutAmount"));
             }
             if (line.getDebet() != null && line.getCredit() != null) {
-                throw new CreationException(tr.getString("A line with two amounts has been found!"));
+                throw new ServiceException(tr.getString("InvoiceService.lineWithTwoAmounts"));
             }
 
             if (line.getAccount() == null) {
-                throw new CreationException(tr.getString("A line without an account has been found"));
+                throw new ServiceException(tr.getString("InvoiceService.lineWithoutAccount"));
             }
         }
 
         if (!amountToBePaidSelected) {
-            throw new CreationException(tr.getString("No amount to be paid has been specified"));
+            throw new ServiceException(tr.getString("InvoiceService.noAmountToBePaied"));
         }
 
         List<Party> partiesForWhichCreationFailed = new LinkedList<Party>();
@@ -161,7 +161,7 @@ public class InvoiceService {
             try {
                 journal = new Journal(specificId, specificDescription, issueDate, items, specificId);
             } catch (IllegalArgumentException e) {
-                throw new CreationException("The debet and credit amounts are not in balance!", e);
+                throw new ServiceException("The debet and credit amounts are not in balance!", e);
             }
 
             try {
@@ -179,13 +179,13 @@ public class InvoiceService {
         if (!partiesForWhichCreationFailed.isEmpty()) {
             if (partiesForWhichCreationFailed.size() == 1) {
                 Party party = partiesForWhichCreationFailed.get(0);
-                throw new CreationException("Failed to create journal for " + party.getId() + " - " + party.getName());
+                throw new ServiceException("Failed to create journal for " + party.getId() + " - " + party.getName());
             } else {
                 StringBuilder sb = new StringBuilder(1000);
                 for (Party party : partiesForWhichCreationFailed) {
                     sb.append('\n').append(party.getId()).append(" - ").append(party.getName());
                 }
-                throw new CreationException("Failed to create journal for the parties:" + sb.toString());
+                throw new ServiceException("Failed to create journal for the parties:" + sb.toString());
             }
         }
     }

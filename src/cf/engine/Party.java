@@ -67,6 +67,8 @@ public class Party implements Comparable<Party> {
      * @param zipCode the zip code of the party
      * @param city the city where the party lives
      * @param birthDate the birth date of the party
+     * @param type the type of the party
+     * @param remarks remarks about the party
      */
     public Party(String id, String name, String address, String zipCode, String city, Date birthDate,
         String type, String remarks) {

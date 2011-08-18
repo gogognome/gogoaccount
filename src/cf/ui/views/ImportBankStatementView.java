@@ -21,6 +21,9 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +57,10 @@ import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import cf.engine.Database;
 import cf.engine.Journal;
 import cf.engine.JournalItem;
@@ -69,6 +76,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 		ListSelectionListener, AddJournalForTransactionView.Plugin{
 
 	private static final long serialVersionUID = 1L;
+
+	private final static Logger LOGGER = LoggerFactory.getLogger(ImportBankStatementView.class);
 
 	private FileModel fileSelectionModel = new FileModel();
 
@@ -208,9 +217,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
 	private void handleImport() {
 		File file = fileSelectionModel.getFile();
+		Reader reader = null;
 		try {
+			reader = new FileReader(file);
 			TransactionImporter importer = importersModel.getSelectedItem();
-			List<ImportedTransaction> transactions = importer.importTransactions(file);
+			List<ImportedTransaction> transactions = importer.importTransactions(reader);
 			fileSelectionModel.setEnabled(false, this);
 			importersModel.setEnabled(false, this);
 			importButton.setEnabled(false);
@@ -222,6 +233,14 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 		} catch (Exception e) {
 			MessageDialog.showErrorMessage(this, e,
 					"importBankStatementView.problemWhileImportingTransactions");
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					LOGGER.warn("Failed to close the file " + file.getAbsolutePath(), e);
+				}
+			}
 		}
 	}
 

@@ -16,8 +16,6 @@
 */
 package nl.gogognome.cf.services.importers;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -49,23 +47,12 @@ public class RabobankCSVImporter implements TransactionImporter {
 	}
 
 	@Override
-	public List<ImportedTransaction> importTransactions(File csvFile) throws IOException, ParseException {
-		Reader reader = null;
-		CSVReader csvReader = null;
-		try {
-			reader = new FileReader(csvFile);
-			csvReader = new CSVReader(reader);
-			parseValues(csvReader.readAll());
-			reader.close();
-			return transactions;
-		} finally {
-			if (csvReader != null) {
-				csvReader.close();
-			}
-			if (reader != null) {
-				reader.close();
-			}
-		}
+	public List<ImportedTransaction> importTransactions(Reader reader)
+			throws IOException, ParseException {
+		CSVReader csvReader = new CSVReader(reader);
+		parseValues(csvReader.readAll());
+		reader.close();
+		return transactions;
 	}
 
 	private void parseValues(List<String[]> values) throws ParseException {

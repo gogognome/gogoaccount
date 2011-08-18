@@ -23,6 +23,7 @@ import java.util.Locale;
 
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This class represents a journal.
@@ -206,4 +207,8 @@ public class Journal implements Comparable<Journal> {
         return id.hashCode() + date.hashCode() + description.hashCode();
     }
 
+    @Override
+    public String toString() {
+    	return DateUtil.formatDateYYYYMMDD(date) + ' ' + id + ' ' + description;
+    }
 }

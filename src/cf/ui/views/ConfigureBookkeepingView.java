@@ -35,8 +35,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.CreationException;
-import nl.gogognome.cf.services.DeleteException;
 import nl.gogognome.cf.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
@@ -224,7 +222,7 @@ public class ConfigureBookkeepingView extends View {
 				BookkeepingService.deleteAccount(database, account);
 				int index = SwingUtils.getSelectedRowConvertedToModel(table);
 				tableModel.removeRow(index);
-			} catch (DeleteException e) {
+			} catch (ServiceException e) {
 				MessageDialog.showErrorMessage(getParentWindow(), e, "ConfigureBookkeepingView.deleteAccountException");
 			}
 		}
@@ -241,7 +239,7 @@ public class ConfigureBookkeepingView extends View {
 				AccountDefinition definition = new AccountDefinition();
 				definition.account = account;
 				tableModel.addRow(definition);
-			} catch (CreationException e) {
+			} catch (ServiceException e) {
 				MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.addAccountException");
 			}
 		}
