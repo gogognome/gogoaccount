@@ -28,9 +28,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.ServiceException;
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -39,13 +46,6 @@ import nl.gogognome.lib.util.Factory;
 
 import org.junit.Before;
 
-import cf.engine.Account;
-import cf.engine.Account.Type;
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
-import cf.engine.Party;
 
 /**
  * Abstract class that sets up a test account.
@@ -289,8 +289,6 @@ public class AbstractBookkeepingTest {
 				Arrays.toString(actual.getAmounts()));
 		assertEquals(Arrays.toString(expected.getDescriptions()),
 				Arrays.toString(actual.getDescriptions()));
-		assertEquals(expected.getPayments().toString(),
-				actual.getPayments().toString());
 	}
 
 }

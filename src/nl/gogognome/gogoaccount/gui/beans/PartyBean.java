@@ -26,6 +26,9 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -34,9 +37,6 @@ import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.util.Factory;
-import cf.engine.Database;
-import cf.engine.Party;
-import cf.ui.views.PartiesView;
 
 /**
  * This class implements a widget for selecting a Party.

@@ -24,14 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.gogognome.gogoaccount.businessobjects.Account.Type;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
-import cf.engine.Account;
-import cf.engine.Account.Type;
-import cf.engine.Invoice;
-import cf.engine.Party;
 
 /**
  * This class contains the financial report for a specific date.

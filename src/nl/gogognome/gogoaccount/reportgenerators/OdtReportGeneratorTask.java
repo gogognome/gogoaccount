@@ -20,11 +20,11 @@ import java.io.File;
 import java.util.Date;
 import java.util.Map;
 
-import nl.gogognome.cf.services.BookkeepingService;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
-import cf.engine.Database;
 
 /**
  * Generates a report as an ODT document based on a template file.

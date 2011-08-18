@@ -22,18 +22,18 @@ import static junit.framework.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
-import nl.gogognome.cf.services.ImportBankStatementService;
-import nl.gogognome.cf.services.importers.ImportedTransaction;
-import nl.gogognome.cf.services.importers.ImportedTransactionRabobankCsv;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.ImportBankStatementService;
+import nl.gogognome.gogoaccount.services.XMLFileReader;
+import nl.gogognome.gogoaccount.services.XMLFileWriter;
+import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
+import nl.gogognome.gogoaccount.services.importers.ImportedTransactionRabobankCsv;
 import nl.gogognome.lib.util.DateUtil;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import cf.engine.Database;
-import cf.engine.XMLFileReader;
-import cf.engine.XMLFileWriter;
 
 /**
  * Tests storing to and retrieval from a database in an XML file.

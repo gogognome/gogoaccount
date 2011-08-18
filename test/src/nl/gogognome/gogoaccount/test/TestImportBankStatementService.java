@@ -24,16 +24,16 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
 
-import nl.gogognome.cf.services.ImportBankStatementService;
-import nl.gogognome.cf.services.importers.ImportedTransaction;
-import nl.gogognome.cf.services.importers.RabobankCSVImporter;
-import nl.gogognome.cf.services.importers.TransactionImporter;
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.services.ImportBankStatementService;
+import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
+import nl.gogognome.gogoaccount.services.importers.RabobankCSVImporter;
+import nl.gogognome.gogoaccount.services.importers.TransactionImporter;
 import nl.gogognome.lib.util.DateUtil;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import cf.engine.Account;
 
 /**
  * Tests the ImportBankStatementService.

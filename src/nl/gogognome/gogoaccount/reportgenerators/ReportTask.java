@@ -23,10 +23,16 @@ import java.io.PrintWriter;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.cf.services.BookkeepingService;
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.businessobjects.ReportType;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
@@ -34,12 +40,6 @@ import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
-import cf.engine.Account;
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
-import cf.engine.Party;
 
 /**
  * This class generates reports in a text-format.

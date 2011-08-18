@@ -22,15 +22,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
-import cf.engine.Account;
-import cf.engine.Database;
-import cf.engine.Party;
 
 /**
  * Converts a Report to a model for ODT generation.

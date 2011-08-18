@@ -19,8 +19,9 @@ package nl.gogognome.gogoaccount.reportgenerators;
 import java.util.Date;
 import java.util.List;
 
-import cf.engine.Database;
-import cf.engine.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.database.Database;
+
 
 /**
  * This class contains the parameters needed for generating

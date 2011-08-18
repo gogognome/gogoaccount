@@ -21,13 +21,13 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.gui.Start;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
+import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.util.DateUtil;
-import cf.engine.Database;
-import cf.engine.XMLFileReader;
-import cf.ui.Start;
 
 /**
  * Tests generation of ODT invoices.

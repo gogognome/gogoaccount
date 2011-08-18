@@ -27,13 +27,13 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.gui.views.InvoiceEditAndSelectionView;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.util.Factory;
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.ui.views.InvoiceEditAndSelectionView;
 
 /**
  * This class implements a widget for selecting an <code>Invoice</code>.

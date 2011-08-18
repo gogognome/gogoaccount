@@ -24,17 +24,17 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.cf.services.InvoiceLineDefinition;
-import nl.gogognome.cf.services.InvoiceService;
-import nl.gogognome.cf.services.ServiceException;
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
+import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
+import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
 import org.junit.Test;
 
-import cf.engine.Invoice;
-import cf.engine.InvoiceSearchCriteria;
-import cf.engine.Party;
 
 /**
  * This class tests the InvoiceService.

@@ -28,20 +28,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
+import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
 import org.junit.Test;
 
-import cf.engine.Account;
-import cf.engine.Account.Type;
-import cf.engine.Database;
-import cf.engine.DatabaseModificationFailedException;
-import cf.engine.Invoice;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
-import cf.engine.Party;
-import cf.engine.PartySearchCriteria;
 /**
  * Tests the Database class.
  *

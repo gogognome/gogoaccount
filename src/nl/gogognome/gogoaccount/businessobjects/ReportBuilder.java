@@ -22,17 +22,12 @@ import java.util.List;
 import java.util.Map;
 
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
-import cf.engine.Account;
-import cf.engine.Database;
-import cf.engine.Invoice;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
-import cf.engine.Party;
-import cf.engine.Payment;
 
 /**
  * Class to build Report instances.
@@ -183,7 +178,7 @@ public class ReportBuilder {
 	public void addInvoice(Invoice invoice) {
 		report.addInvoice(invoice);
 
-		for (Payment p : invoice.getPayments()) {
+		for (Payment p : InvoiceService.getPayments(database, invoice.getId())) {
 			if (DateUtil.compareDayOfYear(p.getDate(), report.getEndDate()) <= 0) {
 				report.addPayment(invoice, p.getAmount());
 			}

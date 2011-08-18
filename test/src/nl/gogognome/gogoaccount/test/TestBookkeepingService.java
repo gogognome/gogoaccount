@@ -26,19 +26,19 @@ import static junit.framework.Assert.fail;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.gogognome.cf.services.BookkeepingService;
-import nl.gogognome.cf.services.ServiceException;
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
 import org.junit.Test;
 
-import cf.engine.Account;
-import cf.engine.Account.Type;
-import cf.engine.Database;
-import cf.engine.Journal;
-import cf.engine.JournalItem;
 
 /**
  * Tests the bookkeeping service.
@@ -241,12 +241,12 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 	public void removeJournalWithPayment() throws Exception {
 		assertNotNull(findJournal("t2"));
 		assertEquals("[20110510 pay1 Betaalrekening]",
-				database.getInvoice("inv1").getPayments().toString());
+				database.getPayments("inv1").toString());
 
 		BookkeepingService.removeJournal(database, findJournal("t2"));
 
 		assertNull(findJournal("t2"));
-		assertEquals("[]", database.getInvoice("inv1").getPayments().toString());
+		assertEquals("[]", database.getPayments("inv1").toString());
 	}
 
 	@Test

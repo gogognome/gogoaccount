@@ -22,13 +22,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.Payment;
+import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.util.StringUtil;
-import cf.engine.Invoice;
-import cf.engine.Payment;
 
 /**
  * Converts invoices to a model for ODT generation.
@@ -80,16 +81,17 @@ public class InvoicesToModelConverter {
 	private Map<String, Object> createInvoiceModel(Invoice invoice) {
 		Map<String, Object> map = new HashMap<String, Object>();
 
-		putNullable(map, "ourReference", invoice.getId());
+		putNullable(map, "id", invoice.getId());
 
 		putNullable(map, "partyName", invoice.getConcerningParty().getName());
 		putNullable(map, "partyAddress", invoice.getConcerningParty().getAddress());
 		putNullable(map, "partyZip", invoice.getConcerningParty().getZipCode());
 		putNullable(map, "partyCity", invoice.getConcerningParty().getCity());
 
-		Amount totalAmount = invoice.getRemainingAmountToBePaid(parameters.getDate());
+		Amount totalAmount = InvoiceService.getRemainingAmountToBePaid(
+				parameters.getDatabase(), invoice.getId(), parameters.getDate());
 		putNullable(map, "totalAmount", amountFormat.formatAmount(totalAmount));
-		
+
 		map.put("lines", createLinesForInvoice(invoice));
 
 		return map;
@@ -104,7 +106,8 @@ public class InvoicesToModelConverter {
 			lines.add(createLine(invoice.getIssueDate(), descriptions[i], amounts[i]));
 		}
 
-		for (Payment p : invoice.getPayments()) {
+		List<Payment> payments = InvoiceService.getPayments(parameters.getDatabase(), invoice.getId());
+		for (Payment p : payments) {
 			lines.add(createLine(p.getDate(), p.getDescription(), p.getAmount().negate()));
 		}
 

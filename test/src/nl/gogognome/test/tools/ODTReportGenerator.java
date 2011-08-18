@@ -20,12 +20,12 @@ import java.io.File;
 import java.util.Date;
 import java.util.Locale;
 
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.gui.Start;
 import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
+import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.util.DateUtil;
-import cf.engine.Database;
-import cf.engine.XMLFileReader;
-import cf.ui.Start;
 
 /**
  * Tests generation of an ODT report.
