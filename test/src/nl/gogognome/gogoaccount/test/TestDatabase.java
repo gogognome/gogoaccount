@@ -94,7 +94,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
 	@Test
 	public void testCreatePaymentId() throws Exception {
-		int n = 1000000;
+		int n = 100000;
 		Set<String> ids = new HashSet<String>(2 * n);
 		for (int i=0; i<n; i++) {
 			String id = database.createPaymentId();
