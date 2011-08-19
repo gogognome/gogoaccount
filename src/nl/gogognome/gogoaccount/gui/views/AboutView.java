@@ -37,7 +37,9 @@ import nl.gogognome.lib.swing.views.View;
  */
 public class AboutView extends View {
 
-    @Override
+	private static final long serialVersionUID = 1L;
+
+	@Override
     public String getTitle() {
         return textResource.getString("aboutView.title");
     }
@@ -71,6 +73,7 @@ public class AboutView extends View {
         JButton closeButton = widgetFactory.createButton("gen.ok", closeAction);
         add(closeButton, SwingUtils.createGBConstraints(0, n, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER,
             GridBagConstraints.NONE, 5, 0, 0, 0));
+        setDefaultButton(closeButton);
     }
 
 }
