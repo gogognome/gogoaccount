@@ -457,7 +457,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleAddJournal() {
 	    if (!database.hasAccounts()) {
-	        MessageDialog.showWarningMessage(this, "mf.noAccountsPresent");
+	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
             EditJournalView view = new EditJournalView(database, "ajd.title", null);
             ViewDialog dialog = new ViewDialog(this, view);
@@ -467,19 +467,27 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleEditJournals() {
 	    if (!database.hasAccounts()) {
-	        MessageDialog.showWarningMessage(this, "mf.noAccountsPresent");
+	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
 	    	openView(EditJournalsView.class);
 	    }
 	}
 
 	private void handleGenerateInvoices() {
-		openView(InvoiceToOdtView.class);
+	    if (!database.hasAccounts()) {
+	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
+	    } else {
+	    	openView(InvoiceToOdtView.class);
+	    }
 	}
 
 	private void handleGenerateReport() {
-	    GenerateReportController controller = new GenerateReportController(database, this);
-	    controller.execute();
+	    if (!database.hasAccounts()) {
+	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
+	    } else {
+		    GenerateReportController controller = new GenerateReportController(database, this);
+		    controller.execute();
+	    }
 	}
 
 	private void handlePrintAddressLabels() {
@@ -492,7 +500,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleAddInvoices() {
-		openView(InvoiceGeneratorView.class);
+	    if (!database.hasAccounts()) {
+	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
+	    } else {
+	    	openView(InvoiceGeneratorView.class);
+	    }
 	}
 
 	/** Shows the about dialog. */
