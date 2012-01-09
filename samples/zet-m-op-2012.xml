@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<gogoAccountBookkeeping currency="EUR" description="Boekhouding Zet 'm op" fileversion="1.0" startdate="2011.01.01">
+<gogoAccountBookkeeping currency="EUR" description="Boekhouding Zet 'm op" fileversion="1.0" startdate="2012.01.01">
     <assets>
         <account id="100" name="Kas"/>
         <account id="101" name="Betaalrekening"/>
@@ -22,35 +22,16 @@
         <party address="Hoofdweg 5" city="Eindhoven" id="003" name="Gullebank" remarks="Contactpersoon: Judih Jansen" type="sponsor" zip="3276 AA"/>
     </parties>
     <journals>
-        <journal date="2010.12.31" description="Startbalans" id="startbalans">
+        <journal date="2011.12.31" description="start balance" id="start">
             <item amount="EUR 100.00" id="100" side="debet"/>
-            <item amount="EUR 400.00" id="101" side="debet"/>
+            <item amount="EUR 475.00" id="101" side="debet"/>
             <item amount="EUR 1000.00" id="102" side="debet"/>
+            <item amount="EUR 100.00" id="190" side="debet"/>
             <item amount="EUR 1500.00" id="200" side="credit"/>
-        </journal>
-        <journal createdInvoice="201108-002" date="2011.05.08" description="Contributie voor Jan Jansen" id="201108-002">
-            <item amount="EUR 50.00" id="190" side="debet"/>
-            <item amount="EUR 50.00" id="300" side="credit"/>
-        </journal>
-        <journal createdInvoice="201108-003" date="2011.05.08" description="Sponsorbijdrage" id="201108-003">
-            <item amount="EUR 50.00" id="190" side="debet"/>
-            <item amount="EUR 50.00" id="300" side="credit"/>
-        </journal>
-        <journal createdInvoice="201108-001" date="2011.08.16" description="Contributie voor Piet Puk" id="201108-001">
-            <item amount="EUR 75.00" id="190" side="debet"/>
-            <item amount="EUR 75.00" id="300" side="credit"/>
-        </journal>
-        <journal date="2011.08.25" description="Contributie Piek Puk" id="871">
-            <item amount="EUR 75.00" id="101" invoice="201108-001" payment="p1" side="debet"/>
-            <item amount="EUR 75.00" id="190" side="credit"/>
+            <item amount="EUR 175.00" id="200" side="credit"/>
         </journal>
     </journals>
     <invoices>
-        <invoice amountToBePaid="EUR 75.00" concerningParty="001" id="201108-001" issueDate="2011.08.16" payingParty="001">
-            <line description="Contributie voor Piet Puk"/>
-            <line amount="EUR 75.00" description="Contributie"/>
-            <payment amount="EUR 75.00" date="2011.08.25" description="Betaalrekening" id="p1"/>
-        </invoice>
         <invoice amountToBePaid="EUR 50.00" concerningParty="002" id="201108-002" issueDate="2011.05.08" payingParty="002">
             <line description="Contributie voor Jan Jansen"/>
             <line amount="EUR 50.00" description="Contributie"/>
