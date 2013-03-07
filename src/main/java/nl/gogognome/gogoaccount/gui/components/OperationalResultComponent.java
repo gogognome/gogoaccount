@@ -49,17 +49,17 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
 	private static final long serialVersionUID = 1L;
 
-    private Database database;
-    private DateModel dateModel;
-    private BalanceSheet balanceSheet;
+    private final Database database;
+    private final DateModel dateModel;
+    private final BalanceSheet balanceSheet;
 
     private Report report;
 
     private DatabaseListener databaseListener;
     private ModelChangeListener modelChangeListener;
 
-    private TextResource textResource = Factory.getInstance(TextResource.class);
-    private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
+    private final TextResource textResource = Factory.getInstance(TextResource.class);
+    private final WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
     /**
      * Creates a new <code>OperationalResultComponent</code>.
@@ -154,7 +154,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 		public void modelChanged(AbstractModel model) {
 		    if (((DateModel)(model)).getDate() != null) {
 		        initComponents();
-		        validateTree();
+		        validate();
 		    }
 		}
 	}
@@ -163,7 +163,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 		@Override
 		public void databaseChanged(Database db) {
 		    initComponents();
-		    validateTree();
+		    validate();
 		}
 	}
 }
