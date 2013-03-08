@@ -26,10 +26,10 @@ import java.util.Date;
  */
 public class Party implements Comparable<Party> {
     /**  The id of the party. The id must be unique for all parties. */
-    private String id;
+    private final String id;
 
     /** The name of this party. */
-    private String name;
+    private final String name;
 
     /** The address of this party. */
     private String address;
@@ -173,7 +173,7 @@ public class Party implements Comparable<Party> {
         if (that instanceof Party)
         {
             Party thatParty = (Party)that;
-            result = this.id.equals(thatParty.id) && this.name.equals(thatParty.name);
+            result = this.id.equals(thatParty.id);
         }
         return result;
     }

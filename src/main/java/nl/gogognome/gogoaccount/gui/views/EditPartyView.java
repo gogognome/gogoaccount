@@ -29,11 +29,7 @@ import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.components.PartyTypeBean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.models.AbstractModel;
-import nl.gogognome.lib.swing.models.DateModel;
-import nl.gogognome.lib.swing.models.ListModel;
-import nl.gogognome.lib.swing.models.ModelChangeListener;
-import nl.gogognome.lib.swing.models.StringModel;
+import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.views.OkCancelView;
 
 /**
@@ -46,19 +42,19 @@ public class EditPartyView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-    private Database database;
+    private final Database database;
 
-    private StringModel idModel = new StringModel();
-    private StringModel nameModel = new StringModel();
-    private StringModel addressModel = new StringModel();
-    private StringModel zipCodeModel = new StringModel();
-    private StringModel cityModel = new StringModel();
-    private ListModel<String> typeListModel = new ListModel<String>();
-    private DateModel birthDateModel = new DateModel();
+    private final StringModel idModel = new StringModel();
+    private final StringModel nameModel = new StringModel();
+    private final StringModel addressModel = new StringModel();
+    private final StringModel zipCodeModel = new StringModel();
+    private final StringModel cityModel = new StringModel();
+    private final ListModel<String> typeListModel = new ListModel<String>();
+    private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
-    private JTextArea taRemarks;
+    private final JTextArea taRemarks = new JTextArea(5, 30);
 
-    private Party initialParty;
+    private final Party initialParty;
     private Party resultParty;
 
     private ModelChangeListener idUpdateListener;
@@ -122,7 +118,6 @@ public class EditPartyView extends OkCancelView {
         PartyTypeBean typesBean = new PartyTypeBean(typeListModel);
         ifc.addVariableSizeField("editPartyView.type", typesBean);
 
-        taRemarks = new JTextArea(5, 30);
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
 
         return ifc;
