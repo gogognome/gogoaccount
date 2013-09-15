@@ -17,24 +17,24 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import java.awt.BorderLayout;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
+import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.models.ListModel;
+import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.TextResource;
 
 /**
  * This view is used to edit a new or existing account.
@@ -50,10 +50,10 @@ public class EditAccountView extends View {
 
 	private Account editedAccount;
 
-	private JTextField tfId;
-	private JTextField tfDescription;
-	private JComboBox cmType;
-
+	private StringModel idModel = new StringModel();
+	private StringModel descriptionModel = new StringModel();
+	private ListModel<Account.Type> accountTypeModel = new ListModel<Account.Type>(types);
+	
 	public EditAccountView(Account initialAccount) {
 		this.initialAccount = initialAccount;
 	}
@@ -72,45 +72,18 @@ public class EditAccountView extends View {
 	public void onInit() {
 		setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Create panel with ID, issue date, concerning party, paying party and amount to be paid.
-        GridBagLayout gbl = new GridBagLayout();
-        JPanel topPanel = new JPanel(gbl);
-
-        String id;
-        String description;
+        InputFieldsColumn ifc = new InputFieldsColumn();
+        addCloseable(ifc);
+        ifc.addField("editAccountView.id", idModel);
+        ifc.addField("editAccountView.description", descriptionModel);
+        ifc.addComboBoxField("editAccountView.type", accountTypeModel, new AccountTypeFormatter(textResource));
+        
         if (initialAccount != null) {
-        	id = initialAccount.getId();
-        	description = initialAccount.getName();
-        } else {
-        	id = "";
-        	description = "";
+        	idModel.setEnabled(false, null);
+        	idModel.setString(initialAccount.getId());
+        	descriptionModel.setString(initialAccount.getName());
+        	accountTypeModel.setSelectedItem(initialAccount.getType(), null);
         }
-
-        tfId = widgetFactory.createTextField(id);
-        if (initialAccount != null) {
-            tfId.setEditable(false); // prevent changing the id of an existing account
-            tfId.setEnabled(false);
-        }
-        int row = 0;
-        JLabel label = widgetFactory.createLabel("editAccountView.id", tfId);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(tfId, SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
-
-        tfDescription = widgetFactory.createTextField(description);
-        label = widgetFactory.createLabel("editAccountView.description", tfDescription);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(tfDescription, SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
-
-        cmType = new JComboBox();
-        for (Account.Type type : types) {
-        	cmType.addItem(textResource.getString("gen.TYPE_" + type.name()));
-        }
-        label = widgetFactory.createLabel("editAccountView.type", cmType);
-        topPanel.add(label, SwingUtils.createLabelGBConstraints(0, row));
-        topPanel.add(cmType, SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
 
         // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
@@ -133,13 +106,12 @@ public class EditAccountView extends View {
 
         // Put all panels on the view.
         setLayout(new BorderLayout());
-        add(topPanel, BorderLayout.NORTH);
+        add(ifc, BorderLayout.NORTH);
         add(buttonPanel, BorderLayout.SOUTH);
 	}
 
 	private void onOk() {
-		Account.Type type = types.get(cmType.getSelectedIndex());
-		editedAccount = new Account(tfId.getText(), tfDescription.getText(), type);
+		editedAccount = new Account(idModel.getString(), descriptionModel.getString(), accountTypeModel.getSelectedItem());
 		closeAction.actionPerformed(null);
 	}
 
@@ -154,4 +126,19 @@ public class EditAccountView extends View {
 	public Account getEditedAccount() {
 		return editedAccount;
 	}
+}
+
+class AccountTypeFormatter implements ObjectFormatter<Account.Type> {
+
+	private TextResource textResource;
+	
+	public AccountTypeFormatter(TextResource textResource) {
+		this.textResource = textResource;
+	}
+
+	@Override
+	public String format(Type type) {
+		return type == null ? null : textResource.getString("gen.TYPE_" + type.name());
+	}
+	
 }
