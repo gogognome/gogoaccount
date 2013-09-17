@@ -37,6 +37,17 @@
     
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+        </configuration>
+      </plugin>
+        
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
           <archive>
@@ -97,6 +108,28 @@
 	    </configuration>
 	  </plugin>
 	    
+	  <plugin>
+	    <groupId>nl.gogognome</groupId>
+	    <artifactId>gogoimagemodifier</artifactId>
+	    <executions>
+	      <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>modifyImage</goal>
+            </goals>
+	        <configuration>
+	          <sourceImage>sketches/splash.png</sourceImage>
+	          <destinationImage>target/classes/splash.png</destinationImage>
+	          <commands>
+	            <command>color: 0, 0, 0</command>
+	            <command>font: Arial Bold, 60</command>
+	            <command>text: 40, 450, gogo account ${version}</command>
+	          </commands>
+	        </configuration>
+	      </execution>
+	    </executions>
+	  </plugin>
+	  
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
