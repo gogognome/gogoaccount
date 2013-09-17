@@ -20,7 +20,7 @@
 
   <groupId>nl.gogognome.gogoaccount</groupId>
   <artifactId>gogoaccount</artifactId>
-  <version>2.2-SNAPSHOT</version>
+  <version>2.2</version>
   <packaging>jar</packaging>
 
   <name>gogoaccount</name>
@@ -113,6 +113,7 @@
 	    <artifactId>gogoimagemodifier</artifactId>
 	    <executions>
 	      <execution>
+	      	<id>generateSplashImage</id>
             <phase>compile</phase>
             <goals>
               <goal>modifyImage</goal>
@@ -124,6 +125,22 @@
 	            <command>color: 0, 0, 0</command>
 	            <command>font: Arial Bold, 60</command>
 	            <command>text: 40, 450, gogo account ${version}</command>
+	          </commands>
+	        </configuration>
+	      </execution>
+	      <execution>
+	      	<id>generateAboutImage</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>modifyImage</goal>
+            </goals>
+	        <configuration>
+	          <sourceImage>sketches/about.png</sourceImage>
+	          <destinationImage>target/classes/about.png</destinationImage>
+	          <commands>
+	            <command>color: 0, 0, 0</command>
+	            <command>font: Arial Bold, 30</command>
+	            <command>text: 140, 30, gogo account ${version}</command>
 	          </commands>
 	        </configuration>
 	      </execution>
