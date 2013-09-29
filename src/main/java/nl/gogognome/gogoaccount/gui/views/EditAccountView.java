@@ -13,8 +13,16 @@
 
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 package nl.gogognome.gogoaccount.gui.views;
+
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.ASSET;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.CREDITOR;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.DEBTOR;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.EQUITY;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.EXPENSE;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.LIABILITY;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.REVENUE;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -27,7 +35,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -43,25 +51,27 @@ import nl.gogognome.lib.text.TextResource;
  */
 public class EditAccountView extends View {
 
-	private final static List<Account.Type> types = Arrays.asList(Account.Type.ASSET, Account.Type.LIABILITY,
-			Account.Type.EXPENSE, Account.Type.REVENUE);
+	private static final long serialVersionUID = 1L;
 
-	private Account initialAccount;
+	private final static List<AccountType> types = Arrays.asList(ASSET, DEBTOR, LIABILITY, CREDITOR, EQUITY,
+			EXPENSE, REVENUE);
+
+	private final Account initialAccount;
 
 	private Account editedAccount;
 
-	private StringModel idModel = new StringModel();
-	private StringModel descriptionModel = new StringModel();
-	private ListModel<Account.Type> accountTypeModel = new ListModel<Account.Type>(types);
-	
+	private final StringModel idModel = new StringModel();
+	private final StringModel descriptionModel = new StringModel();
+	private final ListModel<AccountType> accountTypeModel = new ListModel<AccountType>(types);
+
 	public EditAccountView(Account initialAccount) {
 		this.initialAccount = initialAccount;
 	}
 
 	@Override
 	public String getTitle() {
-        return textResource.getString(
-        		initialAccount != null ? "editAccountView.titleEdit" : "editAccountView.titleAdd");
+		return textResource.getString(
+				initialAccount != null ? "editAccountView.titleEdit" : "editAccountView.titleAdd");
 	}
 
 	@Override
@@ -72,42 +82,42 @@ public class EditAccountView extends View {
 	public void onInit() {
 		setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        InputFieldsColumn ifc = new InputFieldsColumn();
-        addCloseable(ifc);
-        ifc.addField("editAccountView.id", idModel);
-        ifc.addField("editAccountView.description", descriptionModel);
-        ifc.addComboBoxField("editAccountView.type", accountTypeModel, new AccountTypeFormatter(textResource));
-        
-        if (initialAccount != null) {
-        	idModel.setEnabled(false, null);
-        	idModel.setString(initialAccount.getId());
-        	descriptionModel.setString(initialAccount.getName());
-        	accountTypeModel.setSelectedItem(initialAccount.getType(), null);
-        }
+		InputFieldsColumn ifc = new InputFieldsColumn();
+		addCloseable(ifc);
+		ifc.addField("editAccountView.id", idModel);
+		ifc.addField("editAccountView.description", descriptionModel);
+		ifc.addComboBoxField("editAccountView.type", accountTypeModel, new AccountTypeFormatter(textResource));
 
-        // Create button panel
-        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
-        JButton button = widgetFactory.createButton("gen.ok", new AbstractAction() {
-            @Override
+		if (initialAccount != null) {
+			idModel.setEnabled(false, null);
+			idModel.setString(initialAccount.getId());
+			descriptionModel.setString(initialAccount.getName());
+			accountTypeModel.setSelectedItem(initialAccount.getType(), null);
+		}
+
+		// Create button panel
+		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
+		JButton button = widgetFactory.createButton("gen.ok", new AbstractAction() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
-                onOk();
-            }
-        });
-        buttonPanel.add(button);
-        setDefaultButton(button);
+				onOk();
+			}
+		});
+		buttonPanel.add(button);
+		setDefaultButton(button);
 
-        button = widgetFactory.createButton("gen.cancel", new AbstractAction() {
-            @Override
+		button = widgetFactory.createButton("gen.cancel", new AbstractAction() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        });
-        buttonPanel.add(button);
+				onCancel();
+			}
+		});
+		buttonPanel.add(button);
 
-        // Put all panels on the view.
-        setLayout(new BorderLayout());
-        add(ifc, BorderLayout.NORTH);
-        add(buttonPanel, BorderLayout.SOUTH);
+		// Put all panels on the view.
+		setLayout(new BorderLayout());
+		add(ifc, BorderLayout.NORTH);
+		add(buttonPanel, BorderLayout.SOUTH);
 	}
 
 	private void onOk() {
@@ -128,17 +138,17 @@ public class EditAccountView extends View {
 	}
 }
 
-class AccountTypeFormatter implements ObjectFormatter<Account.Type> {
+class AccountTypeFormatter implements ObjectFormatter<AccountType> {
 
-	private TextResource textResource;
-	
+	private final TextResource textResource;
+
 	public AccountTypeFormatter(TextResource textResource) {
 		this.textResource = textResource;
 	}
 
 	@Override
-	public String format(Type type) {
-		return type == null ? null : textResource.getString("gen.TYPE_" + type.name());
+	public String format(AccountType type) {
+		return type == null ? null : textResource.getString("gen.ACCOUNTTYPE_" + type.name());
 	}
-	
+
 }

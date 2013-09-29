@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
@@ -43,6 +43,8 @@ import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
+
+import com.google.common.base.Joiner;
 
 /**
  * This class maintains all accounts, journals, debtors and
@@ -187,7 +189,7 @@ public class Database {
      *         <code>!asset.isDebet()</code>.
      */
     public void setAssets(List<Account> assets) throws DatabaseModificationFailedException {
-        checkAccountTypes(assets, Type.ASSET);
+        checkAccountTypes(assets, true, true);
 
         this.assets = new TreeMap<String, Account>();
         for (Account account : assets) {
@@ -196,12 +198,12 @@ public class Database {
         updateIdsToAccountsMap();
     }
 
-	private void checkAccountTypes(List<Account> accounts, Type expectedType)
+	private void checkAccountTypes(List<Account> accounts, boolean debet, boolean balanceAccount)
 			throws DatabaseModificationFailedException {
 		for (Account a : accounts){
-            if (a.getType() != expectedType) {
+            if (a.getType().isDebet() != debet || a.getType().isBalanceAccount() != balanceAccount) {
                 throw new DatabaseModificationFailedException("Account found with type "
-                		+ a.getType() + " instead of " + expectedType + ".");
+                		+ a.getType() + " instead of " + Joiner.on(", ").join(AccountType.get(debet, balanceAccount)) + ".");
             }
         }
 	}
@@ -217,7 +219,7 @@ public class Database {
      *         <code>!expense.isDebet()</code>
      */
     public void setExpenses(List<Account> expenses) throws DatabaseModificationFailedException {
-        checkAccountTypes(expenses, Type.EXPENSE);
+        checkAccountTypes(expenses, true, false);
 
         this.expenses = new TreeMap<String, Account>();
         for (Account account : expenses) {
@@ -231,7 +233,7 @@ public class Database {
     }
 
     public void setLiabilities(List<Account> liabilities) throws DatabaseModificationFailedException {
-    	checkAccountTypes(liabilities, Type.LIABILITY);
+    	checkAccountTypes(liabilities, false, true);
 
         this.liabilities = new TreeMap<String, Account>();
         for (Account account : liabilities) {
@@ -245,7 +247,7 @@ public class Database {
     }
 
     public void setRevenues(List<Account> revenues) throws DatabaseModificationFailedException {
-    	checkAccountTypes(revenues, Type.REVENUE);
+    	checkAccountTypes(revenues, false, false);
 
         this.revenues = new TreeMap<String, Account>();
         for (Account account : revenues) {
@@ -867,11 +869,19 @@ public class Database {
     }
 
     private void doAddAccout(Account account) {
-    	switch (account.getType()) {
-    	case ASSET: assets.put(account.getId(), account); break;
-    	case LIABILITY: liabilities.put(account.getId(), account); break;
-    	case EXPENSE: expenses.put(account.getId(), account); break;
-    	case REVENUE: revenues.put(account.getId(), account); break;
+    	AccountType type = account.getType();
+    	if (type.isBalanceAccount()) {
+    		if (type.isDebet()) {
+    			assets.put(account.getId(), account); 
+    		} else {
+    			liabilities.put(account.getId(), account);
+    		}
+    	} else {
+    		if (type.isDebet()) {
+    			expenses.put(account.getId(), account);
+    		} else {
+    			revenues.put(account.getId(), account);
+    		}
     	}
     	idsToAccountsMap.put(account.getId(), account);
     }

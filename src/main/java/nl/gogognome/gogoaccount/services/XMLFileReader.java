@@ -30,12 +30,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.businessobjects.Account.Type;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
 import nl.gogognome.lib.text.Amount;
@@ -100,19 +100,19 @@ public class XMLFileReader {
 
 			// parse accounts
 			List<Account> assets = parseAccounts(rootElement.getElementsByTagName("assets"),
-					Type.ASSET);
+					AccountType.ASSET);
 			database.setAssets(assets);
 
 			List<Account> liabilities = parseAccounts(rootElement.getElementsByTagName("liabilities"),
-					Type.LIABILITY);
+					AccountType.LIABILITY);
 			database.setLiabilities(liabilities);
 
 			List<Account> expenses = parseAccounts(rootElement.getElementsByTagName("expenses"),
-					Type.EXPENSE);
+					AccountType.EXPENSE);
 			database.setExpenses(expenses);
 
 			List<Account> revenues = parseAccounts(rootElement.getElementsByTagName("revenues"),
-					Type.REVENUE);
+					AccountType.REVENUE);
 			database.setRevenues(revenues);
 
 			parseAndAddParties(rootElement.getElementsByTagName("parties"));
@@ -192,7 +192,7 @@ public class XMLFileReader {
 	 * @param type the type of the account
 	 * @return the accounts
 	 */
-	private List<Account> parseAccounts(NodeList nodes, Account.Type type) {
+	private List<Account> parseAccounts(NodeList nodes, AccountType type) {
 	    ArrayList<Account> accounts = new ArrayList<Account>();
 	    for (int i=0; i<nodes.getLength(); i++)
 	    {

@@ -24,13 +24,9 @@ package nl.gogognome.gogoaccount.businessobjects;
  */
 public class Account implements Comparable<Account> {
 
-    public enum Type {
-        ASSET, LIABILITY, EXPENSE, REVENUE
-    }
-
     private String id;
     private String name;
-    private Type type;
+    private AccountType type;
 
     /**
      * Constructs an account.
@@ -38,7 +34,7 @@ public class Account implements Comparable<Account> {
      * @param name the name of this account
      * @param type the type of this account
      */
-    public Account(String id, String name, Type type) {
+    public Account(String id, String name, AccountType type) {
         this.id = id;
         this.name = name;
         this.type = type;
@@ -67,7 +63,7 @@ public class Account implements Comparable<Account> {
      * <code>false</code> indicates this account is a liability or a revenue.
      */
     public boolean isDebet() {
-        return type == Type.ASSET || type == Type.EXPENSE;
+        return type.isDebet();
     }
 
     /**
@@ -84,7 +80,7 @@ public class Account implements Comparable<Account> {
      * Gets the type of this account.
      * @return the type
      */
-    public Type getType() {
+    public AccountType getType() {
         return type;
     }
 

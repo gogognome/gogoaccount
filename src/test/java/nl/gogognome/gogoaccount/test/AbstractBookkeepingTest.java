@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Locale;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
@@ -113,30 +113,30 @@ public class AbstractBookkeepingTest {
 
 	private List<Account> createAssets() {
 		return Arrays.asList(
-				new Account("100", "Kas", Type.ASSET),
-				new Account("101", "Betaalrekening", Type.ASSET),
-				new Account("190", "Debiteuren", Type.ASSET)
+				new Account("100", "Kas", AccountType.ASSET),
+				new Account("101", "Betaalrekening", AccountType.ASSET),
+				new Account("190", "Debiteuren", AccountType.ASSET)
 		);
 	}
 
 	private List<Account> createLiabilities() {
 		return Arrays.asList(
-				new Account("200", "Eigen vermogen", Type.LIABILITY),
-				new Account("290", "Crediteuren", Type.LIABILITY)
+				new Account("200", "Eigen vermogen", AccountType.LIABILITY),
+				new Account("290", "Crediteuren", AccountType.LIABILITY)
 		);
 	}
 
 	private List<Account> createExpenses() {
 		return Arrays.asList(
-				new Account("400", "Zaalhuur", Type.EXPENSE),
-				new Account("490", "Onvoorzien", Type.EXPENSE)
+				new Account("400", "Zaalhuur", AccountType.EXPENSE),
+				new Account("490", "Onvoorzien", AccountType.EXPENSE)
 		);
 	}
 
 	private List<Account> createRevenues() {
 		return Arrays.asList(
-				new Account("300", "Contributie", Type.REVENUE),
-				new Account("390", "Onvoorzien", Type.REVENUE)
+				new Account("300", "Contributie", AccountType.REVENUE),
+				new Account("390", "Onvoorzien", AccountType.REVENUE)
 		);
 	}
 

@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.Account.Type;
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Report;
@@ -90,7 +90,7 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Winst]",
 				report.getLiabilitiesInclProfitAccount().toString());
 
-		checkAmount(20, report.getAmount(new Account("", "", Type.LIABILITY)));
+		checkAmount(20, report.getAmount(new Account("", "", AccountType.LIABILITY)));
 
 		assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
 		assertEquals("[]", report.getCreditors().toString());
@@ -130,7 +130,7 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Winst]",
 				report.getLiabilitiesInclProfitAccount().toString());
 
-		checkAmount(20, report.getAmount(new Account("", "", Type.LIABILITY)));
+		checkAmount(20, report.getAmount(new Account("", "", AccountType.LIABILITY)));
 
 		assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
 		assertEquals("[]", report.getCreditors().toString());
@@ -252,18 +252,18 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 	@Test
 	public void addNewAccount() throws Exception {
 		BookkeepingService.addAccount(database,
-				new Account("103", "Spaarrekening", Type.ASSET));
+				new Account("103", "Spaarrekening", AccountType.ASSET));
 		Account a = database.getAccount("103");
 		assertEquals("103", a.getId());
 		assertEquals("Spaarrekening", a.getName());
-		assertEquals(Type.ASSET, a.getType());
+		assertEquals(AccountType.ASSET, a.getType());
 	}
 
 	@Test
 	public void addAccountWithExistingIdFails() throws Exception {
 		try {
 			BookkeepingService.addAccount(database,
-					new Account("101", "Spaarrekening", Type.ASSET));
+					new Account("101", "Spaarrekening", AccountType.ASSET));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {
 		}
@@ -272,18 +272,18 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 	@Test
 	public void addUpdateAccount() throws Exception {
 		BookkeepingService.updateAccount(database,
-				new Account("101", "Spaarrekening", Type.ASSET));
+				new Account("101", "Spaarrekening", AccountType.ASSET));
 		Account a = database.getAccount("101");
 		assertEquals("101", a.getId());
 		assertEquals("Spaarrekening", a.getName());
-		assertEquals(Type.ASSET, a.getType());
+		assertEquals(AccountType.ASSET, a.getType());
 	}
 
 	@Test
 	public void updateNonExistingAccountFails() throws Exception {
 		try {
 			BookkeepingService.updateAccount(database,
-					new Account("103", "Spaarrekening", Type.ASSET));
+					new Account("103", "Spaarrekening", AccountType.ASSET));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {
 		}

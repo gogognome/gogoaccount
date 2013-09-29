@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.gogognome.gogoaccount.businessobjects.Account.Type;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
@@ -218,11 +217,11 @@ public class Report {
 
         if (resultOfOperations.isPositive()) {
     		resultOfOperationsAccount =
-    			new Account("", textResource.getString("gen.profit"), Type.LIABILITY);
+    			new Account("", textResource.getString("gen.profit"), AccountType.LIABILITY);
     		setAmount(resultOfOperationsAccount, resultOfOperations);
         } else if (resultOfOperations.isNegative()) {
         	resultOfOperationsAccount =
-    			new Account("", textResource.getString("gen.loss"), Type.ASSET);
+    			new Account("", textResource.getString("gen.loss"), AccountType.ASSET);
     		setAmount(resultOfOperationsAccount, resultOfOperations.negate());
         }
 	}

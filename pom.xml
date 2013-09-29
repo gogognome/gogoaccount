@@ -110,7 +110,7 @@
 	    
 	  <plugin>
 	    <groupId>nl.gogognome</groupId>
-	    <artifactId>gogoimagemodifier</artifactId>
+	    <artifactId>image-modifier-maven-plugin</artifactId>
 	    <executions>
 	      <execution>
 	      	<id>generateSplashImage</id>
@@ -254,7 +254,12 @@
       <artifactId>xom</artifactId>      
       <version>1.2.7</version>
       <scope>compile</scope>
-    </dependency>  
+    </dependency>
+    <dependency>
+    	<groupId>com.google.guava</groupId>
+    	<artifactId>guava</artifactId>
+    	<version>15.0</version>
+    </dependency>
   </dependencies>
   
 </project>

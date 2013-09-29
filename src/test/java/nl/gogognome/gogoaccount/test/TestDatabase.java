@@ -29,12 +29,12 @@ import java.util.List;
 import java.util.Set;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
-import nl.gogognome.gogoaccount.businessobjects.Account.Type;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
 import nl.gogognome.lib.text.Amount;
@@ -64,7 +64,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testGetAssets() throws Exception {
 		for (Account a : database.getAssets()) {
 			assertTrue(a.isDebet());
-			assertEquals(Type.ASSET, a.getType());
+			assertEquals(AccountType.ASSET, a.getType());
 		}
 	}
 
@@ -72,7 +72,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testGetLiabilities() throws Exception {
 		for (Account a : database.getLiabilities()) {
 			assertTrue(a.isCredit());
-			assertEquals(Type.LIABILITY, a.getType());
+			assertEquals(AccountType.LIABILITY, a.getType());
 		}
 	}
 
@@ -80,7 +80,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testGetExpenses() throws Exception {
 		for (Account a : database.getExpenses()) {
 			assertTrue(a.isDebet());
-			assertEquals(Type.EXPENSE, a.getType());
+			assertEquals(AccountType.EXPENSE, a.getType());
 		}
 	}
 
@@ -88,7 +88,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testGetRevenues() throws Exception {
 		for (Account a : database.getRevenues()) {
 			assertTrue(a.isCredit());
-			assertEquals(Type.REVENUE, a.getType());
+			assertEquals(AccountType.REVENUE, a.getType());
 		}
 	}
 
