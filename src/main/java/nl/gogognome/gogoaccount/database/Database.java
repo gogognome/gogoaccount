@@ -200,7 +200,7 @@ public class Database {
 	 * @throws DatabaseModificationFailedException if there is an asset for which holds
 	 *         <code>!asset.isDebet()</code>.
 	 */
-	public void setAssets(List<Account> assets) throws DatabaseModificationFailedException {
+	public void setAssets(Iterable<Account> assets) throws DatabaseModificationFailedException {
 		checkAccountTypes(assets, true, true);
 
 		this.assets = new TreeMap<String, Account>();
@@ -210,7 +210,7 @@ public class Database {
 		updateIdsToAccountsMap();
 	}
 
-	private void checkAccountTypes(List<Account> accounts, boolean debet, boolean balanceAccount)
+	private void checkAccountTypes(Iterable<Account> accounts, boolean debet, boolean balanceAccount)
 			throws DatabaseModificationFailedException {
 		for (Account a : accounts){
 			if (a.getType().isDebet() != debet || a.getType().isBalanceAccount() != balanceAccount) {
@@ -224,13 +224,7 @@ public class Database {
 		return new ArrayList<Account>(expenses.values());
 	}
 
-	/**
-	 * Sets the expenses.
-	 * @param expenses the expenses
-	 * @throws DatabaseModificationFailedException if there is an expense for which holds
-	 *         <code>!expense.isDebet()</code>
-	 */
-	public void setExpenses(List<Account> expenses) throws DatabaseModificationFailedException {
+	public void setExpenses(Iterable<Account> expenses) throws DatabaseModificationFailedException {
 		checkAccountTypes(expenses, true, false);
 
 		this.expenses = new TreeMap<String, Account>();
@@ -244,7 +238,7 @@ public class Database {
 		return new ArrayList<Account>(liabilities.values());
 	}
 
-	public void setLiabilities(List<Account> liabilities) throws DatabaseModificationFailedException {
+	public void setLiabilities(Iterable<Account> liabilities) throws DatabaseModificationFailedException {
 		checkAccountTypes(liabilities, false, true);
 
 		this.liabilities = new TreeMap<String, Account>();
@@ -258,7 +252,7 @@ public class Database {
 		return new ArrayList<Account>(revenues.values());
 	}
 
-	public void setRevenues(List<Account> revenues) throws DatabaseModificationFailedException {
+	public void setRevenues(Iterable<Account> revenues) throws DatabaseModificationFailedException {
 		checkAccountTypes(revenues, false, false);
 
 		this.revenues = new TreeMap<String, Account>();

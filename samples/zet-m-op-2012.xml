@@ -1,21 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<gogoAccountBookkeeping currency="EUR" description="Boekhouding Zet 'm op" fileversion="1.0" startdate="2012.01.01">
-    <assets>
-        <account id="100" name="Kas"/>
-        <account id="101" name="Betaalrekening"/>
-        <account id="102" name="Spaarrekening"/>
-        <account id="190" name="Debiteuren"/>
-    </assets>
-    <liabilities>
-        <account id="200" name="Eigen vermogen"/>
-        <account id="290" name="Crediteuren"/>
-    </liabilities>
-    <expenses>
-        <account id="400" name="Zaalhuur"/>
-    </expenses>
-    <revenues>
-        <account id="300" name="Contributie"/>
-    </revenues>
+<gogoAccountBookkeeping currency="EUR" description="Boekhouding Zet 'm op" fileversion="2.2" startdate="2012.01.01">
+    <accounts>
+        <account id="100" name="Kas" type="ASSET"/>
+        <account id="101" name="Betaalrekening" type="ASSET"/>
+        <account id="102" name="Spaarrekening" type="ASSET"/>
+        <account id="190" name="Debiteuren" type="DEBTOR"/>
+        <account id="200" name="Eigen vermogen" type="LIABILITY"/>
+        <account id="290" name="Crediteuren" type="CREDITOR"/>
+        <account id="400" name="Zaalhuur" type="EXPENSE"/>
+        <account id="300" name="Contributie" type="REVENUE"/>
+    </accounts>
     <parties>
         <party address="Eikweg 23" birthdate="1978.05.23" city="Eindhoven" id="001" name="Piet Puk" type="competitie" zip="1234 AB"/>
         <party address="Standaartstraat 15" city="Eindhoven" id="002" name="Jan Jansen" type="recreant" zip="1531 HG"/>
@@ -38,6 +32,14 @@
             <item amount="EUR 1.00" id="100" side="debet"/>
             <item amount="EUR 1.00" id="100" side="credit"/>
         </journal>
+        <journal createdInvoice="2014-001" date="2014.02.16" description="Contributie Piet Puk" id="2014-001">
+            <item amount="EUR 100.00" id="190" side="debet"/>
+            <item amount="EUR 100.00" id="300" side="credit"/>
+        </journal>
+        <journal createdInvoice="2014-002" date="2014.02.16" description="Contributie Jan Jansen" id="2014-002">
+            <item amount="EUR 100.00" id="190" side="debet"/>
+            <item amount="EUR 100.00" id="300" side="credit"/>
+        </journal>
     </journals>
     <invoices>
         <invoice amountToBePaid="EUR 50.00" concerningParty="002" id="201108-002" issueDate="2011.05.08" payingParty="002">
@@ -47,6 +49,14 @@
         <invoice amountToBePaid="EUR 50.00" concerningParty="003" id="201108-003" issueDate="2011.05.08" payingParty="003">
             <line description="Sponsorbijdrage"/>
             <line amount="EUR 50.00" description="Contributie"/>
+        </invoice>
+        <invoice amountToBePaid="EUR 100.00" concerningParty="001" id="2014-001" issueDate="2014.02.16" payingParty="001">
+            <line description="Contributie Piet Puk"/>
+            <line amount="EUR 100.00" description="Contributie"/>
+        </invoice>
+        <invoice amountToBePaid="EUR 100.00" concerningParty="002" id="2014-002" issueDate="2014.02.16" payingParty="002">
+            <line description="Contributie Jan Jansen"/>
+            <line amount="EUR 100.00" description="Contributie"/>
         </invoice>
     </invoices>
     <importedaccounts/>
