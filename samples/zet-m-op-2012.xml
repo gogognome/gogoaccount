@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <gogoAccountBookkeeping currency="EUR" description="Boekhouding Zet 'm op" fileversion="1.0" startdate="2012.01.01">
     <assets>
         <account id="100" name="Kas"/>
@@ -29,6 +29,14 @@
             <item amount="EUR 100.00" id="190" side="debet"/>
             <item amount="EUR 1500.00" id="200" side="credit"/>
             <item amount="EUR 175.00" id="200" side="credit"/>
+        </journal>
+        <journal date="2014.02.03" description="4545" id="123">
+            <item amount="EUR 10.00" id="100" side="debet"/>
+            <item amount="EUR 10.00" id="190" side="credit"/>
+        </journal>
+        <journal date="2014.02.03" description="test" id="1234">
+            <item amount="EUR 1.00" id="100" side="debet"/>
+            <item amount="EUR 1.00" id="100" side="credit"/>
         </journal>
     </journals>
     <invoices>
