@@ -20,7 +20,7 @@
 
   <groupId>nl.gogognome.gogoaccount</groupId>
   <artifactId>gogoaccount</artifactId>
-  <version>2.2</version>
+  <version>2.3</version>
   <packaging>jar</packaging>
 
   <name>gogoaccount</name>
@@ -183,23 +183,6 @@
     </plugins>
   </build>
  
-  <reporting>    
-    <plugins>  
-      <plugin> 
-        <groupId>org.codehaus.mojo</groupId> 
-        <artifactId>surefire-report-maven-plugin</artifactId> 
-        <inherited>true</inherited>
-      </plugin>       
-      
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.9</version>
-      </plugin>
-      
-    </plugins>      
-  </reporting>  
-    
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
