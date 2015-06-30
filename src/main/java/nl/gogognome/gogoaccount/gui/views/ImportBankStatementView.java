@@ -224,9 +224,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 			List<ImportedTransaction> transactions = importer.importTransactions(reader);
 			fileSelectionModel.setEnabled(false, this);
 			importersModel.setEnabled(false, this);
-			importButton.setEnabled(false);
-			addTransactionsToTable(transactions);
-			SwingUtils.selectFirstRow(transactionsJournalsTable);
+			if (!transactions.isEmpty()) {
+				importButton.setEnabled(false);
+				addTransactionsToTable(transactions);
+				SwingUtils.selectFirstRow(transactionsJournalsTable);
+			}
 		} catch (FileNotFoundException e) {
 			MessageDialog.showErrorMessage(this,
 					"importBankStatementView.fileNotFound", file.getAbsoluteFile());

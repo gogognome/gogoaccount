@@ -62,7 +62,7 @@ public class RabobankCSVImporter implements TransactionImporter {
 	}
 
 	private void parseLine(String[] values) throws ParseException {
-		if (values.length == 16) {
+		if (values.length == 19) {
 			if ("C".equals(values[3])) {
 				parseCreditTransaction(values);
 			} else if ("D".equals(values[3])) {
