@@ -52,7 +52,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 	@Test
 	public void testGettersFromImportedTransaction() throws Exception {
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-				"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','',''");
+				"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 
 		assertEquals(createAmount(450), it.getAmount());
@@ -69,7 +69,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = database.getAccount("101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','',''");
+			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 
 		assertNull(ibsService.getFromAccount(it));
@@ -86,7 +86,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = database.getAccount("101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','',''");
+			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 
 		assertNull(ibsService.getToAccount(it));
@@ -103,7 +103,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = database.getAccount("101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0170059308','EUR',20030105,'C',9550.00,'0000000000','STORTING',20030103,'','','','','','','',''");
+			"'0170059308','EUR',20030105,'C',9550.00,'0000000000','STORTING',20030103,'','','','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 		assertNull(it.getFromAccount());
 
@@ -121,7 +121,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = database.getAccount("101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0000000000','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','',''");
+			"'0000000000','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 		assertNull(it.getToAccount());
 
