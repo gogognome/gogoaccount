@@ -23,7 +23,10 @@ import java.util.Map;
 
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
@@ -39,10 +42,10 @@ public class ReportBuilder {
 	private final Database database;
 	private final Report report;
 
-	private Map<Account, Amount> accountToTotalDebet = new HashMap<Account, Amount>();
-	private Map<Account, Amount> accountToTotalCredit = new HashMap<Account, Amount>();
-	private Map<Account, Amount> accountToStartDebet = new HashMap<Account, Amount>();
-	private Map<Account, Amount> accountToStartCredit = new HashMap<Account, Amount>();
+	private Map<Account, Amount> accountToTotalDebet = new HashMap<>();
+	private Map<Account, Amount> accountToTotalCredit = new HashMap<>();
+	private Map<Account, Amount> accountToStartDebet = new HashMap<>();
+	private Map<Account, Amount> accountToStartCredit = new HashMap<>();
 
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 
@@ -51,7 +54,7 @@ public class ReportBuilder {
 		this.report = new Report(date, database.getCurrency());
 	}
 
-	public Report build() {
+	public Report build() throws ServiceException {
 		report.removeCompletedInvoices();
 		report.determineResultOfOperations();
 		addFootersToLedgerLines();
@@ -178,11 +181,9 @@ public class ReportBuilder {
 	public void addInvoice(Invoice invoice) {
 		report.addInvoice(invoice);
 
-		for (Payment p : InvoiceService.getPayments(database, invoice.getId())) {
-			if (DateUtil.compareDayOfYear(p.getDate(), report.getEndDate()) <= 0) {
-				report.addPayment(invoice, p.getAmount());
-			}
-		}
+		InvoiceService.getPayments(database, invoice.getId()).stream()
+				.filter(p -> DateUtil.compareDayOfYear(p.getDate(), report.getEndDate()) <= 0)
+				.forEach(p -> report.addPayment(invoice, p.getAmount()));
 	}
 
 	private Amount nullToZero(Amount amount) {
@@ -192,8 +193,8 @@ public class ReportBuilder {
 		return amount;
 	}
 
-	private void addFootersToLedgerLines() {
-		for (Account account : database.getAllAccounts()) {
+	private void addFootersToLedgerLines() throws ServiceException {
+		for (Account account : ObjectFactory.create(BookkeepingService.class).findAllAccounts(database)) {
 			if (!hasStartBalanceLineBeenAdded(account)) {
 				addStartLedgerLineForAccount(account,
 						accountToTotalDebet.get(account), accountToTotalCredit.get(account));

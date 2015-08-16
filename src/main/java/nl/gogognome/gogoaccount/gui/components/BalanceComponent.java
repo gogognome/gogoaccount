@@ -33,6 +33,7 @@ import nl.gogognome.gogoaccount.database.DatabaseListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -104,43 +105,43 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         }
 
         try {
-			report = BookkeepingService.createReport(database, date);
+			report = ObjectFactory.create(BookkeepingService.class).createReport(database, date);
+
+            setBorder(Factory.getInstance(WidgetFactory.class)
+                    .createTitleBorder("balanceComponent.title", report.getEndDate()));
+
+            List<Row> leftRows = convertAccountsToRows(report.getAssetsInclLossAccount());
+            List<Row> rightRows = convertAccountsToRows(report.getLiabilitiesInclProfitAccount());
+
+            balanceSheet.setLeftRows(leftRows);
+            balanceSheet.setRightRows(rightRows);
+            balanceSheet.update();
+
+            int row = 5 + Math.max(leftRows.size(), rightRows.size());
+
+            balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalDebtors")),
+                    SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
+                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalDebtors())),
+                    SwingUtils.createGBConstraints(2, row, 2, 1, 0.0, 0.0,
+                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+            row++;
+
+            balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalCreditors")),
+                    SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 0.0,
+                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalCreditors())),
+                    SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 0.0,
+                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+            row++;
 		} catch (ServiceException e) {
 			MessageDialog.showErrorMessage(this, e, "gen.internalError");
-			return;
+            close();
 		}
-
-        setBorder(Factory.getInstance(WidgetFactory.class)
-        		.createTitleBorder("balanceComponent.title", report.getEndDate()));
-
-        List<Row> leftRows = convertAccountsToRows(report.getAssetsInclLossAccount());
-        List<Row> rightRows = convertAccountsToRows(report.getLiabilitiesInclProfitAccount());
-
-        balanceSheet.setLeftRows(leftRows);
-        balanceSheet.setRightRows(rightRows);
-        balanceSheet.update();
-
-        int row = 5 + Math.max(leftRows.size(), rightRows.size());
-
-        balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalDebtors")),
-            SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
-                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalDebtors())),
-            SwingUtils.createGBConstraints(2, row, 2, 1, 0.0, 0.0,
-                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-        row++;
-
-        balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalCreditors")),
-            SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 0.0,
-                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-        balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalCreditors())),
-            SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 0.0,
-                GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-        row++;
     }
 
     private List<Row> convertAccountsToRows(List<Account> accounts) {
-        List<Row> rows = new ArrayList<Row>();
+        List<Row> rows = new ArrayList<>();
 
         for (Account a : accounts) {
         	Row row = new Row();

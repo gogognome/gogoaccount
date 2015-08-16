@@ -16,11 +16,10 @@
 */
 package nl.gogognome.gogoaccount.gui.components;
 
-import java.util.List;
-
 import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.lib.swing.JComboBoxWithKeyboardInput;
+
+import java.util.List;
 
 /**
  * This class implements a selection bean for <code>Account</code>s.
@@ -36,14 +35,14 @@ public class AccountSelectionBean extends JComboBoxWithKeyboardInput
 
     /**
      * Creates an <code>AccountCellEditor</code>.
-     * @param database the database to get the accounts from
+     * @param accounts all accounts from which one account must be selected
      * @param account the initial value shown in the editor;
      *        <code>null</code> indicates that no account is shown initially.
      */
-    public AccountSelectionBean(Database database, Account account) {
+    public AccountSelectionBean(List<Account> accounts, Account account) {
         super();
 
-        accounts = database.getAllAccounts();
+        this.accounts = accounts;
 		for (Account a : accounts) {
 		    addItem(a.getId() + ' ' + a.getName());
 		}

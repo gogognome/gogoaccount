@@ -23,6 +23,8 @@ import java.util.Map;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 
@@ -53,7 +55,7 @@ public class OdtReportGeneratorTask implements Task {
 	public Object execute(TaskProgressListener progressListener) throws Exception {
     	progressListener.onProgressUpdate(0);
 
-    	report = BookkeepingService.createReport(database, date);
+    	report = ObjectFactory.create(BookkeepingService.class).createReport(database, date);
     	progressListener.onProgressUpdate(33);
 
     	createModel();
@@ -65,7 +67,7 @@ public class OdtReportGeneratorTask implements Task {
 		return null;
 	}
 
-	private void createModel() {
+	private void createModel() throws ServiceException {
 		ReportToModelConverter converter = new ReportToModelConverter(database, report);
 		model = converter.getModel();
 	}

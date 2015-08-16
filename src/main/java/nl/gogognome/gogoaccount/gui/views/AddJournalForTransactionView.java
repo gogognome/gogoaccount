@@ -96,7 +96,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	@Override
-	protected void initValuesForNextJournal() {
+	protected void initValuesForNextJournal() throws ServiceException {
 		importedTransaction = plugin.getNextImportedTransaction();
 		if (importedTransaction != null) {
 			initValuesForImportedTransaction(importedTransaction);
@@ -112,7 +112,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 		plugin.journalAdded(journal);
 	}
 
-	private void initValuesForImportedTransaction(ImportedTransaction t) {
+	private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
 		dateModel.setDate(t.getDate());
 		descriptionModel.setString(t.getDescription());
 		ImportBankStatementService service = new ImportBankStatementService(database);
@@ -143,7 +143,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	@Override
-	protected JournalItem createDefaultItemToBeAdded() {
+	protected JournalItem createDefaultItemToBeAdded() throws ServiceException {
 		switch (itemsTableModel.getRowCount()) {
 		case 0: { // first item
 			Account account = new ImportBankStatementService(database).getToAccount(importedTransaction);

@@ -37,7 +37,9 @@ import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.gui.ActionRunner;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -113,13 +115,18 @@ public class EditJournalView extends View {
     }
 
     private void initModels() {
-        itemsTableModel = new ItemsTableModel(database);
-        itemsTableModel.setJournalItems(new JournalItem[0]);
+        try {
+            itemsTableModel = new ItemsTableModel(database);
+            itemsTableModel.setJournalItems(new JournalItem[0]);
 
-        initModelsForJournal(journalToBeEdited);
+            initModelsForJournal(journalToBeEdited);
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
 	}
 
-	private void initModelsForJournal(Journal initialValuesJournal) {
+	private void initModelsForJournal(Journal initialValuesJournal) throws ServiceException {
 		if (initialValuesJournal == null) {
         	dateModel.setDate(new Date(), null);
         } else {
@@ -189,7 +196,7 @@ public class EditJournalView extends View {
 	    return widgetFactory.createButton("ajd.addItem", new AbstractAction() {
 	        @Override
 			public void actionPerformed(ActionEvent evt) {
-	            handleAddButtonPressed();
+	            ActionRunner.run(EditJournalView.this, () -> handleAddButtonPressed());
 	        }
 	    });
     }
@@ -271,7 +278,7 @@ public class EditJournalView extends View {
 		database.addJournal(journal, true);
 	}
 
-	protected void initValuesForNextJournal() {
+	protected void initValuesForNextJournal() throws ServiceException {
 	}
 
     /**
@@ -301,7 +308,7 @@ public class EditJournalView extends View {
     }
 
     /** Handles the add button. Lets the user add a journal item. */
-    private void handleAddButtonPressed() {
+    private void handleAddButtonPressed() throws ServiceException {
     	JournalItem defaultItem = createDefaultItemToBeAdded();
     	EditJournalItemView view = new EditJournalItemView(database, defaultItem);
     	ViewDialog dialog = new ViewDialog(this, view);
@@ -319,7 +326,7 @@ public class EditJournalView extends View {
      * of the new journal item.
      * @return the journal item containing the initial values; null is allowed
      */
-    protected JournalItem createDefaultItemToBeAdded() {
+    protected JournalItem createDefaultItemToBeAdded() throws ServiceException {
 		return null;
 	}
 

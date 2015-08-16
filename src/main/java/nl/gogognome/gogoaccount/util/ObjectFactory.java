@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
 
-public class Factory {
+public class ObjectFactory {
 
     private static Map<Class<?>, Object> registredMocks = new HashMap<>();
     private final static Map<Class<?>, Constructor<?>> CLASS_TO_CONSTRUCTOR_WITHOUT_PARAMETERS = new ConcurrentHashMap<Class<?>, Constructor<?>>(100);

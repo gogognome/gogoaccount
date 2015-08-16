@@ -47,6 +47,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static nl.gogognome.gogoaccount.gui.ActionRunner.run;
+
 /**
  * This class implements the main frame of the application.
  *
@@ -65,7 +67,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** The tabbed pane containing the views. */
 	private ViewTabbedPane viewTabbedPane;
 
-	private Map<Class<?>, View> openViews = new HashMap<Class<?>, View>();
+	private Map<Class<?>, View> openViews = new HashMap<>();
 
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 	private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
@@ -201,7 +203,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	public void actionPerformed(ActionEvent e)
 	{
 		String command = e.getActionCommand();
-		if ("mi.newBookkeeping".equals(command)) { run(() -> handleNewEdition()); }
+		if ("mi.newBookkeeping".equals(command)) { run(this, () -> handleNewEdition()); }
 		if ("mi.openBookkeeping".equals(command)) { handleOpenBookkeeping(); }
 		if ("mi.configureBookkeeping".equals(command)) { handleConfigureBookkeeping(); }
 		if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
@@ -212,12 +214,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
 		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
 		if ("mi.viewInvoicesOverview".equals(command)) { handleViewPartyOverview(); }
-		if ("mi.addJournal".equals(command)) { run(() -> handleAddJournal()); }
-		if ("mi.editJournals".equals(command)) { run(() -> handleEditJournals()); }
-		if ("mi.addInvoices".equals(command)) { run(() -> handleAddInvoices()); }
+		if ("mi.addJournal".equals(command)) { run(this, () -> handleAddJournal()); }
+		if ("mi.editJournals".equals(command)) { run(this, () -> handleEditJournals()); }
+		if ("mi.addInvoices".equals(command)) { run(this, () -> handleAddInvoices()); }
         if ("mi.editParties".equals(command)) { handleEditParties(); }
-		if ("mi.generateInvoices".equals(command)) { run(() -> handleGenerateInvoices()); }
-		if ("mi.generateReport".equals(command)) { run(() -> handleGenerateReport()); }
+		if ("mi.generateInvoices".equals(command)) { run(this, () -> handleGenerateInvoices()); }
+		if ("mi.generateReport".equals(command)) { run(this, () -> handleGenerateReport()); }
 		if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
 		if ("mi.about".equals(command)) { handleAbout(); }
 	}
@@ -367,7 +369,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * @param fileName the name of the file.
 	 */
 	public void loadFile(String fileName) {
-        Database newDatabase = null;
+        Database newDatabase;
 		try {
 			newDatabase = new XMLFileReader(new File(fileName)).createDatabaseFromFile();
 		} catch (ServiceException e) {
@@ -534,15 +536,4 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         }
     }
 
-    private void run(RunnableWithServiceException runnable) {
-        try {
-            runnable.run();
-        } catch (ServiceException e) {
-            MessageDialog.showMessage(MainFrame.this, "gen.error", "gen.problemOccurred");
-        }
-    }
-
-    interface RunnableWithServiceException {
-        void run() throws ServiceException;
-    }
 }

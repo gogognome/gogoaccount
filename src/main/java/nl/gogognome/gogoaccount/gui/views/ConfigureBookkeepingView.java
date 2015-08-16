@@ -102,10 +102,15 @@ public class ConfigureBookkeepingView extends View {
 
 	@Override
 	public void onInit() {
-		initModels();
-		addComponents();
-		updateButtonState();
-		addListeners();
+		try {
+			initModels();
+			addComponents();
+			updateButtonState();
+			addListeners();
+		} catch (ServiceException e) {
+			MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+		}
 	}
 
 	private void initModels() {
@@ -123,7 +128,7 @@ public class ConfigureBookkeepingView extends View {
 		currencyModel.addModelChangeListener(modelChangeListener);
 	}
 
-	private void addComponents() {
+	private void addComponents() throws ServiceException {
 		setLayout(new BorderLayout());
 
 		InputFieldsColumn ifc = new InputFieldsColumn();

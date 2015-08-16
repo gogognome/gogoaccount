@@ -24,6 +24,9 @@ import javax.swing.JComponent;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
@@ -46,7 +49,7 @@ public class CloseBookkeepingView extends OkCancelView {
 
     private DateModel dateModel = new DateModel();
     private StringModel descriptionModel = new StringModel();
-	private ListModel<Account> accountListModel = new ListModel<Account>();
+	private ListModel<Account> accountListModel = new ListModel<>();
 
     private boolean dataSuccessfullyEntered;
 
@@ -69,8 +72,13 @@ public class CloseBookkeepingView extends OkCancelView {
 
     @Override
     public void onInit() {
-        initModels();
-        addComponents();
+        try {
+            initModels();
+            addComponents();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
     }
 
     @Override
@@ -135,9 +143,9 @@ public class CloseBookkeepingView extends OkCancelView {
         return descriptionModel.getString();
     }
 
-    private void initModels() {
+    private void initModels() throws ServiceException {
         dateModel.setDate(DateUtil.addYears(database.getStartOfPeriod(), 1), null);
-		accountListModel.setItems(database.getAllAccounts());
+		accountListModel.setItems(ObjectFactory.create(BookkeepingService.class).findAllAccounts(database));
 
         String description = database.getDescription();
         int year = DateUtil.getField(database.getStartOfPeriod(), Calendar.YEAR);

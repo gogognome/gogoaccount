@@ -27,6 +27,9 @@ import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -47,7 +50,7 @@ public class ReportToModelConverter {
     private TextResource textResource = Factory.getInstance(TextResource.class);
     private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
-	public ReportToModelConverter(Database database, Report report) {
+	public ReportToModelConverter(Database database, Report report) throws ServiceException {
 		super();
 		this.database = database;
 		this.report = report;
@@ -55,7 +58,7 @@ public class ReportToModelConverter {
 		createModel();
 	}
 
-	private void createModel() {
+	private void createModel() throws ServiceException {
 		model = new HashMap<String, Object>();
 
 		model.put("date", textResource.formatDate("gen.dateFormatFull", report.getEndDate()));
@@ -180,9 +183,10 @@ public class ReportToModelConverter {
 		return line;
 	}
 
-	private Object createAccounts() {
+	private Object createAccounts() throws ServiceException {
 		List<Map<String, Object>> accounts = new ArrayList<Map<String,Object>>();
-		for (Account account : database.getAllAccounts()) {
+		BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+		for (Account account : bookkeepingService.findAllAccounts(database)) {
 			accounts.add(createAccount(account));
 		}
 		return accounts;

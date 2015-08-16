@@ -37,7 +37,7 @@ public class ImportBankStatementService {
 	 * @return the account corresponding to the "from account" of the imported transaction;
 	 *         null if no account was found
 	 */
-	public Account getFromAccount(ImportedTransaction transaction) {
+	public Account getFromAccount(ImportedTransaction transaction) throws ServiceException {
 		return getAccountForImportedAccount(transaction.getFromAccount(), transaction.getFromName());
 	}
 
@@ -45,13 +45,15 @@ public class ImportBankStatementService {
 	 * @return the account corresponding to the "to account" of the imported transaction;
 	 *         null if no account was found
 	 */
-	public Account getToAccount(ImportedTransaction transaction) {
+	public Account getToAccount(ImportedTransaction transaction) throws ServiceException {
 		return getAccountForImportedAccount(transaction.getToAccount(), transaction.getToName());
 	}
 
-	private Account getAccountForImportedAccount(String account, String name) {
-		String key = getKey(account, name);
-		return database.getAccountForImportedAccount(key);
+	private Account getAccountForImportedAccount(String account, String name) throws ServiceException {
+		return ServiceTransaction.withResult(() -> {
+            String key = getKey(account, name);
+            return database.getAccountForImportedAccount(key);
+        });
 	}
 
 	public void setImportedToAccount(ImportedTransaction transaction, Account account) {

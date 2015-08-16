@@ -31,6 +31,7 @@ import nl.gogognome.gogoaccount.database.DatabaseListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -106,21 +107,21 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
         }
 
         try {
-			report = BookkeepingService.createReport(database, date);
+			report = ObjectFactory.create(BookkeepingService.class).createReport(database, date);
+
+            setBorder(widgetFactory.createTitleBorder("operationalResultComponent.title",
+                    report.getEndDate()));
+
+            List<Row> leftRows = convertAccountsToRows(report.getExpenses());
+            List<Row> rightRows = convertAccountsToRows(report.getRevenues());
+
+            balanceSheet.setLeftRows(leftRows);
+            balanceSheet.setRightRows(rightRows);
+            balanceSheet.update();
 		} catch (ServiceException e) {
 			MessageDialog.showErrorMessage(this, e, "gen.internalError");
-			return;
+            close();
 		}
-
-        setBorder(widgetFactory.createTitleBorder("operationalResultComponent.title",
-        		report.getEndDate()));
-
-        List<Row> leftRows = convertAccountsToRows(report.getExpenses());
-        List<Row> rightRows = convertAccountsToRows(report.getRevenues());
-
-        balanceSheet.setLeftRows(leftRows);
-        balanceSheet.setRightRows(rightRows);
-        balanceSheet.update();
     }
 
     private List<Row> convertAccountsToRows(List<Account> accounts) {

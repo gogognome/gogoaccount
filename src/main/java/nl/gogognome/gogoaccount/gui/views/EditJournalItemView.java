@@ -29,6 +29,9 @@ import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.ListModel;
@@ -51,9 +54,9 @@ public class EditJournalItemView extends OkCancelView {
     private InvoiceBean invoiceBean;
     private JournalItem itemToBeEdited;
 
-    private ListModel<Account> accountListModel = new ListModel<Account>();
+    private ListModel<Account> accountListModel = new ListModel<>();
     private StringModel amountModel = new StringModel();
-    private ListModel<String> sideListModel = new ListModel<String>();
+    private ListModel<String> sideListModel = new ListModel<>();
 
     private JournalItem enteredJournalItem;
 
@@ -83,18 +86,23 @@ public class EditJournalItemView extends OkCancelView {
 	}
 
 	private void initModels() {
-		accountListModel.setItems(database.getAllAccounts());
+		try {
+            accountListModel.setItems(ObjectFactory.create(BookkeepingService.class).findAllAccounts(database));
 
-		List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
-				textResource.getString("gen.credit"));
-		sideListModel.setItems(sides);
-		sideListModel.setSelectedIndex(0, null);
+            List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
+                    textResource.getString("gen.credit"));
+            sideListModel.setItems(sides);
+            sideListModel.setSelectedIndex(0, null);
 
-		invoiceBean = new InvoiceBean(database);
+            invoiceBean = new InvoiceBean(database);
 
-		if (itemToBeEdited != null) {
-			initModelsForItemToBeEdited();
-		}
+            if (itemToBeEdited != null) {
+                initModelsForItemToBeEdited();
+            }
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
 	}
 
 	private void initModelsForItemToBeEdited() {

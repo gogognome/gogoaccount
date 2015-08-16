@@ -16,23 +16,11 @@
 */
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Date;
-import java.util.List;
-
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.businessobjects.ReportType;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
@@ -40,6 +28,12 @@ import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class generates reports in a text-format.
@@ -88,26 +82,20 @@ public class ReportTask implements Task {
 	public Object execute(TaskProgressListener progressListener) throws Exception {
     	this.progressListener = progressListener;
     	progressListener.onProgressUpdate(0);
-        try {
-	        switch(fileType) {
-	            case PLAIN_TEXT:
-	                textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
-	                break;
-	            default:
-	                throw new IllegalArgumentException("Illegal file type: " + fileType);
-	        }
+        switch(fileType) {
+            case PLAIN_TEXT:
+                textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal file type: " + fileType);
+        }
 
-	        report = BookkeepingService.createReport(database, date);
-	        progressListener.onProgressUpdate(10);
+        report = ObjectFactory.create(BookkeepingService.class).createReport(database, date);
+        progressListener.onProgressUpdate(10);
 
-	        writer = new PrintWriter(new FileWriter(file));
-	        printReport();
-	        writer.close();
-        } catch (IOException e) {
-            if (writer != null) {
-                writer.close();
-            }
-            throw e;
+        try (PrintWriter writer = new PrintWriter(new FileWriter(file))){
+            this.writer = writer;
+            printReport();
         }
 
         progressListener.onProgressUpdate(100);
