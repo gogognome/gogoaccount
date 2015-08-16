@@ -16,52 +16,12 @@
 */
 package nl.gogognome.gogoaccount.gui;
 
-import java.awt.Dimension;
-import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.print.PrinterException;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.WindowConstants;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseListener;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
-import nl.gogognome.gogoaccount.gui.views.AboutView;
-import nl.gogognome.gogoaccount.gui.views.AccountMutationsView;
-import nl.gogognome.gogoaccount.gui.views.BalanceAndOperationResultView;
-import nl.gogognome.gogoaccount.gui.views.CloseBookkeepingView;
-import nl.gogognome.gogoaccount.gui.views.ConfigureBookkeepingView;
-import nl.gogognome.gogoaccount.gui.views.EditJournalView;
-import nl.gogognome.gogoaccount.gui.views.EditJournalsView;
-import nl.gogognome.gogoaccount.gui.views.ImportBankStatementView;
-import nl.gogognome.gogoaccount.gui.views.InvoiceGeneratorView;
-import nl.gogognome.gogoaccount.gui.views.InvoiceToOdtView;
-import nl.gogognome.gogoaccount.gui.views.InvoicesPerPartyView;
-import nl.gogognome.gogoaccount.gui.views.PartiesView;
-import nl.gogognome.gogoaccount.services.AddressLabelPrinter;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.XMLFileReader;
-import nl.gogognome.gogoaccount.services.XMLFileWriter;
-import nl.gogognome.gogoaccount.services.XMLParseException;
+import nl.gogognome.gogoaccount.gui.views.*;
+import nl.gogognome.gogoaccount.services.*;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
@@ -70,6 +30,22 @@ import nl.gogognome.lib.swing.views.ViewListener;
 import nl.gogognome.lib.swing.views.ViewTabbedPane;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.print.PrinterException;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class implements the main frame of the application.
@@ -81,7 +57,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
     private static final long serialVersionUID = 1L;
 
     /** The current database of the application. */
-    private Database database = new Database();
+    private Database database;
 
     /** The menu bar of the application. */
 	private JMenuBar menuBar = new JMenuBar();
@@ -94,9 +70,15 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 	private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
-	/** Creates the main frame. */
+    private BookkeepingService bookkeepingService = new BookkeepingService();
+
 	public MainFrame() {
 		super();
+		try {
+			database = new Database();
+		} catch (SQLException e) {
+			throw new RuntimeException("Could not create inital database: " + e.getMessage(), e);
+		}
 		database.addListener(this);
 		createMenuBar();
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -219,7 +201,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	public void actionPerformed(ActionEvent e)
 	{
 		String command = e.getActionCommand();
-		if ("mi.newBookkeeping".equals(command)) { handleNewEdition(); }
+		if ("mi.newBookkeeping".equals(command)) { run(() -> handleNewEdition()); }
 		if ("mi.openBookkeeping".equals(command)) { handleOpenBookkeeping(); }
 		if ("mi.configureBookkeeping".equals(command)) { handleConfigureBookkeeping(); }
 		if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
@@ -230,12 +212,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
 		if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
 		if ("mi.viewInvoicesOverview".equals(command)) { handleViewPartyOverview(); }
-		if ("mi.addJournal".equals(command)) { handleAddJournal(); }
-		if ("mi.editJournals".equals(command)) { handleEditJournals(); }
-		if ("mi.addInvoices".equals(command)) { handleAddInvoices(); }
+		if ("mi.addJournal".equals(command)) { run(() -> handleAddJournal()); }
+		if ("mi.editJournals".equals(command)) { run(() -> handleEditJournals()); }
+		if ("mi.addInvoices".equals(command)) { run(() -> handleAddInvoices()); }
         if ("mi.editParties".equals(command)) { handleEditParties(); }
-		if ("mi.generateInvoices".equals(command)) { handleGenerateInvoices(); }
-		if ("mi.generateReport".equals(command)) { handleGenerateReport(); }
+		if ("mi.generateInvoices".equals(command)) { run(() -> handleGenerateInvoices()); }
+		if ("mi.generateReport".equals(command)) { run(() -> handleGenerateReport()); }
 		if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
 		if ("mi.about".equals(command)) { handleAbout(); }
 	}
@@ -288,18 +270,19 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		return result;
 	}
 
-	/** Handles the new edition event. */
-	private void handleNewEdition()
-	{
+	private void handleNewEdition() throws ServiceException {
 		if (mayCurrentDatabaseBeDestroyed()) {
-			setDatabase(new Database());
-			database.setDescription(textResource.getString("mf.newBookkeepingDescription"));
+            try {
+                setDatabase(new Database());
+            } catch (SQLException e) {
+                throw new ServiceException(e);
+            }
+            database.setDescription(textResource.getString("mf.newBookkeepingDescription"));
 			database.databaseConsistentWithFile();
 			handleConfigureBookkeeping();
 		}
 	}
 
-	/** Handles the open bookkeeping event. */
 	private void handleOpenBookkeeping()
 	{
 		if (mayCurrentDatabaseBeDestroyed())
@@ -367,7 +350,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         String description = cbv.getDescription();
         if (date != null && accountToAddResultTo != null) {
             try {
-                Database newDatabase = BookkeepingService.closeBookkeeping(database, description, date, accountToAddResultTo);
+                Database newDatabase = bookkeepingService.closeBookkeeping(database, description, date, accountToAddResultTo);
                 setDatabase(newDatabase);
             } catch (ServiceException e) {
                 MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");
@@ -387,10 +370,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         Database newDatabase = null;
 		try {
 			newDatabase = new XMLFileReader(new File(fileName)).createDatabaseFromFile();
-		} catch (XMLParseException e) {
-			MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
-            return;
-		} catch (IOException e) {
+		} catch (ServiceException e) {
 			MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
         }
@@ -455,8 +435,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		openView(InvoicesPerPartyView.class);
 	}
 
-	private void handleAddJournal() {
-	    if (!database.hasAccounts()) {
+	private void handleAddJournal() throws ServiceException {
+	    if (!bookkeepingService.hasAccounts(database)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
             EditJournalView view = new EditJournalView(database, "ajd.title", null);
@@ -465,24 +445,24 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	    }
 	}
 
-	private void handleEditJournals() {
-	    if (!database.hasAccounts()) {
+	private void handleEditJournals() throws ServiceException {
+	    if (!bookkeepingService.hasAccounts(database)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
 	    	openView(EditJournalsView.class);
 	    }
 	}
 
-	private void handleGenerateInvoices() {
-	    if (!database.hasAccounts()) {
+	private void handleGenerateInvoices() throws ServiceException {
+	    if (!bookkeepingService.hasAccounts(database)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
 	    	openView(InvoiceToOdtView.class);
 	    }
 	}
 
-	private void handleGenerateReport() {
-	    if (!database.hasAccounts()) {
+	private void handleGenerateReport() throws ServiceException {
+	    if (!bookkeepingService.hasAccounts(database)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
 		    GenerateReportController controller = new GenerateReportController(database, this);
@@ -499,12 +479,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
         }
 	}
 
-	private void handleAddInvoices() {
-	    if (!database.hasAccounts()) {
-	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
-	    } else {
-	    	openView(InvoiceGeneratorView.class);
-	    }
+	private void handleAddInvoices() throws ServiceException {
+        if (!bookkeepingService.hasAccounts(database)) {
+            MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
+        } else {
+            openView(InvoiceGeneratorView.class);
+        }
 	}
 
 	/** Shows the about dialog. */
@@ -552,5 +532,17 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
             view.removeViewListener(this);
             openViews.remove(view.getClass());
         }
+    }
+
+    private void run(RunnableWithServiceException runnable) {
+        try {
+            runnable.run();
+        } catch (ServiceException e) {
+            MessageDialog.showMessage(MainFrame.this, "gen.error", "gen.problemOccurred");
+        }
+    }
+
+    interface RunnableWithServiceException {
+        void run() throws ServiceException;
     }
 }

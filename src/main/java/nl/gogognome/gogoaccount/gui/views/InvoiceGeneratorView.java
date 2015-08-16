@@ -23,10 +23,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
@@ -42,6 +39,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import nl.gogognome.dataaccess.DataAccessException;
+import nl.gogognome.dataaccess.transaction.RunTransaction;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Party;
@@ -74,6 +73,9 @@ public class InvoiceGeneratorView extends View {
 
 	private final Database database;
 
+    private List<Account> accounts;
+    private Currency currency;
+
 	private final JTextField tfDescription = new JTextField();
 	private DateModel invoiceGenerationDateModel;
 	private final JTextField tfId = new JTextField();
@@ -85,12 +87,14 @@ public class InvoiceGeneratorView extends View {
 	private class TemplateLine {
 		JRadioButton rbAmountToBePaid = new JRadioButton();
 		private final ListModel<Account> accountListModel = new ListModel<Account>();
-		AmountTextField tfDebet = new AmountTextField(database.getCurrency());
-		AmountTextField tfCredit = new AmountTextField(database.getCurrency());
+		AmountTextField tfDebet;
+		AmountTextField tfCredit;
 
-		public TemplateLine() {
+		public TemplateLine(List<Account> accounts, Currency currency) {
+			tfDebet = new AmountTextField(currency);
+			tfCredit = new AmountTextField(currency);
 			templateLinesButtonGroup.add(rbAmountToBePaid);
-			accountListModel.setItems(database.getAllAccounts());
+			accountListModel.setItems(accounts);
 		}
 	}
 
@@ -99,7 +103,7 @@ public class InvoiceGeneratorView extends View {
 	private JPanel templateLinesPanel;
 
 	public InvoiceGeneratorView(Database database) {
-		this.database = database;
+        this.database = database;
 	}
 
 	@Override
@@ -113,6 +117,15 @@ public class InvoiceGeneratorView extends View {
 
 	@Override
 	public void onInit() {
+        try {
+            RunTransaction.withoutResult(() -> {
+                accounts = database.getAccountDAO().findAll("id");
+                currency = database.getCurrency();
+            });
+        } catch (DataAccessException e) {
+            MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
+        }
+
 		JPanel invoiceTypePanel = createInvoiceTypePanel();
 		JPanel headerPanel = createHeaderPanel();
 		initTemplateLinesPanel();
@@ -157,7 +170,7 @@ public class InvoiceGeneratorView extends View {
 
 		// Add two empty lines so the user can start editing the template.
 		for (int i=0; i<2; i++) {
-			templateLines.add(new TemplateLine());
+			templateLines.add(new TemplateLine(accounts, currency));
 		}
 		updateTemplateLinesPanel();
 	}
@@ -283,7 +296,7 @@ public class InvoiceGeneratorView extends View {
 		JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
-				templateLines.add(new TemplateLine());
+				templateLines.add(new TemplateLine(accounts, currency));
 				updateTemplateLinesPanelAndRepaint();
 			}
 		});
@@ -418,10 +431,17 @@ public class InvoiceGeneratorView extends View {
 			templateLine.tfCredit.setText(totalAmount);
 			accountType = AccountType.CREDITOR;
 		}
-		List<Account> accounts = database.getAccountsOfType(accountType);
-		if (!accounts.isEmpty()) {
-			templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
-		}
+
+        try {
+            RunTransaction.withoutResult(() -> {
+                List<Account> accounts = database.getAccountDAO().findAccountsOfType(accountType);
+                if (!accounts.isEmpty()) {
+                    templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
+                }
+            });
+        } catch (DataAccessException e) {
+            MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
+        }
 	}
 
 }

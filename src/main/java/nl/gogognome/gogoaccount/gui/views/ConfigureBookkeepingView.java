@@ -73,6 +73,7 @@ public class ConfigureBookkeepingView extends View {
 	private static final long serialVersionUID = 1L;
 
 	private final Database database;
+	private final BookkeepingService bookkeepingService = Factory.getInstance(BookkeepingService.class);
 
 	private final StringModel descriptionModel = new StringModel();
 	private final ListModel<Currency> currencyModel = new ListModel<Currency>();
@@ -219,7 +220,7 @@ public class ConfigureBookkeepingView extends View {
 				"ConfigureBookkeepingView.deleteAccountAreYouSure",	account.getId() + " - " + account.getName());
 		if (choice == MessageDialog.YES_OPTION) {
 			try {
-				BookkeepingService.deleteAccount(database, account);
+				bookkeepingService.deleteAccount(database, account);
 				int index = SwingUtils.getSelectedRowConvertedToModel(table);
 				tableModel.removeRow(index);
 			} catch (ServiceException e) {
@@ -235,7 +236,7 @@ public class ConfigureBookkeepingView extends View {
 		Account account = eav.getEditedAccount();
 		if (account != null) {
 			try {
-				BookkeepingService.addAccount(database, account);
+				bookkeepingService.addAccount(database, account);
 				AccountDefinition definition = new AccountDefinition();
 				definition.account = account;
 				tableModel.addRow(definition);
@@ -256,7 +257,7 @@ public class ConfigureBookkeepingView extends View {
 			Account account = eav.getEditedAccount();
 			if (account != null) {
 				try {
-					BookkeepingService.updateAccount(database, account);
+					bookkeepingService.updateAccount(database, account);
 					definition.account = account;
 					tableModel.updateRow(rows[0], definition);
 				} catch (ServiceException e) {
@@ -266,8 +267,8 @@ public class ConfigureBookkeepingView extends View {
 		}
 	}
 
-	private static List<AccountDefinition> getAccountDefinitions(Database database) {
-		List<Account> accounts = database.getAllAccounts();
+	private List<AccountDefinition> getAccountDefinitions(Database database) throws ServiceException {
+		List<Account> accounts = bookkeepingService.findAllAccounts(database);
 		List<AccountDefinition> result = new ArrayList<AccountDefinition>(accounts.size());
 		for (Account account : accounts) {
 			AccountDefinition accountDefinition = new AccountDefinition();

@@ -18,22 +18,12 @@ package nl.gogognome.gogoaccount.database;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Currency;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
 
+import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
+import nl.gogognome.dataaccess.transaction.CompositeTransaction;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
@@ -43,33 +33,23 @@ import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
+import nl.gogognome.gogoaccount.util.Factory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
 import com.google.common.base.Joiner;
+import org.h2.jdbcx.JdbcDataSource;
 
-/**
- * This class maintains all accounts, journals, debtors and
- * creditors for the bookkeeping.
- *
- * @author Sander Kooijmans
- */
 public class Database {
 
 	/** Description of the bookkeeping represented by this database. */
 	private String description = "";
 
-	private Map<String, Account> assets = new TreeMap<String, Account>();
-	private Map<String, Account> liabilities = new TreeMap<String, Account>();
-	private Map<String, Account> revenues = new TreeMap<String, Account>();
-	private Map<String, Account> expenses = new TreeMap<String, Account>();
+	private Connection connectionToKeepInMemoryDatabaseAlive;
 
 	private final ArrayList<Journal> journals = new ArrayList<Journal>();
 
 	private ArrayList<Party> parties = new ArrayList<Party>();
-
-	/** Maps ids of accounts to <code>Account</code>s. */
-	private final HashMap<String, Account> idsToAccountsMap = new HashMap<String, Account>();
 
 	/** Maps ids of parties to <code>Party</code> instances. */
 	private HashMap<String, Party> idsToPartiesMap = new HashMap<String, Party>();
@@ -105,7 +85,22 @@ public class Database {
 	 */
 	private final ArrayList<DatabaseListener> listeners = new ArrayList<DatabaseListener>();
 
-	/**
+    private final String bookkeepingId = UUID.randomUUID().toString();
+
+    private AccountDAO accountDAO = Factory.create(AccountDAO.class);
+
+    public Database() throws SQLException {
+        JdbcDataSource dataSource = new JdbcDataSource();
+        dataSource.setURL("jdbc:h2:mem:bookkeeping-" + bookkeepingId);
+        CompositeDatasourceTransaction.registerDataSource(bookkeepingId, dataSource);
+        connectionToKeepInMemoryDatabaseAlive = dataSource.getConnection();
+    }
+
+    public AccountDAO getAccountDAO() {
+        return accountDAO;
+    }
+
+    /**
 	 * Adds a database listener.
 	 * @param l the database listener.
 	 */
@@ -170,46 +165,6 @@ public class Database {
 		notifyChange();
 	}
 
-	/**
-	 * Gets an account based on its id.
-	 * @param id the id of the account
-	 * @return the account or <code>null</code> if no account was
-	 *         found with the specified id.
-	 */
-	public Account getAccount(String id) {
-		return idsToAccountsMap.get(id);
-	}
-
-	public List<Account> getAssets() {
-		return new ArrayList<Account>(assets.values());
-	}
-
-	public List<Account> getAccountsOfType(AccountType accountType) {
-		List<Account> accounts = newArrayList();
-		for (Account asset : getAllAccounts()) {
-			if (asset.getType() == accountType) {
-				accounts.add(asset);
-			}
-		}
-		return accounts;
-	}
-
-	/**
-	 * Sets the assets.
-	 * @param assets the assets
-	 * @throws DatabaseModificationFailedException if there is an asset for which holds
-	 *         <code>!asset.isDebet()</code>.
-	 */
-	public void setAssets(Iterable<Account> assets) throws DatabaseModificationFailedException {
-		checkAccountTypes(assets, true, true);
-
-		this.assets = new TreeMap<String, Account>();
-		for (Account account : assets) {
-			this.assets.put(account.getId(), account);
-		}
-		updateIdsToAccountsMap();
-	}
-
 	private void checkAccountTypes(Iterable<Account> accounts, boolean debet, boolean balanceAccount)
 			throws DatabaseModificationFailedException {
 		for (Account a : accounts){
@@ -218,61 +173,6 @@ public class Database {
 						+ a.getType() + " instead of " + Joiner.on(", ").join(AccountType.get(debet, balanceAccount)) + ".");
 			}
 		}
-	}
-
-	public List<Account> getExpenses() {
-		return new ArrayList<Account>(expenses.values());
-	}
-
-	public void setExpenses(Iterable<Account> expenses) throws DatabaseModificationFailedException {
-		checkAccountTypes(expenses, true, false);
-
-		this.expenses = new TreeMap<String, Account>();
-		for (Account account : expenses) {
-			this.expenses.put(account.getId(), account);
-		}
-		updateIdsToAccountsMap();
-	}
-
-	public List<Account> getLiabilities() {
-		return new ArrayList<Account>(liabilities.values());
-	}
-
-	public void setLiabilities(Iterable<Account> liabilities) throws DatabaseModificationFailedException {
-		checkAccountTypes(liabilities, false, true);
-
-		this.liabilities = new TreeMap<String, Account>();
-		for (Account account : liabilities) {
-			this.liabilities.put(account.getId(), account);
-		}
-		updateIdsToAccountsMap();
-	}
-
-	public List<Account> getRevenues() {
-		return new ArrayList<Account>(revenues.values());
-	}
-
-	public void setRevenues(Iterable<Account> revenues) throws DatabaseModificationFailedException {
-		checkAccountTypes(revenues, false, false);
-
-		this.revenues = new TreeMap<String, Account>();
-		for (Account account : revenues) {
-			this.revenues.put(account.getId(), account);
-		}
-		updateIdsToAccountsMap();
-	}
-
-	/**
-	 * Gets all accounts of this database. The accounts are a concatenation of the
-	 * assets, liabilities, expenses and revenues.
-	 * @return all accounts of this database
-	 */
-	public List<Account> getAllAccounts() {
-		List<Account> accounts = getAssets();
-		accounts.addAll(getLiabilities());
-		accounts.addAll(getExpenses());
-		accounts.addAll(getRevenues());
-		return accounts;
 	}
 
 	public Date getStartOfPeriod()
@@ -629,18 +529,6 @@ public class Database {
 		notifyChange();
 	}
 
-	/**
-	 * Updates the map <code>idsToAccountsMap</code> based on all
-	 * accounts registered at this database.
-	 */
-	private void updateIdsToAccountsMap() {
-		idsToAccountsMap.clear();
-		idsToAccountsMap.putAll(assets);
-		idsToAccountsMap.putAll(liabilities);
-		idsToAccountsMap.putAll(expenses);
-		idsToAccountsMap.putAll(revenues);
-	}
-
 	public String getFileName()
 	{
 		return fileName;
@@ -650,16 +538,6 @@ public class Database {
 	{
 		this.fileName = fileName;
 		notifyChange();
-	}
-
-	/**
-	 * Checks whether any accounts are present in this database.
-	 * @return <code>true</code> if any account is present; otherwise <code>false</code>
-	 *
-	 */
-	public boolean hasAccounts()
-	{
-		return !assets.isEmpty() || !liabilities.isEmpty() || !expenses.isEmpty() || !revenues.isEmpty();
 	}
 
 	/**
@@ -861,69 +739,6 @@ public class Database {
 	}
 
 	/**
-	 * Adds an account to the database.
-	 * @param database the database
-	 * @param account the account
-	 * @throws DatabaseModificationFailedException if a problem occurs while creating the account
-	 */
-	public void addAccount(Account account) throws DatabaseModificationFailedException {
-		if (idsToAccountsMap.containsKey(account.getId())) {
-			throw new DatabaseModificationFailedException("An account with id " + account.getId() + " already exists!");
-		}
-		doAddAccout(account);
-		notifyChange();
-	}
-
-	private void doAddAccout(Account account) {
-		AccountType type = account.getType();
-		if (type.isBalanceAccount()) {
-			if (type.isDebet()) {
-				assets.put(account.getId(), account);
-			} else {
-				liabilities.put(account.getId(), account);
-			}
-		} else {
-			if (type.isDebet()) {
-				expenses.put(account.getId(), account);
-			} else {
-				revenues.put(account.getId(), account);
-			}
-		}
-		idsToAccountsMap.put(account.getId(), account);
-	}
-
-	/**
-	 * Updates an existing account to the database.
-	 * @param database the database
-	 * @param account the account
-	 * @throws DatabaseModificationFailedException if a problem occurs while updating the account
-	 */
-	public void updateAccount(Account account) throws DatabaseModificationFailedException {
-		if (!idsToAccountsMap.containsKey(account.getId())) {
-			throw new DatabaseModificationFailedException("Cannot update account " + account.getId() +
-					" because it does not exist!");
-		}
-
-		doRemoveAccount(account.getId());
-		doAddAccout(account);
-
-		notifyChange();
-	}
-
-	/**
-	 * Removes an account from the database. The account may not be in use.
-	 * @param accountId the id of the account
-	 * @throws DatabaseModificationFailedException if a problem occurs
-	 */
-	public void removeAccount(String accountId) throws DatabaseModificationFailedException {
-		if (isAccountUsed(accountId)) {
-			throw new DatabaseModificationFailedException("The account " + accountId + " is in use and can therefore not be deleted!");
-		}
-		doRemoveAccount(accountId);
-		notifyChange();
-	}
-
-	/**
 	 * Sets a link between an account of an imported transaction and an account
 	 * of gogo account.
 	 * @param importedAccount the account of an imported transaction
@@ -939,10 +754,10 @@ public class Database {
 	 * @param importedAccount the account of an imported transaction
 	 * @return the account or null if no corresponding account is found
 	 */
-	public Account getAccountForImportedAccount(String importedAccount) {
+	public Account getAccountForImportedAccount(String importedAccount) throws SQLException {
 		String accountId = importedTransactionAccountToAccountMap.get(importedAccount);
 		if (accountId != null) {
-			return getAccount(accountId);
+			return accountDAO.get(accountId);
 		} else {
 			return null;
 		}
@@ -950,14 +765,6 @@ public class Database {
 
 	public Map<String, String> getImportedTransactionAccountToAccountMap() {
 		return importedTransactionAccountToAccountMap;
-	}
-
-	private void doRemoveAccount(String accountId) {
-		idsToAccountsMap.remove(accountId);
-		assets.remove(accountId);
-		liabilities.remove(accountId);
-		expenses.remove(accountId);
-		revenues.remove(accountId);
 	}
 
 	private static Date getFirstDayOfYear(Date date) {

@@ -16,39 +16,27 @@
  */
 package nl.gogognome.gogoaccount.services;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.io.File;
-import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Currency;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
+import nl.gogognome.dataaccess.DataAccessException;
+import nl.gogognome.dataaccess.transaction.RunTransaction;
+import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.StringUtil;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import com.google.common.collect.Iterables;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import static com.google.common.collect.Lists.newArrayList;
 
 
 
@@ -74,60 +62,55 @@ public class XMLFileReader {
 	/**
 	 * Creates a <tt>Database</tt> from a file.
 	 * @return a <tt>Database</tt> with the contents of the file.
-	 * @throws XMLParseException if a syntax error is found in the file.
-	 * @throws IOException if an I/O problem occurs while reading the file.
+	 * @throws ServiceException if a problem occurs
 	 */
-	public Database createDatabaseFromFile() throws XMLParseException, IOException {
-		try {
-			int highestPaymentId = 0;
+	public Database createDatabaseFromFile() throws ServiceException {
+        try {
+            return RunTransaction.withResult(() -> {
+                int highestPaymentId = 0;
 
-			database = new Database();
-			database.setFileName(file.getAbsolutePath());
+                database = new Database();
+                database.setFileName(file.getAbsolutePath());
 
-			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
-			DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-			Document doc = docBuilder.parse(file);
-			Element rootElement = doc.getDocumentElement();
+                DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
+                DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
+                Document doc = docBuilder.parse(file);
+                Element rootElement = doc.getDocumentElement();
 
-			fileVersion = rootElement.getAttribute("fileversion");
+                fileVersion = rootElement.getAttribute("fileversion");
 
-			String description = rootElement.getAttribute("description");
-			database.setDescription(description);
+                String description = rootElement.getAttribute("description");
+                database.setDescription(description);
 
-			String currency = rootElement.getAttribute("currency");
-			database.setCurrency(Currency.getInstance(currency));
+                String currency = rootElement.getAttribute("currency");
+                database.setCurrency(Currency.getInstance(currency));
 
-			Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
-			database.setStartOfPeriod(startDate);
+                Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
+                database.setStartOfPeriod(startDate);
 
-			// parse accounts
-			if (fileVersion == null || fileVersion.equals("1.0")) {
-				parseAccountsBeforeVersion2_2(rootElement);
-			} else {
-				parseAccountsForVersion2_2(rootElement);
-			}
+                // parse accounts
+                if (fileVersion == null || fileVersion.equals("1.0")) {
+                    parseAccountsBeforeVersion2_2(rootElement);
+                } else {
+                    parseAccountsForVersion2_2(rootElement);
+                }
 
-			parseAndAddParties(rootElement.getElementsByTagName("parties"));
+                parseAndAddParties(rootElement.getElementsByTagName("parties"));
 
-			parseAndAddInvoices(rootElement.getElementsByTagName("invoices"));
+                parseAndAddInvoices(rootElement.getElementsByTagName("invoices"));
 
-			parseAndAddJournals(highestPaymentId, rootElement);
+                parseAndAddJournals(highestPaymentId, rootElement);
 
-			parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
+                parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
 
-			return database;
-		} catch(Exception e) {
-			if (e instanceof XMLParseException) {
-				throw (XMLParseException)e;
-			} else if (e instanceof IOException) {
-				throw (IOException) e;
-			} else {
-				throw new XMLParseException(e);
-			}
-		}
+                return database;
+            });
+        } catch (DataAccessException e) {
+            throw new ServiceException(e);
+        }
 	}
 
-	private void parseAccountsForVersion2_2(Element rootElement) throws DatabaseModificationFailedException {
+	private void parseAccountsForVersion2_2(Element rootElement) throws SQLException {
 		List<Account> accounts = newArrayList();
 		NodeList nodes = rootElement.getElementsByTagName("accounts");
 		for (int i=0; i<nodes.getLength(); i++)
@@ -140,33 +123,35 @@ public class XMLFileReader {
 				String id = accountElem.getAttribute("id");
 				String name = accountElem.getAttribute("name");
 				AccountType type = AccountType.valueOf(accountElem.getAttribute("type"));
-				accounts.add(new Account(id, name, type));
+                database.getAccountDAO().create(new Account(id, name, type));
 			}
 		}
-
-		database.setAssets(Iterables.filter(accounts, new AccountTypeIn(AccountType.ASSET, AccountType.DEBTOR)));
-		database.setLiabilities(Iterables.filter(accounts, new AccountTypeIn(AccountType.LIABILITY, AccountType.CREDITOR)));
-		database.setExpenses(Iterables.filter(accounts, new AccountTypeIn(AccountType.EXPENSE)));
-		database.setRevenues(Iterables.filter(accounts, new AccountTypeIn(AccountType.REVENUE)));
 	}
 
-	private void parseAccountsBeforeVersion2_2(Element rootElement)
-			throws DatabaseModificationFailedException {
+	private void parseAccountsBeforeVersion2_2(Element rootElement) throws SQLException {
 		List<Account> assets = parseAccounts(rootElement.getElementsByTagName("assets"), AccountType.ASSET);
-		database.setAssets(assets);
+		for (Account account : assets) {
+            database.getAccountDAO().create(account);
+        }
 
 		List<Account> liabilities = parseAccounts(rootElement.getElementsByTagName("liabilities"), AccountType.LIABILITY);
-		database.setLiabilities(liabilities);
+        for (Account account : liabilities) {
+            database.getAccountDAO().create(account);
+        }
 
 		List<Account> expenses = parseAccounts(rootElement.getElementsByTagName("expenses"), AccountType.EXPENSE);
-		database.setExpenses(expenses);
+        for (Account account : expenses) {
+            database.getAccountDAO().create(account);
+        }
 
 		List<Account> revenues = parseAccounts(rootElement.getElementsByTagName("revenues"), AccountType.REVENUE);
-		database.setRevenues(revenues);
-	}
+        for (Account account : revenues) {
+            database.getAccountDAO().create(account);
+        }
+    }
 
 	private void parseAndAddJournals(int highestPaymentId, Element rootElement)
-			throws ParseException, DatabaseModificationFailedException {
+            throws ParseException, DatabaseModificationFailedException, SQLException {
 		String description;
 		NodeList journalsNodes = rootElement.getElementsByTagName("journals");
 		for (int i=0; i<journalsNodes.getLength(); i++) {
@@ -204,7 +189,7 @@ public class XMLFileReader {
 						}
 					}
 
-					itemsList.add(new JournalItem(amount, database.getAccount(itemId),
+					itemsList.add(new JournalItem(amount, database.getAccountDAO().get(itemId),
 							"debet".equals(side), invoiceId, paymentId));
 				}
 
@@ -290,7 +275,6 @@ public class XMLFileReader {
 
 	/**
 	 * Parses invoices and adds them to the database
-	 * @param database the database to which the invoices are to be added
 	 * @param nodes a node list containing invoices.
 	 * @return an array of invoices found in <code>nodes</code>
 	 * @throws XMLParseException if a syntax error is found in the nodes

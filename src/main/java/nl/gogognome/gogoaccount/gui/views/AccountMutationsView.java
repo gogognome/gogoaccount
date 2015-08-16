@@ -24,6 +24,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
+import nl.gogognome.dataaccess.DataAccessException;
+import nl.gogognome.dataaccess.transaction.RunTransaction;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.database.Database;
@@ -147,7 +149,7 @@ public class AccountMutationsView extends View {
 
 	private void updateReport(Date date) {
 		try {
-			report = BookkeepingService.createReport(database, date);
+			report = new BookkeepingService().createReport(database, date);
 		} catch (ServiceException e) {
 			report = null;
 			MessageDialog.showErrorMessage(this, e, "gen.internalError");
@@ -169,8 +171,12 @@ public class AccountMutationsView extends View {
 	}
 
 	private void setAccountsInListModel() {
-		accountListModel.setItems(database.getAllAccounts());
-	}
+        try {
+            RunTransaction.withoutResult(() -> accountListModel.setItems(database.getAccountDAO().findAll("id")));
+        } catch (DataAccessException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        }
+    }
 
 	private final class ModelChangeListenerImpl implements ModelChangeListener {
 		@Override
