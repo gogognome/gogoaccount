@@ -40,7 +40,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import nl.gogognome.dataaccess.DataAccessException;
-import nl.gogognome.dataaccess.transaction.RunTransaction;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Party;
@@ -50,6 +49,7 @@ import nl.gogognome.gogoaccount.gui.components.AmountTextField;
 import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
@@ -118,12 +118,14 @@ public class InvoiceGeneratorView extends View {
 	@Override
 	public void onInit() {
         try {
-            RunTransaction.withoutResult(() -> {
-                accounts = database.getAccountDAO().findAll("id");
-                currency = database.getCurrency();
-            });
-        } catch (DataAccessException e) {
+            ServiceTransaction.withoutResult(() -> {
+				accounts = database.getAccountDAO().findAll("id");
+				currency = database.getCurrency();
+			});
+        } catch (ServiceException e) {
             MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
+			close();
+            return;
         }
 
 		JPanel invoiceTypePanel = createInvoiceTypePanel();
@@ -433,13 +435,13 @@ public class InvoiceGeneratorView extends View {
 		}
 
         try {
-            RunTransaction.withoutResult(() -> {
+            ServiceTransaction.withoutResult(() -> {
                 List<Account> accounts = database.getAccountDAO().findAccountsOfType(accountType);
                 if (!accounts.isEmpty()) {
                     templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
                 }
             });
-        } catch (DataAccessException e) {
+        } catch (ServiceException e) {
             MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
         }
 	}

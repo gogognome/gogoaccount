@@ -87,13 +87,15 @@ public class Database {
 
     private final String bookkeepingId = UUID.randomUUID().toString();
 
-    private AccountDAO accountDAO = Factory.create(AccountDAO.class);
+    private final AccountDAO accountDAO;
 
     public Database() throws SQLException {
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:mem:bookkeeping-" + bookkeepingId);
         CompositeDatasourceTransaction.registerDataSource(bookkeepingId, dataSource);
         connectionToKeepInMemoryDatabaseAlive = dataSource.getConnection();
+
+		accountDAO = new AccountDAO(bookkeepingId);
     }
 
     public AccountDAO getAccountDAO() {

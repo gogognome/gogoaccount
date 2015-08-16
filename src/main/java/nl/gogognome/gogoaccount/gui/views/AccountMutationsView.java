@@ -16,16 +16,6 @@
 */
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.util.Date;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-
-import nl.gogognome.dataaccess.DataAccessException;
-import nl.gogognome.dataaccess.transaction.RunTransaction;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.database.Database;
@@ -33,6 +23,7 @@ import nl.gogognome.gogoaccount.database.DatabaseListener;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.AbstractModel;
@@ -40,6 +31,10 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.Date;
 
 /**
  * This view shows all mutations for an account.
@@ -172,8 +167,8 @@ public class AccountMutationsView extends View {
 
 	private void setAccountsInListModel() {
         try {
-            RunTransaction.withoutResult(() -> accountListModel.setItems(database.getAccountDAO().findAll("id")));
-        } catch (DataAccessException e) {
+            ServiceTransaction.withoutResult(() -> accountListModel.setItems(database.getAccountDAO().findAll("id")));
+        } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
     }

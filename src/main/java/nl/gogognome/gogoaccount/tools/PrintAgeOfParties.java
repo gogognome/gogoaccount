@@ -16,21 +16,20 @@
 */
 package nl.gogognome.gogoaccount.tools;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
-import nl.gogognome.gogoaccount.services.XMLParseException;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * This class implements a small application that prints the age of all parties on a specified date.
@@ -51,27 +50,27 @@ public class PrintAgeOfParties {
         // arguments are shown in the specified language.
         initFactory(Locale.getDefault());
         TextResource tr = Factory.getInstance(TextResource.class);
-        for (int i=0; i<args.length; i++) {
-            if (args[i].startsWith("-lang=")) {
-                initFactory(new Locale(args[i].substring(6)));
+        for (String arg : args) {
+            if (arg.startsWith("-lang=")) {
+                initFactory(new Locale(arg.substring(6)));
             }
         }
 
-        for (int i=0; i<args.length; i++) {
-            if (args[i].startsWith("-xml-file=")) {
+        for (String arg : args) {
+            if (arg.startsWith("-xml-file=")) {
                 if (xmlFileName != null) {
                     System.out.println(tr.getString("printAge.moreThanOneXmlFile"));
                     printUsage();
                     return;
                 }
-                xmlFileName = args[i].substring(10);
-            } else if (args[i].startsWith("-date=")) {
+                xmlFileName = arg.substring(10);
+            } else if (arg.startsWith("-date=")) {
                 if (dateString != null) {
                     System.out.println(tr.getString("printAge.moreThanOneDate"));
                     printUsage();
                     return;
                 }
-                dateString = args[i].substring(6);
+                dateString = arg.substring(6);
             }
         }
 
@@ -98,19 +97,17 @@ public class PrintAgeOfParties {
         try {
             Database db = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
             Party[] parties = db.getParties();
-            for (int i = 0; i < parties.length; i++) {
-                Date birthDay = parties[i].getBirthDate();
-                System.out.print(parties[i].getId() + " - " + parties[i].getName() + ": ");
+            for (Party party : parties) {
+                Date birthDay = party.getBirthDate();
+                System.out.print(party.getId() + " - " + party.getName() + ": ");
                 if (birthDay != null) {
                     System.out.println(DateUtil.getDifferenceInYears(date, birthDay));
                 } else {
                     System.out.println(tr.getString("printAge.unknownBirthDay"));
                 }
             }
-        } catch (XMLParseException e) {
-            System.out.println(tr.getString("printAge.syntaxError", e.getMessage()));
-        } catch (IOException e) {
-            System.out.println(tr.getString("printAge.ioError", e.getMessage()));
+        } catch (ServiceException e) {
+            System.out.println(tr.getString("gen.problemOccurred", e.getMessage()));
         }
     }
 

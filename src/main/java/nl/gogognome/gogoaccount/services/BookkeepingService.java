@@ -16,25 +16,17 @@
 */
 package nl.gogognome.gogoaccount.services;
 
+import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
-import nl.gogognome.dataaccess.DataAccessException;
-import nl.gogognome.dataaccess.transaction.RunTransaction;
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.businessobjects.ReportBuilder;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.util.DateUtil;
 
 
 /**
@@ -45,127 +37,115 @@ import nl.gogognome.lib.util.DateUtil;
 public class BookkeepingService {
 
     public boolean hasAccounts(Database database) throws ServiceException {
-        try {
-            return RunTransaction.withResult(() -> database.getAccountDAO().hasAny());
-        } catch (DataAccessException e) {
-            throw new ServiceException(e);
-        }
+        return ServiceTransaction.withResult(() -> database.getAccountDAO().hasAny());
     }
 
     public List<Account> findAllAccounts(Database database) throws ServiceException {
-        try {
-            return RunTransaction.withResult(() -> database.getAccountDAO().findAll("id"));
-        } catch (DataAccessException e) {
-            throw new ServiceException(e);
-        }
+        return ServiceTransaction.withResult(() -> database.getAccountDAO().findAll("id"));
     }
 
     public Database closeBookkeeping(Database database, String description, Date date, Account equity) throws ServiceException {
-        try {
-            return RunTransaction.withResult(() -> {
-                if (database.hasUnsavedChanges()) {
-                    throw new ServiceException("The bookkeeping contains unsaved changes. " +
-                            "First save the changes before closing the bookkeeping.");
+        return ServiceTransaction.withResult(() -> {
+            if (database.hasUnsavedChanges()) {
+                throw new ServiceException("The bookkeeping contains unsaved changes. " +
+                        "First save the changes before closing the bookkeeping.");
+            }
+
+            Database newDatabase;
+            try {
+                newDatabase = new Database();
+            } catch (SQLException e) {
+                throw new ServiceException("Failed to create new database: " + e.getMessage(), e);
+            }
+            newDatabase.setCurrency(database.getCurrency());
+            newDatabase.setDescription(description);
+            newDatabase.setFileName(null);
+            newDatabase.setStartOfPeriod(date);
+
+            // Copy the parties
+            try {
+                newDatabase.setParties(database.getParties());
+            } catch (DatabaseModificationFailedException e) {
+                throw new ServiceException("Failed to copy parties to the new bookkeeping.", e);
+            }
+
+            // Copy the accounts
+            for (Account account : database.getAccountDAO().findAll()) {
+                newDatabase.getAccountDAO().create(account);
+            }
+
+            // Create start balance
+            Date dayBeforeStart = DateUtil.addDays(date, -1);
+
+            List<JournalItem> journalItems = new ArrayList<JournalItem>(20);
+            for (Account account : database.getAccountDAO().findAssets()) {
+                JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
+                        newDatabase.getAccountDAO().get(account.getId()), true, null, null);
+                if (!item.getAmount().isZero()) {
+                    journalItems.add(item);
                 }
-
-                Database newDatabase;
-                try {
-                    newDatabase = new Database();
-                } catch (SQLException e) {
-                    throw new ServiceException("Failed to create new database: " + e.getMessage(), e);
+            }
+            for (Account account : database.getAccountDAO().findLiabilities()) {
+                JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
+                        newDatabase.getAccountDAO().get(account.getId()), false, null, null);
+                if (!item.getAmount().isZero()) {
+                    journalItems.add(item);
                 }
-                newDatabase.setCurrency(database.getCurrency());
-                newDatabase.setDescription(description);
-                newDatabase.setFileName(null);
-                newDatabase.setStartOfPeriod(date);
+            }
 
-                // Copy the parties
-                try {
-                    newDatabase.setParties(database.getParties());
-                } catch (DatabaseModificationFailedException e) {
-                    throw new ServiceException("Failed to copy parties to the new bookkeeping.", e);
-                }
+            // Add the result of operations to the specified account.
+            Report report = createReport(database, dayBeforeStart);
+            Amount resultOfOperations = report.getResultOfOperations();
+            if (resultOfOperations.isPositive()) {
+                journalItems.add(new JournalItem(resultOfOperations, newDatabase.getAccountDAO().get(equity.getId()), false, null, null));
+            } else if (resultOfOperations.isNegative()) {
+                journalItems.add(new JournalItem(resultOfOperations.negate(), newDatabase.getAccountDAO().get(equity.getId()), true, null, null));
+            }
+            try {
+                Journal startBalance = new Journal("start", "start balance", dayBeforeStart,
+                        journalItems.toArray(new JournalItem[journalItems.size()]), null);
+                newDatabase.addJournal(startBalance, false);
+            } catch (IllegalArgumentException e) {
+                throw new ServiceException("Failed to create journal for start balance.", e);
+            } catch (DatabaseModificationFailedException e) {
+                throw new ServiceException("Failed to create journal for start balance.", e);
+            }
 
-                // Copy the accounts
-                for (Account account : database.getAccountDAO().findAll()) {
-                    newDatabase.getAccountDAO().create(account);
-                }
-
-                // Create start balance
-                Date dayBeforeStart = DateUtil.addDays(date, -1);
-
-                List<JournalItem> journalItems = new ArrayList<JournalItem>(20);
-                for (Account account : database.getAccountDAO().findAssets()) {
-                    JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
-                            newDatabase.getAccountDAO().get(account.getId()), true, null, null);
-                    if (!item.getAmount().isZero()) {
-                        journalItems.add(item);
+            // Copy journals starting from the specified date
+            for (Journal journal : database.getJournals()) {
+                if (DateUtil.compareDayOfYear(date, journal.getDate()) <= 0) {
+                    try {
+                        newDatabase.addJournal(copyJournal(journal, newDatabase), false);
+                    } catch (DatabaseModificationFailedException e) {
+                        throw new ServiceException("Failed to copy a journal to the new bookkeeping.", e);
                     }
                 }
-                for (Account account : database.getAccountDAO().findLiabilities()) {
-                    JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
-                            newDatabase.getAccountDAO().get(account.getId()), false, null, null);
-                    if (!item.getAmount().isZero()) {
-                        journalItems.add(item);
+            }
+
+            // Copy the open invoices including their payments
+            List<Invoice> newInvoices = new ArrayList<Invoice>(100);
+            for (Invoice invoice : database.getInvoices()) {
+                if (!InvoiceService.isPaid(database, invoice.getId(), dayBeforeStart)) {
+                    newInvoices.add(new Invoice(invoice.getId(), invoice.getPayingParty(), invoice.getConcerningParty(),
+                            invoice.getAmountToBePaid(), invoice.getIssueDate(), invoice.getDescriptions(), invoice.getAmounts()));
+                }
+            }
+            try {
+                newDatabase.setInvoices(newInvoices.toArray(new Invoice[newInvoices.size()]));
+                for (Invoice invoice : newInvoices) {
+                    for (Payment payment : database.getPayments(invoice.getId())) {
+                        newDatabase.addPayment(invoice.getId(), payment);
                     }
                 }
+            } catch (DatabaseModificationFailedException e) {
+                throw new ServiceException("Failed to copy open invoices to the new bookkeeping.", e);
+            }
 
-                // Add the result of operations to the specified account.
-                Report report = createReport(database, dayBeforeStart);
-                Amount resultOfOperations = report.getResultOfOperations();
-                if (resultOfOperations.isPositive()) {
-                    journalItems.add(new JournalItem(resultOfOperations, newDatabase.getAccountDAO().get(equity.getId()), false, null, null));
-                } else if (resultOfOperations.isNegative()) {
-                    journalItems.add(new JournalItem(resultOfOperations.negate(), newDatabase.getAccountDAO().get(equity.getId()), true, null, null));
-                }
-                try {
-                    Journal startBalance = new Journal("start", "start balance", dayBeforeStart,
-                            journalItems.toArray(new JournalItem[journalItems.size()]), null);
-                    newDatabase.addJournal(startBalance, false);
-                } catch (IllegalArgumentException e) {
-                    throw new ServiceException("Failed to create journal for start balance.", e);
-                } catch (DatabaseModificationFailedException e) {
-                    throw new ServiceException("Failed to create journal for start balance.", e);
-                }
+            // Notify unsaved changes in the new database.
+            newDatabase.notifyChange();
 
-                // Copy journals starting from the specified date
-                for (Journal journal : database.getJournals()) {
-                    if (DateUtil.compareDayOfYear(date, journal.getDate()) <= 0) {
-                        try {
-                            newDatabase.addJournal(copyJournal(journal, newDatabase), false);
-                        } catch (DatabaseModificationFailedException e) {
-                            throw new ServiceException("Failed to copy a journal to the new bookkeeping.", e);
-                        }
-                    }
-                }
-
-                // Copy the open invoices including their payments
-                List<Invoice> newInvoices = new ArrayList<Invoice>(100);
-                for (Invoice invoice : database.getInvoices()) {
-                    if (!InvoiceService.isPaid(database, invoice.getId(), dayBeforeStart)) {
-                        newInvoices.add(new Invoice(invoice.getId(), invoice.getPayingParty(), invoice.getConcerningParty(),
-                                invoice.getAmountToBePaid(), invoice.getIssueDate(), invoice.getDescriptions(), invoice.getAmounts()));
-                    }
-                }
-                try {
-                    newDatabase.setInvoices(newInvoices.toArray(new Invoice[newInvoices.size()]));
-                    for (Invoice invoice : newInvoices) {
-                        for (Payment payment : database.getPayments(invoice.getId())) {
-                            newDatabase.addPayment(invoice.getId(), payment);
-                        }
-                    }
-                } catch (DatabaseModificationFailedException e) {
-                    throw new ServiceException("Failed to copy open invoices to the new bookkeeping.", e);
-                }
-
-                // Notify unsaved changes in the new database.
-                newDatabase.notifyChange();
-
-                return newDatabase;
-            });
-        } catch (DataAccessException e) {
-            throw new ServiceException(e);
-        }
+            return newDatabase;
+        });
     }
 
     private Journal copyJournal(Journal journal, Database newDatabase) throws SQLException {
@@ -300,81 +280,39 @@ public class BookkeepingService {
         return false;
     }
 
-    /**
-     * Adds an account to the database.
-     * @param database the database
-     * @param account the account
-     * @throws ServiceException if a problem occurs while creating the account
-     */
 	public void addAccount(Database database, Account account) throws ServiceException {
-		try {
-			RunTransaction.withoutResult(() -> database.getAccountDAO().create(account));
-    	} catch (DataAccessException e) {
-    		throw new ServiceException("Could not add account " + account.getId() + " to the database", e);
-    	}
+		ServiceTransaction.withoutResult(() -> database.getAccountDAO().create(account));
 	}
 
-	/**
-	 * Updates an existing account.
-	 * @param database the database
-	 * @param account the account
-	 * @throws ServiceException if a problem occurs while updating the account
-	 */
 	public void updateAccount(Database database, Account account) throws ServiceException {
-		try {
-            RunTransaction.withoutResult(() -> database.getAccountDAO().update(account));
-        } catch (DataAccessException e) {
-    		throw new ServiceException("Could not update account " + account.getId() + " in the database", e);
-		}
-
+        ServiceTransaction.withoutResult(() -> database.getAccountDAO().update(account));
 	}
 
-    /**
-     * Deletes an account from the database. Only unused accounts can be deleted.
-     * @param database the database
-     * @param account the account
-     * @throws ServiceException if a problem occurs while deleting the account
-     */
     public void deleteAccount(Database database, Account account) throws ServiceException {
-    	try {
-            RunTransaction.withoutResult(() -> database.getAccountDAO().delete(account.getId()));
-        } catch (DataAccessException e) {
-    		throw new ServiceException("Could not delete account " + account.getId() + " from the database", e);
-    	}
+        ServiceTransaction.withoutResult(() -> database.getAccountDAO().delete(account.getId()));
     }
 
-    /**
-     * Creates a report for the specified date.
-     * @param database database containing the bookkeeping
-     * @param date the date
-     * @return the report
-     * @throws ServiceException if a problem occurs
-     */
     public Report createReport(Database database, Date date) throws ServiceException {
-        try {
-            return RunTransaction.withResult(() -> {
-                ReportBuilder rb = new ReportBuilder(database, date);
-                rb.setAssets(database.getAccountDAO().findAssets());
-                rb.setLiabilities(database.getAccountDAO().findLiabilities());
-                rb.setExpenses(database.getAccountDAO().findExpenses());
-                rb.setRevenues(database.getAccountDAO().findRevenues());
+        return ServiceTransaction.withResult(() -> {
+            ReportBuilder rb = new ReportBuilder(database, date);
+            rb.setAssets(database.getAccountDAO().findAssets());
+            rb.setLiabilities(database.getAccountDAO().findLiabilities());
+            rb.setExpenses(database.getAccountDAO().findExpenses());
+            rb.setRevenues(database.getAccountDAO().findRevenues());
 
-                for (Journal j : database.getJournals()) {
-                    if (DateUtil.compareDayOfYear(j.getDate(), date) <= 0) {
-                        rb.addJournal(j);
-                    }
+            for (Journal j : database.getJournals()) {
+                if (DateUtil.compareDayOfYear(j.getDate(), date) <= 0) {
+                    rb.addJournal(j);
                 }
+            }
 
-                for (Invoice invoice : database.getInvoices()) {
-                    if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
-                        rb.addInvoice(invoice);
-                    }
+            for (Invoice invoice : database.getInvoices()) {
+                if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
+                    rb.addInvoice(invoice);
                 }
+            }
 
-                return rb.build();
-            });
-        } catch (DataAccessException e) {
-            throw new ServiceException(e);
-        }
+            return rb.build();
+        });
     }
 }

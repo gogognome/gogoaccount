@@ -35,7 +35,6 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import nl.gogognome.dataaccess.transaction.RunTransaction;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
@@ -74,31 +73,27 @@ public class XMLFileWriter {
 		this.file = file;
 	}
 
-	public void writeDatabaseToFile() throws IOException {
-		try	{
-			RunTransaction.withoutResult(() -> {
-				doc = createDocument();
+	public void writeDatabaseToFile() throws ServiceException {
+		ServiceTransaction.withoutResult(() -> {
+			doc = createDocument();
 
-				Element rootElement = doc.createElement("gogoAccountBookkeeping");
-				doc.appendChild(rootElement);
+			Element rootElement = doc.createElement("gogoAccountBookkeeping");
+			doc.appendChild(rootElement);
 
-				rootElement.setAttribute("fileversion", FILE_VERSION);
-				rootElement.setAttribute("description", database.getDescription());
-				rootElement.setAttribute("currency", database.getCurrency().getCurrencyCode());
-				rootElement.setAttribute("startdate", DATE_FORMAT.format(database.getStartOfPeriod()));
+			rootElement.setAttribute("fileversion", FILE_VERSION);
+			rootElement.setAttribute("description", database.getDescription());
+			rootElement.setAttribute("currency", database.getCurrency().getCurrencyCode());
+			rootElement.setAttribute("startdate", DATE_FORMAT.format(database.getStartOfPeriod()));
 
-				rootElement.appendChild(createElementForAccounts(database.getAccountDAO().findAll("id")));
+			rootElement.appendChild(createElementForAccounts(database.getAccountDAO().findAll("id")));
 
-				rootElement.appendChild(createElementForParties(database.getParties()));
-				appendElementsForJournals(rootElement);
-				rootElement.appendChild(createElementForInvoices());
-				rootElement.appendChild(createElementForImportedAccounts());
+			rootElement.appendChild(createElementForParties(database.getParties()));
+			appendElementsForJournals(rootElement);
+			rootElement.appendChild(createElementForInvoices());
+			rootElement.appendChild(createElementForImportedAccounts());
 
-				writeDomToFile(doc);
-			});
-		} catch (Exception e) 	{
-			throw new IOException("Failed to write the XML file " + file, e);
-		}
+			writeDomToFile(doc);
+		});
 	}
 
 	private void appendElementsForJournals(Element rootElement) {

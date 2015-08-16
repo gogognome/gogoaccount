@@ -16,8 +16,6 @@
  */
 package nl.gogognome.gogoaccount.services;
 
-import nl.gogognome.dataaccess.DataAccessException;
-import nl.gogognome.dataaccess.transaction.RunTransaction;
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
@@ -65,49 +63,45 @@ public class XMLFileReader {
 	 * @throws ServiceException if a problem occurs
 	 */
 	public Database createDatabaseFromFile() throws ServiceException {
-        try {
-            return RunTransaction.withResult(() -> {
-                int highestPaymentId = 0;
+		return ServiceTransaction.withResult(() -> {
+			int highestPaymentId = 0;
 
-                database = new Database();
-                database.setFileName(file.getAbsolutePath());
+			database = new Database();
+			database.setFileName(file.getAbsolutePath());
 
-                DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
-                DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-                Document doc = docBuilder.parse(file);
-                Element rootElement = doc.getDocumentElement();
+			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
+			Document doc = docBuilder.parse(file);
+			Element rootElement = doc.getDocumentElement();
 
-                fileVersion = rootElement.getAttribute("fileversion");
+			fileVersion = rootElement.getAttribute("fileversion");
 
-                String description = rootElement.getAttribute("description");
-                database.setDescription(description);
+			String description = rootElement.getAttribute("description");
+			database.setDescription(description);
 
-                String currency = rootElement.getAttribute("currency");
-                database.setCurrency(Currency.getInstance(currency));
+			String currency = rootElement.getAttribute("currency");
+			database.setCurrency(Currency.getInstance(currency));
 
-                Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
-                database.setStartOfPeriod(startDate);
+			Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
+			database.setStartOfPeriod(startDate);
 
-                // parse accounts
-                if (fileVersion == null || fileVersion.equals("1.0")) {
-                    parseAccountsBeforeVersion2_2(rootElement);
-                } else {
-                    parseAccountsForVersion2_2(rootElement);
-                }
+			// parse accounts
+			if (fileVersion == null || fileVersion.equals("1.0")) {
+				parseAccountsBeforeVersion2_2(rootElement);
+			} else {
+				parseAccountsForVersion2_2(rootElement);
+			}
 
-                parseAndAddParties(rootElement.getElementsByTagName("parties"));
+			parseAndAddParties(rootElement.getElementsByTagName("parties"));
 
-                parseAndAddInvoices(rootElement.getElementsByTagName("invoices"));
+			parseAndAddInvoices(rootElement.getElementsByTagName("invoices"));
 
-                parseAndAddJournals(highestPaymentId, rootElement);
+			parseAndAddJournals(highestPaymentId, rootElement);
 
-                parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
+			parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
 
-                return database;
-            });
-        } catch (DataAccessException e) {
-            throw new ServiceException(e);
-        }
+			return database;
+		});
 	}
 
 	private void parseAccountsForVersion2_2(Element rootElement) throws SQLException {

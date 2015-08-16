@@ -25,7 +25,9 @@ import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.text.AmountFormat;
@@ -41,8 +43,8 @@ import nl.gogognome.lib.util.Factory;
 public class AddJournalForTransactionView extends EditJournalView {
 
 	public interface Plugin {
-		public ImportedTransaction getNextImportedTransaction();
-		public void journalAdded(Journal journal);
+		ImportedTransaction getNextImportedTransaction();
+		void journalAdded(Journal journal);
 	}
 
 	private Plugin plugin;
@@ -64,9 +66,6 @@ public class AddJournalForTransactionView extends EditJournalView {
      * To add one or more new journals, set <code>journal</code> to <code>null</code>.
      *
      * @param database the database to which the journal must be added
-     * @param titleId the id of the title
-     * @param journal the journal used to initialize the elements of the view. Must be <code>null</code>
-     *        to edit a new journal
      * @param plugin plugin used to determine initial values for a new journal
      */
 	public AddJournalForTransactionView(Database database, Plugin plugin) {
@@ -147,19 +146,17 @@ public class AddJournalForTransactionView extends EditJournalView {
 	protected JournalItem createDefaultItemToBeAdded() {
 		switch (itemsTableModel.getRowCount()) {
 		case 0: { // first item
-			Account account = new ImportBankStatementService(database)
-				.getToAccount(importedTransaction);
+			Account account = new ImportBankStatementService(database).getToAccount(importedTransaction);
 			if (account == null) {
-				account = database.getAllAccounts().get(0);
-			}
+                account = getDefaultAccount();
+            }
 			return new JournalItem(importedTransaction.getAmount(), account, true);
 		}
 
 		case 1: { // second item
-			Account account = new ImportBankStatementService(database)
-				.getFromAccount(importedTransaction);
+			Account account = new ImportBankStatementService(database).getFromAccount(importedTransaction);
 			if (account == null) {
-				account = database.getAllAccounts().get(0);
+				account = getDefaultAccount();
 			}
 			return new JournalItem(importedTransaction.getAmount(), account, false);
 		}
@@ -167,4 +164,12 @@ public class AddJournalForTransactionView extends EditJournalView {
 			return null;
 		}
 	}
+
+    private Account getDefaultAccount() {
+        try {
+            return Factory.getInstance(BookkeepingService.class).findAllAccounts(database).get(0);
+        } catch (ServiceException e) {
+            return null;
+        }
+    }
 }
