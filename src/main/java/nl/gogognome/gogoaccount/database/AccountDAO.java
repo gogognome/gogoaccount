@@ -21,7 +21,7 @@ import static nl.gogognome.gogoaccount.businessobjects.AccountType.*;
 public class AccountDAO extends AbstractDomainClassDAO<Account> {
 
     public AccountDAO(Database database) {
-        super("account", "domain_class_sequence", database.getBookkeepingId());
+        super("account", null, database.getBookkeepingId());
     }
 
     public Account get(String accountId) throws SQLException {

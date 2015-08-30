@@ -46,8 +46,8 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
 		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
 				"200 Eigen vermogen, 290 Crediteuren, " +
-				"400 Zaalhuur, 490 Onvoorzien, " +
-				"300 Contributie, 390 Onvoorzien]",
+				"300 Contributie, 390 Onvoorzien, " +
+				"400 Zaalhuur, 490 Onvoorzien]",
 			accounts.toString());
 	}
 
@@ -146,7 +146,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testHasAccounts() throws Exception {
 		assertTrue(bookkeepingService.hasAccounts(database));
 
-		assertFalse(bookkeepingService.hasAccounts(new Database()));
+		assertFalse(bookkeepingService.hasAccounts(bookkeepingService.createNewDatabase()));
 	}
 
 	@Test

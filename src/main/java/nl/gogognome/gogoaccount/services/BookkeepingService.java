@@ -24,7 +24,6 @@ import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -54,12 +53,7 @@ public class BookkeepingService {
                         "First save the changes before closing the bookkeeping.");
             }
 
-            Database newDatabase;
-            try {
-                newDatabase = new Database();
-            } catch (SQLException e) {
-                throw new ServiceException("Failed to create new database: " + e.getMessage(), e);
-            }
+            Database newDatabase = createNewDatabase();
             newDatabase.setCurrency(database.getCurrency());
             newDatabase.setDescription(description);
             newDatabase.setFileName(null);
@@ -73,24 +67,25 @@ public class BookkeepingService {
             }
 
             // Copy the accounts
+            AccountDAO accountDAONew = new AccountDAO(newDatabase);
             for (Account account : new AccountDAO(database).findAll()) {
-                new AccountDAO(database).create(account);
+                accountDAONew.create(account);
             }
 
             // Create start balance
             Date dayBeforeStart = DateUtil.addDays(date, -1);
 
-            List<JournalItem> journalItems = new ArrayList<JournalItem>(20);
-            for (Account account : new AccountDAO(database).findAssets()) {
+            List<JournalItem> journalItems = new ArrayList<>(20);
+            for (Account account : accountDAONew.findAssets()) {
                 JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
-                        new AccountDAO(database).get(account.getId()), true, null, null);
+                        accountDAONew.get(account.getId()), true, null, null);
                 if (!item.getAmount().isZero()) {
                     journalItems.add(item);
                 }
             }
-            for (Account account : new AccountDAO(database).findLiabilities()) {
+            for (Account account : accountDAONew.findLiabilities()) {
                 JournalItem item = new JournalItem(getAccountBalance(database, account, dayBeforeStart),
-                        new AccountDAO(database).get(account.getId()), false, null, null);
+                        accountDAONew.get(account.getId()), false, null, null);
                 if (!item.getAmount().isZero()) {
                     journalItems.add(item);
                 }
@@ -100,17 +95,15 @@ public class BookkeepingService {
             Report report = createReport(database, dayBeforeStart);
             Amount resultOfOperations = report.getResultOfOperations();
             if (resultOfOperations.isPositive()) {
-                journalItems.add(new JournalItem(resultOfOperations, new AccountDAO(database).get(equity.getId()), false, null, null));
+                journalItems.add(new JournalItem(resultOfOperations, accountDAONew.get(equity.getId()), false, null, null));
             } else if (resultOfOperations.isNegative()) {
-                journalItems.add(new JournalItem(resultOfOperations.negate(), new AccountDAO(database).get(equity.getId()), true, null, null));
+                journalItems.add(new JournalItem(resultOfOperations.negate(), accountDAONew.get(equity.getId()), true, null, null));
             }
             try {
                 Journal startBalance = new Journal("start", "start balance", dayBeforeStart,
                         journalItems.toArray(new JournalItem[journalItems.size()]), null);
                 newDatabase.addJournal(startBalance, false);
-            } catch (IllegalArgumentException e) {
-                throw new ServiceException("Failed to create journal for start balance.", e);
-            } catch (DatabaseModificationFailedException e) {
+            } catch (IllegalArgumentException | DatabaseModificationFailedException e) {
                 throw new ServiceException("Failed to create journal for start balance.", e);
             }
 
@@ -126,7 +119,7 @@ public class BookkeepingService {
             }
 
             // Copy the open invoices including their payments
-            List<Invoice> newInvoices = new ArrayList<Invoice>(100);
+            List<Invoice> newInvoices = new ArrayList<>(100);
             for (Invoice invoice : database.getInvoices()) {
                 if (!InvoiceService.isPaid(database, invoice.getId(), dayBeforeStart)) {
                     newInvoices.add(new Invoice(invoice.getId(), invoice.getPayingParty(), invoice.getConcerningParty(),
@@ -227,12 +220,12 @@ public class BookkeepingService {
         for (Journal journal : journals) {
             if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
                 JournalItem[] items = journal.getItems();
-                for (int j = 0; j < items.length; j++) {
-                    if (items[j].getAccount().equals(account)) {
-                        if (account.isDebet() == items[j].isDebet()) {
-                            result = result.add(items[j].getAmount());
+                for (JournalItem item : items) {
+                    if (item.getAccount().equals(account)) {
+                        if (account.isDebet() == item.isDebet()) {
+                            result = result.add(item.getAmount());
                         } else {
-                            result = result.subtract(items[j].getAmount());
+                            result = result.subtract(item.getAmount());
                         }
                     }
                 }
@@ -296,7 +289,12 @@ public class BookkeepingService {
 	}
 
     public void deleteAccount(Database database, Account account) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> new AccountDAO(database).delete(account.getId()));
+        ServiceTransaction.withoutResult(() -> {
+            if (inUse(database, account)) {
+                throw new DatabaseModificationFailedException("The account " + account + " is in use and can therefore not be deleted!");
+            }
+            new AccountDAO(database).delete(account.getId());
+        });
     }
 
     public Report createReport(Database database, Date date) throws ServiceException {
@@ -323,7 +321,12 @@ public class BookkeepingService {
         });
     }
 
-    public void applyMigrations(Database database) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> new DatabaseMigratorDAO(database.getBookkeepingId()).applyMigrationsFromResource("/database/_migrations.txt"));
+    public Database createNewDatabase() throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            Database database = new Database();
+            new DatabaseMigratorDAO(database.getBookkeepingId()).applyMigrationsFromResource("/database/_migrations.txt");
+            return database;
+        });
     }
+
 }

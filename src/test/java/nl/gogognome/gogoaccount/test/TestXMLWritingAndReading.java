@@ -23,10 +23,7 @@ import java.io.File;
 import java.io.IOException;
 
 import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.gogoaccount.services.ImportBankStatementService;
-import nl.gogognome.gogoaccount.services.XMLFileReader;
-import nl.gogognome.gogoaccount.services.XMLFileWriter;
+import nl.gogognome.gogoaccount.services.*;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransactionRabobankCsv;
 import nl.gogognome.lib.util.DateUtil;
@@ -81,15 +78,17 @@ public class TestXMLWritingAndReading extends AbstractBookkeepingTest {
 	 * @throws Exception
 	 */
 	private void writeReadAndCompareDatabase() throws Exception {
-		File file = File.createTempFile("ga-test", ".xml");
-		XMLFileWriter writer = new XMLFileWriter(database, file);
-		writer.writeDatabaseToFile();
+		ServiceTransaction.withoutResult(() -> {
+			File file = File.createTempFile("ga-test", ".xml");
+			XMLFileWriter writer = new XMLFileWriter(database, file);
+			writer.writeDatabaseToFile();
 
-		XMLFileReader reader = new XMLFileReader(file);
-		Database newDatabase = reader.createDatabaseFromFile();
+			XMLFileReader reader = new XMLFileReader(file);
+			Database newDatabase = reader.createDatabaseFromFile();
 
-		assertEqualDatabase(database, newDatabase);
-		assertEquals(file.getAbsolutePath(), newDatabase.getFileName());
+			assertEqualDatabase(database, newDatabase);
+			assertEquals(file.getAbsolutePath(), newDatabase.getFileName());
+		});
 	}
 
 }

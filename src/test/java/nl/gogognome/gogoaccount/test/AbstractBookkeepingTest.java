@@ -16,38 +16,24 @@
 */
 package nl.gogognome.gogoaccount.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-
-import java.sql.SQLException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Currency;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-
-import nl.gogognome.dataaccess.migrations.DatabaseMigratorDAO;
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.database.AccountDAO;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
-
 import org.junit.Before;
+
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.*;
+
+import static junit.framework.Assert.*;
 
 
 /**
@@ -67,13 +53,12 @@ public abstract class AbstractBookkeepingTest {
 	public void initBookkeeping() throws Exception {
 		initFactory();
 
-		database = new Database();
-		database.setCurrency(Currency.getInstance("EUR"));
-		database.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
-		database.setParties(createParties());
-
         BookkeepingService bookkeepingService = new BookkeepingService();
-        bookkeepingService.applyMigrations(database);
+        database = bookkeepingService.createNewDatabase();
+        database.setCurrency(Currency.getInstance("EUR"));
+        database.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
+        database.setParties(createParties());
+
         for (Account account : createAccounts()) {
             bookkeepingService.createAccount(database, account);
         }
@@ -153,17 +138,20 @@ public abstract class AbstractBookkeepingTest {
 		database.addJournal(journal, false);
 	}
 
-	protected JournalItem createItem(int amountInt, String accountId, boolean debet) throws ParseException, SQLException {
-		Account account = new AccountDAO(database).get(accountId);
-		Amount amount = createAmount(amountInt);
-		return new JournalItem(amount, account, debet);
+	protected JournalItem createItem(int amountInt, String accountId, boolean debet) throws ServiceException {
+		return ServiceTransaction.withResult(() -> {
+			Account account = new AccountDAO(database).get(accountId);
+			Amount amount = createAmount(amountInt);
+			return new JournalItem(amount, account, debet);
+		});
 	}
 
-	protected JournalItem createItem(int amountInt, String accountId, boolean debet,
-			String invoiceId, String paymentId) throws ParseException, SQLException {
-		Account account = new AccountDAO(database).get(accountId);
-		Amount amount = createAmount(amountInt);
-		return new JournalItem(amount, account, debet, invoiceId, paymentId);
+	protected JournalItem createItem(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            Account account = new AccountDAO(database).get(accountId);
+            Amount amount = createAmount(amountInt);
+            return new JournalItem(amount, account, debet, invoiceId, paymentId);
+        });
 	}
 
 	protected Amount createAmount(int value) throws ParseException {

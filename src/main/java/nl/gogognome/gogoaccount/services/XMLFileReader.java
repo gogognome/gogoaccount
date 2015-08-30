@@ -67,7 +67,7 @@ public class XMLFileReader {
 		return ServiceTransaction.withResult(() -> {
 			int highestPaymentId = 0;
 
-			database = new Database();
+			database = new BookkeepingService().createNewDatabase();
 			database.setFileName(file.getAbsolutePath());
 
 			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
