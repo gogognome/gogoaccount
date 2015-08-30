@@ -8,6 +8,7 @@ import nl.gogognome.dataaccess.dao.ResultSetWrapper;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 
+import javax.xml.crypto.Data;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,8 +20,8 @@ import static nl.gogognome.gogoaccount.businessobjects.AccountType.*;
 
 public class AccountDAO extends AbstractDomainClassDAO<Account> {
 
-    public AccountDAO(Object... connectionParameters) {
-        super("account", "domain_class_sequence", connectionParameters);
+    public AccountDAO(Database database) {
+        super("account", "domain_class_sequence", database.getBookkeepingId());
     }
 
     public Account get(String accountId) throws SQLException {

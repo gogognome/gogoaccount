@@ -18,6 +18,7 @@ package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.database.AccountDAO;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseListener;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
@@ -47,12 +48,11 @@ public class AccountMutationsView extends View {
 
 	private Database database;
 
-	private JTable table;
 	private JScrollPane tableScrollPane;
 	private AccountOverviewTableModel tableModel;
 
 	private DateModel dateModel = new DateModel(new Date());
-	private ListModel<Account> accountListModel = new ListModel<Account>();
+	private ListModel<Account> accountListModel = new ListModel<>();
 
 	private ModelChangeListener modelListener;
 	private DatabaseListener databaseListener;
@@ -90,7 +90,7 @@ public class AccountMutationsView extends View {
 		JPanel northPanel = createInputFieldsPanel();
 		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
 
-		table = widgetFactory.createSortedTable(tableModel);
+		JTable table = widgetFactory.createSortedTable(tableModel);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		tableScrollPane = widgetFactory.createScrollPane(table);
 
@@ -167,7 +167,7 @@ public class AccountMutationsView extends View {
 
 	private void setAccountsInListModel() {
         try {
-            ServiceTransaction.withoutResult(() -> accountListModel.setItems(database.getAccountDAO().findAll("id")));
+            ServiceTransaction.withoutResult(() -> accountListModel.setItems(new AccountDAO(database).findAll("id")));
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }

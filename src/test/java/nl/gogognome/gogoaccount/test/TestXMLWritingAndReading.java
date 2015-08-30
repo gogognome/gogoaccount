@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 
 import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.gogoaccount.services.XMLFileWriter;
@@ -42,6 +43,7 @@ import org.junit.Test;
  */
 public class TestXMLWritingAndReading extends AbstractBookkeepingTest {
 
+	private BookkeepingService bookkeepingService = new BookkeepingService();
 	private File file;
 
 	@Before
@@ -67,8 +69,8 @@ public class TestXMLWritingAndReading extends AbstractBookkeepingTest {
 		ImportBankStatementService ibsService = new ImportBankStatementService(database);
 		ImportedTransaction transaction = new ImportedTransactionRabobankCsv("from", "fromName",
 				createAmount(123), DateUtil.createDate(2011, 8, 23), "to", "toName", "test");
-		ibsService.setImportedFromAccount(transaction, database.getAccount("101"));
-		ibsService.setImportedToAccount(transaction, database.getAccount("190"));
+		ibsService.setImportedFromAccount(transaction, bookkeepingService.getAccount(database, "101"));
+		ibsService.setImportedToAccount(transaction, bookkeepingService.getAccount(database, "190"));
 
 		writeReadAndCompareDatabase();
 	}

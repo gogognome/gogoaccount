@@ -85,20 +85,16 @@ public class Database {
 
     private final String bookkeepingId = UUID.randomUUID().toString();
 
-    private final AccountDAO accountDAO;
-
     public Database() throws SQLException {
         JdbcDataSource dataSource = new JdbcDataSource();
         dataSource.setURL("jdbc:h2:mem:bookkeeping-" + bookkeepingId);
         CompositeDatasourceTransaction.registerDataSource(bookkeepingId, dataSource);
         connectionToKeepInMemoryDatabaseAlive = dataSource.getConnection();
-
-		accountDAO = new AccountDAO(bookkeepingId);
     }
 
-    public AccountDAO getAccountDAO() {
-        return accountDAO;
-    }
+	public String getBookkeepingId() {
+		return bookkeepingId;
+	}
 
     /**
 	 * Adds a database listener.
@@ -757,7 +753,7 @@ public class Database {
 	public Account getAccountForImportedAccount(String importedAccount) throws SQLException {
 		String accountId = importedTransactionAccountToAccountMap.get(importedAccount);
 		if (accountId != null) {
-			return accountDAO.get(accountId);
+			return new AccountDAO(this).get(accountId);
 		} else {
 			return null;
 		}

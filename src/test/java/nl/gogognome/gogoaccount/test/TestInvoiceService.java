@@ -27,6 +27,7 @@ import java.util.List;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -43,14 +44,16 @@ import org.junit.Test;
  */
 public class TestInvoiceService extends AbstractBookkeepingTest {
 
+    private BookkeepingService bookkeepingService = new BookkeepingService();
+
 	@Test
 	public void testInvoiceCreation() throws Exception {
 		List<Party> parties = Arrays.asList(database.getParties());
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, database.getAccount("190"), true),
-			new InvoiceLineDefinition(null, a, database.getAccount("400"), false));
+			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(database, "190"), true),
+			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(database, "400"), false));
 		InvoiceService.createInvoiceAndJournalForParties(database, "inv-{id}",
 				parties, issueDate, "Invoice for {name}", lines);
 
@@ -68,8 +71,8 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, database.getAccount("190"), true),
-			new InvoiceLineDefinition(null, a, database.getAccount("400"), false));
+			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(database, "190"), true),
+			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(database, "400"), false));
 		InvoiceService.createInvoiceAndJournalForParties(database, "auto",
 				parties, issueDate, "Invoice for {name}", lines);
 
@@ -93,8 +96,8 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, database.getAccount("190"), false),
-			new InvoiceLineDefinition(null, a, database.getAccount("400"), false));
+			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(database, "190"), false),
+			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(database, "400"), false));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(database, "inv-{id}",
@@ -110,8 +113,8 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, database.getAccount("190"), true),
-			new InvoiceLineDefinition(null, a, database.getAccount("400"), true));
+			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(database, "190"), true),
+			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(database, "400"), true));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(database, "inv-{id}",
@@ -127,9 +130,9 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, database.getAccount("190"), true),
-			new InvoiceLineDefinition(null, null, database.getAccount("190"), false),
-			new InvoiceLineDefinition(null, a, database.getAccount("400"), false));
+			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(database, "190"), true),
+			new InvoiceLineDefinition(null, null, bookkeepingService.getAccount(database, "190"), false),
+			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(database, "400"), false));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(database, "inv-{id}",
@@ -145,9 +148,9 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, database.getAccount("190"), true),
-			new InvoiceLineDefinition(a, a, database.getAccount("190"), false),
-			new InvoiceLineDefinition(null, a, database.getAccount("400"), false));
+			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(database, "190"), true),
+			new InvoiceLineDefinition(a, a, bookkeepingService.getAccount(database, "190"), false),
+			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(database, "400"), false));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(database, "inv-{id}",

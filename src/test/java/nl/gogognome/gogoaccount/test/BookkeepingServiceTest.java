@@ -23,6 +23,7 @@ import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,6 +32,7 @@ import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.database.AccountDAO;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -45,37 +47,39 @@ import org.junit.Test;
  *
  * @author Sander Kooijmans
  */
-public class TestBookkeepingService extends AbstractBookkeepingTest {
+public class BookkeepingServiceTest extends AbstractBookkeepingTest {
+
+	private BookkeepingService bookkeepingService = new BookkeepingService();
 
 	@Test
 	public void testStartBalance() throws Exception {
 		checkAmount(100,
-				BookkeepingService.getStartBalance(database, database.getAccount("100")));
+				bookkeepingService.getStartBalance(database, new AccountDAO(database).get("100")));
 		checkAmount(300,
-				BookkeepingService.getStartBalance(database, database.getAccount("101")));
+				bookkeepingService.getStartBalance(database, new AccountDAO(database).get("101")));
 		checkAmount(400,
-				BookkeepingService.getStartBalance(database, database.getAccount("200")));
+				bookkeepingService.getStartBalance(database, new AccountDAO(database).get("200")));
 	}
 
 	@Test
 	public void deleteUnusedAccountSucceeds() throws Exception {
-		BookkeepingService.deleteAccount(database, database.getAccount("290"));
-		assertNull(database.getAccount("290"));
+		bookkeepingService.deleteAccount(database, new AccountDAO(database).get("290"));
+		assertNull(new AccountDAO(database).get("290"));
 	}
 
 	@Test
 	public void deleteAccountFails() throws Exception {
 		try {
-			BookkeepingService.deleteAccount(database, database.getAccount("190"));
+			bookkeepingService.deleteAccount(database, new AccountDAO(database).get("190"));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {
-			assertNotNull(database.getAccount("190"));
+			assertNotNull(new AccountDAO(database).get("190"));
 		}
 	}
 
 	@Test
 	public void testReportAtEndOf2011() throws Exception {
-		Report report = BookkeepingService.createReport(database,
+		Report report = bookkeepingService.createReport(database,
 				DateUtil.createDate(2011, 12, 31));
 
 		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
@@ -102,20 +106,20 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 				"20110510 t2 Payment 1000 null inv1,  " +
 				"null totaal mutaties 1000 0,  " +
 				"null eindsaldo 31000 null]",
-				report.getLedgerLinesForAccount(database.getAccount("101")).toString());
+				report.getLedgerLinesForAccount(new AccountDAO(database).get("101")).toString());
 
 		assertEquals("[ null beginsaldo null 0, " +
 				"20110305 t1 Payment null 2000 inv1,  " +
 				"null totaal mutaties 0 2000,  " +
 				"null eindsaldo null 2000]",
-				report.getLedgerLinesForAccount(database.getAccount("300")).toString());
+				report.getLedgerLinesForAccount(new AccountDAO(database).get("300")).toString());
 
 		checkTotalsOfReport(report);
 	}
 
 	@Test
 	public void testReportApril30_2011() throws Exception {
-		Report report = BookkeepingService.createReport(database,
+		Report report = bookkeepingService.createReport(database,
 				DateUtil.createDate(2011, 4, 30));
 
 		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
@@ -141,22 +145,22 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		assertEquals("[ null beginsaldo 30000 null,  " +
 				"null totaal mutaties 0 0,  " +
 				"null eindsaldo 30000 null]",
-				report.getLedgerLinesForAccount(database.getAccount("101")).toString());
+				report.getLedgerLinesForAccount(new AccountDAO(database).get("101")).toString());
 
 		checkTotalsOfReport(report);
 	}
 
 	@Test
 	public void testCloseBookkeeping() throws Exception {
-		Database newDatabase = BookkeepingService.closeBookkeeping(database, "new bookkeeping",
-				DateUtil.createDate(2012, 1, 1), database.getAccount("200"));
+		Database newDatabase = bookkeepingService.closeBookkeeping(database, "new bookkeeping",
+				DateUtil.createDate(2012, 1, 1), new AccountDAO(database).get("200"));
 
 		assertEquals("new bookkeeping", newDatabase.getDescription());
-		assertEquals(database.getAllAccounts().toString(), newDatabase.getAllAccounts().toString());
+		assertEquals(bookkeepingService.findAllAccounts(database).toString(), bookkeepingService.findAllAccounts(newDatabase).toString());
 		assertEquals(0, DateUtil.compareDayOfYear(DateUtil.createDate(2012, 1, 1),
 				newDatabase.getStartOfPeriod()));
 
-		Report report = BookkeepingService.createReport(newDatabase,
+		Report report = bookkeepingService.createReport(newDatabase,
 				DateUtil.createDate(2011, 12, 31));
 
 		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
@@ -177,8 +181,8 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		checkAmount(10, report.getBalanceForDebtor(database.getParty("1101")));
 		checkAmount(0, report.getBalanceForCreditor(database.getParty("1101")));
 
-		checkAmount(420, report.getAmount(newDatabase.getAccount("200")));
-		checkAmount(0, report.getAmount(newDatabase.getAccount("300")));
+		checkAmount(420, report.getAmount(new AccountDAO(database).get("200")));
+		checkAmount(0, report.getAmount(new AccountDAO(database).get("300")));
 
 		checkTotalsOfReport(report);
 	}
@@ -192,8 +196,8 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 
 		database.addJournal(journal, false);
 		try {
-			BookkeepingService.closeBookkeeping(database, "new bookkeeping",
-					DateUtil.createDate(2012, 1, 1), database.getAccount("200"));
+			bookkeepingService.closeBookkeeping(database, "new bookkeeping",
+					DateUtil.createDate(2012, 1, 1), new AccountDAO(database).get("200"));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {
 		}
@@ -208,22 +212,22 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 
 		database.addJournal(journal, false);
 		database.databaseConsistentWithFile();
-		Database newDatabase = BookkeepingService.closeBookkeeping(database, "new bookkeeping",
-				DateUtil.createDate(2012, 1, 1), database.getAccount("200"));
+		Database newDatabase = bookkeepingService.closeBookkeeping(database, "new bookkeeping",
+				DateUtil.createDate(2012, 1, 1), new AccountDAO(database).get("200"));
 
 		assertEquals("[20111231 start start balance, 20120110 ABC Test]",
 				newDatabase.getJournals().toString());
 	}
 
 	@Test
-	public void checkInUseForUsedAccount() {
-		assertTrue(BookkeepingService.inUse(database, database.getAccount("190")));
-		assertTrue(BookkeepingService.inUse(database, database.getAccount("200")));
+	public void checkInUseForUsedAccount() throws SQLException {
+		assertTrue(bookkeepingService.inUse(database, new AccountDAO(database).get("190")));
+		assertTrue(bookkeepingService.inUse(database, new AccountDAO(database).get("200")));
 	}
 
 	@Test
-	public void checkInUseForUnusedAccount() {
-		assertFalse(BookkeepingService.inUse(database, database.getAccount("400")));
+	public void checkInUseForUnusedAccount() throws SQLException {
+		assertFalse(bookkeepingService.inUse(database, new AccountDAO(database).get("400")));
 	}
 
 	@Test
@@ -231,7 +235,7 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		assertNotNull(findJournal("t1"));
 		assertNotNull(database.getInvoice("inv1"));
 
-		BookkeepingService.removeJournal(database, findJournal("t1"));
+		bookkeepingService.removeJournal(database, findJournal("t1"));
 
 		assertNull(findJournal("t1"));
 		assertNull(database.getInvoice("inv1"));
@@ -243,7 +247,7 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 		assertEquals("[20110510 pay1 Betaalrekening]",
 				database.getPayments("inv1").toString());
 
-		BookkeepingService.removeJournal(database, findJournal("t2"));
+		bookkeepingService.removeJournal(database, findJournal("t2"));
 
 		assertNull(findJournal("t2"));
 		assertEquals("[]", database.getPayments("inv1").toString());
@@ -251,9 +255,9 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 
 	@Test
 	public void addNewAccount() throws Exception {
-		BookkeepingService.addAccount(database,
-				new Account("103", "Spaarrekening", AccountType.ASSET));
-		Account a = database.getAccount("103");
+		bookkeepingService.createAccount(database,
+                new Account("103", "Spaarrekening", AccountType.ASSET));
+		Account a = new AccountDAO(database).get("103");
 		assertEquals("103", a.getId());
 		assertEquals("Spaarrekening", a.getName());
 		assertEquals(AccountType.ASSET, a.getType());
@@ -262,8 +266,8 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 	@Test
 	public void addAccountWithExistingIdFails() throws Exception {
 		try {
-			BookkeepingService.addAccount(database,
-					new Account("101", "Spaarrekening", AccountType.ASSET));
+			bookkeepingService.createAccount(database,
+                    new Account("101", "Spaarrekening", AccountType.ASSET));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {
 		}
@@ -271,9 +275,9 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 
 	@Test
 	public void addUpdateAccount() throws Exception {
-		BookkeepingService.updateAccount(database,
+		bookkeepingService.updateAccount(database,
 				new Account("101", "Spaarrekening", AccountType.ASSET));
-		Account a = database.getAccount("101");
+		Account a = new AccountDAO(database).get("101");
 		assertEquals("101", a.getId());
 		assertEquals("Spaarrekening", a.getName());
 		assertEquals(AccountType.ASSET, a.getType());
@@ -282,7 +286,7 @@ public class TestBookkeepingService extends AbstractBookkeepingTest {
 	@Test
 	public void updateNonExistingAccountFails() throws Exception {
 		try {
-			BookkeepingService.updateAccount(database,
+			bookkeepingService.updateAccount(database,
 					new Account("103", "Spaarrekening", AccountType.ASSET));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {

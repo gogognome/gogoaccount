@@ -16,31 +16,20 @@
 */
 package nl.gogognome.gogoaccount.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.util.DateUtil;
-
-import org.junit.Test;
+import static junit.framework.Assert.*;
 
 /**
  * Tests the Database class.
@@ -49,47 +38,17 @@ import org.junit.Test;
  */
 public class TestDatabase extends AbstractBookkeepingTest {
 
+	private BookkeepingService bookkeepingService = new BookkeepingService();
+
 	@Test
 	public void testGetAllAccounts() throws Exception {
-		List<Account> accounts = database.getAllAccounts();
+		List<Account> accounts = bookkeepingService.findAllAccounts(database);
 
 		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
 				"200 Eigen vermogen, 290 Crediteuren, " +
 				"400 Zaalhuur, 490 Onvoorzien, " +
 				"300 Contributie, 390 Onvoorzien]",
 			accounts.toString());
-	}
-
-	@Test
-	public void testGetAssets() throws Exception {
-		for (Account a : database.getAssets()) {
-			assertTrue(a.isDebet());
-			assertEquals(AccountType.ASSET, a.getType());
-		}
-	}
-
-	@Test
-	public void testGetLiabilities() throws Exception {
-		for (Account a : database.getLiabilities()) {
-			assertTrue(a.isCredit());
-			assertEquals(AccountType.LIABILITY, a.getType());
-		}
-	}
-
-	@Test
-	public void testGetExpenses() throws Exception {
-		for (Account a : database.getExpenses()) {
-			assertTrue(a.isDebet());
-			assertEquals(AccountType.EXPENSE, a.getType());
-		}
-	}
-
-	@Test
-	public void testGetRevenues() throws Exception {
-		for (Account a : database.getRevenues()) {
-			assertTrue(a.isCredit());
-			assertEquals(AccountType.REVENUE, a.getType());
-		}
 	}
 
 	@Test
@@ -185,9 +144,9 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
 	@Test
 	public void testHasAccounts() throws Exception {
-		assertTrue(database.hasAccounts());
+		assertTrue(bookkeepingService.hasAccounts(database));
 
-		assertFalse(new Database().hasAccounts());
+		assertFalse(bookkeepingService.hasAccounts(new Database()));
 	}
 
 	@Test
@@ -196,8 +155,8 @@ public class TestDatabase extends AbstractBookkeepingTest {
 		assertNotNull(oldJournal);
 
 		List<JournalItem> items = Arrays.asList(
-				new JournalItem(createAmount(20), database.getAccount("100"), true),
-				new JournalItem(createAmount(20), database.getAccount("190"), false)
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "100"), true),
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "190"), false)
 				);
 		Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
 				items, null);
@@ -209,8 +168,8 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	@Test
 	public void updateNonExistingJournalFails() throws Exception {
 		List<JournalItem> items = Arrays.asList(
-				new JournalItem(createAmount(20), database.getAccount("100"), true),
-				new JournalItem(createAmount(20), database.getAccount("190"), false)
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "100"), true),
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "190"), false)
 				);
 		Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
 				items, null);

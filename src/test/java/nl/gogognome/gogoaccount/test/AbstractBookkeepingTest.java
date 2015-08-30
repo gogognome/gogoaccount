@@ -20,6 +20,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import nl.gogognome.dataaccess.migrations.DatabaseMigratorDAO;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
@@ -35,6 +37,7 @@ import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.database.AccountDAO;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -52,7 +55,7 @@ import org.junit.Before;
  *
  * @author Sander Kooijmans
  */
-public class AbstractBookkeepingTest {
+public abstract class AbstractBookkeepingTest {
 
 	protected Database database;
 
@@ -67,11 +70,13 @@ public class AbstractBookkeepingTest {
 		database = new Database();
 		database.setCurrency(Currency.getInstance("EUR"));
 		database.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
-		database.setAssets(createAssets());
-		database.setLiabilities(createLiabilities());
-		database.setExpenses(createExpenses());
-		database.setRevenues(createRevenues());
 		database.setParties(createParties());
+
+        BookkeepingService bookkeepingService = new BookkeepingService();
+        bookkeepingService.applyMigrations(database);
+        for (Account account : createAccounts()) {
+            bookkeepingService.createAccount(database, account);
+        }
 
 		addStartBalance();
 		addJournals();
@@ -91,7 +96,7 @@ public class AbstractBookkeepingTest {
 	}
 
 	private void addJournals() throws Exception {
-		List<JournalItem> items = new ArrayList<JournalItem>();
+		List<JournalItem> items = new ArrayList<>();
 		items.add(createItem(20, "190", true));
 		items.add(createItem(20, "300", false));
 		Journal journal = new Journal("t1", "Payment", DateUtil.createDate(2011, 3, 5),
@@ -104,40 +109,28 @@ public class AbstractBookkeepingTest {
 				createAmount(20), journal.getDate(), descriptions, amounts);
 		database.addInvoicAndJournal(invoice, journal);
 
-		items = new ArrayList<JournalItem>();
+		items = new ArrayList<>();
 		items.add(createItem(10, "101", true, "inv1", "pay1"));
 		items.add(createItem(10, "190", false));
 		journal = new Journal("t2", "Payment", DateUtil.createDate(2011, 5, 10), items, null);
 		database.addJournal(journal, true);
 	}
 
-	private List<Account> createAssets() {
+	private List<Account> createAccounts() {
 		return Arrays.asList(
 				new Account("100", "Kas", AccountType.ASSET),
 				new Account("101", "Betaalrekening", AccountType.ASSET),
-				new Account("190", "Debiteuren", AccountType.ASSET)
-		);
-	}
+				new Account("190", "Debiteuren", AccountType.ASSET),
 
-	private List<Account> createLiabilities() {
-		return Arrays.asList(
-				new Account("200", "Eigen vermogen", AccountType.LIABILITY),
-				new Account("290", "Crediteuren", AccountType.LIABILITY)
-		);
-	}
+                new Account("200", "Eigen vermogen", AccountType.LIABILITY),
+                new Account("290", "Crediteuren", AccountType.LIABILITY),
 
-	private List<Account> createExpenses() {
-		return Arrays.asList(
-				new Account("400", "Zaalhuur", AccountType.EXPENSE),
-				new Account("490", "Onvoorzien", AccountType.EXPENSE)
-		);
-	}
+                new Account("400", "Zaalhuur", AccountType.EXPENSE),
+                new Account("490", "Onvoorzien", AccountType.EXPENSE),
 
-	private List<Account> createRevenues() {
-		return Arrays.asList(
-				new Account("300", "Contributie", AccountType.REVENUE),
-				new Account("390", "Onvoorzien", AccountType.REVENUE)
-		);
+                new Account("300", "Contributie", AccountType.REVENUE),
+                new Account("390", "Onvoorzien", AccountType.REVENUE)
+        );
 	}
 
 	private Party[] createParties() {
@@ -150,7 +143,7 @@ public class AbstractBookkeepingTest {
 	}
 
 	private void addStartBalance() throws Exception {
-		List<JournalItem> items = new ArrayList<JournalItem>();
+		List<JournalItem> items = new ArrayList<>();
 		items.add(createItem(100, "100", true));
 		items.add(createItem(300, "101", true));
 		items.add(createItem(400, "200", false));
@@ -160,15 +153,15 @@ public class AbstractBookkeepingTest {
 		database.addJournal(journal, false);
 	}
 
-	protected JournalItem createItem(int amountInt, String accountId, boolean debet) throws ParseException {
-		Account account = database.getAccount(accountId);
+	protected JournalItem createItem(int amountInt, String accountId, boolean debet) throws ParseException, SQLException {
+		Account account = new AccountDAO(database).get(accountId);
 		Amount amount = createAmount(amountInt);
 		return new JournalItem(amount, account, debet);
 	}
 
 	protected JournalItem createItem(int amountInt, String accountId, boolean debet,
-			String invoiceId, String paymentId) throws ParseException {
-		Account account = database.getAccount(accountId);
+			String invoiceId, String paymentId) throws ParseException, SQLException {
+		Account account = new AccountDAO(database).get(accountId);
 		Amount amount = createAmount(amountInt);
 		return new JournalItem(amount, account, debet, invoiceId, paymentId);
 	}
@@ -220,8 +213,9 @@ public class AbstractBookkeepingTest {
 	 * @param actual actual database
 	 * @throws ServiceException
 	 */
-	public void assertEqualDatabase(Database expected, Database actual) throws ServiceException {
-		assertEquals(expected.getAllAccounts().toString(), actual.getAllAccounts().toString());
+	public void assertEqualDatabase(Database expected, Database actual) throws ServiceException, SQLException {
+        BookkeepingService bookkeepingService = new BookkeepingService();
+		assertEquals(bookkeepingService.findAllAccounts(expected).toString(), bookkeepingService.findAllAccounts(actual).toString());
 		assertEquals(Arrays.toString(expected.getParties()), Arrays.toString(actual.getParties()));
 		assertEquals(expected.getCurrency(), actual.getCurrency());
 		assertEquals(expected.getDescription(), actual.getDescription());
@@ -233,10 +227,8 @@ public class AbstractBookkeepingTest {
 		assertEquals(expected.getJournals().toString(), actual.getJournals().toString());
 		assertEqualDayOfYear(expected.getStartOfPeriod(), actual.getStartOfPeriod());
 
-		Report expectedReport = BookkeepingService.createReport(expected,
-				DateUtil.addYears(expected.getStartOfPeriod(), 1));
-		Report actualReport = BookkeepingService.createReport(actual,
-				DateUtil.addYears(expected.getStartOfPeriod(), 1));
+		Report expectedReport = bookkeepingService.createReport(expected, DateUtil.addYears(expected.getStartOfPeriod(), 1));
+		Report actualReport = bookkeepingService.createReport(actual, DateUtil.addYears(expected.getStartOfPeriod(), 1));
 
 		assertEquals(expectedReport.getTotalAssets(), actualReport.getTotalAssets());
 		assertEquals(expectedReport.getTotalLiabilities(), actualReport.getTotalLiabilities());

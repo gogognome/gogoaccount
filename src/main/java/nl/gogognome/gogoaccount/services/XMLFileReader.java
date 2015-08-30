@@ -17,6 +17,7 @@
 package nl.gogognome.gogoaccount.services;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.database.AccountDAO;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
 import nl.gogognome.lib.text.Amount;
@@ -117,7 +118,7 @@ public class XMLFileReader {
 				String id = accountElem.getAttribute("id");
 				String name = accountElem.getAttribute("name");
 				AccountType type = AccountType.valueOf(accountElem.getAttribute("type"));
-                database.getAccountDAO().create(new Account(id, name, type));
+                new AccountDAO(database).create(new Account(id, name, type));
 			}
 		}
 	}
@@ -125,22 +126,22 @@ public class XMLFileReader {
 	private void parseAccountsBeforeVersion2_2(Element rootElement) throws SQLException {
 		List<Account> assets = parseAccounts(rootElement.getElementsByTagName("assets"), AccountType.ASSET);
 		for (Account account : assets) {
-            database.getAccountDAO().create(account);
+            new AccountDAO(database).create(account);
         }
 
 		List<Account> liabilities = parseAccounts(rootElement.getElementsByTagName("liabilities"), AccountType.LIABILITY);
         for (Account account : liabilities) {
-            database.getAccountDAO().create(account);
+            new AccountDAO(database).create(account);
         }
 
 		List<Account> expenses = parseAccounts(rootElement.getElementsByTagName("expenses"), AccountType.EXPENSE);
         for (Account account : expenses) {
-            database.getAccountDAO().create(account);
+            new AccountDAO(database).create(account);
         }
 
 		List<Account> revenues = parseAccounts(rootElement.getElementsByTagName("revenues"), AccountType.REVENUE);
         for (Account account : revenues) {
-            database.getAccountDAO().create(account);
+            new AccountDAO(database).create(account);
         }
     }
 
@@ -183,7 +184,7 @@ public class XMLFileReader {
 						}
 					}
 
-					itemsList.add(new JournalItem(amount, database.getAccountDAO().get(itemId),
+					itemsList.add(new JournalItem(amount, new AccountDAO(database).get(itemId),
 							"debet".equals(side), invoiceId, paymentId));
 				}
 

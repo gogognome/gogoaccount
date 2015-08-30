@@ -241,7 +241,7 @@ public class ConfigureBookkeepingView extends View {
 		Account account = eav.getEditedAccount();
 		if (account != null) {
 			try {
-				bookkeepingService.addAccount(database, account);
+				bookkeepingService.createAccount(database, account);
 				AccountDefinition definition = new AccountDefinition();
 				definition.account = account;
 				tableModel.addRow(definition);

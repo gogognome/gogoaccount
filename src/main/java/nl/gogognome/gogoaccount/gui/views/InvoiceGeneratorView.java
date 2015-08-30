@@ -16,33 +16,10 @@
  */
 package nl.gogognome.gogoaccount.gui.views;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
-
-import javax.swing.AbstractAction;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import nl.gogognome.dataaccess.DataAccessException;
 import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.database.AccountDAO;
 import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.components.AmountTextField;
@@ -60,6 +37,19 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
+
+import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
+
+import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * This class implements a view in which the user can generate invoices
@@ -80,13 +70,12 @@ public class InvoiceGeneratorView extends View {
 	private DateModel invoiceGenerationDateModel;
 	private final JTextField tfId = new JTextField();
 	private JRadioButton rbSalesInvoice;
-	private JRadioButton rbPurchaseInvoice;
 	private final ButtonGroup invoiceTypeButtonGroup = new ButtonGroup();
 
 	/** Instances of this class represent a single line of the invoice template. */
 	private class TemplateLine {
 		JRadioButton rbAmountToBePaid = new JRadioButton();
-		private final ListModel<Account> accountListModel = new ListModel<Account>();
+		private final ListModel<Account> accountListModel = new ListModel<>();
 		AmountTextField tfDebet;
 		AmountTextField tfCredit;
 
@@ -119,7 +108,7 @@ public class InvoiceGeneratorView extends View {
 	public void onInit() {
         try {
             ServiceTransaction.withoutResult(() -> {
-				accounts = database.getAccountDAO().findAll("id");
+				accounts = new AccountDAO(database).findAll("id");
 				currency = database.getCurrency();
 			});
         } catch (ServiceException e) {
@@ -189,7 +178,7 @@ public class InvoiceGeneratorView extends View {
 				SwingUtils.createTextFieldGBConstraints(1, row));
 		row++;
 
-		rbPurchaseInvoice = new JRadioButton();
+		JRadioButton rbPurchaseInvoice = new JRadioButton();
 		invoiceTypePanel.add(rbPurchaseInvoice,
 				SwingUtils.createGBConstraints(0, row, 1, 1, 0.0, 0.0,
 						GridBagConstraints.CENTER, GridBagConstraints.NONE,
@@ -198,12 +187,7 @@ public class InvoiceGeneratorView extends View {
 				SwingUtils.createTextFieldGBConstraints(1, row));
 		row++;
 
-		ChangeListener changeListener = new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				onInvoiceTypeChanged();
-			}
-		};
+		ChangeListener changeListener = e -> onInvoiceTypeChanged();
 		rbSalesInvoice.addChangeListener(changeListener);
 		rbPurchaseInvoice.addChangeListener(changeListener);
 		invoiceTypeButtonGroup.add(rbSalesInvoice);
@@ -342,7 +326,7 @@ public class InvoiceGeneratorView extends View {
 			return;
 		}
 
-		List<InvoiceLineDefinition> invoiceLines = new ArrayList<InvoiceLineDefinition>(templateLines.size());
+		List<InvoiceLineDefinition> invoiceLines = new ArrayList<>(templateLines.size());
 		for (TemplateLine line : templateLines) {
 			invoiceLines.add(new InvoiceLineDefinition(line.tfDebet.getAmount(), line.tfCredit.getAmount(),
 					line.accountListModel.getSelectedItem(), line.rbAmountToBePaid.isSelected()));
@@ -436,7 +420,7 @@ public class InvoiceGeneratorView extends View {
 
         try {
             ServiceTransaction.withoutResult(() -> {
-                List<Account> accounts = database.getAccountDAO().findAccountsOfType(accountType);
+                List<Account> accounts = new AccountDAO(database).findAccountsOfType(accountType);
                 if (!accounts.isEmpty()) {
                     templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
                 }
