@@ -18,13 +18,11 @@ import static junit.framework.Assert.*;
 
 /**
  * Tests the Database class.
- *
- * @author Sander Kooijmans
  */
 public class TestDatabase extends AbstractBookkeepingTest {
 
-	private BookkeepingService bookkeepingService = new BookkeepingService();
-	private ConfigurationService configurationService = new ConfigurationService();
+	private final ConfigurationService configurationService = new ConfigurationService();
+	private final BookkeepingService bookkeepingService = new BookkeepingService();
 
 	@Test
 	public void testGetAllAccounts() throws Exception {
@@ -141,8 +139,8 @@ public class TestDatabase extends AbstractBookkeepingTest {
 		assertNotNull(oldJournal);
 
 		List<JournalItem> items = Arrays.asList(
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "100"), true),
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "190"), false)
+				new JournalItem(createAmount(20), configurationService.getAccount(document, "100"), true),
+				new JournalItem(createAmount(20), configurationService.getAccount(document, "190"), false)
 				);
 		Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
 				items, null);
@@ -154,8 +152,8 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	@Test
 	public void updateNonExistingJournalFails() throws Exception {
 		List<JournalItem> items = Arrays.asList(
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "100"), true),
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "190"), false)
+				new JournalItem(createAmount(20), configurationService.getAccount(document, "100"), true),
+				new JournalItem(createAmount(20), configurationService.getAccount(document, "190"), false)
 				);
 		Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
 				items, null);

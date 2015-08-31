@@ -25,7 +25,7 @@ import java.io.Reader;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 import nl.gogognome.gogoaccount.services.importers.RabobankCSVImporter;
@@ -43,12 +43,12 @@ import org.junit.Test;
  */
 public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
-	private BookkeepingService bookkeepingService = new BookkeepingService();
-	private ImportBankStatementService ibsService;
+	private ConfigurationService configurationService = new ConfigurationService();
+	private ImportBankStatementService importBankStatementService;
 	
 	@Before
 	public void initService() {
-		ibsService = new ImportBankStatementService(document);
+		importBankStatementService = new ImportBankStatementService(document);
 	}
 
 	@Test
@@ -67,72 +67,72 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
 	@Test
 	public void setAndGetFromAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(document, "100");
-		Account account101 = bookkeepingService.getAccount(document, "101");
+		Account account100 = configurationService.getAccount(document, "100");
+		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 
-		assertNull(ibsService.getFromAccount(it));
-		ibsService.setImportedFromAccount(it, account101);
-		assertEquals(account101, ibsService.getFromAccount(it));
+		assertNull(importBankStatementService.getFromAccount(it));
+		importBankStatementService.setImportedFromAccount(it, account101);
+		assertEquals(account101, importBankStatementService.getFromAccount(it));
 
-		ibsService.setImportedFromAccount(it, account100);
-		assertEquals(account100, ibsService.getFromAccount(it));
+		importBankStatementService.setImportedFromAccount(it, account100);
+		assertEquals(account100, importBankStatementService.getFromAccount(it));
 	}
 
 	@Test
 	public void setAndGetToAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(document, "100");
-		Account account101 = bookkeepingService.getAccount(document, "101");
+		Account account100 = configurationService.getAccount(document, "100");
+		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 
-		assertNull(ibsService.getToAccount(it));
-		ibsService.setImportedToAccount(it, account101);
-		assertEquals(account101, ibsService.getToAccount(it));
+		assertNull(importBankStatementService.getToAccount(it));
+		importBankStatementService.setImportedToAccount(it, account101);
+		assertEquals(account101, importBankStatementService.getToAccount(it));
 
-		ibsService.setImportedToAccount(it, account100);
-		assertEquals(account100, ibsService.getToAccount(it));
+		importBankStatementService.setImportedToAccount(it, account100);
+		assertEquals(account100, importBankStatementService.getToAccount(it));
 	}
 
 	@Test
 	public void setAndGetFromAccountWithUnknownAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(document, "100");
-		Account account101 = bookkeepingService.getAccount(document, "101");
+		Account account100 = configurationService.getAccount(document, "100");
+		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0170059308','EUR',20030105,'C',9550.00,'0000000000','STORTING',20030103,'','','','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 		assertNull(it.getFromAccount());
 
-		assertNull(ibsService.getFromAccount(it));
-		ibsService.setImportedFromAccount(it, account101);
-		assertEquals(account101, ibsService.getFromAccount(it));
+		assertNull(importBankStatementService.getFromAccount(it));
+		importBankStatementService.setImportedFromAccount(it, account101);
+		assertEquals(account101, importBankStatementService.getFromAccount(it));
 
-		ibsService.setImportedFromAccount(it, account100);
-		assertEquals(account100, ibsService.getFromAccount(it));
+		importBankStatementService.setImportedFromAccount(it, account100);
+		assertEquals(account100, importBankStatementService.getFromAccount(it));
 	}
 
 	@Test
 	public void setAndGetToAccountWithUnknownAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(document, "100");
-		Account account101 = bookkeepingService.getAccount(document, "101");
+		Account account100 = configurationService.getAccount(document, "100");
+		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0000000000','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 		assertNull(it.getToAccount());
 
-		assertNull(ibsService.getToAccount(it));
-		ibsService.setImportedToAccount(it, account101);
-		assertEquals(account101, ibsService.getToAccount(it));
+		assertNull(importBankStatementService.getToAccount(it));
+		importBankStatementService.setImportedToAccount(it, account101);
+		assertEquals(account101, importBankStatementService.getToAccount(it));
 
-		ibsService.setImportedToAccount(it, account100);
-		assertEquals(account100, ibsService.getToAccount(it));
+		importBankStatementService.setImportedToAccount(it, account100);
+		assertEquals(account100, importBankStatementService.getToAccount(it));
 	}
 
 	private List<ImportedTransaction> importRabobankTransactions(String... lines) throws Exception {

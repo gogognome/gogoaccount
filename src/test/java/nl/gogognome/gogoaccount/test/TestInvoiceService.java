@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public Licensen
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.test;
 
 
@@ -27,6 +11,7 @@ import java.util.List;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
 import nl.gogognome.gogoaccount.services.InvoiceService;
@@ -44,7 +29,8 @@ import org.junit.Test;
  */
 public class TestInvoiceService extends AbstractBookkeepingTest {
 
-    private BookkeepingService bookkeepingService = new BookkeepingService();
+    private final BookkeepingService bookkeepingService = new BookkeepingService();
+	private final ConfigurationService configurationService = new ConfigurationService();
 
 	@Test
 	public void testInvoiceCreation() throws Exception {
@@ -52,8 +38,8 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(document, "190"), true),
-			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(document, "400"), false));
+			new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
+			new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
 		InvoiceService.createInvoiceAndJournalForParties(document, "inv-{id}",
 				parties, issueDate, "Invoice for {name}", lines);
 
@@ -71,8 +57,8 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(document, "190"), true),
-			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(document, "400"), false));
+			new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
+			new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
 		InvoiceService.createInvoiceAndJournalForParties(document, "auto",
 				parties, issueDate, "Invoice for {name}", lines);
 
@@ -96,8 +82,8 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(document, "190"), false),
-			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(document, "400"), false));
+			new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), false),
+			new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(document, "inv-{id}",
@@ -113,8 +99,8 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(document, "190"), true),
-			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(document, "400"), true));
+			new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
+			new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), true));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(document, "inv-{id}",
@@ -130,9 +116,9 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(document, "190"), true),
-			new InvoiceLineDefinition(null, null, bookkeepingService.getAccount(document, "190"), false),
-			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(document, "400"), false));
+			new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
+			new InvoiceLineDefinition(null, null, configurationService.getAccount(document, "190"), false),
+			new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(document, "inv-{id}",
@@ -148,9 +134,9 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
 		Date issueDate = DateUtil.createDate(2011, 8, 20);
 		Amount a = createAmount(20);
 		List<InvoiceLineDefinition> lines = Arrays.asList(
-			new InvoiceLineDefinition(a, null, bookkeepingService.getAccount(document, "190"), true),
-			new InvoiceLineDefinition(a, a, bookkeepingService.getAccount(document, "190"), false),
-			new InvoiceLineDefinition(null, a, bookkeepingService.getAccount(document, "400"), false));
+			new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
+			new InvoiceLineDefinition(a, a, configurationService.getAccount(document, "190"), false),
+			new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
 
 		try {
 			InvoiceService.createInvoiceAndJournalForParties(document, "inv-{id}",

@@ -18,7 +18,6 @@ package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
@@ -44,6 +43,8 @@ import static junit.framework.Assert.*;
  * @author Sander Kooijmans
  */
 public abstract class AbstractBookkeepingTest {
+
+    private final ConfigurationService configurationService = new ConfigurationService();
 
 	protected Document document;
 
@@ -143,7 +144,7 @@ public abstract class AbstractBookkeepingTest {
 
 	protected JournalItem createItem(int amountInt, String accountId, boolean debet) throws ServiceException {
 		return ServiceTransaction.withResult(() -> {
-			Account account = new AccountDAO(document).get(accountId);
+			Account account = configurationService.getAccount(document, accountId);
 			Amount amount = createAmount(amountInt);
 			return new JournalItem(amount, account, debet);
 		});
@@ -151,7 +152,7 @@ public abstract class AbstractBookkeepingTest {
 
 	protected JournalItem createItem(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            Account account = new AccountDAO(document).get(accountId);
+            Account account = configurationService.getAccount(document, accountId);
             Amount amount = createAmount(amountInt);
             return new JournalItem(amount, account, debet, invoiceId, paymentId);
         });

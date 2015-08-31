@@ -3,13 +3,13 @@ package nl.gogognome.gogoaccount.services;
 import nl.gogognome.dataaccess.migrations.DatabaseMigratorDAO;
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -20,6 +20,8 @@ import java.util.List;
  * This class offers methods to manipulate the bookkeeping.
  */
 public class BookkeepingService {
+
+    private ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
 
     public Document closeBookkeeping(Document document, String description, Date date, Account equity) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
@@ -42,25 +44,24 @@ public class BookkeepingService {
             }
 
             // Copy the accounts
-            AccountDAO accountDAONew = new AccountDAO(newDocument);
-            for (Account account : new AccountDAO(document).findAll()) {
-                accountDAONew.create(account);
+            for (Account account : configurationService.findAllAccounts(document)) {
+                configurationService.createAccount(newDocument, account);
             }
 
             // Create start balance
             Date dayBeforeStart = DateUtil.addDays(date, -1);
 
             List<JournalItem> journalItems = new ArrayList<>(20);
-            for (Account account : accountDAONew.findAssets()) {
+            for (Account account : configurationService.findAssets(document)) {
                 JournalItem item = new JournalItem(getAccountBalance(document, account, dayBeforeStart),
-                        accountDAONew.get(account.getId()), true, null, null);
+                        configurationService.getAccount(newDocument, account.getId()), true, null, null);
                 if (!item.getAmount().isZero()) {
                     journalItems.add(item);
                 }
             }
-            for (Account account : accountDAONew.findLiabilities()) {
+            for (Account account : configurationService.findLiabilities(document)) {
                 JournalItem item = new JournalItem(getAccountBalance(document, account, dayBeforeStart),
-                        accountDAONew.get(account.getId()), false, null, null);
+                        configurationService.getAccount(newDocument, account.getId()), false, null, null);
                 if (!item.getAmount().isZero()) {
                     journalItems.add(item);
                 }
@@ -70,9 +71,9 @@ public class BookkeepingService {
             Report report = createReport(document, dayBeforeStart);
             Amount resultOfOperations = report.getResultOfOperations();
             if (resultOfOperations.isPositive()) {
-                journalItems.add(new JournalItem(resultOfOperations, accountDAONew.get(equity.getId()), false, null, null));
+                journalItems.add(new JournalItem(resultOfOperations, configurationService.getAccount(newDocument, equity.getId()), false, null, null));
             } else if (resultOfOperations.isNegative()) {
-                journalItems.add(new JournalItem(resultOfOperations.negate(), accountDAONew.get(equity.getId()), true, null, null));
+                journalItems.add(new JournalItem(resultOfOperations.negate(), configurationService.getAccount(newDocument, equity.getId()), true, null, null));
             }
             try {
                 Journal startBalance = new Journal("start", "start balance", dayBeforeStart,
@@ -119,15 +120,15 @@ public class BookkeepingService {
         });
     }
 
-    private Journal copyJournal(Journal journal, Document newDocument) throws SQLException {
+    private Journal copyJournal(Journal journal, Document newDocument) throws ServiceException {
         return new Journal(journal.getId(), journal.getDescription(), journal.getDate(),
             copyJournalItems(journal.getItems(), newDocument), journal.getIdOfCreatedInvoice());
     }
 
-    private JournalItem[] copyJournalItems(JournalItem[] items, Document newDocument) throws SQLException {
+    private JournalItem[] copyJournalItems(JournalItem[] items, Document newDocument) throws ServiceException {
         JournalItem[] newItems = new JournalItem[items.length];
         for (int i=0; i<items.length; i++) {
-            newItems[i] = new JournalItem(items[i].getAmount(), new AccountDAO(newDocument).get(items[i].getAccount().getId()),
+            newItems[i] = new JournalItem(items[i].getAmount(), configurationService.getAccount(newDocument, items[i].getAccount().getId()),
                 items[i].isDebet(), items[i].getInvoiceId(), items[i].getPaymentId());
         }
         return newItems;
@@ -228,10 +229,6 @@ public class BookkeepingService {
         return getAccountBalance(document, account, date);
     }
 
-    public Account getAccount(Document document, String accountId) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new AccountDAO(document).get(accountId));
-    }
-
     /**
      * Checks whether the specified account is used in the database. An account is considered
      * "in use" if it has a non-zero start balance or if one or more journals use the account.
@@ -258,10 +255,10 @@ public class BookkeepingService {
     public Report createReport(Document document, Date date) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             ReportBuilder rb = new ReportBuilder(document, date);
-            rb.setAssets(new AccountDAO(document).findAssets());
-            rb.setLiabilities(new AccountDAO(document).findLiabilities());
-            rb.setExpenses(new AccountDAO(document).findExpenses());
-            rb.setRevenues(new AccountDAO(document).findRevenues());
+            rb.setAssets(configurationService.findAssets(document));
+            rb.setLiabilities(configurationService.findLiabilities(document));
+            rb.setExpenses(configurationService.findExpenses(document));
+            rb.setRevenues(configurationService.findRevenues(document));
 
             for (Journal j : document.getJournals()) {
                 if (DateUtil.compareDayOfYear(j.getDate(), date) <= 0) {

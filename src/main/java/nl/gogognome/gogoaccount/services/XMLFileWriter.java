@@ -40,7 +40,7 @@ import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
@@ -84,7 +84,7 @@ public class XMLFileWriter {
 			rootElement.setAttribute("currency", document.getCurrency().getCurrencyCode());
 			rootElement.setAttribute("startdate", DATE_FORMAT.format(document.getStartOfPeriod()));
 
-			rootElement.appendChild(createElementForAccounts(new AccountDAO(document).findAll("id")));
+			rootElement.appendChild(createElementForAccounts(new ConfigurationService().findAllAccounts(document)));
 
 			rootElement.appendChild(createElementForParties(document.getParties()));
 			appendElementsForJournals(rootElement);

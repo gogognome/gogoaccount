@@ -1,25 +1,9 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
- */
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.components.AmountTextField;
@@ -27,6 +11,7 @@ import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
@@ -107,10 +92,8 @@ public class InvoiceGeneratorView extends View {
 	@Override
 	public void onInit() {
         try {
-            ServiceTransaction.withoutResult(() -> {
-				accounts = new AccountDAO(document).findAll("id");
-				currency = document.getCurrency();
-			});
+            accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
+			currency = document.getCurrency();
         } catch (ServiceException e) {
             MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
 			close();
@@ -419,12 +402,10 @@ public class InvoiceGeneratorView extends View {
 		}
 
         try {
-            ServiceTransaction.withoutResult(() -> {
-                List<Account> accounts = new AccountDAO(document).findAccountsOfType(accountType);
-                if (!accounts.isEmpty()) {
-                    templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
-                }
-            });
+			List<Account> accounts = ObjectFactory.create(ConfigurationService.class).findAccountsOfType(document, accountType);
+			if (!accounts.isEmpty()) {
+				templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
+			}
         } catch (ServiceException e) {
             MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
         }

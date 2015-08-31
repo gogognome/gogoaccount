@@ -16,8 +16,9 @@ import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
@@ -736,10 +737,10 @@ public class Document {
 	 * @param importedAccount the account of an imported transaction
 	 * @return the account or null if no corresponding account is found
 	 */
-	public Account getAccountForImportedAccount(String importedAccount) throws SQLException {
+	public Account getAccountForImportedAccount(String importedAccount) throws ServiceException {
 		String accountId = importedTransactionAccountToAccountMap.get(importedAccount);
 		if (accountId != null) {
-			return new AccountDAO(this).get(accountId);
+			return new ConfigurationService().getAccount(this, accountId);
 		} else {
 			return null;
 		}

@@ -13,7 +13,7 @@ import java.util.List;
 import static com.google.common.collect.Lists.newArrayList;
 import static nl.gogognome.gogoaccount.businessobjects.AccountType.*;
 
-public class AccountDAO extends AbstractDomainClassDAO<Account> {
+class AccountDAO extends AbstractDomainClassDAO<Account> {
 
     public AccountDAO(Document document) {
         super("account", null, document.getBookkeepingId());

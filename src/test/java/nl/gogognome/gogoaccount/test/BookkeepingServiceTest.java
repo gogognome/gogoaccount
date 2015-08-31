@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.test;
 
 import static junit.framework.Assert.assertEquals;
@@ -48,29 +32,29 @@ import org.junit.Test;
  */
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
-	private BookkeepingService bookkeepingService = new BookkeepingService();
-	private ConfigurationService configurationService = new ConfigurationService();
+	private final ConfigurationService configurationService = new ConfigurationService();
+	private final BookkeepingService bookkeepingService = new BookkeepingService();
 
 	@Test
 	public void testStartBalance() throws Exception {
 		checkAmount(100,
-				bookkeepingService.getStartBalance(document, bookkeepingService.getAccount(document, "100")));
+				bookkeepingService.getStartBalance(document, configurationService.getAccount(document, "100")));
 		checkAmount(300,
-				bookkeepingService.getStartBalance(document, bookkeepingService.getAccount(document, "101")));
+				bookkeepingService.getStartBalance(document, configurationService.getAccount(document, "101")));
 		checkAmount(400,
-				bookkeepingService.getStartBalance(document, bookkeepingService.getAccount(document, "200")));
+				bookkeepingService.getStartBalance(document, configurationService.getAccount(document, "200")));
 	}
 
 	@Test
 	public void deleteUnusedAccountSucceeds() throws Exception {
-		configurationService.deleteAccount(document, bookkeepingService.getAccount(document, "290"));
+		configurationService.deleteAccount(document, configurationService.getAccount(document, "290"));
 		assertAccountDoesNotExist(document, "290");
 	}
 
     @Test
 	public void deleteUsedAccountFails() throws Exception {
 		try {
-			configurationService.deleteAccount(document, bookkeepingService.getAccount(document, "190"));
+			configurationService.deleteAccount(document, configurationService.getAccount(document, "190"));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {
 			assertAccountExists(document, "190");
@@ -114,13 +98,13 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 						"20110510 t2 Payment 1000 null inv1,  " +
 						"null totaal mutaties 1000 0,  " +
 						"null eindsaldo 31000 null]",
-				report.getLedgerLinesForAccount(bookkeepingService.getAccount(document, "101")).toString());
+				report.getLedgerLinesForAccount(configurationService.getAccount(document, "101")).toString());
 
 		assertEquals("[ null beginsaldo null 0, " +
 				"20110305 t1 Payment null 2000 inv1,  " +
 				"null totaal mutaties 0 2000,  " +
 				"null eindsaldo null 2000]",
-				report.getLedgerLinesForAccount(bookkeepingService.getAccount(document, "300")).toString());
+				report.getLedgerLinesForAccount(configurationService.getAccount(document, "300")).toString());
 
 		checkTotalsOfReport(report);
 	}
@@ -153,7 +137,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 		assertEquals("[ null beginsaldo 30000 null,  " +
 						"null totaal mutaties 0 0,  " +
 						"null eindsaldo 30000 null]",
-				report.getLedgerLinesForAccount(bookkeepingService.getAccount(document, "101")).toString());
+				report.getLedgerLinesForAccount(configurationService.getAccount(document, "101")).toString());
 
 		checkTotalsOfReport(report);
 	}
@@ -161,7 +145,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 	@Test
 	public void testCloseBookkeeping() throws Exception {
 		Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
-				DateUtil.createDate(2012, 1, 1), bookkeepingService.getAccount(document, "200"));
+				DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
 
 		assertEquals("new bookkeeping", newDocument.getDescription());
 		assertEquals(configurationService.findAllAccounts(document).toString(), configurationService.findAllAccounts(newDocument).toString());
@@ -189,8 +173,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 		checkAmount(10, report.getBalanceForDebtor(document.getParty("1101")));
 		checkAmount(0, report.getBalanceForCreditor(document.getParty("1101")));
 
-		checkAmount(420, report.getAmount(bookkeepingService.getAccount(document, "200")));
-		checkAmount(0, report.getAmount(bookkeepingService.getAccount(document, "300")));
+		checkAmount(420, report.getAmount(configurationService.getAccount(document, "200")));
+		checkAmount(0, report.getAmount(configurationService.getAccount(document, "300")));
 
 		checkTotalsOfReport(report);
 	}
@@ -205,7 +189,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 		document.addJournal(journal, false);
 		try {
 			bookkeepingService.closeBookkeeping(document, "new bookkeeping",
-					DateUtil.createDate(2012, 1, 1), bookkeepingService.getAccount(document, "200"));
+					DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
 			fail("Expected exception was not thrown");
 		} catch (ServiceException e) {
 		}
@@ -221,7 +205,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 		document.addJournal(journal, false);
 		document.databaseConsistentWithFile();
 		Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
-				DateUtil.createDate(2012, 1, 1), bookkeepingService.getAccount(document, "200"));
+				DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
 
 		assertEquals("[20111231 start start balance, 20120110 ABC Test]",
 				newDocument.getJournals().toString());
@@ -229,13 +213,13 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
 	@Test
 	public void checkInUseForUsedAccount() throws ServiceException {
-		assertTrue(bookkeepingService.inUse(document, bookkeepingService.getAccount(document, "190")));
-		assertTrue(bookkeepingService.inUse(document, bookkeepingService.getAccount(document, "200")));
+		assertTrue(bookkeepingService.inUse(document, configurationService.getAccount(document, "190")));
+		assertTrue(bookkeepingService.inUse(document, configurationService.getAccount(document, "200")));
 	}
 
 	@Test
 	public void checkInUseForUnusedAccount() throws ServiceException {
-		assertFalse(bookkeepingService.inUse(document, bookkeepingService.getAccount(document, "400")));
+		assertFalse(bookkeepingService.inUse(document, configurationService.getAccount(document, "400")));
 	}
 
 	@Test
@@ -265,7 +249,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 	public void addNewAccount() throws Exception {
 		configurationService.createAccount(document,
                 new Account("103", "Spaarrekening", AccountType.ASSET));
-		Account a = bookkeepingService.getAccount(document, "103");
+		Account a = configurationService.getAccount(document, "103");
 		assertEquals("103", a.getId());
 		assertEquals("Spaarrekening", a.getName());
 		assertEquals(AccountType.ASSET, a.getType());
@@ -285,7 +269,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 	public void addUpdateAccount() throws Exception {
 		configurationService.updateAccount(document,
 				new Account("101", "Spaarrekening", AccountType.ASSET));
-		Account a = bookkeepingService.getAccount(document, "101");
+		Account a = configurationService.getAccount(document, "101");
 		assertEquals("101", a.getId());
 		assertEquals("Spaarrekening", a.getName());
 		assertEquals(AccountType.ASSET, a.getType());

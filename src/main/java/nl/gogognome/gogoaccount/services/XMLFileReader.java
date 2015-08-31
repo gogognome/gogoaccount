@@ -1,26 +1,11 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
- */
 package nl.gogognome.gogoaccount.services;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.StringUtil;
@@ -37,18 +22,16 @@ import java.util.*;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-
-
 /**
  * This class reads the contents of a <code>Database</code> from an XML file.
- *
- * @author Sander Kooijmans
  */
 public class XMLFileReader {
 
 	private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
 
 	private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
+
+	private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
 
 	private Document document;
 	private String fileVersion;
@@ -105,7 +88,7 @@ public class XMLFileReader {
 		});
 	}
 
-	private void parseAccountsForVersion2_2(Element rootElement) throws SQLException {
+	private void parseAccountsForVersion2_2(Element rootElement) throws ServiceException {
 		List<Account> accounts = newArrayList();
 		NodeList nodes = rootElement.getElementsByTagName("accounts");
 		for (int i=0; i<nodes.getLength(); i++)
@@ -118,35 +101,35 @@ public class XMLFileReader {
 				String id = accountElem.getAttribute("id");
 				String name = accountElem.getAttribute("name");
 				AccountType type = AccountType.valueOf(accountElem.getAttribute("type"));
-                new AccountDAO(document).create(new Account(id, name, type));
+                configurationService.createAccount(document, new Account(id, name, type));
 			}
 		}
 	}
 
-	private void parseAccountsBeforeVersion2_2(Element rootElement) throws SQLException {
+	private void parseAccountsBeforeVersion2_2(Element rootElement) throws ServiceException {
 		List<Account> assets = parseAccounts(rootElement.getElementsByTagName("assets"), AccountType.ASSET);
 		for (Account account : assets) {
-            new AccountDAO(document).create(account);
+			configurationService.createAccount(document, account);
         }
 
 		List<Account> liabilities = parseAccounts(rootElement.getElementsByTagName("liabilities"), AccountType.LIABILITY);
         for (Account account : liabilities) {
-            new AccountDAO(document).create(account);
+            configurationService.createAccount(document, account);
         }
 
 		List<Account> expenses = parseAccounts(rootElement.getElementsByTagName("expenses"), AccountType.EXPENSE);
         for (Account account : expenses) {
-            new AccountDAO(document).create(account);
+            configurationService.createAccount(document, account);
         }
 
 		List<Account> revenues = parseAccounts(rootElement.getElementsByTagName("revenues"), AccountType.REVENUE);
         for (Account account : revenues) {
-            new AccountDAO(document).create(account);
+            configurationService.createAccount(document, account);
         }
     }
 
 	private void parseAndAddJournals(int highestPaymentId, Element rootElement)
-            throws ParseException, DocumentModificationFailedException, SQLException {
+            throws ParseException, DocumentModificationFailedException, ServiceException {
 		String description;
 		NodeList journalsNodes = rootElement.getElementsByTagName("journals");
 		for (int i=0; i<journalsNodes.getLength(); i++) {
@@ -184,7 +167,7 @@ public class XMLFileReader {
 						}
 					}
 
-					itemsList.add(new JournalItem(amount, new AccountDAO(document).get(itemId),
+					itemsList.add(new JournalItem(amount, configurationService.getAccount(document, itemId),
 							"debet".equals(side), invoiceId, paymentId));
 				}
 

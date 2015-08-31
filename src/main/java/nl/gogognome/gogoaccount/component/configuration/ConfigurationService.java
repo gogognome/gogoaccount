@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.component.configuration;
 
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
@@ -14,8 +15,32 @@ public class ConfigurationService {
         return ServiceTransaction.withResult(() -> new AccountDAO(document).hasAny());
     }
 
+    public Account getAccount(Document document, String accountId) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new AccountDAO(document).get(accountId));
+    }
+
     public List<Account> findAllAccounts(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> new AccountDAO(document).findAll("id"));
+    }
+
+    public List<Account> findAccountsOfType(Document document, AccountType accountType) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new AccountDAO(document).findAccountsOfType(accountType));
+    }
+
+    public List<Account> findAssets(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new AccountDAO(document).findAssets());
+    }
+
+    public List<Account> findLiabilities(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new AccountDAO(document).findLiabilities());
+    }
+
+    public List<Account> findExpenses(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new AccountDAO(document).findExpenses());
+    }
+
+    public List<Account> findRevenues(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new AccountDAO(document).findRevenues());
     }
 
     public void createAccount(Document document, Account account) throws ServiceException {
@@ -35,6 +60,4 @@ public class ConfigurationService {
             new AccountDAO(document).delete(account.getId());
         });
     }
-
-
 }
