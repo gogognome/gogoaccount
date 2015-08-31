@@ -20,7 +20,7 @@ import java.awt.Window;
 import java.io.File;
 import java.util.Date;
 
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.views.GenerateReportView;
 import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.ReportTask;
@@ -38,17 +38,17 @@ import nl.gogognome.lib.util.Factory;
  */
 public class GenerateReportController {
 
-	private Database database;
+	private Document document;
 	private Window parentWindow;
 
-	public GenerateReportController(Database database, Window parentWindow) {
+	public GenerateReportController(Document document, Window parentWindow) {
 		super();
-		this.database = database;
+		this.document = document;
 		this.parentWindow = parentWindow;
 	}
 
 	public void execute() {
-		GenerateReportView view = new GenerateReportView(database);
+		GenerateReportView view = new GenerateReportView(document);
 		ViewDialog dialog = new ViewDialog(parentWindow, view);
 		dialog.showDialog();
 
@@ -59,11 +59,11 @@ public class GenerateReportController {
 
 			switch (view.getReportType()) {
 			case PLAIN_TEXT:
-			    task = new ReportTask(database, date, reportFile, view.getReportType());
+			    task = new ReportTask(document, date, reportFile, view.getReportType());
 				break;
 
 			case ODT_DOCUMENT:
-				task = new OdtReportGeneratorTask(database, date, reportFile, view.getTemplateFile());
+				task = new OdtReportGeneratorTask(document, date, reportFile, view.getTemplateFile());
 				break;
 
 			default:

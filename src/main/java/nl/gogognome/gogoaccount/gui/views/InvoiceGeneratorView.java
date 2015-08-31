@@ -16,11 +16,11 @@
  */
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.database.AccountDAO;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.components.AmountTextField;
 import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
@@ -61,7 +61,7 @@ public class InvoiceGeneratorView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	private final Database database;
+	private final Document document;
 
     private List<Account> accounts;
     private Currency currency;
@@ -91,8 +91,8 @@ public class InvoiceGeneratorView extends View {
 	private final ArrayList<TemplateLine> templateLines = newArrayList();
 	private JPanel templateLinesPanel;
 
-	public InvoiceGeneratorView(Database database) {
-        this.database = database;
+	public InvoiceGeneratorView(Document document) {
+        this.document = document;
 	}
 
 	@Override
@@ -108,8 +108,8 @@ public class InvoiceGeneratorView extends View {
 	public void onInit() {
         try {
             ServiceTransaction.withoutResult(() -> {
-				accounts = new AccountDAO(database).findAll("id");
-				currency = database.getCurrency();
+				accounts = new AccountDAO(document).findAll("id");
+				currency = document.getCurrency();
 			});
         } catch (ServiceException e) {
             MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
@@ -368,7 +368,7 @@ public class InvoiceGeneratorView extends View {
 		}
 
 		// Let the user select the parties.
-		PartiesView partiesView = new PartiesView(database);
+		PartiesView partiesView = new PartiesView(document);
 		partiesView.setSelectioEnabled(true);
 		partiesView.setMultiSelectionEnabled(true);
 		ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
@@ -388,7 +388,7 @@ public class InvoiceGeneratorView extends View {
 		}
 
 		try {
-			InvoiceService.createInvoiceAndJournalForParties(database, tfId.getText(), Arrays.asList(parties), date,
+			InvoiceService.createInvoiceAndJournalForParties(document, tfId.getText(), Arrays.asList(parties), date,
 					tfDescription.getText(), invoiceLines);
 		} catch (ServiceException e) {
 			MessageDialog.showMessage(this, "gen.titleError",
@@ -420,7 +420,7 @@ public class InvoiceGeneratorView extends View {
 
         try {
             ServiceTransaction.withoutResult(() -> {
-                List<Account> accounts = new AccountDAO(database).findAccountsOfType(accountType);
+                List<Account> accounts = new AccountDAO(document).findAccountsOfType(accountType);
                 if (!accounts.isEmpty()) {
                     templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
                 }

@@ -1,24 +1,9 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
 import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.*;
@@ -54,12 +39,12 @@ import static nl.gogognome.gogoaccount.gui.ActionRunner.run;
  *
  * @author Sander Kooijmans
  */
-public class MainFrame extends JFrame implements ActionListener, DatabaseListener {
+public class MainFrame extends JFrame implements ActionListener, DocumentListener {
 
     private static final long serialVersionUID = 1L;
 
     /** The current database of the application. */
-    private Database database;
+    private Document document;
 
     /** The menu bar of the application. */
 	private JMenuBar menuBar = new JMenuBar();
@@ -73,15 +58,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
     private BookkeepingService bookkeepingService = new BookkeepingService();
+	private ConfigurationService configurationService = new ConfigurationService();
 
 	public MainFrame() {
 		super();
 		try {
-			database = new Database();
+			document = new Document();
 		} catch (SQLException e) {
 			throw new RuntimeException("Could not create inital database: " + e.getMessage(), e);
 		}
-		database.addListener(this);
+		document.addListener(this);
 		createMenuBar();
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -109,11 +95,11 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 */
 	private String createTitle() {
 	    String result = textResource.getString("mf.title");
-	    String description = database.getDescription();
+	    String description = document.getDescription();
 	    if (description != null)
 	    {
 	        result += " - " + description;
-	        if (database.hasUnsavedChanges())
+	        if (document.hasUnsavedChanges())
 	        {
 	            result += "*";
 	        }
@@ -240,7 +226,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private boolean mayCurrentDatabaseBeDestroyed()
 	{
 		boolean result;
-		if (database.hasUnsavedChanges())
+		if (document.hasUnsavedChanges())
 		{
 			int choice = MessageDialog.showYesNoCancelQuestion(this, "gen.titleWarning",
 				"mf.saveChangesBeforeExit");
@@ -275,12 +261,12 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	private void handleNewEdition() throws ServiceException {
 		if (mayCurrentDatabaseBeDestroyed()) {
             try {
-                setDatabase(new Database());
+                setDocument(new Document());
             } catch (SQLException e) {
                 throw new ServiceException(e);
             }
-            database.setDescription(textResource.getString("mf.newBookkeepingDescription"));
-			database.databaseConsistentWithFile();
+            document.setDescription(textResource.getString("mf.newBookkeepingDescription"));
+			document.databaseConsistentWithFile();
 			handleConfigureBookkeeping();
 		}
 	}
@@ -290,8 +276,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 		if (mayCurrentDatabaseBeDestroyed())
 		{
 			JFileChooser fc = new JFileChooser();
-			if (database.getFileName() != null) {
-				fc.setCurrentDirectory(new File(database.getFileName()));
+			if (document.getFileName() != null) {
+				fc.setCurrentDirectory(new File(document.getFileName()));
 			}
 			fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
 			int choice = fc.showDialog(this, textResource.getString("mf.titleOpenBookkeeping"));
@@ -311,7 +297,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** Handles the save bookkeeping event. */
 	private void handleSaveBookkeeping()
 	{
-		String fileName = database.getFileName();
+		String fileName = document.getFileName();
 		if (fileName != null)
 		{
 		    saveBookkeeping(fileName);
@@ -324,8 +310,8 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	private void handleSaveBookeepingAs() {
 		JFileChooser fc = new JFileChooser();
-		if (database.getFileName() != null) {
-			fc.setCurrentDirectory(new File(database.getFileName()));
+		if (document.getFileName() != null) {
+			fc.setCurrentDirectory(new File(document.getFileName()));
 		}
 		fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
 		int choice = fc.showDialog(this, textResource.getString("mf.titleSaveAs"));
@@ -337,23 +323,23 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 
 	/** Handles closing the bookkeeping. */
 	private void handleCloseBookkeeping() {
-	    if (database.hasUnsavedChanges()) {
+	    if (document.hasUnsavedChanges()) {
 	        handleSaveBookkeeping();
 	    }
-        if (database.hasUnsavedChanges()) {
+        if (document.hasUnsavedChanges()) {
             // The user did not want to save the changes. Do not close the bookkeeping.
             return;
         }
 
-        CloseBookkeepingView cbv = new CloseBookkeepingView(database);
+        CloseBookkeepingView cbv = new CloseBookkeepingView(document);
         new ViewDialog(this, cbv).showDialog();
         Date date = cbv.getDate();
         Account accountToAddResultTo = cbv.getAccountToAddResultTo();
         String description = cbv.getDescription();
         if (date != null && accountToAddResultTo != null) {
             try {
-                Database newDatabase = bookkeepingService.closeBookkeeping(database, description, date, accountToAddResultTo);
-                setDatabase(newDatabase);
+                Document newDocument = bookkeepingService.closeBookkeeping(document, description, date, accountToAddResultTo);
+                setDocument(newDocument);
             } catch (ServiceException e) {
                 MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");
             }
@@ -369,33 +355,33 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 * @param fileName the name of the file.
 	 */
 	public void loadFile(String fileName) {
-        Database newDatabase;
+        Document newDocument;
 		try {
-			newDatabase = new XMLFileReader(new File(fileName)).createDatabaseFromFile();
+			newDocument = new XMLFileReader(new File(fileName)).createDatabaseFromFile();
 		} catch (ServiceException e) {
 			MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
         }
-		newDatabase.databaseConsistentWithFile();
-		setDatabase(newDatabase);
+		newDocument.databaseConsistentWithFile();
+		setDocument(newDocument);
 	}
 
 	/**
 	 * Replaces the old database by the new database.
-	 * @param newDatabase the new database
+	 * @param newDocument the new database
 	 */
-	private void setDatabase(Database newDatabase) {
-        database.removeListener(this);
+	private void setDocument(Document newDocument) {
+        document.removeListener(this);
 
-        database = newDatabase;
-        database.addListener(this);
+        document = newDocument;
+        document.addListener(this);
         viewTabbedPane.closeAllViews();
 
         for (View view : openViews.values()) {
         	view.requestClose();
         }
 
-        databaseChanged(database);
+        documentChanged(document);
         handleViewBalanceAndOperationalResult();
 	}
 
@@ -405,9 +391,9 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	 */
 	private void saveBookkeeping(String fileName) {
 		try {
-			new XMLFileWriter(database, new File(fileName)).writeDatabaseToFile();
-			database.setFileName(fileName);
-			database.databaseConsistentWithFile();
+			new XMLFileWriter(document, new File(fileName)).writeDatabaseToFile();
+			document.setFileName(fileName);
+			document.databaseConsistentWithFile();
 		} catch (Exception e) {
 			MessageDialog.showErrorMessage(this, e, "mf.saveException");
 		}
@@ -416,7 +402,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	/** Handles the exit event. */
 	private void handleExit() {
 		if (mayCurrentDatabaseBeDestroyed()) {
-			database.removeListener(this);
+			document.removeListener(this);
 			dispose();
 		}
 	}
@@ -438,17 +424,17 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleAddJournal() throws ServiceException {
-	    if (!bookkeepingService.hasAccounts(database)) {
+	    if (!configurationService.hasAccounts(document)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
-            EditJournalView view = new EditJournalView(database, "ajd.title", null);
+            EditJournalView view = new EditJournalView(document, "ajd.title", null);
             ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();
 	    }
 	}
 
 	private void handleEditJournals() throws ServiceException {
-	    if (!bookkeepingService.hasAccounts(database)) {
+	    if (!configurationService.hasAccounts(document)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
 	    	openView(EditJournalsView.class);
@@ -456,7 +442,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleGenerateInvoices() throws ServiceException {
-	    if (!bookkeepingService.hasAccounts(database)) {
+	    if (!configurationService.hasAccounts(document)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
 	    	openView(InvoiceToOdtView.class);
@@ -464,16 +450,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleGenerateReport() throws ServiceException {
-	    if (!bookkeepingService.hasAccounts(database)) {
+	    if (!configurationService.hasAccounts(document)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
-		    GenerateReportController controller = new GenerateReportController(database, this);
+		    GenerateReportController controller = new GenerateReportController(document, this);
 		    controller.execute();
 	    }
 	}
 
 	private void handlePrintAddressLabels() {
-	    AddressLabelPrinter alp = new AddressLabelPrinter(database.getParties());
+	    AddressLabelPrinter alp = new AddressLabelPrinter(document.getParties());
 	    try {
             alp.printAddressLabels();
         } catch (PrinterException e) {
@@ -482,7 +468,7 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
 	private void handleAddInvoices() throws ServiceException {
-        if (!bookkeepingService.hasAccounts(database)) {
+        if (!configurationService.hasAccounts(document)) {
             MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
         } else {
             openView(InvoiceGeneratorView.class);
@@ -515,16 +501,16 @@ public class MainFrame extends JFrame implements ActionListener, DatabaseListene
 	}
 
     private View createView(Class<? extends View> viewClass) throws Exception {
-    	Constructor<? extends View> c = viewClass.getConstructor(Database.class);
-    	return c.newInstance(database);
+    	Constructor<? extends View> c = viewClass.getConstructor(Document.class);
+    	return c.newInstance(document);
 	}
 
 	/**
      * This method is called when the database has changed.
-     * @param database the database that has changed
+     * @param document the database that has changed
      */
     @Override
-	public void databaseChanged(Database database) {
+	public void documentChanged(Document document) {
         setTitle(createTitle());
     }
 

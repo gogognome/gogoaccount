@@ -35,8 +35,8 @@ import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.ActionRunner;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -59,7 +59,7 @@ public class EditJournalView extends View {
 	private static final long serialVersionUID = 1L;
 
 	/** The database. */
-    protected Database database;
+    protected Document document;
 
     /** The id of the title. */
     private String titleId;
@@ -97,13 +97,13 @@ public class EditJournalView extends View {
      * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
      * To add one or more new journals, set <code>journal</code> to <code>null</code>.
      *
-     * @param database the database to which the journal must be added
+     * @param document the database to which the journal must be added
      * @param titleId the id of the title
      * @param journal the journal used to initialize the elements of the view. Must be <code>null</code>
      *        to edit a new journal
      */
-    public EditJournalView(Database database, String titleId, Journal journal) {
-        this.database = database;
+    public EditJournalView(Document document, String titleId, Journal journal) {
+        this.document = document;
         this.titleId = titleId;
         this.journalToBeEdited = journal;
     }
@@ -116,7 +116,7 @@ public class EditJournalView extends View {
 
     private void initModels() {
         try {
-            itemsTableModel = new ItemsTableModel(database);
+            itemsTableModel = new ItemsTableModel(document);
             itemsTableModel.setJournalItems(new JournalItem[0]);
 
             initModelsForJournal(journalToBeEdited);
@@ -274,8 +274,8 @@ public class EditJournalView extends View {
         }
 	}
 
-	protected void createNewJournal(Journal journal) throws DatabaseModificationFailedException {
-		database.addJournal(journal, true);
+	protected void createNewJournal(Journal journal) throws DocumentModificationFailedException {
+		document.addJournal(journal, true);
 	}
 
 	protected void initValuesForNextJournal() throws ServiceException {
@@ -310,7 +310,7 @@ public class EditJournalView extends View {
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() throws ServiceException {
     	JournalItem defaultItem = createDefaultItemToBeAdded();
-    	EditJournalItemView view = new EditJournalItemView(database, defaultItem);
+    	EditJournalItemView view = new EditJournalItemView(document, defaultItem);
     	ViewDialog dialog = new ViewDialog(this, view);
     	dialog.showDialog();
 
@@ -335,7 +335,7 @@ public class EditJournalView extends View {
         int row = itemsTable.getSelectedRow();
         JournalItem item = itemsTableModel.getRow(row);
         if (item != null) {
-        	EditJournalItemView view = new EditJournalItemView(database, item);
+        	EditJournalItemView view = new EditJournalItemView(document, item);
         	ViewDialog dialog = new ViewDialog(this, view);
         	dialog.showDialog();
 

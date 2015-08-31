@@ -19,7 +19,7 @@ package nl.gogognome.gogoaccount.gui.controllers;
 import java.awt.Component;
 
 import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -32,7 +32,7 @@ import nl.gogognome.lib.swing.MessageDialog;
 public class DeleteJournalController {
 
 	private Component owner;
-	private Database database;
+	private Document document;
 	private Journal journal;
 
 	private boolean journalDeleted;
@@ -40,18 +40,18 @@ public class DeleteJournalController {
 	/**
 	 * Constructs the controller.
 	 * @param owner the component that uses this controller
-	 * @param database the database
+	 * @param document the database
 	 * @param journal the journal to be deleted
 	 */
-	public DeleteJournalController(Component owner, Database database, Journal journal) {
+	public DeleteJournalController(Component owner, Document document, Journal journal) {
 		super();
 		this.owner = owner;
-		this.database = database;
+		this.document = document;
 		this.journal = journal;
 	}
 
 	public void execute() {
-        if (!database.getPayments(journal.getIdOfCreatedInvoice()).isEmpty()) {
+        if (!document.getPayments(journal.getIdOfCreatedInvoice()).isEmpty()) {
             MessageDialog.showWarningMessage(owner, "editJournalsView.journalCreatingInvoiceCannotBeDeleted");
             return;
         }
@@ -63,7 +63,7 @@ public class DeleteJournalController {
 	    }
 
 	    try {
-	        BookkeepingService.removeJournal(database, journal);
+	        BookkeepingService.removeJournal(document, journal);
 	        journalDeleted = true;
 	    } catch (ServiceException e) {
 	        MessageDialog.showErrorMessage(owner, e, "DeleteJournalController.serviceException");

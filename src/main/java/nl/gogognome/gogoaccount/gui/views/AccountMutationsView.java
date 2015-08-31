@@ -16,11 +16,11 @@
 */
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.database.AccountDAO;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -46,7 +46,7 @@ public class AccountMutationsView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
+	private Document document;
 
 	private JScrollPane tableScrollPane;
 	private AccountOverviewTableModel tableModel;
@@ -55,13 +55,13 @@ public class AccountMutationsView extends View {
 	private ListModel<Account> accountListModel = new ListModel<>();
 
 	private ModelChangeListener modelListener;
-	private DatabaseListener databaseListener;
+	private DocumentListener documentListener;
 
 	private Report report;
 
-	public AccountMutationsView(Database database) {
+	public AccountMutationsView(Document document) {
 		super();
-		this.database = database;
+		this.document = document;
 	}
 
 	@Override
@@ -121,12 +121,12 @@ public class AccountMutationsView extends View {
 		dateModel.addModelChangeListener(modelListener);
 		accountListModel.addModelChangeListener(modelListener);
 
-		databaseListener = new DatabaseListenerImpl();
-		database.addListener(databaseListener);
+		documentListener = new DocumentListenerImpl();
+		document.addListener(documentListener);
 	}
 
 	private void removeListeners() {
-		database.removeListener(databaseListener);
+		document.removeListener(documentListener);
 		dateModel.removeModelChangeListener(modelListener);
 		accountListModel.removeModelChangeListener(modelListener);
 	}
@@ -144,7 +144,7 @@ public class AccountMutationsView extends View {
 
 	private void updateReport(Date date) {
 		try {
-			report = new BookkeepingService().createReport(database, date);
+			report = new BookkeepingService().createReport(document, date);
 		} catch (ServiceException e) {
 			report = null;
 			MessageDialog.showErrorMessage(this, e, "gen.internalError");
@@ -167,7 +167,7 @@ public class AccountMutationsView extends View {
 
 	private void setAccountsInListModel() {
         try {
-            ServiceTransaction.withoutResult(() -> accountListModel.setItems(new AccountDAO(database).findAll("id")));
+            ServiceTransaction.withoutResult(() -> accountListModel.setItems(new AccountDAO(document).findAll("id")));
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
@@ -184,9 +184,9 @@ public class AccountMutationsView extends View {
 		}
 	}
 
-	private final class DatabaseListenerImpl implements DatabaseListener {
+	private final class DocumentListenerImpl implements DocumentListener {
 		@Override
-		public void databaseChanged(Database db) {
+		public void documentChanged(Document document) {
 			setAccountsInListModel();
 			updateReportAndTableModel();
 		}

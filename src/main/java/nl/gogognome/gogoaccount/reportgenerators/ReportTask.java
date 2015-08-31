@@ -18,7 +18,8 @@ package nl.gogognome.gogoaccount.reportgenerators;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.Task;
@@ -44,7 +45,7 @@ import java.util.List;
  * @author Sander Kooijmans
  */
 public class ReportTask implements Task {
-    private Database database;
+    private Document document;
     private Date date;
     private Report report;
 
@@ -61,13 +62,13 @@ public class ReportTask implements Task {
 
     /**
      * Constructor.
-     * @param database
+     * @param document
      * @param date
      * @param file
      * @param fileType the type of file to be created. Only PLAIN_TEXT is allowed
      */
-    public ReportTask(Database database, Date date, File file, ReportType fileType) {
-        this.database = database;
+    public ReportTask(Document document, Date date, File file, ReportType fileType) {
+        this.document = document;
         this.date = date;
         this.file = file;
         this.fileType = fileType;
@@ -90,7 +91,7 @@ public class ReportTask implements Task {
                 throw new IllegalArgumentException("Illegal file type: " + fileType);
         }
 
-        report = ObjectFactory.create(BookkeepingService.class).createReport(database, date);
+        report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
         progressListener.onProgressUpdate(10);
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(file))){
@@ -117,9 +118,9 @@ public class ReportTask implements Task {
         printCreditors();
         progressListener.onProgressUpdate(60);
 
-        List<Journal> journals = database.getJournals();
+        List<Journal> journals = document.getJournals();
         progressListener.onProgressUpdate(70);
-        printJournals(journals, database.getStartOfPeriod(), date);
+        printJournals(journals, document.getStartOfPeriod(), date);
         progressListener.onProgressUpdate(80);
         printLedger();
 
@@ -282,7 +283,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noDebtors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(database.getCurrency());
+            Amount total = Amount.getZero(document.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -321,7 +322,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noCreditors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(database.getCurrency());
+            Amount total = Amount.getZero(document.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -396,7 +397,7 @@ public class ReportTask implements Task {
                 values[6] = "";
                 String idOfCreatedInvoice = journals.get(i).getIdOfCreatedInvoice();
                 if (idOfCreatedInvoice != null) {
-                    Invoice invoice = database.getInvoice(idOfCreatedInvoice);
+                    Invoice invoice = document.getInvoice(idOfCreatedInvoice);
                     values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid())
                         + " " + invoice.getId() + " (" + invoice.getConcerningParty().getName() + ')';
                 } else {
@@ -413,7 +414,7 @@ public class ReportTask implements Task {
                     values[6] = "";
                     values[items[j].isDebet() ? 4 : 6] =
                         amountFormat.formatAmountWithoutCurrency(items[j].getAmount());
-                    Invoice invoice = database.getInvoice(items[j].getInvoiceId());
+                    Invoice invoice = document.getInvoice(items[j].getInvoiceId());
                     values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
                     result.append(textFormat.getRow(values));
                 }

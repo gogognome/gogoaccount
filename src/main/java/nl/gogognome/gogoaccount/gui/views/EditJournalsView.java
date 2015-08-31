@@ -32,8 +32,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
@@ -58,15 +58,15 @@ public class EditJournalsView extends View {
     private JTable journalsTable;
     private ListSelectionListener listSelectionListener;
 
-    private Database database;
+    private Document document;
 
 	/**
 	 * Creates the "Edit journals" view.
-	 * @param database the database whose journals are being edited
+	 * @param document the database whose journals are being edited
 	 */
-	public EditJournalsView(Database database) {
+	public EditJournalsView(Document document) {
 		super();
-        this.database = database;
+        this.document = document;
     }
 
     /**
@@ -75,11 +75,11 @@ public class EditJournalsView extends View {
     @Override
     public void onInit() {
         // Create table of journals
-        journalsTableModel = new JournalsTableModel(database);
+        journalsTableModel = new JournalsTableModel(document);
 		journalsTable = widgetFactory.createSortedTable(journalsTableModel);
 
 		// Create table of items
-		itemsTableModel = new ItemsTableModel(database);
+		itemsTableModel = new ItemsTableModel(document);
 		itemsTable = widgetFactory.createTable(itemsTableModel);
 		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
@@ -148,7 +148,7 @@ public class EditJournalsView extends View {
         int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
         if (row != -1) {
             Journal journal = journalsTableModel.getRow(row);
-            EditJournalController controller = new EditJournalController(this, database, journal);
+            EditJournalController controller = new EditJournalController(this, document, journal);
             controller.execute();
             updateJournalItemTable(row);
         }
@@ -158,14 +158,14 @@ public class EditJournalsView extends View {
      * This method lets the user add new journals.
      */
     private void addJournal() {
-    	DatabaseListener databaseListener = new DatabaseListenerImpl();
+    	DocumentListener documentListener = new DocumentListenerImpl();
     	try {
-    		database.addListener(databaseListener);
-	        EditJournalView view = new EditJournalView(database, "ajd.title", null);
+    		document.addListener(documentListener);
+	        EditJournalView view = new EditJournalView(document, "ajd.title", null);
 	        ViewDialog dialog = new ViewDialog(this, view);
 	        dialog.showDialog();
 	    } finally {
-    		database.removeListener(databaseListener);
+    		document.removeListener(documentListener);
 	    }
     }
 
@@ -176,7 +176,7 @@ public class EditJournalsView extends View {
         int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
         if (row != -1) {
         	DeleteJournalController controller =
-        		new DeleteJournalController(this, database, journalsTableModel.getRow(row));
+        		new DeleteJournalController(this, document, journalsTableModel.getRow(row));
         	controller.execute();
         }
     }
@@ -231,10 +231,10 @@ public class EditJournalsView extends View {
 	    }
     }
 
-	private class DatabaseListenerImpl implements DatabaseListener {
+	private class DocumentListenerImpl implements DocumentListener {
 		@Override
-		public void databaseChanged(Database db) {
-			journalsTableModel.replaceRows(db.getJournals());
+		public void documentChanged(Document document) {
+			journalsTableModel.replaceRows(document.getJournals());
 		}
 	}
 }

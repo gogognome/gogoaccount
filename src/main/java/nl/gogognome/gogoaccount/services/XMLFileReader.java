@@ -17,13 +17,13 @@
 package nl.gogognome.gogoaccount.services;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
-import nl.gogognome.gogoaccount.database.AccountDAO;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.StringUtil;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -50,7 +50,7 @@ public class XMLFileReader {
 
 	private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
-	private Database database;
+	private Document document;
 	private String fileVersion;
 	private final File file;
 
@@ -63,28 +63,28 @@ public class XMLFileReader {
 	 * @return a <tt>Database</tt> with the contents of the file.
 	 * @throws ServiceException if a problem occurs
 	 */
-	public Database createDatabaseFromFile() throws ServiceException {
+	public Document createDatabaseFromFile() throws ServiceException {
 		return ServiceTransaction.withResult(() -> {
 			int highestPaymentId = 0;
 
-			database = new BookkeepingService().createNewDatabase();
-			database.setFileName(file.getAbsolutePath());
+			document = new BookkeepingService().createNewDatabase();
+			document.setFileName(file.getAbsolutePath());
 
 			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-			Document doc = docBuilder.parse(file);
+			org.w3c.dom.Document doc = docBuilder.parse(file);
 			Element rootElement = doc.getDocumentElement();
 
 			fileVersion = rootElement.getAttribute("fileversion");
 
 			String description = rootElement.getAttribute("description");
-			database.setDescription(description);
+			document.setDescription(description);
 
 			String currency = rootElement.getAttribute("currency");
-			database.setCurrency(Currency.getInstance(currency));
+			document.setCurrency(Currency.getInstance(currency));
 
 			Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
-			database.setStartOfPeriod(startDate);
+			document.setStartOfPeriod(startDate);
 
 			// parse accounts
 			if (fileVersion == null || fileVersion.equals("1.0")) {
@@ -101,7 +101,7 @@ public class XMLFileReader {
 
 			parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
 
-			return database;
+			return document;
 		});
 	}
 
@@ -118,7 +118,7 @@ public class XMLFileReader {
 				String id = accountElem.getAttribute("id");
 				String name = accountElem.getAttribute("name");
 				AccountType type = AccountType.valueOf(accountElem.getAttribute("type"));
-                new AccountDAO(database).create(new Account(id, name, type));
+                new AccountDAO(document).create(new Account(id, name, type));
 			}
 		}
 	}
@@ -126,27 +126,27 @@ public class XMLFileReader {
 	private void parseAccountsBeforeVersion2_2(Element rootElement) throws SQLException {
 		List<Account> assets = parseAccounts(rootElement.getElementsByTagName("assets"), AccountType.ASSET);
 		for (Account account : assets) {
-            new AccountDAO(database).create(account);
+            new AccountDAO(document).create(account);
         }
 
 		List<Account> liabilities = parseAccounts(rootElement.getElementsByTagName("liabilities"), AccountType.LIABILITY);
         for (Account account : liabilities) {
-            new AccountDAO(database).create(account);
+            new AccountDAO(document).create(account);
         }
 
 		List<Account> expenses = parseAccounts(rootElement.getElementsByTagName("expenses"), AccountType.EXPENSE);
         for (Account account : expenses) {
-            new AccountDAO(database).create(account);
+            new AccountDAO(document).create(account);
         }
 
 		List<Account> revenues = parseAccounts(rootElement.getElementsByTagName("revenues"), AccountType.REVENUE);
         for (Account account : revenues) {
-            new AccountDAO(database).create(account);
+            new AccountDAO(document).create(account);
         }
     }
 
 	private void parseAndAddJournals(int highestPaymentId, Element rootElement)
-            throws ParseException, DatabaseModificationFailedException, SQLException {
+            throws ParseException, DocumentModificationFailedException, SQLException {
 		String description;
 		NodeList journalsNodes = rootElement.getElementsByTagName("journals");
 		for (int i=0; i<journalsNodes.getLength(); i++) {
@@ -184,16 +184,16 @@ public class XMLFileReader {
 						}
 					}
 
-					itemsList.add(new JournalItem(amount, new AccountDAO(database).get(itemId),
+					itemsList.add(new JournalItem(amount, new AccountDAO(document).get(itemId),
 							"debet".equals(side), invoiceId, paymentId));
 				}
 
 				JournalItem[] items = itemsList.toArray(new JournalItem[itemsList.size()]);
-				database.addJournal(new Journal(id, description, date, items, idOfCreatedInvoice), false);
+				document.addJournal(new Journal(id, description, date, items, idOfCreatedInvoice), false);
 			}
 		}
 
-		database.setNextPaymentId("p" + (highestPaymentId + 1));
+		document.setNextPaymentId("p" + (highestPaymentId + 1));
 	}
 
 	private List<Account> parseAccounts(NodeList nodes, AccountType type) {
@@ -218,9 +218,9 @@ public class XMLFileReader {
 	 * @param nodes a node list containing parties.
 	 * @return an array of parties found in <code>nodes</code>
 	 * @throws XMLParseException if a syntax error is found in the nodes
-	 * @throws DatabaseModificationFailedException
+	 * @throws DocumentModificationFailedException
 	 */
-	private void parseAndAddParties(NodeList nodes) throws XMLParseException, DatabaseModificationFailedException {
+	private void parseAndAddParties(NodeList nodes) throws XMLParseException, DocumentModificationFailedException {
 		ArrayList<Party> parties = new ArrayList<Party>();
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element elem = (Element)nodes.item(i);
@@ -265,7 +265,7 @@ public class XMLFileReader {
 			}
 		}
 
-		database.setParties(parties.toArray(new Party[parties.size()]));
+		document.setParties(parties.toArray(new Party[parties.size()]));
 	}
 
 	/**
@@ -288,12 +288,12 @@ public class XMLFileReader {
 					throw new XMLParseException("Invalid amount: " + invoiceElem.getAttribute("amountToBePaid"));
 				}
 
-				Party concerningParty = database.getParty(invoiceElem.getAttribute("concerningParty"));
+				Party concerningParty = document.getParty(invoiceElem.getAttribute("concerningParty"));
 				if (concerningParty == null) {
 					throw new XMLParseException("No (valid) party specified for the invoice \"" + id + "\"");
 				}
 
-				Party payingParty = database.getParty(invoiceElem.getAttribute("payingParty"));
+				Party payingParty = document.getParty(invoiceElem.getAttribute("payingParty"));
 
 				NodeList lineNodes = invoiceElem.getElementsByTagName("line");
 				int numNodes = lineNodes.getLength();
@@ -348,12 +348,12 @@ public class XMLFileReader {
 				}
 
 				try {
-					database.addInvoice(new Invoice(id, payingParty, concerningParty, amountToBePaid,
+					document.addInvoice(new Invoice(id, payingParty, concerningParty, amountToBePaid,
 							issueDate, descriptions, amounts));
 					for (Payment p : payments) {
-						database.addPayment(id, p);
+						document.addPayment(id, p);
 					}
-				} catch (DatabaseModificationFailedException e) {
+				} catch (DocumentModificationFailedException e) {
 					throw new XMLParseException(e);
 				}
 			}
@@ -372,7 +372,7 @@ public class XMLFileReader {
 				Element element = (Element) mappingNodes.item(j);
 				String importedAccount = element.getAttribute("importedaccount");
 				String accountId = element.getAttribute("account");
-				database.setImportedAccount(importedAccount, accountId);
+				document.setImportedAccount(importedAccount, accountId);
 			}
 		}
 	}

@@ -40,7 +40,7 @@ import javax.swing.ListSelectionModel;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
@@ -60,7 +60,7 @@ public class InvoiceEditAndSelectionView extends View {
     private JTable table;
 
     /** The database whose invoices are to be shown and changed. */
-    private Database database;
+    private Document document;
 
     /** Indicates whether this view should also allow the user to select an invoice. */
     private boolean selectioEnabled;
@@ -86,24 +86,24 @@ public class InvoiceEditAndSelectionView extends View {
 
     /**
      * Constructor for an invoices view in which at most one invoice can be selected.
-     * @param database the database used to search for invoices
+     * @param document the database used to search for invoices
      * @param selectioEnabled <code>true</code> if the user should be able to select an invoice;
      *         <code>false</code> if the user cannot select an invoice
      */
-    public InvoiceEditAndSelectionView(Database database, boolean selectionEnabled) {
-        this(database, selectionEnabled, false);
+    public InvoiceEditAndSelectionView(Document document, boolean selectionEnabled) {
+        this(document, selectionEnabled, false);
     }
 
     /**
      * Constructor.
-     * @param database the database used to search for invoices and to add, delete or update invoices from.
+     * @param document the database used to search for invoices and to add, delete or update invoices from.
      * @param selectioEnabled <code>true</code> if the user should be able to select an invoice;
      *         <code>false</code> if the user cannot select an invoice
      * @param multiSelectionEnabled indicates that multiple invoices can be selected (<code>true</code>) or
      *         at most one invoice (<code>false</code>)
      */
-    public InvoiceEditAndSelectionView(Database database, boolean selectionEnabled, boolean multiSelectionEnabled) {
-        this.database = database;
+    public InvoiceEditAndSelectionView(Document document, boolean selectionEnabled, boolean multiSelectionEnabled) {
+        this.document = document;
         this.selectioEnabled = selectionEnabled;
         this.multiSelectionEnabled = multiSelectionEnabled;
     }
@@ -196,7 +196,7 @@ public class InvoiceEditAndSelectionView extends View {
         resultPanel.setBorder(widgetFactory.createTitleBorderWithPadding(
                 "invoicesView.foundInvoices"));
 
-        invoicesTableModel = new InvoicesTableModel(database);
+        invoicesTableModel = new InvoicesTableModel(document);
         table = widgetFactory.createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
         Action selectionAction = new SelectInvoiceAction();
@@ -241,7 +241,7 @@ public class InvoiceEditAndSelectionView extends View {
         }
         searchCriteria.setIncludeClosedInvoices(btIncludeClosedInvoices.isSelected());
 
-        invoicesTableModel.replaceRows(Arrays.asList(database.getInvoices(searchCriteria)));
+        invoicesTableModel.replaceRows(Arrays.asList(document.getInvoices(searchCriteria)));
         SwingUtils.selectFirstRow(table);
         table.requestFocusInWindow();
 

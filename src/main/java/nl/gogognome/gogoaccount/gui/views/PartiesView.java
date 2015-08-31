@@ -51,9 +51,9 @@ import javax.swing.event.ListSelectionListener;
 
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.components.document.DocumentListener;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -75,7 +75,7 @@ public class PartiesView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-    private Database database;
+    private Document document;
 
     private JTable table;
 	private PartiesTableModel partiesTableModel;
@@ -96,7 +96,7 @@ public class PartiesView extends View {
     private JButton btSearch;
     private JButton btSelect;
 
-    private DatabaseListener databaseListener;
+    private DocumentListener documentListener;
     private ListSelectionListener listSelectionListener;
     private FocusListener focusListener;
 
@@ -107,10 +107,10 @@ public class PartiesView extends View {
     /**
      * Constructor for the parties view. Parties can be edited. There is no select
      * party button.
-     * @param database
+     * @param document
      */
-    public PartiesView(Database database) {
-        this.database = database;
+    public PartiesView(Document document) {
+        this.document = document;
     }
 
     public void setSelectioEnabled(boolean selectioEnabled) {
@@ -232,13 +232,13 @@ public class PartiesView extends View {
     private void updateTypeListModel() {
     	List<String> items = new ArrayList<String>();
     	items.add("\u00a0");
-    	items.addAll(Arrays.asList(database.getPartyTypes()));
+    	items.addAll(Arrays.asList(document.getPartyTypes()));
     	typeListModel.setItems(items);
     }
 
     private void addListeners() {
-    	databaseListener = new DatabaseListenerImpl();
-    	database.addListener(databaseListener);
+    	documentListener = new DocumentListenerImpl();
+    	document.addListener(documentListener);
 
         listSelectionListener = new RemarksUpdateSelectionListener();
         table.getSelectionModel().addListSelectionListener(listSelectionListener);
@@ -263,7 +263,7 @@ public class PartiesView extends View {
     }
 
     private void removeListeners() {
-    	database.removeListener(databaseListener);
+    	document.removeListener(documentListener);
     	table.getSelectionModel().removeListSelectionListener(listSelectionListener);
     	removeListeners(ifc);
     }
@@ -307,7 +307,7 @@ public class PartiesView extends View {
             searchCriteria.setType(typeListModel.getSelectedItem());
         }
 
-        partiesTableModel.replaceRows(Arrays.asList(database.getParties(searchCriteria)));
+        partiesTableModel.replaceRows(Arrays.asList(document.getParties(searchCriteria)));
         SwingUtils.selectFirstRow(table);
         table.requestFocusInWindow();
 
@@ -321,15 +321,15 @@ public class PartiesView extends View {
      * This method is called when the "add party" button is pressed.
      */
     private void onAddParty() {
-        EditPartyView editPartyView = new EditPartyView(database, null);
+        EditPartyView editPartyView = new EditPartyView(document, null);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
 
         Party party = editPartyView.getEnteredParty();
         if (party != null) {
             try {
-                database.addParty(party);
-            } catch (DatabaseModificationFailedException e) {
+                document.addParty(party);
+            } catch (DocumentModificationFailedException e) {
                 MessageDialog.showErrorMessage(this, "partiesView.partyAlreadyExists");
             }
         }
@@ -346,15 +346,15 @@ public class PartiesView extends View {
         }
 
         Party oldParty = partiesTableModel.getRow(row);
-        EditPartyView editPartyView = new EditPartyView(database, oldParty);
+        EditPartyView editPartyView = new EditPartyView(document, oldParty);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
 
         Party party = editPartyView.getEnteredParty();
         if (party != null) {
             try {
-                database.updateParty(oldParty, party);
-            } catch (DatabaseModificationFailedException e) {
+                document.updateParty(oldParty, party);
+            } catch (DocumentModificationFailedException e) {
                 MessageDialog.showErrorMessage(this, e, "partiesView.partyAlreadyExists");
             }
         }
@@ -377,8 +377,8 @@ public class PartiesView extends View {
             "partiesView.areYouSurePartyIsDeleted", party.getName());
         if (choice == MessageDialog.YES_OPTION) {
             try {
-                database.removeParty(party);
-            } catch (DatabaseModificationFailedException e) {
+                document.removeParty(party);
+            } catch (DocumentModificationFailedException e) {
                 MessageDialog.showErrorMessage(this, e, "partiesView.partyCouldNotBeDeleted");
             }
         }
@@ -470,9 +470,9 @@ public class PartiesView extends View {
 		}
     }
 
-	private class DatabaseListenerImpl implements DatabaseListener {
+	private class DocumentListenerImpl implements DocumentListener {
 		@Override
-		public void databaseChanged(Database db) {
+		public void documentChanged(Document document) {
 			updateTypeListModel();
 		}
 	}

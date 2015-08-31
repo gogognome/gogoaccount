@@ -25,7 +25,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import nl.gogognome.gogoaccount.businessobjects.ReportType;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.RadioButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -48,7 +48,7 @@ public class GenerateReportView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
+	private Document document;
 
 	private DateModel dateModel;
     private FileModel reportFileModel;
@@ -63,8 +63,8 @@ public class GenerateReportView extends OkCancelView {
 
     private ModelChangeListener odtSelectionListener;
 
-    public GenerateReportView(Database database) {
-    	this.database = database;
+    public GenerateReportView(Document document) {
+    	this.document = document;
     }
 
 	@Override
@@ -81,7 +81,7 @@ public class GenerateReportView extends OkCancelView {
 	}
 
 	private void initModels() {
-		dateModel = new DateModel(DateUtil.addYears(database.getStartOfPeriod(), 1));
+		dateModel = new DateModel(DateUtil.addYears(document.getStartOfPeriod(), 1));
 
 		reportFileModel = new FileModel();
 		templateFileModel = new FileModel();

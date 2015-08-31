@@ -33,7 +33,7 @@ import javax.swing.SwingConstants;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -59,7 +59,7 @@ public class EditInvoiceView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
+	private Document document;
 
     private String titleId;
 
@@ -84,13 +84,13 @@ public class EditInvoiceView extends OkCancelView {
      * Constructor. To edit an existing invoice, give <code>invoice</code> a non-<code>null</code> value.
      * To create a new journal, set <code>invoice</code> to <code>null</code>.
      *
-     * @param database the database to which the journal must be added
+     * @param document the database to which the journal must be added
      * @param titleId the id of the title
      * @param invoice the invoice used to initialize the elements of the view. Must be <code>null</code>
      *        to edit a new invoice
      */
-    public EditInvoiceView(Database database, String titleId, Invoice invoice) {
-        this.database = database;
+    public EditInvoiceView(Document document, String titleId, Invoice invoice) {
+        this.document = document;
         this.titleId = titleId;
         this.initialInvoice = invoice;
     }
@@ -123,7 +123,7 @@ public class EditInvoiceView extends OkCancelView {
                 initialInvoice.getAmountToBePaid()));
         } else {
             dateModel.setDate(new Date());
-            idModel.setString(database.suggestNewInvoiceId(
+            idModel.setString(document.suggestNewInvoiceId(
                 textResource.formatDate("editInvoiceView.dateFormatForNewId", dateModel.getDate())));
         }
 
@@ -142,9 +142,9 @@ public class EditInvoiceView extends OkCancelView {
         ifc.addField("editInvoiceView.id", idModel);
         ifc.addField("editInvoiceView.issueDate", dateModel);
         ifc.addVariableSizeField("editInvoiceView.concerningParty",
-        		new PartyBean(database, concerningPartyModel));
+        		new PartyBean(document, concerningPartyModel));
         ifc.addVariableSizeField("editInvoiceView.payingParty",
-        		new PartyBean(database, payingPartyModel));
+        		new PartyBean(document, payingPartyModel));
         ifc.addField("editInvoiceView.amount", amountModel);
 
     	return ifc;
@@ -190,7 +190,7 @@ public class EditInvoiceView extends OkCancelView {
      */
     private void onAddRow() {
         EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
-            "editInvoiceView.addRowTileId", database.getCurrency());
+            "editInvoiceView.addRowTileId", document.getCurrency());
         ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
         dialog.showDialog();
         if (editDescriptionAndAmountView.getEditedDescription() != null) {
@@ -214,7 +214,7 @@ public class EditInvoiceView extends OkCancelView {
                 "editInvoiceView.editRowTileId",
                 tuple.getFirst(),
                 tuple.getSecond(),
-                database.getCurrency());
+                document.getCurrency());
             ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
             dialog.showDialog();
             if (editDescriptionAndAmountView.getEditedDescription() != null) {
@@ -263,7 +263,7 @@ public class EditInvoiceView extends OkCancelView {
 
         Amount amount;
         try {
-             amount = amountFormat.parse(amountModel.getString(), database.getCurrency());
+             amount = amountFormat.parse(amountModel.getString(), document.getCurrency());
         } catch (ParseException e) {
             MessageDialog.showWarningMessage(this, "gen.invalidAmount");
             return;

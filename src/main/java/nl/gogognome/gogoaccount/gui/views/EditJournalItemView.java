@@ -23,10 +23,11 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
@@ -50,7 +51,7 @@ public class EditJournalItemView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
+	private Document document;
     private InvoiceBean invoiceBean;
     private JournalItem itemToBeEdited;
 
@@ -64,11 +65,11 @@ public class EditJournalItemView extends OkCancelView {
 
     /**
      * Constructor.
-     * @param database the database
+     * @param document the database
      * @param item the item used to fill in the initial values of the fields.
      */
-    public EditJournalItemView(Database database, JournalItem item) {
-    	this.database = database;
+    public EditJournalItemView(Document document, JournalItem item) {
+    	this.document = document;
     	this.itemToBeEdited = item;
     }
 
@@ -87,14 +88,14 @@ public class EditJournalItemView extends OkCancelView {
 
 	private void initModels() {
 		try {
-            accountListModel.setItems(ObjectFactory.create(BookkeepingService.class).findAllAccounts(database));
+            accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
 
             List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
                     textResource.getString("gen.credit"));
             sideListModel.setItems(sides);
             sideListModel.setSelectedIndex(0, null);
 
-            invoiceBean = new InvoiceBean(database);
+            invoiceBean = new InvoiceBean(document);
 
             if (itemToBeEdited != null) {
                 initModelsForItemToBeEdited();
@@ -110,7 +111,7 @@ public class EditJournalItemView extends OkCancelView {
 		amountModel.setString(amountFormat.formatAmountWithoutCurrency(itemToBeEdited.getAmount()));
 		sideListModel.setSelectedIndex(itemToBeEdited.isDebet() ? 0 : 1, null);
 
-		Invoice invoice = database.getInvoice(itemToBeEdited.getInvoiceId());
+		Invoice invoice = document.getInvoice(itemToBeEdited.getInvoiceId());
 		invoiceBean.setSelectedInvoice(invoice);
 	}
 
@@ -142,7 +143,7 @@ public class EditJournalItemView extends OkCancelView {
 	protected void onOk() {
         Amount amount;
         try {
-            amount = amountFormat.parse(amountModel.getString(), database.getCurrency());
+            amount = amountFormat.parse(amountModel.getString(), document.getCurrency());
         } catch (ParseException e) {
         	amount = null;
         }
@@ -157,7 +158,7 @@ public class EditJournalItemView extends OkCancelView {
 
         enteredJournalItem = new JournalItem(amount, account, debet,
             invoice != null ? invoice.getId() : null,
-            invoice != null ? database.createPaymentId() : null);
+            invoice != null ? document.createPaymentId() : null);
         requestClose();
 	}
 

@@ -1,18 +1,13 @@
-package nl.gogognome.gogoaccount.database;
+package nl.gogognome.gogoaccount.component.configuration;
 
-import com.google.common.base.Joiner;
 import nl.gogognome.dataaccess.dao.AbstractDomainClassDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.dataaccess.dao.NoRecordFoundException;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
-import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
+import nl.gogognome.gogoaccount.components.document.Document;
 
-import javax.xml.crypto.Data;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -20,8 +15,8 @@ import static nl.gogognome.gogoaccount.businessobjects.AccountType.*;
 
 public class AccountDAO extends AbstractDomainClassDAO<Account> {
 
-    public AccountDAO(Database database) {
-        super("account", null, database.getBookkeepingId());
+    public AccountDAO(Document document) {
+        super("account", null, document.getBookkeepingId());
     }
 
     public Account get(String accountId) throws SQLException {

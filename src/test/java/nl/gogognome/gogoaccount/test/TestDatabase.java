@@ -1,24 +1,9 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public Licensen
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
@@ -39,10 +24,11 @@ import static junit.framework.Assert.*;
 public class TestDatabase extends AbstractBookkeepingTest {
 
 	private BookkeepingService bookkeepingService = new BookkeepingService();
+	private ConfigurationService configurationService = new ConfigurationService();
 
 	@Test
 	public void testGetAllAccounts() throws Exception {
-		List<Account> accounts = bookkeepingService.findAllAccounts(database);
+		List<Account> accounts = configurationService.findAllAccounts(document);
 
 		assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
 				"200 Eigen vermogen, 290 Crediteuren, " +
@@ -56,7 +42,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 		int n = 100000;
 		Set<String> ids = new HashSet<String>(2 * n);
 		for (int i=0; i<n; i++) {
-			String id = database.createPaymentId();
+			String id = document.createPaymentId();
 			if (!ids.add(id)) {
 				fail("The id " + id + " was generated more than once");
 			}
@@ -65,67 +51,67 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
 	@Test
 	public void testGetCreatingInvoice() throws Exception {
-		assertEquals("t1", database.getCreatingJournal("inv1").getId());
-		assertNull(database.getCreatingJournal("bla"));
+		assertEquals("t1", document.getCreatingJournal("inv1").getId());
+		assertNull(document.getCreatingJournal("bla"));
 	}
 
 	@Test
 	public void testAddingNonExistentParty() throws Exception {
 		Party party = new Party("1115", "Hendrik Erikszoon", "Willemstraat 5", "6122 CC", "Heerenveen", null, null, null);
-		assertNull(database.getParty(party.getId()));
-		database.addParty(party);
-		assertEqualParty(party, database.getParty(party.getId()));
+		assertNull(document.getParty(party.getId()));
+		document.addParty(party);
+		assertEqualParty(party, document.getParty(party.getId()));
 	}
 
 	@Test
 	public void testAddingExistentPartyFails() throws Exception {
 		Party party = new Party("1101", "Hendrik Erikszoon");
-		assertNotNull(database.getParty(party.getId()));
+		assertNotNull(document.getParty(party.getId()));
 		try {
-			database.addParty(party);
+			document.addParty(party);
 			fail("Expected exception was not thrown");
-		} catch (DatabaseModificationFailedException e) {
+		} catch (DocumentModificationFailedException e) {
 		}
 	}
 
 	@Test
 	public void updateExistingParty() throws Exception {
 		Party party = new Party("1101", "Hendrik Erikszoon");
-		assertNotNull(database.getParty(party.getId()));
-		Party oldParty = database.getParty(party.getId());
-		database.updateParty(oldParty, party);
+		assertNotNull(document.getParty(party.getId()));
+		Party oldParty = document.getParty(party.getId());
+		document.updateParty(oldParty, party);
 
-		Party updatedParty = database.getParty(party.getId());
+		Party updatedParty = document.getParty(party.getId());
 		assertEqualParty(party, updatedParty);
 	}
 
 	@Test
 	public void updateNonExistingPartyFails() throws Exception {
 		Party party = new Party("1115", "Hendrik Erikszoon");
-		assertNull(database.getParty(party.getId()));
+		assertNull(document.getParty(party.getId()));
 		try {
-			database.updateParty(party, party);
+			document.updateParty(party, party);
 			fail("Expected exception was not thrown");
-		} catch (DatabaseModificationFailedException e) {
+		} catch (DocumentModificationFailedException e) {
 		}
 	}
 
 	@Test
 	public void removeExistingParty() throws Exception {
-		Party party = database.getParties()[0];
-		database.removeParty(party);
-		assertNull(database.getParty(party.getId()));
+		Party party = document.getParties()[0];
+		document.removeParty(party);
+		assertNull(document.getParty(party.getId()));
 	}
 
 	@Test
 	public void removeNonExistingPartyFails() throws Exception {
 		Party party = new Party("1115", "Hendrik Erikszoon", "Willemstraat 5", "6122 CC",
 				"Heerenveen", null, "Type 1", null);
-		assertNull(database.getParty(party.getId()));
+		assertNull(document.getParty(party.getId()));
 		try {
-			database.removeParty(party);
+			document.removeParty(party);
 			fail("Expected exception was not thrown");
-		} catch (DatabaseModificationFailedException e) {
+		} catch (DocumentModificationFailedException e) {
 		}
 	}
 
@@ -133,20 +119,20 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testPartyTypes() throws Exception {
 		Party party = new Party("1115", "Hendrik Erikszoon", "Willemstraat 5", "6122 CC",
 				"Heerenveen", null, "Type 1", null);
-		database.addParty(party);
+		document.addParty(party);
 
 		party = new Party("1116", "Erik Hendriksen", "Pieterstraat 23", "6122 CC",
 				"Heerenveen", null, "Type 2", null);
-		database.addParty(party);
+		document.addParty(party);
 
-		assertEquals("[Type 1, Type 2]", Arrays.toString(database.getPartyTypes()));
+		assertEquals("[Type 1, Type 2]", Arrays.toString(document.getPartyTypes()));
 	}
 
 	@Test
 	public void testHasAccounts() throws Exception {
-		assertTrue(bookkeepingService.hasAccounts(database));
+		assertTrue(configurationService.hasAccounts(document));
 
-		assertFalse(bookkeepingService.hasAccounts(bookkeepingService.createNewDatabase()));
+		assertFalse(configurationService.hasAccounts(bookkeepingService.createNewDatabase()));
 	}
 
 	@Test
@@ -155,12 +141,12 @@ public class TestDatabase extends AbstractBookkeepingTest {
 		assertNotNull(oldJournal);
 
 		List<JournalItem> items = Arrays.asList(
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "100"), true),
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "190"), false)
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "100"), true),
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "190"), false)
 				);
 		Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
 				items, null);
-		database.updateJournal(oldJournal, newJournal);
+		document.updateJournal(oldJournal, newJournal);
 
 		assertEqualJournal(newJournal, findJournal(newJournal.getId()));
 	}
@@ -168,17 +154,17 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	@Test
 	public void updateNonExistingJournalFails() throws Exception {
 		List<JournalItem> items = Arrays.asList(
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "100"), true),
-				new JournalItem(createAmount(20), bookkeepingService.getAccount(database, "190"), false)
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "100"), true),
+				new JournalItem(createAmount(20), bookkeepingService.getAccount(document, "190"), false)
 				);
 		Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
 				items, null);
 
 		assertNull(findJournal(newJournal.getId()));
 		try {
-			database.updateJournal(newJournal, newJournal);
+			document.updateJournal(newJournal, newJournal);
 			fail("Expected exception was not thrown");
-		} catch (DatabaseModificationFailedException e) {
+		} catch (DocumentModificationFailedException e) {
 		}
 	}
 
@@ -187,11 +173,11 @@ public class TestDatabase extends AbstractBookkeepingTest {
 		String[] descriptions = new String[] { "Sponsoring 2011", "Sponsoring" };
 		Amount[] amounts = new Amount[] { null, createAmount(30) };
 		Invoice invoice = new Invoice("inv1",
-				database.getParty("1102"), database.getParty("1102"),
+				document.getParty("1102"), document.getParty("1102"),
 				createAmount(30), DateUtil.createDate(2011, 5, 6), descriptions, amounts);
 
-		database.updateInvoice("inv1", invoice);
-		assertEqualInvoice(invoice, database.getInvoice("inv1"));
+		document.updateInvoice("inv1", invoice);
+		assertEqualInvoice(invoice, document.getInvoice("inv1"));
 	}
 
 	@Test
@@ -199,13 +185,13 @@ public class TestDatabase extends AbstractBookkeepingTest {
 		String[] descriptions = new String[] { "Sponsoring 2011", "Sponsoring" };
 		Amount[] amounts = new Amount[] { null, createAmount(30) };
 		Invoice invoice = new Invoice("inv421",
-				database.getParty("1102"), database.getParty("1102"),
+				document.getParty("1102"), document.getParty("1102"),
 				createAmount(30), DateUtil.createDate(2011, 5, 6), descriptions, amounts);
 
 		try {
-			database.updateInvoice("inv421", invoice);
+			document.updateInvoice("inv421", invoice);
 			fail("Expected exception was not thrown");
-		} catch (DatabaseModificationFailedException e) {
+		} catch (DocumentModificationFailedException e) {
 		}
 	}
 
@@ -213,22 +199,22 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testPartySearchCriteria() throws Exception {
 		PartySearchCriteria searchCriteria = new PartySearchCriteria();
 		searchCriteria.setName("Puk");
-		assertEquals("[1101 Pietje Puk]", Arrays.toString(database.getParties(searchCriteria)));
+		assertEquals("[1101 Pietje Puk]", Arrays.toString(document.getParties(searchCriteria)));
 
 		searchCriteria = new PartySearchCriteria();
 		searchCriteria.setAddress("Sterrenlaan");
-		assertEquals("[1102 Jan Pieterszoon]", Arrays.toString(database.getParties(searchCriteria)));
+		assertEquals("[1102 Jan Pieterszoon]", Arrays.toString(document.getParties(searchCriteria)));
 
 		searchCriteria = new PartySearchCriteria();
 		searchCriteria.setBirthDate(DateUtil.createDate(1980, 2, 23));
-		assertEquals("[1101 Pietje Puk]", Arrays.toString(database.getParties(searchCriteria)));
+		assertEquals("[1101 Pietje Puk]", Arrays.toString(document.getParties(searchCriteria)));
 
 		searchCriteria = new PartySearchCriteria();
 		searchCriteria.setCity("Eind");
-		assertEquals("[1102 Jan Pieterszoon]", Arrays.toString(database.getParties(searchCriteria)));
+		assertEquals("[1102 Jan Pieterszoon]", Arrays.toString(document.getParties(searchCriteria)));
 
 		searchCriteria = new PartySearchCriteria();
 		searchCriteria.setZipCode("15");
-		assertEquals("[1101 Pietje Puk]", Arrays.toString(database.getParties(searchCriteria)));
+		assertEquals("[1101 Pietje Puk]", Arrays.toString(document.getParties(searchCriteria)));
 	}
 }

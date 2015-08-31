@@ -22,7 +22,7 @@ import java.util.List;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.text.AmountFormat;
@@ -30,7 +30,7 @@ import nl.gogognome.lib.util.Factory;
 
 class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction> {
 
-	private Database database;
+	private Document document;
 
     private final static ColumnDefinition DATE =
         new ColumnDefinition("importBankStatementView.date", Date.class, 70);
@@ -60,9 +60,9 @@ class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction>
         DATE, TO_ACCOUNT, FROM_ACCOUNT, AMOUNT, DESCRIPTION1, ID, DESCRIPTION2, INVOICE
     );
 
-    public TransactionsJournalsTableModel(List<Transaction> transactions, Database database) {
+    public TransactionsJournalsTableModel(List<Transaction> transactions, Document document) {
         super(COLUMN_DEFINITIONS, transactions);
-        this.database = database;
+        this.document = document;
     }
 
     /** {@inheritDoc} */
@@ -89,7 +89,7 @@ class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction>
             if (journal != null) {
                 String id = journal.getIdOfCreatedInvoice();
                 if (id != null) {
-                    Invoice invoice = database.getInvoice(id);
+                    Invoice invoice = document.getInvoice(id);
                     return invoice.getId() + " (" + invoice.getConcerningParty().getName() + ")";
                 }
             }

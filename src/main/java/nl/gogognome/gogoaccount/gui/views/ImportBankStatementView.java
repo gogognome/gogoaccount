@@ -40,7 +40,7 @@ import javax.swing.event.ListSelectionListener;
 
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
@@ -94,17 +94,17 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private JButton editButton;
     private JButton deleteButton;
 
-    Database database;
+    Document document;
 
     private InputFieldsColumn ifc;
 
 	/**
 	 * Creates the view.
-	 * @param database the database
+	 * @param document the database
 	 */
-	public ImportBankStatementView(Database database) {
+	public ImportBankStatementView(Document document) {
 		super();
-        this.database = database;
+        this.document = document;
     }
 
     /**
@@ -142,11 +142,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
 		// Create table of journals
 		transactionJournalsTableModel = new TransactionsJournalsTableModel(
-				Collections.<Transaction>emptyList(), database);
+				Collections.<Transaction>emptyList(), document);
 		transactionsJournalsTable = widgetFactory.createSortedTable(transactionJournalsTableModel);
 
 		// Create table of items
-		itemsTableModel = new ItemsTableModel(database);
+		itemsTableModel = new ItemsTableModel(document);
 		itemsTable = widgetFactory.createTable(itemsTableModel);
 		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
@@ -259,7 +259,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
             Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-            EditJournalController controller = new EditJournalController(this, database, journal);
+            EditJournalController controller = new EditJournalController(this, document, journal);
             controller.execute();
             if (controller.isJournalUpdated()) {
             	updateTransactionJournal(row, controller.getUpdatedJournal());
@@ -271,7 +271,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      * This method lets the user add new journals.
      */
     private void addJournalForSelectedTransaction() {
-        AddJournalForTransactionView view = new AddJournalForTransactionView(database, this);
+        AddJournalForTransactionView view = new AddJournalForTransactionView(document, this);
         ViewDialog dialog = new ViewDialog(this, view);
         dialog.showDialog();
     }
@@ -283,7 +283,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
             Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-        	DeleteJournalController controller = new DeleteJournalController(this, database, journal);
+        	DeleteJournalController controller = new DeleteJournalController(this, document, journal);
         	controller.execute();
 
         	if (controller.isJournalDeleted()) {
@@ -345,7 +345,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 	private void setLinkBetweenImportedTransactionAccountAndAccount(
 			ImportedTransaction transaction, Journal journal) {
 		JournalItem[] items = journal.getItems();
-		ImportBankStatementService service = new ImportBankStatementService(database);
+		ImportBankStatementService service = new ImportBankStatementService(document);
 		if (items.length == 2) {
 			for (JournalItem item : items) {
 				if (item.isDebet()) {

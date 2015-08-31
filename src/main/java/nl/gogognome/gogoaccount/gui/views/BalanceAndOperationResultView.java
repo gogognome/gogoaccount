@@ -25,7 +25,7 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.BalanceComponent;
 import nl.gogognome.gogoaccount.gui.components.OperationalResultComponent;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
@@ -44,11 +44,11 @@ public class BalanceAndOperationResultView extends View {
 
 	private final static Color BACKGROUND_COLOR = new Color(255, 255, 209);
 
-    private Database database;
+    private Document document;
     private DateModel dateModel;
 
-    public BalanceAndOperationResultView(Database database) {
-        this.database = database;
+    public BalanceAndOperationResultView(Document document) {
+        this.document = document;
     }
 
     @Override
@@ -94,13 +94,13 @@ public class BalanceAndOperationResultView extends View {
         JPanel panel = new JPanel(new GridBagLayout());
 
         panel.setBackground(BACKGROUND_COLOR);
-        BalanceComponent balanceComponent = new BalanceComponent(database, dateModel);
+        BalanceComponent balanceComponent = new BalanceComponent(document, dateModel);
         addCloseable(balanceComponent);
         balanceComponent.setBackground(BACKGROUND_COLOR);
         panel.add(balanceComponent, createConstraints(0, 0));
 
         OperationalResultComponent operationalResultComponent =
-            new OperationalResultComponent(database, dateModel);
+            new OperationalResultComponent(document, dateModel);
         addCloseable(operationalResultComponent);
         operationalResultComponent.setBackground(BACKGROUND_COLOR);
         panel.add(operationalResultComponent, createConstraints(0, 1));

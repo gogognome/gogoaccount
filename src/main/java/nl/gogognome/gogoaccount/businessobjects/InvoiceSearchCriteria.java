@@ -18,7 +18,7 @@ package nl.gogognome.gogoaccount.businessobjects;
 
 import java.util.Date;
 
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 
 
@@ -59,7 +59,7 @@ public class InvoiceSearchCriteria {
      * @return <code>true</code> if the invoice matches the criteria,
      *          <code>false</code> otherwise
      */
-    public boolean matches(Database database, Invoice invoice) {
+    public boolean matches(Document document, Invoice invoice) {
         boolean matches = true;
         if (id != null) {
             matches = matches && matches(id, invoice.getId());
@@ -68,7 +68,7 @@ public class InvoiceSearchCriteria {
             matches = matches && matches(name, invoice.getPayingParty().getName());
         }
         if (!includeClosedInvoices) {
-            matches = matches && !InvoiceService.isPaid(database, invoice.getId(), new Date());
+            matches = matches && !InvoiceService.isPaid(document, invoice.getId(), new Date());
         }
         return matches;
     }

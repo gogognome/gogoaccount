@@ -24,10 +24,10 @@ import java.util.List;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -50,13 +50,13 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
 	private static final long serialVersionUID = 1L;
 
-    private final Database database;
+    private final Document document;
     private final DateModel dateModel;
     private final BalanceSheet balanceSheet;
 
     private Report report;
 
-    private DatabaseListener databaseListener;
+    private DocumentListener documentListener;
     private ModelChangeListener modelChangeListener;
 
     private final TextResource textResource = Factory.getInstance(TextResource.class);
@@ -64,16 +64,16 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
     /**
      * Creates a new <code>OperationalResultComponent</code>.
-     * @param database the database used to create the operational result
+     * @param document the database used to create the operational result
      * @param dateModel the date model used to determine the date of the operational result
      */
-    public OperationalResultComponent(Database database, DateModel dateModel) {
+    public OperationalResultComponent(Document document, DateModel dateModel) {
         super();
-        this.database = database;
+        this.document = document;
         this.dateModel = dateModel;
 
         balanceSheet = new BalanceSheet(textResource.getString("gen.expenses"),
-        		textResource.getString("gen.revenues"), database.getCurrency());
+        		textResource.getString("gen.revenues"), document.getCurrency());
         balanceSheet.setOpaque(false);
         balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
         setViewportView(balanceSheet);
@@ -83,8 +83,8 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
     }
 
     private void addListeners() {
-        databaseListener = new DatabaseListenerImpl();
-        database.addListener(databaseListener);
+        documentListener = new DocumentListenerImpl();
+        document.addListener(documentListener);
 
         modelChangeListener = new ModelChangeListenerImpl();
         dateModel.addModelChangeListener(modelChangeListener);
@@ -97,7 +97,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
     private void removeListeners() {
     	dateModel.removeModelChangeListener(modelChangeListener);
-    	database.removeListener(databaseListener);
+    	document.removeListener(documentListener);
     }
 
     private void initComponents() {
@@ -107,7 +107,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
         }
 
         try {
-			report = ObjectFactory.create(BookkeepingService.class).createReport(database, date);
+			report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
 
             setBorder(widgetFactory.createTitleBorder("operationalResultComponent.title",
                     report.getEndDate()));
@@ -160,9 +160,9 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 		}
 	}
 
-	private final class DatabaseListenerImpl implements DatabaseListener {
+	private final class DocumentListenerImpl implements DocumentListener {
 		@Override
-		public void databaseChanged(Database db) {
+		public void documentChanged(Document document) {
 		    initComponents();
 		    validate();
 		}

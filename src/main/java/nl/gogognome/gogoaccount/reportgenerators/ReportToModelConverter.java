@@ -22,11 +22,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -42,7 +43,7 @@ import nl.gogognome.lib.util.Factory;
  */
 public class ReportToModelConverter {
 
-	private final Database database;
+	private final Document document;
     private final Report report;
 
     private Map<String, Object> model;
@@ -50,9 +51,9 @@ public class ReportToModelConverter {
     private TextResource textResource = Factory.getInstance(TextResource.class);
     private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
-	public ReportToModelConverter(Database database, Report report) throws ServiceException {
+	public ReportToModelConverter(Document document, Report report) throws ServiceException {
 		super();
-		this.database = database;
+		this.document = document;
 		this.report = report;
 
 		createModel();
@@ -85,8 +86,8 @@ public class ReportToModelConverter {
 	private void addBalanceSheetLines(List<Map<String, Object>> lines,
 			List<Account> leftAccounts, List<Account> rightAccounts) {
 
-		Amount leftTotal = Amount.getZero(database.getCurrency());
-		Amount rightTotal = Amount.getZero(database.getCurrency());
+		Amount leftTotal = Amount.getZero(document.getCurrency());
+		Amount rightTotal = Amount.getZero(document.getCurrency());
 
 		Iterator<Account> leftIter = leftAccounts.iterator();
 		Iterator<Account> rightIter = rightAccounts.iterator();
@@ -143,7 +144,7 @@ public class ReportToModelConverter {
 
 	private Object createDebtors() {
 		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
-		Amount total = Amount.getZero(database.getCurrency());
+		Amount total = Amount.getZero(document.getCurrency());
 		for (Party p : report.getDebtors()) {
 			Amount amount = report.getBalanceForDebtor(p);
 			total = total.add(amount);
@@ -158,7 +159,7 @@ public class ReportToModelConverter {
 
 	private Object createCreditors() {
 		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
-		Amount total = Amount.getZero(database.getCurrency());
+		Amount total = Amount.getZero(document.getCurrency());
 		for (Party p : report.getCreditors()) {
 			Amount amount = report.getBalanceForCreditor(p);
 			total = total.add(amount);
@@ -185,8 +186,8 @@ public class ReportToModelConverter {
 
 	private Object createAccounts() throws ServiceException {
 		List<Map<String, Object>> accounts = new ArrayList<Map<String,Object>>();
-		BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
-		for (Account account : bookkeepingService.findAllAccounts(database)) {
+		ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+		for (Account account : configurationService.findAllAccounts(document)) {
 			accounts.add(createAccount(account));
 		}
 		return accounts;

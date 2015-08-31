@@ -17,7 +17,6 @@
 package nl.gogognome.gogoaccount.services;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
@@ -35,18 +34,17 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.database.AccountDAO;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 
@@ -63,14 +61,14 @@ public class XMLFileWriter {
 
 	private static final String FILE_VERSION = "2.2";
 
-	private final Database database;
+	private final Document document;
 
 	private final File file;
 
-	private Document doc;
+	private org.w3c.dom.Document doc;
 
-	public XMLFileWriter(Database database, File file) {
-		this.database = database;
+	public XMLFileWriter(Document document, File file) {
+		this.document = document;
 		this.file = file;
 	}
 
@@ -82,13 +80,13 @@ public class XMLFileWriter {
 			doc.appendChild(rootElement);
 
 			rootElement.setAttribute("fileversion", FILE_VERSION);
-			rootElement.setAttribute("description", database.getDescription());
-			rootElement.setAttribute("currency", database.getCurrency().getCurrencyCode());
-			rootElement.setAttribute("startdate", DATE_FORMAT.format(database.getStartOfPeriod()));
+			rootElement.setAttribute("description", document.getDescription());
+			rootElement.setAttribute("currency", document.getCurrency().getCurrencyCode());
+			rootElement.setAttribute("startdate", DATE_FORMAT.format(document.getStartOfPeriod()));
 
-			rootElement.appendChild(createElementForAccounts(new AccountDAO(database).findAll("id")));
+			rootElement.appendChild(createElementForAccounts(new AccountDAO(document).findAll("id")));
 
-			rootElement.appendChild(createElementForParties(database.getParties()));
+			rootElement.appendChild(createElementForParties(document.getParties()));
 			appendElementsForJournals(rootElement);
 			rootElement.appendChild(createElementForInvoices());
 			rootElement.appendChild(createElementForImportedAccounts());
@@ -99,7 +97,7 @@ public class XMLFileWriter {
 
 	private void appendElementsForJournals(Element rootElement) {
 		Element journalsElem = doc.createElement("journals");
-		List<Journal> journals = database.getJournals();
+		List<Journal> journals = document.getJournals();
 		for (Journal journal : journals) {
 			Element journalElem = doc.createElement("journal");
 			journalElem.setAttribute("id", journal.getId());
@@ -127,7 +125,7 @@ public class XMLFileWriter {
 		rootElement.appendChild(journalsElem);
 	}
 
-	private void writeDomToFile(Document doc)
+	private void writeDomToFile(org.w3c.dom.Document doc)
 			throws TransformerFactoryConfigurationError,
 			TransformerConfigurationException, TransformerException {
 		// Use a Transformer for output
@@ -142,10 +140,10 @@ public class XMLFileWriter {
 		transformer.transform(source, result);
 	}
 
-	private static Document createDocument() throws ParserConfigurationException {
+	private static org.w3c.dom.Document createDocument() throws ParserConfigurationException {
 		DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-		Document doc = docBuilder.newDocument();
+		org.w3c.dom.Document doc = docBuilder.newDocument();
 		return doc;
 	}
 
@@ -192,7 +190,7 @@ public class XMLFileWriter {
 
 	private Element createElementForInvoices() {
 		Element groupElem = doc.createElement("invoices");
-		for (Invoice invoice : database.getInvoices()) {
+		for (Invoice invoice : document.getInvoices()) {
 			Element elem = doc.createElement("invoice");
 			elem.setAttribute("id", invoice.getId());
 			elem.setAttribute("amountToBePaid", AMOUNT_FORMAT.formatAmount(invoice.getAmountToBePaid()));
@@ -216,7 +214,7 @@ public class XMLFileWriter {
 			}
 			elem.setAttribute("issueDate", DATE_FORMAT.format(invoice.getIssueDate()));
 
-			List<Payment> payments = InvoiceService.getPayments(database, invoice.getId());
+			List<Payment> payments = InvoiceService.getPayments(document, invoice.getId());
 			for (Payment payment : payments) {
 				Element paymentElem = doc.createElement("payment");
 				paymentElem.setAttribute("id", payment.getId());
@@ -233,7 +231,7 @@ public class XMLFileWriter {
 
 	private Element createElementForImportedAccounts() {
 		Element groupElem = doc.createElement("importedaccounts");
-		Map<String, String> map = database.getImportedTransactionAccountToAccountMap();
+		Map<String, String> map = document.getImportedTransactionAccountToAccountMap();
 		for (Map.Entry<String, String> entry : map.entrySet()) {
 			Element elem = doc.createElement("mapping");
 			elem.setAttribute("importedaccount", entry.getKey());

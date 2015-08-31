@@ -22,7 +22,7 @@ import java.util.List;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
@@ -55,15 +55,15 @@ public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
 	private final static List<ColumnDefinition> COLUMN_DEFINTIIONS =
 		Arrays.asList(ACCOUNT, DEBET, CREDIT, INVOICE);
 
-    private Database database;
+    private Document document;
 
     /**
      * Constructor.
-     * @param database the database
+     * @param document the database
      */
-    public ItemsTableModel(Database database) {
+    public ItemsTableModel(Document document) {
     	super(COLUMN_DEFINTIIONS, Collections.<JournalItem>emptyList());
-        this.database = database;
+        this.document = document;
     }
 
     public void setJournalItems(JournalItem[] itemsArray) {
@@ -84,7 +84,7 @@ public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
         } else if (CREDIT == colDef) {
             result = item.isCredit() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
         } else if (INVOICE == colDef) {
-            Invoice invoice = database.getInvoice(item.getInvoiceId());
+            Invoice invoice = document.getInvoice(item.getInvoiceId());
             result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getId()
                 + " - " + invoice.getPayingParty().getName() + ")" : "";
         }

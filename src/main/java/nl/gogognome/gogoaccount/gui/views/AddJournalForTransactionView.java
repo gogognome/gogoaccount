@@ -20,11 +20,12 @@ import java.awt.BorderLayout;
 
 import javax.swing.JLabel;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -65,11 +66,11 @@ public class AddJournalForTransactionView extends EditJournalView {
      * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
      * To add one or more new journals, set <code>journal</code> to <code>null</code>.
      *
-     * @param database the database to which the journal must be added
+     * @param document the database to which the journal must be added
      * @param plugin plugin used to determine initial values for a new journal
      */
-	public AddJournalForTransactionView(Database database, Plugin plugin) {
-		super(database, "ajd.title", null);
+	public AddJournalForTransactionView(Document document, Plugin plugin) {
+		super(document, "ajd.title", null);
 		this.plugin = plugin;
 	}
 
@@ -107,7 +108,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	@Override
-	protected void createNewJournal(Journal journal) throws DatabaseModificationFailedException {
+	protected void createNewJournal(Journal journal) throws DocumentModificationFailedException {
 		super.createNewJournal(journal);
 		plugin.journalAdded(journal);
 	}
@@ -115,7 +116,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 	private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
 		dateModel.setDate(t.getDate());
 		descriptionModel.setString(t.getDescription());
-		ImportBankStatementService service = new ImportBankStatementService(database);
+		ImportBankStatementService service = new ImportBankStatementService(document);
 		Account debetAccount = service.getFromAccount(t);
 		Account creditAccount = service.getToAccount(t);
 		if (debetAccount != null && creditAccount != null) {
@@ -146,7 +147,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 	protected JournalItem createDefaultItemToBeAdded() throws ServiceException {
 		switch (itemsTableModel.getRowCount()) {
 		case 0: { // first item
-			Account account = new ImportBankStatementService(database).getToAccount(importedTransaction);
+			Account account = new ImportBankStatementService(document).getToAccount(importedTransaction);
 			if (account == null) {
                 account = getDefaultAccount();
             }
@@ -154,7 +155,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 		}
 
 		case 1: { // second item
-			Account account = new ImportBankStatementService(database).getFromAccount(importedTransaction);
+			Account account = new ImportBankStatementService(document).getFromAccount(importedTransaction);
 			if (account == null) {
 				account = getDefaultAccount();
 			}
@@ -167,7 +168,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     private Account getDefaultAccount() {
         try {
-            return Factory.getInstance(BookkeepingService.class).findAllAccounts(database).get(0);
+            return Factory.getInstance(ConfigurationService.class).findAllAccounts(document).get(0);
         } catch (ServiceException e) {
             return null;
         }

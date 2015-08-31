@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.Start;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
@@ -44,10 +44,10 @@ public class ODTInvoicesGenerator {
 		File reportFile = new File(args[2]);
 
 		XMLFileReader reader = new XMLFileReader(bookkeepingFile);
-		Database database = reader.createDatabaseFromFile();
+		Document document = reader.createDatabaseFromFile();
 
-		OdtInvoiceParameters parameters = new OdtInvoiceParameters(database, 
-				Arrays.asList(database.getInvoices()));
+		OdtInvoiceParameters parameters = new OdtInvoiceParameters(document,
+				Arrays.asList(document.getInvoices()));
 		parameters.setConcerning("Contributie seizoen 2011-2011");
 		parameters.setDate(new Date());
 		parameters.setDueDate(DateUtil.addMonths(new Date(), 1));

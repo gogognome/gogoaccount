@@ -21,8 +21,9 @@ import java.util.Date;
 
 import javax.swing.JComponent;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -45,7 +46,7 @@ import nl.gogognome.lib.util.DateUtil;
 public class CloseBookkeepingView extends OkCancelView {
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
+	private Document document;
 
     private DateModel dateModel = new DateModel();
     private StringModel descriptionModel = new StringModel();
@@ -55,10 +56,10 @@ public class CloseBookkeepingView extends OkCancelView {
 
     /**
      * Constructor.
-     * @param database the database whose bookkeeping is to be closed
+     * @param document the database whose bookkeeping is to be closed
      */
-    public CloseBookkeepingView(Database database) {
-        this.database = database;
+    public CloseBookkeepingView(Document document) {
+        this.document = document;
     }
 
     @Override
@@ -144,11 +145,11 @@ public class CloseBookkeepingView extends OkCancelView {
     }
 
     private void initModels() throws ServiceException {
-        dateModel.setDate(DateUtil.addYears(database.getStartOfPeriod(), 1), null);
-		accountListModel.setItems(ObjectFactory.create(BookkeepingService.class).findAllAccounts(database));
+        dateModel.setDate(DateUtil.addYears(document.getStartOfPeriod(), 1), null);
+		accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
 
-        String description = database.getDescription();
-        int year = DateUtil.getField(database.getStartOfPeriod(), Calendar.YEAR);
+        String description = document.getDescription();
+        int year = DateUtil.getField(document.getStartOfPeriod(), Calendar.YEAR);
         int nextYear = year+1;
         description = description.replace(Integer.toString(year), Integer.toString(nextYear));
         descriptionModel.setString(description, null);

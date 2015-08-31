@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;

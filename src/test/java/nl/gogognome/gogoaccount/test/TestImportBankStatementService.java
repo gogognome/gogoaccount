@@ -24,8 +24,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.database.AccountDAO;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
@@ -49,7 +48,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 	
 	@Before
 	public void initService() {
-		ibsService = new ImportBankStatementService(database);
+		ibsService = new ImportBankStatementService(document);
 	}
 
 	@Test
@@ -68,8 +67,8 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
 	@Test
 	public void setAndGetFromAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(database, "100");
-		Account account101 = bookkeepingService.getAccount(database, "101");
+		Account account100 = bookkeepingService.getAccount(document, "100");
+		Account account101 = bookkeepingService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
@@ -85,8 +84,8 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
 	@Test
 	public void setAndGetToAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(database, "100");
-		Account account101 = bookkeepingService.getAccount(database, "101");
+		Account account100 = bookkeepingService.getAccount(document, "100");
+		Account account101 = bookkeepingService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
@@ -102,8 +101,8 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
 	@Test
 	public void setAndGetFromAccountWithUnknownAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(database, "100");
-		Account account101 = bookkeepingService.getAccount(database, "101");
+		Account account100 = bookkeepingService.getAccount(document, "100");
+		Account account101 = bookkeepingService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0170059308','EUR',20030105,'C',9550.00,'0000000000','STORTING',20030103,'','','','','','','','','','',''");
@@ -120,8 +119,8 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
 	@Test
 	public void setAndGetToAccountWithUnknownAccount() throws Exception {
-		Account account100 = bookkeepingService.getAccount(database, "100");
-		Account account101 = bookkeepingService.getAccount(database, "101");
+		Account account100 = bookkeepingService.getAccount(document, "100");
+		Account account101 = bookkeepingService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 			"'0000000000','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");

@@ -21,8 +21,8 @@ import java.util.Arrays;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.views.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.views.EditJournalView;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -37,25 +37,25 @@ import nl.gogognome.lib.util.ComparatorUtil;
 public class EditJournalController {
 
 	private Component owner;
-	private Database database;
+	private Document document;
 	private Journal journal;
 	private Journal updatedJournal;
 
 	/**
 	 * Constructs the controller.
 	 * @param owner the component that uses this controller
-	 * @param database the database
+	 * @param document the database
 	 * @param journal the journal to be edited
 	 */
-	public EditJournalController(Component owner, Database database, Journal journal) {
+	public EditJournalController(Component owner, Document document, Journal journal) {
 		super();
 		this.owner = owner;
-		this.database = database;
+		this.document = document;
 		this.journal = journal;
 	}
 
 	public void execute() {
-        EditJournalView view = new EditJournalView(database, "ajd.title", journal);
+        EditJournalView view = new EditJournalView(document, "ajd.title", journal);
         ViewDialog dialog = new ViewDialog(owner, view);
         dialog.showDialog();
 
@@ -66,8 +66,8 @@ public class EditJournalController {
             }
 
             try {
-                database.updateJournal(journal, updatedJournal);
-            } catch (DatabaseModificationFailedException e) {
+                document.updateJournal(journal, updatedJournal);
+            } catch (DocumentModificationFailedException e) {
                 MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateJournalException");
             }
         }
@@ -85,16 +85,16 @@ public class EditJournalController {
 	}
 
 	private void updateInvoiceCreatedByJournal() {
-		EditInvoiceView editInvoiceView = new EditInvoiceView(database,
+		EditInvoiceView editInvoiceView = new EditInvoiceView(document,
 				"EditJournalController.editInvoiceTitle",
-				database.getInvoice(journal.getIdOfCreatedInvoice()));
+				document.getInvoice(journal.getIdOfCreatedInvoice()));
 		ViewDialog editInvoiceDialog = new ViewDialog(owner, editInvoiceView);
 		editInvoiceDialog.showDialog();
 		Invoice newInvoice = editInvoiceView.getEditedInvoice();
 		if (newInvoice != null) {
 		    try {
-		        database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
-		    } catch (DatabaseModificationFailedException e) {
+		        document.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
+		    } catch (DocumentModificationFailedException e) {
 		        MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateInvoiceException");
 		    }
 		}

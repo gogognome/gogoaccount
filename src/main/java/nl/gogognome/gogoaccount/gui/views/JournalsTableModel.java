@@ -25,8 +25,8 @@ import javax.swing.event.TableModelListener;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 
@@ -36,7 +36,7 @@ import nl.gogognome.lib.swing.ColumnDefinition;
  * @author Sander Kooijmans
  */
 public class JournalsTableModel extends AbstractListTableModel<Journal>
-		implements DatabaseListener {
+		implements DocumentListener {
 
 	private final static ColumnDefinition DATE =
 		new ColumnDefinition("gen.date", Date.class, 200);
@@ -56,21 +56,21 @@ public class JournalsTableModel extends AbstractListTableModel<Journal>
     /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
     private ArrayList<TableModelListener> journalsTableModelListeners = new ArrayList<TableModelListener>();
 
-    private Database database;
+    private Document document;
 
     /**
      * Constructor.
-     * @param database the database from which to take the data
+     * @param document the database from which to take the data
      */
-    public JournalsTableModel(Database database) {
-    	super(COLUMNS, database.getJournals());
-        this.database = database;
-        database.addListener(this);
+    public JournalsTableModel(Document document) {
+    	super(COLUMNS, document.getJournals());
+        this.document = document;
+        document.addListener(this);
     }
 
     @Override
-	public void databaseChanged(Database db) {
-        replaceRows(database.getJournals());
+	public void documentChanged(Document document) {
+        replaceRows(this.document.getJournals());
     }
 
 	@Override
@@ -87,7 +87,7 @@ public class JournalsTableModel extends AbstractListTableModel<Journal>
         } else if (INVOICE == colDef) {
             String id = journal.getIdOfCreatedInvoice();
             if (id != null) {
-                Invoice invoice = database.getInvoice(id);
+                Invoice invoice = document.getInvoice(id);
                 result = invoice.getId() + " (" + invoice.getConcerningParty().getName() + ")";
             }
         }

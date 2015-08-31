@@ -89,7 +89,7 @@ public class InvoicesToModelConverter {
 		putNullable(map, "partyCity", invoice.getConcerningParty().getCity());
 
 		Amount totalAmount = InvoiceService.getRemainingAmountToBePaid(
-				parameters.getDatabase(), invoice.getId(), parameters.getDate());
+				parameters.getDocument(), invoice.getId(), parameters.getDate());
 		putNullable(map, "totalAmount", amountFormat.formatAmount(totalAmount));
 
 		map.put("lines", createLinesForInvoice(invoice));
@@ -106,7 +106,7 @@ public class InvoicesToModelConverter {
 			lines.add(createLine(invoice.getIssueDate(), descriptions[i], amounts[i]));
 		}
 
-		List<Payment> payments = InvoiceService.getPayments(parameters.getDatabase(), invoice.getId());
+		List<Payment> payments = InvoiceService.getPayments(parameters.getDocument(), invoice.getId());
 		for (Payment p : payments) {
 			lines.add(createLine(p.getDate(), p.getDescription(), p.getAmount().negate()));
 		}

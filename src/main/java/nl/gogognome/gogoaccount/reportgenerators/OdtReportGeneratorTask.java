@@ -21,7 +21,7 @@ import java.util.Date;
 import java.util.Map;
 
 import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -35,7 +35,7 @@ import nl.gogognome.lib.task.TaskProgressListener;
  */
 public class OdtReportGeneratorTask implements Task {
 
-	private final Database database;
+	private final Document document;
 	private final Date date;
 	private final File reportFile;
 	private final File templateFile;
@@ -43,9 +43,9 @@ public class OdtReportGeneratorTask implements Task {
     private Report report;
     private Map<String, Object> model;
 
-	public OdtReportGeneratorTask(Database database, Date date, File reportFile, File templateFile) {
+	public OdtReportGeneratorTask(Document document, Date date, File reportFile, File templateFile) {
 		super();
-		this.database = database;
+		this.document = document;
 		this.date = date;
 		this.reportFile = reportFile;
 		this.templateFile = templateFile;
@@ -55,7 +55,7 @@ public class OdtReportGeneratorTask implements Task {
 	public Object execute(TaskProgressListener progressListener) throws Exception {
     	progressListener.onProgressUpdate(0);
 
-    	report = ObjectFactory.create(BookkeepingService.class).createReport(database, date);
+    	report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
     	progressListener.onProgressUpdate(33);
 
     	createModel();
@@ -68,7 +68,7 @@ public class OdtReportGeneratorTask implements Task {
 	}
 
 	private void createModel() throws ServiceException {
-		ReportToModelConverter converter = new ReportToModelConverter(database, report);
+		ReportToModelConverter converter = new ReportToModelConverter(document, report);
 		model = converter.getModel();
 	}
 }

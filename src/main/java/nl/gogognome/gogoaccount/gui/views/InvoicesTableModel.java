@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
@@ -53,11 +53,11 @@ class InvoicesTableModel extends AbstractListTableModel<Invoice> {
 	private final static List<ColumnDefinition> COLUMN_DEFINITIONS =
 		Arrays.asList(ID, NAME, SALDO, DATE);
 
-	private Database database;
+	private Document document;
 
-	public InvoicesTableModel(Database database) {
+	public InvoicesTableModel(Document document) {
 		super(COLUMN_DEFINITIONS, Collections.<Invoice>emptyList());
-		this.database = database;
+		this.document = document;
 	}
 
 	@Override
@@ -72,7 +72,7 @@ class InvoicesTableModel extends AbstractListTableModel<Invoice> {
 			result = invoice.getPayingParty().getName();
 		} else if (SALDO == colDef) {
 			result = Factory.getInstance(AmountFormat.class).formatAmount(
-					InvoiceService.getRemainingAmountToBePaid(database, invoice.getId(), new Date()));
+					InvoiceService.getRemainingAmountToBePaid(document, invoice.getId(), new Date()));
 		} else if (DATE == colDef) {
 			return invoice.getIssueDate();
 		}

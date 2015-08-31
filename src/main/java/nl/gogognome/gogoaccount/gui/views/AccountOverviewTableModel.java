@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;

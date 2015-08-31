@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -39,7 +41,7 @@ import nl.gogognome.lib.util.Factory;
  */
 public class ReportBuilder {
 
-	private final Database database;
+	private final Document document;
 	private final Report report;
 
 	private Map<Account, Amount> accountToTotalDebet = new HashMap<>();
@@ -49,9 +51,9 @@ public class ReportBuilder {
 
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 
-	public ReportBuilder(Database database, Date date) {
-		this.database = database;
-		this.report = new Report(date, database.getCurrency());
+	public ReportBuilder(Document document, Date date) {
+		this.document = document;
+		this.report = new Report(date, document.getCurrency());
 	}
 
 	public Report build() throws ServiceException {
@@ -121,15 +123,15 @@ public class ReportBuilder {
 	}
 
 	private void addLedgerLineForAccount(Journal journal, JournalItem item) {
-		if (DateUtil.compareDayOfYear(journal.getDate(), database.getStartOfPeriod()) >= 0) {
+		if (DateUtil.compareDayOfYear(journal.getDate(), document.getStartOfPeriod()) >= 0) {
 			Account account = item.getAccount();
 			if (!hasStartBalanceLineBeenAdded(account)) {
 				addStartLedgerLineForAccount(account, accountToTotalDebet.get(account),
 						accountToTotalCredit.get(account));
 			}
-			Invoice invoice = database.getInvoice(item.getInvoiceId());
+			Invoice invoice = document.getInvoice(item.getInvoiceId());
 			if (invoice == null) {
-				invoice = database.getInvoice(journal.getIdOfCreatedInvoice());
+				invoice = document.getInvoice(journal.getIdOfCreatedInvoice());
 			}
 			addLedgerLineForAccount(account, journal, item, invoice);
 		}
@@ -181,20 +183,20 @@ public class ReportBuilder {
 	public void addInvoice(Invoice invoice) {
 		report.addInvoice(invoice);
 
-		InvoiceService.getPayments(database, invoice.getId()).stream()
+		InvoiceService.getPayments(document, invoice.getId()).stream()
 				.filter(p -> DateUtil.compareDayOfYear(p.getDate(), report.getEndDate()) <= 0)
 				.forEach(p -> report.addPayment(invoice, p.getAmount()));
 	}
 
 	private Amount nullToZero(Amount amount) {
 		if (amount == null) {
-			amount = Amount.getZero(database.getCurrency());
+			amount = Amount.getZero(document.getCurrency());
 		}
 		return amount;
 	}
 
 	private void addFootersToLedgerLines() throws ServiceException {
-		for (Account account : ObjectFactory.create(BookkeepingService.class).findAllAccounts(database)) {
+		for (Account account : ObjectFactory.create(ConfigurationService.class).findAllAccounts(document)) {
 			if (!hasStartBalanceLineBeenAdded(account)) {
 				addStartLedgerLineForAccount(account,
 						accountToTotalDebet.get(account), accountToTotalCredit.get(account));

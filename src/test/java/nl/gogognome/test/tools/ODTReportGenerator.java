@@ -20,7 +20,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.Locale;
 
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.Start;
 import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
@@ -41,11 +41,11 @@ public class ODTReportGenerator {
 		File reportFile = new File(args[2]);
 
 		XMLFileReader reader = new XMLFileReader(bookkeepingFile);
-		Database database = reader.createDatabaseFromFile();
+		Document document = reader.createDatabaseFromFile();
 
-		Date date = DateUtil.addYears(database.getStartOfPeriod(), 1);
+		Date date = DateUtil.addYears(document.getStartOfPeriod(), 1);
 
-		OdtReportGeneratorTask task = new OdtReportGeneratorTask(database, date, reportFile, templateFile);
+		OdtReportGeneratorTask task = new OdtReportGeneratorTask(document, date, reportFile, templateFile);
 		task.execute(new TaskProgressListener() {
 			@Override
 			public void onProgressUpdate(int percentageCompleted) {

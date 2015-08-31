@@ -16,7 +16,7 @@
 */
 package nl.gogognome.gogoaccount.gui.components;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.lib.swing.JComboBoxWithKeyboardInput;
 
 import java.util.List;

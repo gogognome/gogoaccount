@@ -25,7 +25,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.PartyTypeBean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -42,7 +42,7 @@ public class EditPartyView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-    private final Database database;
+    private final Document document;
 
     private final StringModel idModel = new StringModel();
     private final StringModel nameModel = new StringModel();
@@ -63,9 +63,9 @@ public class EditPartyView extends OkCancelView {
      * Constructor.
      * @param party the party used to initialize the view
      */
-    protected EditPartyView(Database database, Party party) {
+    protected EditPartyView(Document document, Party party) {
         super();
-        this.database = database;
+        this.document = document;
         this.initialParty = party;
     }
 
@@ -80,7 +80,7 @@ public class EditPartyView extends OkCancelView {
     private void initModels() {
     	List<String> items = new ArrayList<String>();
     	items.add("");
-    	items.addAll(Arrays.asList(database.getPartyTypes()));
+    	items.addAll(Arrays.asList(document.getPartyTypes()));
     	typeListModel.setItems(items);
 
     	if (initialParty != null) {
@@ -156,7 +156,7 @@ public class EditPartyView extends OkCancelView {
     private void updateIdMessage() {
         String remark = "";
         String id = idModel.getString();
-        if (initialParty == null && database.getParty(id) != null ) {
+        if (initialParty == null && document.getParty(id) != null ) {
             remark = textResource.getString("editPartyView.idExistsAlready");
         } else if (id.length() == 0) {
             remark = textResource.getString("editPartyView.idIsEmpty");
@@ -165,7 +165,7 @@ public class EditPartyView extends OkCancelView {
     }
 
     private String suggestNewId() {
-        Party[] parties = database.getParties();
+        Party[] parties = document.getParties();
 
         String suggestion = null;
         for (Party party : parties) {

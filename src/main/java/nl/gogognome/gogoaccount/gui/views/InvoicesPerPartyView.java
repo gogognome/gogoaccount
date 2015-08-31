@@ -42,8 +42,8 @@ import javax.swing.SwingConstants;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.gui.controllers.EditInvoiceController;
 import nl.gogognome.gogoaccount.models.PartyModel;
@@ -68,8 +68,8 @@ public class InvoicesPerPartyView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
-	private DatabaseListener databaseListener;
+	private Document document;
+	private DocumentListener documentListener;
 
 	private JScrollPane invoicesScrollPane;
 	private JPanel invoicesPanel;
@@ -83,9 +83,9 @@ public class InvoicesPerPartyView extends View {
 
 	private ModelChangeListener listener;
 
-	public InvoicesPerPartyView(Database database) {
+	public InvoicesPerPartyView(Document document) {
 		super();
-		this.database = database;
+		this.document = document;
 	}
 
 	@Override
@@ -130,7 +130,7 @@ public class InvoicesPerPartyView extends View {
 	private JPanel createInvoiceSelectionPanel() {
 		InputFieldsRow row = new InputFieldsRow();
 		addCloseable(row);
-		row.addVariableSizeField("InvoicesSinglePartyView.party", new PartyBean(database, partyModel));
+		row.addVariableSizeField("InvoicesSinglePartyView.party", new PartyBean(document, partyModel));
 		row.addField("InvoicesSinglePartyView.date", dateModel);
 		row.addField("InvoicesSinglePartyView.includeClosedInvoices", includeClosedInvoicesModel);
 		return row;
@@ -157,8 +157,8 @@ public class InvoicesPerPartyView extends View {
 		dateModel.addModelChangeListener(listener);
 		includeClosedInvoicesModel.addModelChangeListener(listener);
 
-		databaseListener = new DatabaseListenerImpl();
-		database.addListener(databaseListener);
+		documentListener = new DocumentListenerImpl();
+		document.addListener(documentListener);
 
 		KeyboardFocusManager focusManager =
 		    KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -168,7 +168,7 @@ public class InvoicesPerPartyView extends View {
 	}
 
 	private void removeListeners() {
-		database.removeListener(databaseListener);
+		document.removeListener(documentListener);
 
 		includeClosedInvoicesModel.removeModelChangeListener(listener);
 		dateModel.removeModelChangeListener(listener);
@@ -206,7 +206,7 @@ public class InvoicesPerPartyView extends View {
 			return;
 		}
 
-        Invoice[] invoices = database.getInvoices();
+        Invoice[] invoices = document.getInvoices();
         sortInvoices(invoices, party);
         addInvoicesToPanel(invoices, party, date);
 
@@ -259,9 +259,9 @@ public class InvoicesPerPartyView extends View {
             	}
 
             	if (addInvoice) {
-            		List<Payment> payments = InvoiceService.getPayments(database, invoice.getId());
+            		List<Payment> payments = InvoiceService.getPayments(document, invoice.getId());
             		InvoicePanel ip = new InvoicePanel(invoice, payments, date,
-            				database.getCurrency());
+            				document.getCurrency());
             		invoicesPanel.add(ip, SwingUtils.createPanelGBConstraints(0, row));
             		row++;
             	}
@@ -282,13 +282,13 @@ public class InvoicesPerPartyView extends View {
 		if (includeClosedInvoicesModel.getBoolean()) {
 			return true;
 		} else {
-			return !InvoiceService.isPaid(database, invoice.getId(), date);
+			return !InvoiceService.isPaid(document, invoice.getId(), date);
 		}
 	}
 
 	private void editSelectedInvoice() {
 		EditInvoiceController controller =
-			new EditInvoiceController(this, database, selectedInvoicePanel.getInvoice());
+			new EditInvoiceController(this, document, selectedInvoicePanel.getInvoice());
 		controller.execute();
 	}
 
@@ -321,10 +321,10 @@ public class InvoicesPerPartyView extends View {
 		}
 	}
 
-	private class DatabaseListenerImpl implements DatabaseListener {
+	private class DocumentListenerImpl implements DocumentListener {
 
 		@Override
-		public void databaseChanged(Database db) {
+		public void documentChanged(Document document) {
 			updateInvoicesInPanel();
 		}
 	}

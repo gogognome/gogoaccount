@@ -16,6 +16,7 @@
 */
 package nl.gogognome.gogoaccount.businessobjects;
 
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.ComparatorUtil;
 

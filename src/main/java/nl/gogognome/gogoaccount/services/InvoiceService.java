@@ -20,14 +20,14 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
@@ -48,7 +48,7 @@ public class InvoiceService {
 
     /**
      * Creates invoices and journals for a number of parties.
-     * @param database the database to which the invoices are to be added.
+     * @param document the database to which the invoices are to be added.
      * @param id the id of the invoices
      * @param parties the parties
      * @param issueDate the date of issue of the invoices
@@ -56,7 +56,7 @@ public class InvoiceService {
      * @param invoiceLineDefinitions the lines of a single invoice
      * @throws ServiceException if a problem occurs while creating invoices for one or more of the parties
      */
-    public static void createInvoiceAndJournalForParties(Database database, String id, List<Party> parties,
+    public static void createInvoiceAndJournalForParties(Document document, String id, List<Party> parties,
             Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
         // Validate the input.
         if (issueDate == null) {
@@ -135,8 +135,8 @@ public class InvoiceService {
 
             assert amountToBePaid != null; // has been checked before
 
-            if (database.getInvoice(specificId) != null) {
-                specificId = database.suggestNewInvoiceId(specificId);
+            if (document.getInvoice(specificId) != null) {
+                specificId = document.suggestNewInvoiceId(specificId);
             }
             Invoice invoice = new Invoice(specificId, party, party, amountToBePaid, issueDate, descriptions, amounts);
 
@@ -167,15 +167,15 @@ public class InvoiceService {
             }
 
             try {
-                database.addInvoicAndJournal(invoice, journal);
+                document.addInvoicAndJournal(invoice, journal);
                 changedDatabase = true;
-            } catch (DatabaseModificationFailedException e) {
+            } catch (DocumentModificationFailedException e) {
                 partiesForWhichCreationFailed.add(party);
             }
         }
 
         if (changedDatabase) {
-            database.notifyChange();
+            document.notifyChange();
         }
 
         if (!partiesForWhichCreationFailed.isEmpty()) {
@@ -219,15 +219,15 @@ public class InvoiceService {
     /**
      * Gets the amount that has to be paid for this invoice minus
      * the payments that have been made.
-     * @param database database containing the bookkeeping
+     * @param document database containing the bookkeeping
      * @param invoiceId the id of the invoice
      * @param date the date for which the amount has to be determined.
      * @return the remaining amount that has to be paid
      */
-    public static Amount getRemainingAmountToBePaid(Database database, String invoiceId, Date date) {
-    	Invoice invoice = database.getInvoice(invoiceId);
+    public static Amount getRemainingAmountToBePaid(Document document, String invoiceId, Date date) {
+    	Invoice invoice = document.getInvoice(invoiceId);
         Amount result = invoice.getAmountToBePaid();
-        for (Payment p : database.getPayments(invoiceId)) {
+        for (Payment p : document.getPayments(invoiceId)) {
             if (DateUtil.compareDayOfYear(p.getDate(), date) <= 0) {
                 result = result.subtract(p.getAmount());
             }
@@ -237,23 +237,23 @@ public class InvoiceService {
 
     /**
      * Checks whether an invoice has been paid.
-     * @param database database containing the bookkeeping
+     * @param document database containing the bookkeeping
      * @param invoiceId the id of the invoice
      * @param date the date for which the amount has to be determined.
      * @return true if the invoice has been paid; false otherwise
      */
-    public static boolean isPaid(Database database, String invoiceId, Date date) {
-    	return getRemainingAmountToBePaid(database, invoiceId, date).isZero();
+    public static boolean isPaid(Document document, String invoiceId, Date date) {
+    	return getRemainingAmountToBePaid(document, invoiceId, date).isZero();
     }
 
     /**
      * Gets all payments for the specified invoice.
-     * @param database database containing the bookkeeping
+     * @param document database containing the bookkeeping
      * @param invoiceId the ID of the invoice
      * @return the payments
      */
-    public static List<Payment> getPayments(Database database, String invoiceId) {
-        return database.getPayments(invoiceId);
+    public static List<Payment> getPayments(Document document, String invoiceId) {
+        return document.getPayments(invoiceId);
     }
 
 }

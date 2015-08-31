@@ -16,8 +16,8 @@
 */
 package nl.gogognome.gogoaccount.services;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 
 /**
@@ -27,10 +27,10 @@ import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
  */
 public class ImportBankStatementService {
 
-	private final Database database;
+	private final Document document;
 
-	public ImportBankStatementService(Database database) {
-		this.database = database;
+	public ImportBankStatementService(Document document) {
+		this.document = document;
 	}
 
 	/**
@@ -52,7 +52,7 @@ public class ImportBankStatementService {
 	private Account getAccountForImportedAccount(String account, String name) throws ServiceException {
 		return ServiceTransaction.withResult(() -> {
             String key = getKey(account, name);
-            return database.getAccountForImportedAccount(key);
+            return document.getAccountForImportedAccount(key);
         });
 	}
 
@@ -66,7 +66,7 @@ public class ImportBankStatementService {
 
 	private void setAccountForImportedAccount(String importedAccount, String name, Account account) {
 		String key = getKey(importedAccount, name);
-		database.setImportedAccount(key, account.getId());
+		document.setImportedAccount(key, account.getId());
 	}
 
 	private String getKey(String account, String name) {

@@ -34,7 +34,7 @@ import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;

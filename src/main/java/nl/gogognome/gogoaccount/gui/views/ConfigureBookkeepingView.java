@@ -34,8 +34,9 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -72,8 +73,9 @@ public class ConfigureBookkeepingView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	private final Database database;
+	private final Document document;
 	private final BookkeepingService bookkeepingService = Factory.getInstance(BookkeepingService.class);
+	private final ConfigurationService configurationService = Factory.getInstance(ConfigurationService.class);
 
 	private final StringModel descriptionModel = new StringModel();
 	private final ListModel<Currency> currencyModel = new ListModel<Currency>();
@@ -89,10 +91,10 @@ public class ConfigureBookkeepingView extends View {
 
 	/**
 	 * Constructor.
-	 * @param database the database whose bookkeeping is to be configured.
+	 * @param document the database whose bookkeeping is to be configured.
 	 */
-	public ConfigureBookkeepingView(Database database) {
-		this.database = database;
+	public ConfigureBookkeepingView(Document document) {
+		this.document = document;
 	}
 
 	@Override
@@ -114,11 +116,11 @@ public class ConfigureBookkeepingView extends View {
 	}
 
 	private void initModels() {
-		startDateModel.setDate(database.getStartOfPeriod());
-		descriptionModel.setString(database.getDescription());
+		startDateModel.setDate(document.getStartOfPeriod());
+		descriptionModel.setString(document.getDescription());
 
 		currencyModel.setItems(CurrencyUtil.getAllCurrencies());
-		currencyModel.setSelectedItem(database.getCurrency(), null);
+		currencyModel.setSelectedItem(document.getCurrency(), null);
 	}
 
 	private void addListeners() {
@@ -146,7 +148,7 @@ public class ConfigureBookkeepingView extends View {
 		accountsAndButtonsPanel.setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createTitledBorder(textResource.getString("ConfigureBookkeepingView.accounts")),
 				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		tableModel = new AccountTableModel(getAccountDefinitions(database));
+		tableModel = new AccountTableModel(getAccountDefinitions(document));
 		table = widgetFactory.createSortedTable(tableModel);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -183,15 +185,15 @@ public class ConfigureBookkeepingView extends View {
 	}
 
 	private void updateDatabaseWithEnteredValues() {
-		database.setDescription(descriptionModel.getString());
+		document.setDescription(descriptionModel.getString());
 		if (startDateModel.getDate() != null) {
-			database.setStartOfPeriod(startDateModel.getDate());
+			document.setStartOfPeriod(startDateModel.getDate());
 		}
 
 		try {
 			Currency currency = currencyModel.getSelectedItem();
 			if (currency != null) {
-				database.setCurrency(currency);
+				document.setCurrency(currency);
 			}
 		} catch (Exception e) {
 			// Probably an invalid currency was entered
@@ -225,7 +227,7 @@ public class ConfigureBookkeepingView extends View {
 				"ConfigureBookkeepingView.deleteAccountAreYouSure",	account.getId() + " - " + account.getName());
 		if (choice == MessageDialog.YES_OPTION) {
 			try {
-				bookkeepingService.deleteAccount(database, account);
+				configurationService.deleteAccount(document, account);
 				int index = SwingUtils.getSelectedRowConvertedToModel(table);
 				tableModel.removeRow(index);
 			} catch (ServiceException e) {
@@ -241,7 +243,7 @@ public class ConfigureBookkeepingView extends View {
 		Account account = eav.getEditedAccount();
 		if (account != null) {
 			try {
-				bookkeepingService.createAccount(database, account);
+				configurationService.createAccount(document, account);
 				AccountDefinition definition = new AccountDefinition();
 				definition.account = account;
 				tableModel.addRow(definition);
@@ -262,7 +264,7 @@ public class ConfigureBookkeepingView extends View {
 			Account account = eav.getEditedAccount();
 			if (account != null) {
 				try {
-					bookkeepingService.updateAccount(database, account);
+					configurationService.updateAccount(document, account);
 					definition.account = account;
 					tableModel.updateRow(rows[0], definition);
 				} catch (ServiceException e) {
@@ -272,13 +274,13 @@ public class ConfigureBookkeepingView extends View {
 		}
 	}
 
-	private List<AccountDefinition> getAccountDefinitions(Database database) throws ServiceException {
-		List<Account> accounts = bookkeepingService.findAllAccounts(database);
+	private List<AccountDefinition> getAccountDefinitions(Document document) throws ServiceException {
+		List<Account> accounts = configurationService.findAllAccounts(document);
 		List<AccountDefinition> result = new ArrayList<AccountDefinition>(accounts.size());
 		for (Account account : accounts) {
 			AccountDefinition accountDefinition = new AccountDefinition();
 			accountDefinition.account = account;
-			accountDefinition.used = database.isAccountUsed(account.getId());
+			accountDefinition.used = document.isAccountUsed(account.getId());
 			result.add(accountDefinition);
 		}
 		return result;

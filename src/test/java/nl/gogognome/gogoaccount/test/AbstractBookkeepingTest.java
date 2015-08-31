@@ -17,8 +17,10 @@
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
-import nl.gogognome.gogoaccount.database.AccountDAO;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.AccountDAO;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
@@ -43,7 +45,7 @@ import static junit.framework.Assert.*;
  */
 public abstract class AbstractBookkeepingTest {
 
-	protected Database database;
+	protected Document document;
 
 	protected AmountFormat amountFormat;
 
@@ -54,21 +56,22 @@ public abstract class AbstractBookkeepingTest {
 		initFactory();
 
         BookkeepingService bookkeepingService = new BookkeepingService();
-        database = bookkeepingService.createNewDatabase();
-        database.setCurrency(Currency.getInstance("EUR"));
-        database.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
-        database.setParties(createParties());
+        ConfigurationService configurationService = new ConfigurationService();
+        document = bookkeepingService.createNewDatabase();
+        document.setCurrency(Currency.getInstance("EUR"));
+        document.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
+        document.setParties(createParties());
 
         for (Account account : createAccounts()) {
-            bookkeepingService.createAccount(database, account);
+            configurationService.createAccount(document, account);
         }
 
 		addStartBalance();
 		addJournals();
 
-		database.databaseConsistentWithFile();
+		document.databaseConsistentWithFile();
 
-		zero = Amount.getZero(database.getCurrency());
+		zero = Amount.getZero(document.getCurrency());
 	}
 
 	private void initFactory() {
@@ -90,15 +93,15 @@ public abstract class AbstractBookkeepingTest {
 		String[] descriptions = new String[] { "Contributie 2011", "Contributie" };
 		Amount[] amounts = new Amount[] { null, createAmount(20) };
 		Invoice invoice = new Invoice(journal.getIdOfCreatedInvoice(),
-				database.getParty("1101"), database.getParty("1101"),
+				document.getParty("1101"), document.getParty("1101"),
 				createAmount(20), journal.getDate(), descriptions, amounts);
-		database.addInvoicAndJournal(invoice, journal);
+		document.addInvoicAndJournal(invoice, journal);
 
 		items = new ArrayList<>();
 		items.add(createItem(10, "101", true, "inv1", "pay1"));
 		items.add(createItem(10, "190", false));
 		journal = new Journal("t2", "Payment", DateUtil.createDate(2011, 5, 10), items, null);
-		database.addJournal(journal, true);
+		document.addJournal(journal, true);
 	}
 
 	private List<Account> createAccounts() {
@@ -133,14 +136,14 @@ public abstract class AbstractBookkeepingTest {
 		items.add(createItem(300, "101", true));
 		items.add(createItem(400, "200", false));
 		Journal journal = new Journal("start", "Start balance",
-				DateUtil.addDays(database.getStartOfPeriod(), -1),
+				DateUtil.addDays(document.getStartOfPeriod(), -1),
 				items, null);
-		database.addJournal(journal, false);
+		document.addJournal(journal, false);
 	}
 
 	protected JournalItem createItem(int amountInt, String accountId, boolean debet) throws ServiceException {
 		return ServiceTransaction.withResult(() -> {
-			Account account = new AccountDAO(database).get(accountId);
+			Account account = new AccountDAO(document).get(accountId);
 			Amount amount = createAmount(amountInt);
 			return new JournalItem(amount, account, debet);
 		});
@@ -148,14 +151,14 @@ public abstract class AbstractBookkeepingTest {
 
 	protected JournalItem createItem(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            Account account = new AccountDAO(database).get(accountId);
+            Account account = new AccountDAO(document).get(accountId);
             Amount amount = createAmount(amountInt);
             return new JournalItem(amount, account, debet, invoiceId, paymentId);
         });
 	}
 
 	protected Amount createAmount(int value) throws ParseException {
-		return amountFormat.parse(Integer.toString(value), database.getCurrency());
+		return amountFormat.parse(Integer.toString(value), document.getCurrency());
 	}
 
 	protected void checkAmount(int expectedAmountInt, Amount actualAmount) throws ParseException {
@@ -165,7 +168,7 @@ public abstract class AbstractBookkeepingTest {
 	}
 
 	protected Journal findJournal(String id) {
-		for (Journal j : database.getJournals()) {
+		for (Journal j : document.getJournals()) {
 			if (j.getId().equals(id)) {
 				return j;
 			}
@@ -201,9 +204,10 @@ public abstract class AbstractBookkeepingTest {
 	 * @param actual actual database
 	 * @throws ServiceException
 	 */
-	public void assertEqualDatabase(Database expected, Database actual) throws ServiceException, SQLException {
+	public void assertEqualDatabase(Document expected, Document actual) throws ServiceException, SQLException {
         BookkeepingService bookkeepingService = new BookkeepingService();
-		assertEquals(bookkeepingService.findAllAccounts(expected).toString(), bookkeepingService.findAllAccounts(actual).toString());
+		ConfigurationService configurationService = new ConfigurationService();
+		assertEquals(configurationService.findAllAccounts(expected).toString(), configurationService.findAllAccounts(actual).toString());
 		assertEquals(Arrays.toString(expected.getParties()), Arrays.toString(actual.getParties()));
 		assertEquals(expected.getCurrency(), actual.getCurrency());
 		assertEquals(expected.getDescription(), actual.getDescription());

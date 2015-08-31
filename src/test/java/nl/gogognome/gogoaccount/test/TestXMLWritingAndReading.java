@@ -22,7 +22,7 @@ import static junit.framework.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.*;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransactionRabobankCsv;
@@ -63,11 +63,11 @@ public class TestXMLWritingAndReading extends AbstractBookkeepingTest {
 
 	@Test
 	public void testImportedTransactions() throws Exception {
-		ImportBankStatementService ibsService = new ImportBankStatementService(database);
+		ImportBankStatementService ibsService = new ImportBankStatementService(document);
 		ImportedTransaction transaction = new ImportedTransactionRabobankCsv("from", "fromName",
 				createAmount(123), DateUtil.createDate(2011, 8, 23), "to", "toName", "test");
-		ibsService.setImportedFromAccount(transaction, bookkeepingService.getAccount(database, "101"));
-		ibsService.setImportedToAccount(transaction, bookkeepingService.getAccount(database, "190"));
+		ibsService.setImportedFromAccount(transaction, bookkeepingService.getAccount(document, "101"));
+		ibsService.setImportedToAccount(transaction, bookkeepingService.getAccount(document, "190"));
 
 		writeReadAndCompareDatabase();
 	}
@@ -80,14 +80,14 @@ public class TestXMLWritingAndReading extends AbstractBookkeepingTest {
 	private void writeReadAndCompareDatabase() throws Exception {
 		ServiceTransaction.withoutResult(() -> {
 			File file = File.createTempFile("ga-test", ".xml");
-			XMLFileWriter writer = new XMLFileWriter(database, file);
+			XMLFileWriter writer = new XMLFileWriter(document, file);
 			writer.writeDatabaseToFile();
 
 			XMLFileReader reader = new XMLFileReader(file);
-			Database newDatabase = reader.createDatabaseFromFile();
+			Document newDocument = reader.createDatabaseFromFile();
 
-			assertEqualDatabase(database, newDatabase);
-			assertEquals(file.getAbsolutePath(), newDatabase.getFileName());
+			assertEqualDatabase(document, newDocument);
+			assertEquals(file.getAbsolutePath(), newDocument.getFileName());
 		});
 	}
 
