@@ -147,9 +147,9 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 	public void testCloseBookkeeping() throws Exception {
 		Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
 				DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
-        Bookkeeping newBookkeeping = configurationService.getBookkeeping(document);
+        Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
 
-		assertEquals("new bookkeeping", newDocument.getDescription());
+		assertEquals("new bookkeeping", newBookkeeping.getDescription());
 		assertEquals(configurationService.findAllAccounts(document).toString(), configurationService.findAllAccounts(newDocument).toString());
 		assertEquals(0, DateUtil.compareDayOfYear(DateUtil.createDate(2012, 1, 1),
                 newBookkeeping.getStartOfPeriod()));

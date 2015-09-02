@@ -9,7 +9,10 @@ CREATE TABLE account (
 
 CREATE TABLE bookkeeping (
   id int,
+  description varchar2(1000),
   start_of_period date,
   currency varchar2(3),
   PRIMARY KEY (id)
 );
+
+INSERT INTO bookkeeping (id, description, start_of_period, currency) values (1, 'New bookkeeping', current_date(), 'EUR');

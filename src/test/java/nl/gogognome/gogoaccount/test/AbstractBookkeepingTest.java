@@ -23,9 +23,7 @@ import static junit.framework.Assert.*;
 
 
 /**
- * Abstract class that sets up a test account.
- *
- * @author Sander Kooijmans
+ * Abstract class that sets up a bookkeeping in an in-memory database. A new database instance is used per test.
  */
 public abstract class AbstractBookkeepingTest {
 
@@ -44,7 +42,7 @@ public abstract class AbstractBookkeepingTest {
 		initFactory();
 
         BookkeepingService bookkeepingService = new BookkeepingService();
-        document = bookkeepingService.createNewDatabase();
+        document = bookkeepingService.createNewDatabase("New bookkeeping");
 		bookkeeping = configurationService.getBookkeeping(document);
 		bookkeeping.setCurrency(Currency.getInstance("EUR"));
         bookkeeping.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
@@ -199,10 +197,10 @@ public abstract class AbstractBookkeepingTest {
 
         Bookkeeping expectedBookkeeping = configurationService.getBookkeeping(expected);
         Bookkeeping actualBookkeeping = configurationService.getBookkeeping(actual);
+		assertEquals(expectedBookkeeping.getDescription(), actualBookkeeping.getDescription());
 		assertEquals(expectedBookkeeping.getCurrency(), actualBookkeeping.getCurrency());
-        assertEqualDayOfYear(expectedBookkeeping.getStartOfPeriod(), actualBookkeeping.getStartOfPeriod());
+		assertEqualDayOfYear(expectedBookkeeping.getStartOfPeriod(), actualBookkeeping.getStartOfPeriod());
 
-        assertEquals(expected.getDescription(), actual.getDescription());
         assertEquals(expected.getImportedTransactionAccountToAccountMap().keySet().toString(),
                 actual.getImportedTransactionAccountToAccountMap().keySet().toString());
         assertEquals(expected.getImportedTransactionAccountToAccountMap().values().toString(),

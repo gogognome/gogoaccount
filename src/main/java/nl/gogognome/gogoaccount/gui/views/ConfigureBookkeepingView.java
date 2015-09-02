@@ -120,7 +120,7 @@ public class ConfigureBookkeepingView extends View {
 	private void initModels() throws ServiceException {
 		Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
 		startDateModel.setDate(bookkeeping.getStartOfPeriod());
-		descriptionModel.setString(document.getDescription());
+		descriptionModel.setString(bookkeeping.getDescription());
 
 		currencyModel.setItems(CurrencyUtil.getAllCurrencies());
 		currencyModel.setSelectedItem(bookkeeping.getCurrency(), null);
@@ -185,7 +185,7 @@ public class ConfigureBookkeepingView extends View {
 	private void updateDatabaseWithEnteredValues() {
         try {
             Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-            document.setDescription(descriptionModel.getString());
+            bookkeeping.setDescription(descriptionModel.getString());
             if (startDateModel.getDate() != null) {
                 bookkeeping.setStartOfPeriod(startDateModel.getDate());
             }

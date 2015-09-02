@@ -7,13 +7,17 @@ import java.util.GregorianCalendar;
 
 public class Bookkeeping {
 
-    /**
-     * Contains the start date of the account period.
-     */
+    private String description = "";
     private Date startOfPeriod;
-
-    /** The currency of all amounts. */
     private Currency currency = Currency.getInstance("EUR");
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public Date getStartOfPeriod() {
         return startOfPeriod;

@@ -72,7 +72,4 @@ public class ConfigurationService {
         ServiceTransaction.withoutResult(() -> new BookkeepingDAO(document).update(bookkeeping));
     }
 
-    public void createBookkeeping(Document document, Bookkeeping bookkeeping) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> new BookkeepingDAO(document).create(bookkeeping));
-    }
 }

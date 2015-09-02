@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.gui;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.components.document.DocumentListener;
@@ -27,7 +28,6 @@ import java.awt.print.PrinterException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.URL;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,9 +63,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 	public MainFrame() {
 		super();
 		try {
-			document = new Document();
-		} catch (SQLException e) {
-			throw new RuntimeException("Could not create inital database: " + e.getMessage(), e);
+			document = bookkeepingService.createNewDatabase("New bookkeeping");
+		} catch (ServiceException e) {
+			throw new RuntimeException("Could not create initial database: " + e.getMessage(), e);
 		}
 		document.addListener(this);
 		createMenuBar();
@@ -95,16 +95,23 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 	 */
 	private String createTitle() {
 	    String result = textResource.getString("mf.title");
-	    String description = document.getDescription();
-	    if (description != null)
-	    {
-	        result += " - " + description;
-	        if (document.hasUnsavedChanges())
-	        {
-	            result += "*";
-	        }
-	    }
-	    return result;
+        Bookkeeping bookkeeping = null;
+        String description;
+        try {
+            bookkeeping = configurationService.getBookkeeping(document);
+            description = bookkeeping.getDescription();
+        } catch (ServiceException e) {
+            description = null;
+        }
+	    if (description != null) {
+            result += " - " + description;
+        }
+        if (document.hasUnsavedChanges())
+        {
+            result += "*";
+        }
+
+        return result;
 	}
 
 	/** Creates the menu bar. */
@@ -260,12 +267,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
 	private void handleNewEdition() throws ServiceException {
 		if (mayCurrentDatabaseBeDestroyed()) {
-            try {
-                setDocument(new Document());
-            } catch (SQLException e) {
-                throw new ServiceException(e);
-            }
-            document.setDescription(textResource.getString("mf.newBookkeepingDescription"));
+            setDocument(bookkeepingService.createNewDatabase(textResource.getString("mf.newBookkeepingDescription")));
 			document.databaseConsistentWithFile();
 			handleConfigureBookkeeping();
 		}

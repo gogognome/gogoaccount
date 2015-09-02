@@ -28,13 +28,15 @@ public class BookkeepingService {
                         "First save the changes before closing the bookkeeping.");
             }
 
-            Document newDocument = createNewDatabase();
-            newDocument.setDescription(description);
+            Document newDocument = createNewDatabase("New bookkeeping");
             newDocument.setFileName(null);
-            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-            Bookkeeping newBookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(newDocument);
+            ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+            Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
+            newBookkeeping.setDescription(description);
             newBookkeeping.setCurrency(bookkeeping.getCurrency());
             newBookkeeping.setStartOfPeriod(date);
+            configurationService.updateBookkeeping(newDocument, newBookkeeping);
 
             // Copy the parties
             try {
@@ -44,24 +46,24 @@ public class BookkeepingService {
             }
 
             // Copy the accounts
-            for (Account account : configurationService.findAllAccounts(document)) {
-                configurationService.createAccount(newDocument, account);
+            for (Account account : this.configurationService.findAllAccounts(document)) {
+                this.configurationService.createAccount(newDocument, account);
             }
 
             // Create start balance
             Date dayBeforeStart = DateUtil.addDays(date, -1);
 
             List<JournalItem> journalItems = new ArrayList<>(20);
-            for (Account account : configurationService.findAssets(document)) {
+            for (Account account : this.configurationService.findAssets(document)) {
                 JournalItem item = new JournalItem(getAccountBalance(document, account, dayBeforeStart),
-                        configurationService.getAccount(newDocument, account.getId()), true, null, null);
+                        this.configurationService.getAccount(newDocument, account.getId()), true, null, null);
                 if (!item.getAmount().isZero()) {
                     journalItems.add(item);
                 }
             }
-            for (Account account : configurationService.findLiabilities(document)) {
+            for (Account account : this.configurationService.findLiabilities(document)) {
                 JournalItem item = new JournalItem(getAccountBalance(document, account, dayBeforeStart),
-                        configurationService.getAccount(newDocument, account.getId()), false, null, null);
+                        this.configurationService.getAccount(newDocument, account.getId()), false, null, null);
                 if (!item.getAmount().isZero()) {
                     journalItems.add(item);
                 }
@@ -71,9 +73,9 @@ public class BookkeepingService {
             Report report = createReport(document, dayBeforeStart);
             Amount resultOfOperations = report.getResultOfOperations();
             if (resultOfOperations.isPositive()) {
-                journalItems.add(new JournalItem(resultOfOperations, configurationService.getAccount(newDocument, equity.getId()), false, null, null));
+                journalItems.add(new JournalItem(resultOfOperations, this.configurationService.getAccount(newDocument, equity.getId()), false, null, null));
             } else if (resultOfOperations.isNegative()) {
-                journalItems.add(new JournalItem(resultOfOperations.negate(), configurationService.getAccount(newDocument, equity.getId()), true, null, null));
+                journalItems.add(new JournalItem(resultOfOperations.negate(), this.configurationService.getAccount(newDocument, equity.getId()), true, null, null));
             }
             try {
                 Journal startBalance = new Journal("start", "start balance", dayBeforeStart,
@@ -278,13 +280,15 @@ public class BookkeepingService {
         });
     }
 
-    public Document createNewDatabase() throws ServiceException {
+    public Document createNewDatabase(String description) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Document document = new Document();
             new DatabaseMigratorDAO(document.getBookkeepingId()).applyMigrationsFromResource("/database/_migrations.txt");
-            Bookkeeping bookkeeping = new Bookkeeping();
+            ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+            bookkeeping.setDescription(description);
             bookkeeping.setStartOfPeriod(getFirstDayOfYear(new Date()));
-            ObjectFactory.create(ConfigurationService.class).createBookkeeping(document, bookkeeping);
+            ObjectFactory.create(ConfigurationService.class).updateBookkeeping(document, bookkeeping);
             return document;
         });
     }

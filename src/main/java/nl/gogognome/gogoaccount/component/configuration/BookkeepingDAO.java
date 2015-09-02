@@ -10,19 +10,20 @@ import java.util.Currency;
 
 public class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
 
-    private Bookkeeping singleton;
+    private final static long SINGLETON_ID = 1;
 
     protected BookkeepingDAO(Document document) {
-        super("account", null, document.getBookkeepingId());
+        super("bookkeeping", null, document.getBookkeepingId());
     }
 
     public Bookkeeping getSingleton() throws SQLException {
-        return get(1L);
+        return get(SINGLETON_ID);
     }
 
     @Override
     protected Bookkeeping getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
         Bookkeeping bookkeeping = new Bookkeeping();
+        bookkeeping.setDescription(result.getString("description"));
         bookkeeping.setCurrency(Currency.getInstance(result.getString("currency")));
         bookkeeping.setStartOfPeriod(result.getDate("start_of_period"));
         return bookkeeping;
@@ -31,7 +32,8 @@ public class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
     @Override
     protected NameValuePairs getNameValuePairs(Bookkeeping bookkeeping) throws SQLException {
         return new NameValuePairs()
-                .add("id", 1L)
+                .add("id", SINGLETON_ID)
+                .add("description", bookkeeping.getDescription())
                 .add("currency", bookkeeping.getCurrency().getCurrencyCode())
                 .add("start_of_period", bookkeeping.getStartOfPeriod());
     }

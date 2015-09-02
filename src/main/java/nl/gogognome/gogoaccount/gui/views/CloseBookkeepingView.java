@@ -132,7 +132,7 @@ public class CloseBookkeepingView extends OkCancelView {
         dateModel.setDate(DateUtil.addYears(bookkeeping.getStartOfPeriod(), 1), null);
 		accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
 
-        String description = document.getDescription();
+        String description = bookkeeping.getDescription();
         int year = DateUtil.getField(bookkeeping.getStartOfPeriod(), Calendar.YEAR);
         int nextYear = year+1;
         description = description.replace(Integer.toString(year), Integer.toString(nextYear));

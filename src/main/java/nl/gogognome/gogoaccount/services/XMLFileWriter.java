@@ -72,7 +72,7 @@ public class XMLFileWriter {
 
 			Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
 			rootElement.setAttribute("fileversion", FILE_VERSION);
-			rootElement.setAttribute("description", document.getDescription());
+			rootElement.setAttribute("description", bookkeeping.getDescription());
 			rootElement.setAttribute("currency", bookkeeping.getCurrency().getCurrencyCode());
 			rootElement.setAttribute("startdate", DATE_FORMAT.format(bookkeeping.getStartOfPeriod()));
 

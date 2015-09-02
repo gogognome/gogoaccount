@@ -1,49 +1,35 @@
 package nl.gogognome.gogoaccount.components.document;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
-
 import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
+import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
-
-import com.google.common.base.Joiner;
 import org.h2.jdbcx.JdbcDataSource;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
 
 public class Document {
 
-	/** Description of the bookkeeping represented by this database. */
-	private String description = "";
-
 	private Connection connectionToKeepInMemoryDatabaseAlive;
 
-	private final ArrayList<Journal> journals = new ArrayList<Journal>();
+	private final ArrayList<Journal> journals = new ArrayList<>();
 
-	private ArrayList<Party> parties = new ArrayList<Party>();
+	private ArrayList<Party> parties = new ArrayList<>();
 
 	/** Maps ids of parties to <code>Party</code> instances. */
-	private HashMap<String, Party> idsToPartiesMap = new HashMap<String, Party>();
+	private HashMap<String, Party> idsToPartiesMap = new HashMap<>();
 
 	/** Maps ids of invoices to <code>Invoice</code> instances. */
-	private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<String, Invoice>();
+	private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<>();
 
 	/** Maps ids of invoices to a map of payment ids to Payments. */
-	private final HashMap<String, HashMap<String, Payment>> idToInvoiceToPaymentMap = new HashMap<String, HashMap<String, Payment>>();
+	private final HashMap<String, HashMap<String, Payment>> idToInvoiceToPaymentMap = new HashMap<>();
 
 	/** Contains the next payment identifier. */
 	private String nextPaymentId = "p1";
@@ -55,12 +41,12 @@ public class Document {
 	private String fileName;
 
 	/** Maps accounts from imported transactions to accounts of gogo account. */
-	private final Map<String, String> importedTransactionAccountToAccountMap = new HashMap<String, String>();
+	private final Map<String, String> importedTransactionAccountToAccountMap = new HashMap<>();
 
 	/**
 	 * Contains the <tt>DatabaseListeners</tt>.
 	 */
-	private final ArrayList<DocumentListener> listeners = new ArrayList<DocumentListener>();
+	private final ArrayList<DocumentListener> listeners = new ArrayList<>();
 
     private final String bookkeepingId = UUID.randomUUID().toString();
 
@@ -94,9 +80,7 @@ public class Document {
 	/** Notifies the listeners. */
 	private void notifyListeners()
 	{
-		for (int i=0; i<listeners.size(); i++)
-		{
-			DocumentListener l = listeners.get(i);
+		for (DocumentListener l : listeners) {
 			l.documentChanged(this);
 		}
 	}
@@ -129,27 +113,6 @@ public class Document {
 		return changed;
 	}
 
-	public String getDescription()
-	{
-		return description;
-	}
-
-	public void setDescription(String description)
-	{
-		this.description = description;
-		notifyChange();
-	}
-
-	private void checkAccountTypes(Iterable<Account> accounts, boolean debet, boolean balanceAccount)
-			throws DocumentModificationFailedException {
-		for (Account a : accounts){
-			if (a.getType().isDebet() != debet || a.getType().isBalanceAccount() != balanceAccount) {
-				throw new DocumentModificationFailedException("Account found with type "
-						+ a.getType() + " instead of " + Joiner.on(", ").join(AccountType.get(debet, balanceAccount)) + ".");
-			}
-		}
-	}
-
 	/**
 	 * Adds payments to invoices that are referred to by the journal.
 	 * To each invoice (referred to by the journal) a new payment is added for the
@@ -162,10 +125,10 @@ public class Document {
 	 */
 	private void createPaymentsForItemsOfJournal(Journal journal) throws DocumentModificationFailedException {
 		JournalItem[] items = journal.getItems();
-		for (int i = 0; i < items.length; i++) {
-			Invoice invoice = getInvoice(items[i].getInvoiceId());
+		for (JournalItem item : items) {
+			Invoice invoice = getInvoice(item.getInvoiceId());
 			if (invoice != null) {
-				Payment payment = createPaymentForJournalItem(journal, items[i]);
+				Payment payment = createPaymentForJournalItem(journal, item);
 				addPayment(invoice.getId(), payment);
 			}
 		}
@@ -311,8 +274,8 @@ public class Document {
 	public void updateJournal(Journal oldJournal, Journal newJournal) throws DocumentModificationFailedException {
 		// Check for payments without paymentId. These payments can exist in old XML files.
 		JournalItem[] items = oldJournal.getItems();
-		for (int i = 0; i < items.length; i++) {
-			if (items[i].getInvoiceId() != null && items[i].getPaymentId() == null) {
+		for (JournalItem item2 : items) {
+			if (item2.getInvoiceId() != null && item2.getPaymentId() == null) {
 				throw new DocumentModificationFailedException("The old journal contains a payment without id. It cannot therefore not be updated.");
 			}
 		}
@@ -326,17 +289,17 @@ public class Document {
 
 		// Update payments. Remove payments from old journal and add payments of the new journal.
 		items = oldJournal.getItems();
-		for (int i = 0; i < items.length; i++) {
-			Invoice invoice = getInvoice(items[i].getInvoiceId());
+		for (JournalItem item1 : items) {
+			Invoice invoice = getInvoice(item1.getInvoiceId());
 			if (invoice != null) {
-				removePayment(invoice.getId(), items[i].getPaymentId());
+				removePayment(invoice.getId(), item1.getPaymentId());
 			}
 		}
 		items = newJournal.getItems();
-		for (int i = 0; i < items.length; i++) {
-			Invoice invoice = getInvoice(items[i].getInvoiceId());
+		for (JournalItem item : items) {
+			Invoice invoice = getInvoice(item.getInvoiceId());
 			if (invoice != null) {
-				Payment payment = createPaymentForJournalItem(newJournal, items[i]);
+				Payment payment = createPaymentForJournalItem(newJournal, item);
 				addPayment(invoice.getId(), payment);
 			}
 		}
@@ -349,7 +312,7 @@ public class Document {
 	 * @return the journals sorted on date
 	 */
 	public List<Journal> getJournals() {
-		List<Journal> result = new ArrayList<Journal>(journals);
+		List<Journal> result = new ArrayList<>(journals);
 		Collections.sort(result);
 		return result;
 	}
@@ -359,9 +322,8 @@ public class Document {
 	 * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
 	 */
 	public String[] getPartyTypes() {
-		HashSet<String> set = new HashSet<String>();
-		for (Iterator<Party> iter = parties.iterator(); iter.hasNext();) {
-			Party party = iter.next();
+		HashSet<String> set = new HashSet<>();
+		for (Party party : parties) {
 			if (party.getType() != null) {
 				set.add(party.getType());
 			}
@@ -383,9 +345,8 @@ public class Document {
 	 * @return the matching parties. Never returns <code>null</code>.
 	 */
 	public Party[] getParties(PartySearchCriteria searchCriteria) {
-		ArrayList<Party> matchingParties = new ArrayList<Party>();
-		for (Iterator<Party> iter = parties.iterator(); iter.hasNext();) {
-			Party party = iter.next();
+		ArrayList<Party> matchingParties = new ArrayList<>();
+		for (Party party : parties) {
 			if (searchCriteria.matches(party)) {
 				matchingParties.add(party);
 			}
@@ -415,15 +376,15 @@ public class Document {
 	 *         with the same id.
 	 */
 	public void setParties(Party[] parties) throws DocumentModificationFailedException {
-		ArrayList<Party> newParties = new ArrayList<Party>();
-		HashMap<String, Party> newIdsToPartiesMap = new HashMap<String, Party>();
-		for (int i = 0; i < parties.length; i++) {
-			String id = parties[i].getId();
-			newParties.add(parties[i]);
+		ArrayList<Party> newParties = new ArrayList<>();
+		HashMap<String, Party> newIdsToPartiesMap = new HashMap<>();
+		for (Party party : parties) {
+			String id = party.getId();
+			newParties.add(party);
 			if (newIdsToPartiesMap.get(id) != null) {
 				throw new DocumentModificationFailedException("A party id " + id + " already exists!");
 			}
-			newIdsToPartiesMap.put(id, parties[i]);
+			newIdsToPartiesMap.put(id, party);
 		}
 
 		// All parties have a unique id.
@@ -530,15 +491,13 @@ public class Document {
 	 *         with the same id.
 	 */
 	public void setInvoices(Invoice[] invoices) throws DocumentModificationFailedException {
-		ArrayList<Invoice> newInvoices = new ArrayList<Invoice>();
-		HashMap<String, Invoice> newIdsToInvoicesMap = new HashMap<String, Invoice>();
-		for (int i = 0; i < invoices.length; i++) {
-			String id = invoices[i].getId();
-			newInvoices.add(invoices[i]);
+		HashMap<String, Invoice> newIdsToInvoicesMap = new HashMap<>();
+		for (Invoice invoice : invoices) {
+			String id = invoice.getId();
 			if (newIdsToInvoicesMap.get(id) != null) {
 				throw new DocumentModificationFailedException("Two invoices with the id " + id + " are being added!");
 			}
-			newIdsToInvoicesMap.put(id, invoices[i]);
+			newIdsToInvoicesMap.put(id, invoice);
 		}
 
 		idsToInvoicesMap = newIdsToInvoicesMap;
@@ -586,7 +545,7 @@ public class Document {
 	 * @return the matching invoices. Will never return <code>null</code>.
 	 */
 	public Invoice[] getInvoices(InvoiceSearchCriteria searchCriteria) {
-		ArrayList<Invoice> matchingInvoices = new ArrayList<Invoice>();
+		ArrayList<Invoice> matchingInvoices = new ArrayList<>();
 		for (Invoice invoice : idsToInvoicesMap.values()) {
 			if (searchCriteria.matches(this, invoice)) {
 				matchingInvoices.add(invoice);
@@ -625,7 +584,7 @@ public class Document {
 		}
 		HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
 		if (paymentsForInvoice == null) {
-			paymentsForInvoice = new HashMap<String, Payment>();
+			paymentsForInvoice = new HashMap<>();
 			idToInvoiceToPaymentMap.put(invoiceId, paymentsForInvoice);
 		}
 		if (paymentsForInvoice.get(payment.getId()) != null) {
@@ -658,15 +617,10 @@ public class Document {
 	 */
 	public List<Payment> getPayments(String invoiceId) {
 		HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
-		ArrayList<Payment> payments = new ArrayList<Payment>(10);
+		ArrayList<Payment> payments = new ArrayList<>(10);
 		if (paymentsForInvoice != null) {
 			payments.addAll(paymentsForInvoice.values());
-			Collections.sort(payments, new Comparator<Payment>() {
-				@Override
-				public int compare(Payment o1, Payment o2) {
-					return DateUtil.compareDayOfYear(o1.getDate(), o2.getDate());
-				}
-			});
+			Collections.sort(payments, (o1, o2) -> DateUtil.compareDayOfYear(o1.getDate(), o2.getDate()));
 		}
 		return payments;
 	}

@@ -49,7 +49,7 @@ public class XMLFileReader {
 		return ServiceTransaction.withResult(() -> {
 			int highestPaymentId = 0;
 
-			document = bookkeepingService.createNewDatabase();
+			document = bookkeepingService.createNewDatabase("New bookkeeping");
 			document.setFileName(file.getAbsolutePath());
 
 			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
@@ -60,10 +60,10 @@ public class XMLFileReader {
 			fileVersion = rootElement.getAttribute("fileversion");
 
 			String description = rootElement.getAttribute("description");
-			document.setDescription(description);
 
-            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-            bookkeeping.setCurrency(Currency.getInstance(rootElement.getAttribute("currency")));
+			Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+			bookkeeping.setDescription(description);
+			bookkeeping.setCurrency(Currency.getInstance(rootElement.getAttribute("currency")));
             bookkeeping.setStartOfPeriod(DATE_FORMAT.parse(rootElement.getAttribute("startdate")));
             configurationService.updateBookkeeping(document, bookkeeping);
 

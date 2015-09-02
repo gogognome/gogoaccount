@@ -130,7 +130,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 	public void testHasAccounts() throws Exception {
 		assertTrue(configurationService.hasAccounts(document));
 
-		assertFalse(configurationService.hasAccounts(bookkeepingService.createNewDatabase()));
+		assertFalse(configurationService.hasAccounts(bookkeepingService.createNewDatabase("New bookkeeping")));
 	}
 
 	@Test
