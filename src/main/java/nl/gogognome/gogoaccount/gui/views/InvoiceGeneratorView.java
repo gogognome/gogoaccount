@@ -1,8 +1,9 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
@@ -10,7 +11,6 @@ import nl.gogognome.gogoaccount.gui.components.AmountTextField;
 import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
@@ -39,8 +39,6 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * This class implements a view in which the user can generate invoices
  * for multiple parties.
- *
- * @author Sander Kooijmans
  */
 public class InvoiceGeneratorView extends View {
 
@@ -92,8 +90,9 @@ public class InvoiceGeneratorView extends View {
 	@Override
 	public void onInit() {
         try {
-            accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
-			currency = document.getCurrency();
+			Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+			accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
+			currency = bookkeeping.getCurrency();
         } catch (ServiceException e) {
             MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
 			close();

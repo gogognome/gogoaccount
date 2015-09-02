@@ -1,31 +1,10 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.businessobjects;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -34,14 +13,15 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
 
-/**
- * Class to build Report instances.
- *
- * @author Sander Kooijmans
- */
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class ReportBuilder {
 
 	private final Document document;
+	private final Bookkeeping bookkeeping;
 	private final Report report;
 
 	private Map<Account, Amount> accountToTotalDebet = new HashMap<>();
@@ -51,9 +31,10 @@ public class ReportBuilder {
 
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 
-	public ReportBuilder(Document document, Date date) {
+	public ReportBuilder(Document document, Date date) throws ServiceException {
 		this.document = document;
-		this.report = new Report(date, document.getCurrency());
+        bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+		this.report = new Report(date, bookkeeping.getCurrency());
 	}
 
 	public Report build() throws ServiceException {
@@ -123,7 +104,7 @@ public class ReportBuilder {
 	}
 
 	private void addLedgerLineForAccount(Journal journal, JournalItem item) {
-		if (DateUtil.compareDayOfYear(journal.getDate(), document.getStartOfPeriod()) >= 0) {
+		if (DateUtil.compareDayOfYear(journal.getDate(), bookkeeping.getStartOfPeriod()) >= 0) {
 			Account account = item.getAccount();
 			if (!hasStartBalanceLineBeenAdded(account)) {
 				addStartLedgerLineForAccount(account, accountToTotalDebet.get(account),
@@ -190,7 +171,7 @@ public class ReportBuilder {
 
 	private Amount nullToZero(Amount amount) {
 		if (amount == null) {
-			amount = Amount.getZero(document.getCurrency());
+			amount = Amount.getZero(bookkeeping.getCurrency());
 		}
 		return amount;
 	}

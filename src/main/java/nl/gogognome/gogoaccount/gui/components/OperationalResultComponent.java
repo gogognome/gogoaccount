@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.components;
 
 import java.awt.Color;
@@ -26,6 +10,8 @@ import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
@@ -59,7 +45,6 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
     private DocumentListener documentListener;
     private ModelChangeListener modelChangeListener;
 
-    private final TextResource textResource = Factory.getInstance(TextResource.class);
     private final WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
     /**
@@ -67,13 +52,15 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
      * @param document the database used to create the operational result
      * @param dateModel the date model used to determine the date of the operational result
      */
-    public OperationalResultComponent(Document document, DateModel dateModel) {
+    public OperationalResultComponent(Document document, DateModel dateModel) throws ServiceException {
         super();
         this.document = document;
         this.dateModel = dateModel;
 
+        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        TextResource textResource = Factory.getInstance(TextResource.class);
         balanceSheet = new BalanceSheet(textResource.getString("gen.expenses"),
-        		textResource.getString("gen.revenues"), document.getCurrency());
+        		textResource.getString("gen.revenues"), bookkeeping.getCurrency());
         balanceSheet.setOpaque(false);
         balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
         setViewportView(balanceSheet);
@@ -125,7 +112,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
     }
 
     private List<Row> convertAccountsToRows(List<Account> accounts) {
-        List<Row> rows = new ArrayList<Row>();
+        List<Row> rows = new ArrayList<>();
 
         for (Account a : accounts) {
         	Row row = new Row();

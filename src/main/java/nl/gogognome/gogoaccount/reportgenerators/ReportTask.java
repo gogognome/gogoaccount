@@ -1,24 +1,10 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.reportgenerators;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -46,6 +32,7 @@ import java.util.List;
  */
 public class ReportTask implements Task {
     private Document document;
+    private Bookkeeping bookkeeping;
     private Date date;
     private Report report;
 
@@ -62,9 +49,9 @@ public class ReportTask implements Task {
 
     /**
      * Constructor.
-     * @param document
-     * @param date
-     * @param file
+     * @param document the document for which the report must be generated
+     * @param date the start date of the period for which the report must be generated
+     * @param file the file of the report to be created
      * @param fileType the type of file to be created. Only PLAIN_TEXT is allowed
      */
     public ReportTask(Document document, Date date, File file, ReportType fileType) {
@@ -81,6 +68,7 @@ public class ReportTask implements Task {
      */
     @Override
 	public Object execute(TaskProgressListener progressListener) throws Exception {
+        bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
     	this.progressListener = progressListener;
     	progressListener.onProgressUpdate(0);
         switch(fileType) {
@@ -120,7 +108,7 @@ public class ReportTask implements Task {
 
         List<Journal> journals = document.getJournals();
         progressListener.onProgressUpdate(70);
-        printJournals(journals, document.getStartOfPeriod(), date);
+        printJournals(journals, bookkeeping.getStartOfPeriod(), date);
         progressListener.onProgressUpdate(80);
         printLedger();
 
@@ -283,7 +271,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noDebtors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(document.getCurrency());
+            Amount total = Amount.getZero(bookkeeping.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -322,7 +310,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noCreditors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(document.getCurrency());
+            Amount total = Amount.getZero(bookkeeping.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -406,15 +394,15 @@ public class ReportTask implements Task {
                 result.append(textFormat.getRow(values));
 
                 JournalItem[] items = journals.get(i).getItems();
-                for (int j = 0; j < items.length; j++) {
+                for (JournalItem item : items) {
                     values[0] = "";
-                    values[2] = items[j].getAccount().getId() + " - "
-                    	+ items[j].getAccount().getName();
+                    values[2] = item.getAccount().getId() + " - "
+                            + item.getAccount().getName();
                     values[4] = "";
                     values[6] = "";
-                    values[items[j].isDebet() ? 4 : 6] =
-                        amountFormat.formatAmountWithoutCurrency(items[j].getAmount());
-                    Invoice invoice = document.getInvoice(items[j].getInvoiceId());
+                    values[item.isDebet() ? 4 : 6] =
+                            amountFormat.formatAmountWithoutCurrency(item.getAmount());
+                    Invoice invoice = document.getInvoice(item.getInvoiceId());
                     values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
                     result.append(textFormat.getRow(values));
                 }

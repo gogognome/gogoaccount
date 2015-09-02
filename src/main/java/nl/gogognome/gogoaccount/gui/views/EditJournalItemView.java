@@ -17,20 +17,14 @@
 
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.text.ParseException;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.swing.JComponent;
-
-import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -41,6 +35,11 @@ import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
+
+import javax.swing.*;
+import java.text.ParseException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This view allows the user to edit a journal item.
@@ -141,25 +140,30 @@ public class EditJournalItemView extends OkCancelView {
 
 	@Override
 	protected void onOk() {
-        Amount amount;
         try {
-            amount = amountFormat.parse(amountModel.getString(), document.getCurrency());
-        } catch (ParseException e) {
-        	amount = null;
+            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            Amount amount;
+            try {
+                amount = amountFormat.parse(amountModel.getString(), bookkeeping.getCurrency());
+            } catch (ParseException e) {
+                amount = null;
+            }
+
+            Account account = accountListModel.getSelectedItem();
+            boolean debet = sideListModel.getSelectedIndex() == 0;
+            Invoice invoice = invoiceBean.getSelectedInvoice();
+
+            if (!validateInput(amount, account)) {
+                return;
+            }
+
+            enteredJournalItem = new JournalItem(amount, account, debet,
+                    invoice != null ? invoice.getId() : null,
+                    invoice != null ? document.createPaymentId() : null);
+            requestClose();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
-
-        Account account = accountListModel.getSelectedItem();
-        boolean debet = sideListModel.getSelectedIndex() == 0;
-        Invoice invoice = invoiceBean.getSelectedInvoice();
-
-        if (!validateInput(amount, account)) {
-        	return;
-        }
-
-        enteredJournalItem = new JournalItem(amount, account, debet,
-            invoice != null ? invoice.getId() : null,
-            invoice != null ? document.createPaymentId() : null);
-        requestClose();
 	}
 
 	private boolean validateInput(Amount amount, Account account) {

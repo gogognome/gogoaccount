@@ -35,10 +35,12 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.AbstractListTableModel;
@@ -115,16 +117,17 @@ public class ConfigureBookkeepingView extends View {
 		}
 	}
 
-	private void initModels() {
-		startDateModel.setDate(document.getStartOfPeriod());
+	private void initModels() throws ServiceException {
+		Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+		startDateModel.setDate(bookkeeping.getStartOfPeriod());
 		descriptionModel.setString(document.getDescription());
 
 		currencyModel.setItems(CurrencyUtil.getAllCurrencies());
-		currencyModel.setSelectedItem(document.getCurrency(), null);
+		currencyModel.setSelectedItem(bookkeeping.getCurrency(), null);
 	}
 
 	private void addListeners() {
-		modelChangeListener = new ModelChangeListenerImpl();
+		modelChangeListener = model -> updateDatabaseWithEnteredValues();
 		startDateModel.addModelChangeListener(modelChangeListener);
 		descriptionModel.addModelChangeListener(modelChangeListener);
 		currencyModel.addModelChangeListener(modelChangeListener);
@@ -152,12 +155,7 @@ public class ConfigureBookkeepingView extends View {
 		table = widgetFactory.createSortedTable(tableModel);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				updateButtonState();
-			}
-		});
+		table.getSelectionModel().addListSelectionListener(e -> updateButtonState());
 		accountsAndButtonsPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
 
 		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
@@ -185,19 +183,25 @@ public class ConfigureBookkeepingView extends View {
 	}
 
 	private void updateDatabaseWithEnteredValues() {
-		document.setDescription(descriptionModel.getString());
-		if (startDateModel.getDate() != null) {
-			document.setStartOfPeriod(startDateModel.getDate());
-		}
+        try {
+            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            document.setDescription(descriptionModel.getString());
+            if (startDateModel.getDate() != null) {
+                bookkeeping.setStartOfPeriod(startDateModel.getDate());
+            }
 
-		try {
-			Currency currency = currencyModel.getSelectedItem();
-			if (currency != null) {
-				document.setCurrency(currency);
-			}
-		} catch (Exception e) {
-			// Probably an invalid currency was entered
-		}
+            try {
+                Currency currency = currencyModel.getSelectedItem();
+                if (currency != null) {
+                    bookkeeping.setCurrency(currency);
+                }
+            } catch (Exception e) {
+                // Probably an invalid currency was entered
+            }
+            configurationService.updateBookkeeping(document, bookkeeping);
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        }
 	}
 
 	private void updateButtonState() {
@@ -310,13 +314,6 @@ public class ConfigureBookkeepingView extends View {
 	private static class AccountDefinition {
 		public Account account;
 		public boolean used;
-	}
-
-	private class ModelChangeListenerImpl implements ModelChangeListener {
-		@Override
-		public void modelChanged(AbstractModel model) {
-			updateDatabaseWithEnteredValues();
-		}
 	}
 
 	private static class CurrencyFormatter implements ObjectFormatter<Currency> {

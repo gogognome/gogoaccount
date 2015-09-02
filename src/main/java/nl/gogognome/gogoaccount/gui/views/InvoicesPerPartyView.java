@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 
@@ -26,10 +10,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -42,15 +23,20 @@ import javax.swing.SwingConstants;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.gui.controllers.EditInvoiceController;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.ButtonPanel;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.BooleanModel;
@@ -61,8 +47,6 @@ import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This view shows all invoices per party or all invoices for a single party.
- *
- * @author Sander Kooijmans
  */
 public class InvoicesPerPartyView extends View {
 
@@ -70,6 +54,7 @@ public class InvoicesPerPartyView extends View {
 
 	private Document document;
 	private DocumentListener documentListener;
+    private Currency currency;
 
 	private JScrollPane invoicesScrollPane;
 	private JPanel invoicesPanel;
@@ -95,10 +80,18 @@ public class InvoicesPerPartyView extends View {
 
 	@Override
 	public void onInit() {
-		initModels();
-		addComponents();
-		addListeners();
-		updateInvoicePanel();
+        try {
+            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            currency = bookkeeping.getCurrency();
+
+            initModels();
+            addComponents();
+            addListeners();
+            updateInvoicePanel();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
 	}
 
 	private void initModels() {
@@ -221,25 +214,15 @@ public class InvoicesPerPartyView extends View {
 	}
 
 	private void sortInvoicesOnDate(Invoice[] invoices) {
-		Arrays.sort(invoices, new Comparator<Invoice>() {
-            @Override
-			public int compare(Invoice o1, Invoice o2) {
-                return DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate());
-            }
-        });
+		Arrays.sort(invoices, (o1, o2) -> DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate()));
 	}
 
 	private void sortInvoicesPerParty(Invoice[] invoices) {
-		Arrays.sort(invoices, new Comparator<Invoice>() {
-            @Override
-			public int compare(Invoice o1, Invoice o2) {
-                return o1.getConcerningParty().getId().compareTo(o2.getConcerningParty().getId());
-            }
-        });
+		Arrays.sort(invoices, (o1, o2) -> o1.getConcerningParty().getId().compareTo(o2.getConcerningParty().getId()));
 	}
 
 	private void addInvoicesToPanel(Invoice[] invoices, Party party, Date date) {
-        int row = 0;
+		int row = 0;
         Party prevParty = null;
         for (Invoice invoice : invoices) {
         	if (mustInvoiceBeIncluded(invoice, date)) {
@@ -260,8 +243,7 @@ public class InvoicesPerPartyView extends View {
 
             	if (addInvoice) {
             		List<Payment> payments = InvoiceService.getPayments(document, invoice.getId());
-            		InvoicePanel ip = new InvoicePanel(invoice, payments, date,
-            				document.getCurrency());
+            		InvoicePanel ip = new InvoicePanel(invoice, payments, date, currency);
             		invoicesPanel.add(ip, SwingUtils.createPanelGBConstraints(0, row));
             		row++;
             	}
@@ -279,12 +261,8 @@ public class InvoicesPerPartyView extends View {
 	}
 
 	private boolean isInvoiceClosedAndMustItBeIncluded(Invoice invoice, Date date) {
-		if (includeClosedInvoicesModel.getBoolean()) {
-			return true;
-		} else {
-			return !InvoiceService.isPaid(document, invoice.getId(), date);
-		}
-	}
+        return includeClosedInvoicesModel.getBoolean() || !InvoiceService.isPaid(document, invoice.getId(), date);
+    }
 
 	private void editSelectedInvoice() {
 		EditInvoiceController controller =

@@ -6,3 +6,10 @@ CREATE TABLE account (
   type varchar2(100),
   PRIMARY KEY (id)
 );
+
+CREATE TABLE bookkeeping (
+  id int,
+  start_of_period date,
+  currency varchar2(3),
+  PRIMARY KEY (id)
+);

@@ -1,23 +1,8 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public Licensen
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
@@ -44,9 +29,11 @@ import static junit.framework.Assert.*;
  */
 public abstract class AbstractBookkeepingTest {
 
+    private final BookkeepingService bookkeepingService = new BookkeepingService();
     private final ConfigurationService configurationService = new ConfigurationService();
 
 	protected Document document;
+    protected Bookkeeping bookkeeping;
 
 	protected AmountFormat amountFormat;
 
@@ -57,10 +44,11 @@ public abstract class AbstractBookkeepingTest {
 		initFactory();
 
         BookkeepingService bookkeepingService = new BookkeepingService();
-        ConfigurationService configurationService = new ConfigurationService();
         document = bookkeepingService.createNewDatabase();
-        document.setCurrency(Currency.getInstance("EUR"));
-        document.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
+		bookkeeping = configurationService.getBookkeeping(document);
+		bookkeeping.setCurrency(Currency.getInstance("EUR"));
+        bookkeeping.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
+        configurationService.updateBookkeeping(document, bookkeeping);
         document.setParties(createParties());
 
         for (Account account : createAccounts()) {
@@ -72,7 +60,7 @@ public abstract class AbstractBookkeepingTest {
 
 		document.databaseConsistentWithFile();
 
-		zero = Amount.getZero(document.getCurrency());
+		zero = Amount.getZero(bookkeeping.getCurrency());
 	}
 
 	private void initFactory() {
@@ -137,7 +125,7 @@ public abstract class AbstractBookkeepingTest {
 		items.add(createItem(300, "101", true));
 		items.add(createItem(400, "200", false));
 		Journal journal = new Journal("start", "Start balance",
-				DateUtil.addDays(document.getStartOfPeriod(), -1),
+				DateUtil.addDays(bookkeeping.getStartOfPeriod(), -1),
 				items, null);
 		document.addJournal(journal, false);
 	}
@@ -159,7 +147,7 @@ public abstract class AbstractBookkeepingTest {
 	}
 
 	protected Amount createAmount(int value) throws ParseException {
-		return amountFormat.parse(Integer.toString(value), document.getCurrency());
+		return amountFormat.parse(Integer.toString(value), bookkeeping.getCurrency());
 	}
 
 	protected void checkAmount(int expectedAmountInt, Amount actualAmount) throws ParseException {
@@ -206,22 +194,24 @@ public abstract class AbstractBookkeepingTest {
 	 * @throws ServiceException
 	 */
 	public void assertEqualDatabase(Document expected, Document actual) throws ServiceException, SQLException {
-        BookkeepingService bookkeepingService = new BookkeepingService();
-		ConfigurationService configurationService = new ConfigurationService();
 		assertEquals(configurationService.findAllAccounts(expected).toString(), configurationService.findAllAccounts(actual).toString());
 		assertEquals(Arrays.toString(expected.getParties()), Arrays.toString(actual.getParties()));
-		assertEquals(expected.getCurrency(), actual.getCurrency());
-		assertEquals(expected.getDescription(), actual.getDescription());
-		assertEquals(expected.getImportedTransactionAccountToAccountMap().keySet().toString(),
-				actual.getImportedTransactionAccountToAccountMap().keySet().toString());
-		assertEquals(expected.getImportedTransactionAccountToAccountMap().values().toString(),
-				actual.getImportedTransactionAccountToAccountMap().values().toString());
-		assertEquals(Arrays.asList(expected.getInvoices()), Arrays.asList(actual.getInvoices()));
-		assertEquals(expected.getJournals().toString(), actual.getJournals().toString());
-		assertEqualDayOfYear(expected.getStartOfPeriod(), actual.getStartOfPeriod());
 
-		Report expectedReport = bookkeepingService.createReport(expected, DateUtil.addYears(expected.getStartOfPeriod(), 1));
-		Report actualReport = bookkeepingService.createReport(actual, DateUtil.addYears(expected.getStartOfPeriod(), 1));
+        Bookkeeping expectedBookkeeping = configurationService.getBookkeeping(expected);
+        Bookkeeping actualBookkeeping = configurationService.getBookkeeping(actual);
+		assertEquals(expectedBookkeeping.getCurrency(), actualBookkeeping.getCurrency());
+        assertEqualDayOfYear(expectedBookkeeping.getStartOfPeriod(), actualBookkeeping.getStartOfPeriod());
+
+        assertEquals(expected.getDescription(), actual.getDescription());
+        assertEquals(expected.getImportedTransactionAccountToAccountMap().keySet().toString(),
+                actual.getImportedTransactionAccountToAccountMap().keySet().toString());
+        assertEquals(expected.getImportedTransactionAccountToAccountMap().values().toString(),
+                actual.getImportedTransactionAccountToAccountMap().values().toString());
+        assertEquals(Arrays.asList(expected.getInvoices()), Arrays.asList(actual.getInvoices()));
+        assertEquals(expected.getJournals().toString(), actual.getJournals().toString());
+
+		Report expectedReport = bookkeepingService.createReport(expected, DateUtil.addYears(expectedBookkeeping.getStartOfPeriod(), 1));
+		Report actualReport = bookkeepingService.createReport(actual, DateUtil.addYears(actualBookkeeping.getStartOfPeriod(), 1));
 
 		assertEquals(expectedReport.getTotalAssets(), actualReport.getTotalAssets());
 		assertEquals(expectedReport.getTotalLiabilities(), actualReport.getTotalLiabilities());

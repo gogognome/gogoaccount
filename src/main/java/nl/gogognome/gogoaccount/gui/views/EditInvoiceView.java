@@ -19,10 +19,7 @@ package nl.gogognome.gogoaccount.gui.views;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -33,9 +30,13 @@ import javax.swing.SwingConstants;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.models.PartyModel;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -60,6 +61,7 @@ public class EditInvoiceView extends OkCancelView {
 	private static final long serialVersionUID = 1L;
 
 	private Document document;
+    private Currency currency;
 
     private String titleId;
 
@@ -107,12 +109,20 @@ public class EditInvoiceView extends OkCancelView {
 
     @Override
     public void onInit() {
-    	initModels();
-    	addComponents();
-        addListeners();
+        try {
+            initModels();
+            addComponents();
+            addListeners();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
     }
 
-	private void initModels() {
+	private void initModels() throws ServiceException {
+        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        currency = bookkeeping.getCurrency();
+
         if (initialInvoice != null) {
             idModel.setString(initialInvoice.getId());
             idModel.setEnabled(false, null);
@@ -154,12 +164,12 @@ public class EditInvoiceView extends OkCancelView {
 	protected JComponent createCenterComponent() {
         // Create panel with descriptions and amounts table.
         JPanel middlePanel = new JPanel(new BorderLayout());
-        List<Tuple<String, Amount>> tuples = new ArrayList<Tuple<String,Amount>>();
+        List<Tuple<String, Amount>> tuples = new ArrayList<>();
         if (initialInvoice != null) {
         	String[] descriptions = initialInvoice.getDescriptions();
         	Amount[] amounts = initialInvoice.getAmounts();
         	for (int i=0; i<descriptions.length; i++) {
-        		tuples.add(new Tuple<String, Amount>(descriptions[i], amounts[i]));
+        		tuples.add(new Tuple<>(descriptions[i], amounts[i]));
         	}
         }
         tableModel = new DescriptionAndAmountTableModel(tuples);
@@ -190,7 +200,7 @@ public class EditInvoiceView extends OkCancelView {
      */
     private void onAddRow() {
         EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
-            "editInvoiceView.addRowTileId", document.getCurrency());
+            "editInvoiceView.addRowTileId", currency);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
         dialog.showDialog();
         if (editDescriptionAndAmountView.getEditedDescription() != null) {
@@ -206,7 +216,7 @@ public class EditInvoiceView extends OkCancelView {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
             MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedToEdit");
-        } else if (rows.length == 0) {
+        } else if (rows.length > 1) {
             MessageDialog.showInfoMessage(this, "editInvoiceView.multipleRowsSelectedToEdit");
         } else {
         	Tuple<String, Amount> tuple = tableModel.getRow(rows[0]);
@@ -214,7 +224,7 @@ public class EditInvoiceView extends OkCancelView {
                 "editInvoiceView.editRowTileId",
                 tuple.getFirst(),
                 tuple.getSecond(),
-                document.getCurrency());
+                currency);
             ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
             dialog.showDialog();
             if (editDescriptionAndAmountView.getEditedDescription() != null) {
@@ -263,7 +273,7 @@ public class EditInvoiceView extends OkCancelView {
 
         Amount amount;
         try {
-             amount = amountFormat.parse(amountModel.getString(), document.getCurrency());
+             amount = amountFormat.parse(amountModel.getString(), currency);
         } catch (ParseException e) {
             MessageDialog.showWarningMessage(this, "gen.invalidAmount");
             return;
@@ -340,7 +350,7 @@ public class EditInvoiceView extends OkCancelView {
          * @param amount the amount of the row; can be <code>null</code>
          */
         public void addRow(String description, Amount amount) {
-            addRow(new Tuple<String, Amount>(description, amount));
+            addRow(new Tuple<>(description, amount));
         }
 
         /**
@@ -350,7 +360,7 @@ public class EditInvoiceView extends OkCancelView {
          * @param amount the new amount of the row; can be <code>null</code>
          */
         public void updateRow(int index, String description, Amount amount) {
-            updateRow(index, new Tuple<String, Amount>(description, amount));
+            updateRow(index, new Tuple<>(description, amount));
         }
 
         @Override

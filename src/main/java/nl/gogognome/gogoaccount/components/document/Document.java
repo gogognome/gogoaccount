@@ -48,14 +48,6 @@ public class Document {
 	/** Contains the next payment identifier. */
 	private String nextPaymentId = "p1";
 
-	/**
-	 * Contains the start date of the account period.
-	 */
-	private Date startOfPeriod = getFirstDayOfYear(new Date());
-
-	/** The currency of all amounts. */
-	private Currency currency = Currency.getInstance("EUR");
-
 	/** Indicates whether this database has unsaved changes. */
 	private boolean changed;
 
@@ -156,31 +148,6 @@ public class Document {
 						+ a.getType() + " instead of " + Joiner.on(", ").join(AccountType.get(debet, balanceAccount)) + ".");
 			}
 		}
-	}
-
-	public Date getStartOfPeriod()
-	{
-		return startOfPeriod;
-	}
-
-	public Currency getCurrency()
-	{
-		return currency;
-	}
-
-	public void setCurrency(Currency currency)
-	{
-		this.currency = currency;
-		notifyChange();
-	}
-
-	/**
-	 * Sets the start date of the period of the bookkeeping.
-	 * @param startOfPeriod the start date of the period
-	 */
-	public void setStartOfPeriod(Date startOfPeriod) {
-		this.startOfPeriod = startOfPeriod;
-		notifyChange();
 	}
 
 	/**
@@ -749,17 +716,4 @@ public class Document {
 	public Map<String, String> getImportedTransactionAccountToAccountMap() {
 		return importedTransactionAccountToAccountMap;
 	}
-
-	private static Date getFirstDayOfYear(Date date) {
-		Calendar cal = GregorianCalendar.getInstance();
-		cal.setTime(date);
-		cal.set(Calendar.MONTH, Calendar.JANUARY);
-		cal.set(Calendar.DATE, 1);
-		cal.set(Calendar.HOUR_OF_DAY, 0);
-		cal.set(Calendar.MINUTE, 0);
-		cal.set(Calendar.SECOND, 0);
-		cal.set(Calendar.MILLISECOND, 0);
-		return cal.getTime();
-	}
-
 }

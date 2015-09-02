@@ -3,6 +3,7 @@ package nl.gogognome.gogoaccount.services;
 import nl.gogognome.dataaccess.migrations.DatabaseMigratorDAO;
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
@@ -10,10 +11,7 @@ import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -31,10 +29,12 @@ public class BookkeepingService {
             }
 
             Document newDocument = createNewDatabase();
-            newDocument.setCurrency(document.getCurrency());
             newDocument.setDescription(description);
             newDocument.setFileName(null);
-            newDocument.setStartOfPeriod(date);
+            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            Bookkeeping newBookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(newDocument);
+            newBookkeeping.setCurrency(bookkeeping.getCurrency());
+            newBookkeeping.setStartOfPeriod(date);
 
             // Copy the parties
             try {
@@ -190,9 +190,10 @@ public class BookkeepingService {
      * @param date the date
      * @return the balance of this account at the specified date
      */
-    public static Amount getAccountBalance(Document document, Account account, Date date) {
+    public static Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
         List<Journal> journals = document.getJournals();
-        Amount result = Amount.getZero(document.getCurrency());
+        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        Amount result = Amount.getZero(bookkeeping.getCurrency());
         for (Journal journal : journals) {
             if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
                 JournalItem[] items = journal.getItems();
@@ -216,8 +217,9 @@ public class BookkeepingService {
      * @param account the account
      * @return the balance of this account at start of the bookkeeping
      */
-    public static Amount getStartBalance(Document document, Account account) {
-        Date date = document.getStartOfPeriod();
+    public static Amount getStartBalance(Document document, Account account) throws ServiceException {
+        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        Date date = bookkeeping.getStartOfPeriod();
 
         // Subtract one day of the period start date, because otherwise the changes
         // made on that day will be taken into account too.
@@ -237,7 +239,7 @@ public class BookkeepingService {
      * @param account the account
      * @return <code>true</code> if the account is used; <code>false</code> otherwise
      */
-    public static boolean inUse(Document document, Account account) {
+    public static boolean inUse(Document document, Account account) throws ServiceException {
         if (!getStartBalance(document, account).isZero()) {
             return true;
         }
@@ -280,8 +282,23 @@ public class BookkeepingService {
         return ServiceTransaction.withResult(() -> {
             Document document = new Document();
             new DatabaseMigratorDAO(document.getBookkeepingId()).applyMigrationsFromResource("/database/_migrations.txt");
+            Bookkeeping bookkeeping = new Bookkeeping();
+            bookkeeping.setStartOfPeriod(getFirstDayOfYear(new Date()));
+            ObjectFactory.create(ConfigurationService.class).createBookkeeping(document, bookkeeping);
             return document;
         });
+    }
+
+    private static Date getFirstDayOfYear(Date date) {
+        Calendar cal = GregorianCalendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.MONTH, Calendar.JANUARY);
+        cal.set(Calendar.DATE, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
     }
 
 }

@@ -28,7 +28,9 @@ import javax.swing.JPanel;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.BalanceComponent;
 import nl.gogognome.gogoaccount.gui.components.OperationalResultComponent;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
@@ -58,8 +60,13 @@ public class BalanceAndOperationResultView extends View {
 
     @Override
 	public void onInit() {
-    	initModels();
-        addComponents();
+        try {
+            initModels();
+            addComponents();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
     }
 
     @Override
@@ -71,7 +78,7 @@ public class BalanceAndOperationResultView extends View {
         dateModel.setDate(new Date(), null);
 	}
 
-	private void addComponents() {
+	private void addComponents() throws ServiceException {
 		setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -90,7 +97,7 @@ public class BalanceAndOperationResultView extends View {
 		return row;
 	}
 
-    private JPanel createBalanceAndOperationalResultPanel() {
+    private JPanel createBalanceAndOperationalResultPanel() throws ServiceException {
         JPanel panel = new JPanel(new GridBagLayout());
 
         panel.setBackground(BACKGROUND_COLOR);

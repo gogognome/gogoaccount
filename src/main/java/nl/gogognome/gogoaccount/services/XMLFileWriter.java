@@ -16,36 +16,27 @@
  */
 package nl.gogognome.gogoaccount.services;
 
+import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
+import org.w3c.dom.Element;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.components.document.Document;
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.text.AmountFormat;
-
-import org.w3c.dom.Element;
 
 
 /**
@@ -79,10 +70,11 @@ public class XMLFileWriter {
 			Element rootElement = doc.createElement("gogoAccountBookkeeping");
 			doc.appendChild(rootElement);
 
+			Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
 			rootElement.setAttribute("fileversion", FILE_VERSION);
 			rootElement.setAttribute("description", document.getDescription());
-			rootElement.setAttribute("currency", document.getCurrency().getCurrencyCode());
-			rootElement.setAttribute("startdate", DATE_FORMAT.format(document.getStartOfPeriod()));
+			rootElement.setAttribute("currency", bookkeeping.getCurrency().getCurrencyCode());
+			rootElement.setAttribute("startdate", DATE_FORMAT.format(bookkeeping.getStartOfPeriod()));
 
 			rootElement.appendChild(createElementForAccounts(new ConfigurationService().findAllAccounts(document)));
 
@@ -107,19 +99,19 @@ public class XMLFileWriter {
 				journalElem.setAttribute("createdInvoice", journal.getIdOfCreatedInvoice());
 			}
 			JournalItem[] items = journal.getItems();
-			for (int j = 0; j < items.length; j++) {
-				Element item = doc.createElement("item");
-				item.setAttribute("id", items[j].getAccount().getId());
-				item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(items[j].getAmount()));
-				item.setAttribute("side", items[j].isDebet() ? "debet" : "credit");
-				if (items[j].getInvoiceId() != null) {
-					item.setAttribute("invoice", items[j].getInvoiceId());
-					if (items[j].getPaymentId() != null) {
-						item.setAttribute("payment", items[j].getPaymentId());
-					}
-				}
-				journalElem.appendChild(item);
-			}
+            for (JournalItem item1 : items) {
+                Element item = doc.createElement("item");
+                item.setAttribute("id", item1.getAccount().getId());
+                item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(item1.getAmount()));
+                item.setAttribute("side", item1.isDebet() ? "debet" : "credit");
+                if (item1.getInvoiceId() != null) {
+                    item.setAttribute("invoice", item1.getInvoiceId());
+                    if (item1.getPaymentId() != null) {
+                        item.setAttribute("payment", item1.getPaymentId());
+                    }
+                }
+                journalElem.appendChild(item);
+            }
 			journalsElem.appendChild(journalElem);
 		}
 		rootElement.appendChild(journalsElem);
@@ -127,7 +119,7 @@ public class XMLFileWriter {
 
 	private void writeDomToFile(org.w3c.dom.Document doc)
 			throws TransformerFactoryConfigurationError,
-			TransformerConfigurationException, TransformerException {
+            TransformerException {
 		// Use a Transformer for output
 		TransformerFactory tFactory = TransformerFactory.newInstance();
 		Transformer transformer = tFactory.newTransformer();
@@ -143,8 +135,7 @@ public class XMLFileWriter {
 	private static org.w3c.dom.Document createDocument() throws ParserConfigurationException {
 		DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
 		DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
-		org.w3c.dom.Document doc = docBuilder.newDocument();
-		return doc;
+        return docBuilder.newDocument();
 	}
 
 	private Element createElementForAccounts(List<Account> accounts) {

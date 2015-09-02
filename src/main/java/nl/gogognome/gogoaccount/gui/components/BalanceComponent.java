@@ -28,6 +28,8 @@ import javax.swing.border.EmptyBorder;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
@@ -70,13 +72,14 @@ public class BalanceComponent extends JScrollPane implements Closeable {
      * @param document the datebase used to create the balance
      * @param dateModel the date model used to determine the date of the balance
      */
-    public BalanceComponent(Document document, DateModel dateModel) {
+    public BalanceComponent(Document document, DateModel dateModel) throws ServiceException {
         super();
         this.document = document;
         this.dateModel = dateModel;
 
+        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
         balanceSheet = new BalanceSheet(textResource.getString("gen.assets"),
-        		textResource.getString("gen.liabilities"), document.getCurrency());
+        		textResource.getString("gen.liabilities"), bookkeeping.getCurrency());
         balanceSheet.setOpaque(false);
         balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
         setViewportView(balanceSheet);

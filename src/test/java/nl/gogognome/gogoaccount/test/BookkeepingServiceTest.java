@@ -15,6 +15,7 @@ import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
@@ -146,11 +147,12 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 	public void testCloseBookkeeping() throws Exception {
 		Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
 				DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
+        Bookkeeping newBookkeeping = configurationService.getBookkeeping(document);
 
 		assertEquals("new bookkeeping", newDocument.getDescription());
 		assertEquals(configurationService.findAllAccounts(document).toString(), configurationService.findAllAccounts(newDocument).toString());
 		assertEquals(0, DateUtil.compareDayOfYear(DateUtil.createDate(2012, 1, 1),
-				newDocument.getStartOfPeriod()));
+                newBookkeeping.getStartOfPeriod()));
 
 		Report report = bookkeepingService.createReport(newDocument,
 				DateUtil.createDate(2011, 12, 31));

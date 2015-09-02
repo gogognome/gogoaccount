@@ -2,6 +2,7 @@ package nl.gogognome.gogoaccount.services;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
@@ -15,12 +16,9 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * This class reads the contents of a <code>Database</code> from an XML file.
@@ -32,6 +30,7 @@ public class XMLFileReader {
 	private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
 	private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+	private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
 
 	private Document document;
 	private String fileVersion;
@@ -50,7 +49,7 @@ public class XMLFileReader {
 		return ServiceTransaction.withResult(() -> {
 			int highestPaymentId = 0;
 
-			document = new BookkeepingService().createNewDatabase();
+			document = bookkeepingService.createNewDatabase();
 			document.setFileName(file.getAbsolutePath());
 
 			DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
@@ -63,11 +62,10 @@ public class XMLFileReader {
 			String description = rootElement.getAttribute("description");
 			document.setDescription(description);
 
-			String currency = rootElement.getAttribute("currency");
-			document.setCurrency(Currency.getInstance(currency));
-
-			Date startDate = DATE_FORMAT.parse(rootElement.getAttribute("startdate"));
-			document.setStartOfPeriod(startDate);
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+            bookkeeping.setCurrency(Currency.getInstance(rootElement.getAttribute("currency")));
+            bookkeeping.setStartOfPeriod(DATE_FORMAT.parse(rootElement.getAttribute("startdate")));
+            configurationService.updateBookkeeping(document, bookkeeping);
 
 			// parse accounts
 			if (fileVersion == null || fileVersion.equals("1.0")) {
@@ -89,8 +87,7 @@ public class XMLFileReader {
 	}
 
 	private void parseAccountsForVersion2_2(Element rootElement) throws ServiceException {
-		List<Account> accounts = newArrayList();
-		NodeList nodes = rootElement.getElementsByTagName("accounts");
+        NodeList nodes = rootElement.getElementsByTagName("accounts");
 		for (int i=0; i<nodes.getLength(); i++)
 		{
 			Element elem = (Element)nodes.item(i);
@@ -146,7 +143,7 @@ public class XMLFileReader {
 				}
 				description = journalElem.getAttribute("description");
 				NodeList itemNodes = journalElem.getElementsByTagName("item");
-				ArrayList<JournalItem> itemsList = new ArrayList<JournalItem>();
+				ArrayList<JournalItem> itemsList = new ArrayList<>();
 				for (int k=0; k<itemNodes.getLength(); k++) {
 					Element itemElem = (Element)itemNodes.item(k);
 					String itemId = itemElem.getAttribute("id");
@@ -180,7 +177,7 @@ public class XMLFileReader {
 	}
 
 	private List<Account> parseAccounts(NodeList nodes, AccountType type) {
-		ArrayList<Account> accounts = new ArrayList<Account>();
+		ArrayList<Account> accounts = new ArrayList<>();
 		for (int i=0; i<nodes.getLength(); i++)
 		{
 			Element elem = (Element)nodes.item(i);
@@ -199,12 +196,11 @@ public class XMLFileReader {
 	/**
 	 * Parses parties.
 	 * @param nodes a node list containing parties.
-	 * @return an array of parties found in <code>nodes</code>
 	 * @throws XMLParseException if a syntax error is found in the nodes
 	 * @throws DocumentModificationFailedException
 	 */
 	private void parseAndAddParties(NodeList nodes) throws XMLParseException, DocumentModificationFailedException {
-		ArrayList<Party> parties = new ArrayList<Party>();
+		ArrayList<Party> parties = new ArrayList<>();
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element elem = (Element)nodes.item(i);
 			NodeList partyNodes = elem.getElementsByTagName("party");
@@ -254,7 +250,6 @@ public class XMLFileReader {
 	/**
 	 * Parses invoices and adds them to the database
 	 * @param nodes a node list containing invoices.
-	 * @return an array of invoices found in <code>nodes</code>
 	 * @throws XMLParseException if a syntax error is found in the nodes
 	 */
 	private void parseAndAddInvoices(NodeList nodes) throws XMLParseException {

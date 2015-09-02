@@ -44,7 +44,10 @@ public class ConfigurationService {
     }
 
     public void createAccount(Document document, Account account) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> new AccountDAO(document).create(account));
+        ServiceTransaction.withoutResult(() -> {
+            new AccountDAO(document).create(account);
+            document.notifyChange();
+        });
     }
 
     public void updateAccount(Document document, Account account) throws ServiceException {
@@ -59,5 +62,17 @@ public class ConfigurationService {
             }
             new AccountDAO(document).delete(account.getId());
         });
+    }
+
+    public Bookkeeping getBookkeeping(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new BookkeepingDAO(document).getSingleton());
+    }
+
+    public void updateBookkeeping(Document document, Bookkeeping bookkeeping) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> new BookkeepingDAO(document).update(bookkeeping));
+    }
+
+    public void createBookkeeping(Document document, Bookkeeping bookkeeping) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> new BookkeepingDAO(document).create(bookkeeping));
     }
 }
