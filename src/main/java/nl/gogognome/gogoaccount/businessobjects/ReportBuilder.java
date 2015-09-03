@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;

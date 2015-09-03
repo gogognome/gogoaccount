@@ -21,7 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;

@@ -20,11 +20,6 @@ public class Document {
 
 	private final ArrayList<Journal> journals = new ArrayList<>();
 
-	private ArrayList<Party> parties = new ArrayList<>();
-
-	/** Maps ids of parties to <code>Party</code> instances. */
-	private HashMap<String, Party> idsToPartiesMap = new HashMap<>();
-
 	/** Maps ids of invoices to <code>Invoice</code> instances. */
 	private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<>();
 
@@ -317,128 +312,6 @@ public class Document {
 		return result;
 	}
 
-	/**
-	 * Gets the different types of the parties.
-	 * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
-	 */
-	public String[] getPartyTypes() {
-		HashSet<String> set = new HashSet<>();
-		for (Party party : parties) {
-			if (party.getType() != null) {
-				set.add(party.getType());
-			}
-		}
-		String[] result = set.toArray(new String[set.size()]);
-		Arrays.sort(result);
-		return result;
-	}
-
-	public Party[] getParties() {
-		Party[] result = parties.toArray(new Party[parties.size()]);
-		Arrays.sort(result);
-		return result;
-	}
-
-	/**
-	 * Gets parties that match the specified search criteria.
-	 * @param searchCriteria the search criteria
-	 * @return the matching parties. Never returns <code>null</code>.
-	 */
-	public Party[] getParties(PartySearchCriteria searchCriteria) {
-		ArrayList<Party> matchingParties = new ArrayList<>();
-		for (Party party : parties) {
-			if (searchCriteria.matches(party)) {
-				matchingParties.add(party);
-			}
-		}
-		Party[] result = new Party[matchingParties.size()];
-		matchingParties.toArray(result);
-		Arrays.sort(result);
-		return result;
-	}
-
-	/**
-	 * Gets a party by id.
-	 * @param id the id of the party
-	 * @return the party or <code>null</code> if none is present
-	 *         with the specified id.
-	 */
-	public Party getParty(String id)
-	{
-		return idsToPartiesMap.get(id);
-	}
-
-	/**
-	 * Sets the parties in the database. Any parties present in the database
-	 * are replaced.
-	 * @param parties the parties.
-	 * @throws DocumentModificationFailedException if at least two parties were present
-	 *         with the same id.
-	 */
-	public void setParties(Party[] parties) throws DocumentModificationFailedException {
-		ArrayList<Party> newParties = new ArrayList<>();
-		HashMap<String, Party> newIdsToPartiesMap = new HashMap<>();
-		for (Party party : parties) {
-			String id = party.getId();
-			newParties.add(party);
-			if (newIdsToPartiesMap.get(id) != null) {
-				throw new DocumentModificationFailedException("A party id " + id + " already exists!");
-			}
-			newIdsToPartiesMap.put(id, party);
-		}
-
-		// All parties have a unique id.
-		this.parties = newParties;
-		idsToPartiesMap = newIdsToPartiesMap;
-	}
-
-	/**
-	 * Adds a party to the database.
-	 * @param party the party to be added
-	 * @throws DocumentModificationFailedException if another party exists with the same id.
-	 */
-	public void addParty(Party party) throws DocumentModificationFailedException {
-		String id = party.getId();
-		if (idsToPartiesMap.get(id) != null) {
-			throw new DocumentModificationFailedException("A party with ID " + id + " already exists!");
-		}
-		parties.add(party);
-		idsToPartiesMap.put(id, party);
-		notifyChange();
-	}
-
-	/**
-	 * Updates a party in the database.
-	 * @param oldParty the old party (which must exist in the database)
-	 * @param newParty the new party (which may not exist yet in the database)
-	 * @throws DocumentModificationFailedException if the IDs of the old and new party differ
-	 */
-	public void updateParty(Party oldParty, Party newParty) throws DocumentModificationFailedException {
-		if (idsToPartiesMap.get(oldParty.getId()) == null) {
-			throw new DocumentModificationFailedException("A party with ID " + oldParty.getId() + " does not exist!");
-		}
-		if (!oldParty.getId().equals(newParty.getId())) {
-			throw new DocumentModificationFailedException("The ID of the party cannot be changed!");
-		}
-
-		parties.set(parties.indexOf(oldParty), newParty);
-		idsToPartiesMap.put(newParty.getId(), newParty);
-		notifyChange();
-	}
-
-	/**
-	 * Removes a party from the database.
-	 * @param party the party to be removed
-	 * @throws DocumentModificationFailedException if the party does not exist
-	 */
-	public void removeParty(Party party) throws DocumentModificationFailedException {
-		if (idsToPartiesMap.get(party.getId()) == null) {
-			throw new DocumentModificationFailedException("A party with ID " + party.getId() + " does not exist!");
-		}
-		idsToPartiesMap.remove(party.getId());
-		parties.remove(party);
-		notifyChange();
-	}
 
 	public String getFileName()
 	{
@@ -519,7 +392,7 @@ public class Document {
 	 * @return an invoice id that does not exist yet in this database
 	 */
 	public String suggestNewInvoiceId(String id) {
-		String newId = id;
+		String newId;
 		Set<String> existingInvoiceIds = idsToInvoicesMap.keySet();
 		int serialNumber = 1;
 		do {

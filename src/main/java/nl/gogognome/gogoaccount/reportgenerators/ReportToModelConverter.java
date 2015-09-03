@@ -1,6 +1,6 @@
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.component.configuration.Account;

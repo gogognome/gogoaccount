@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.util.DayOfYearComparator;

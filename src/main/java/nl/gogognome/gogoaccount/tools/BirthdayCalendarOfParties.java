@@ -16,10 +16,12 @@
 */
 package nl.gogognome.gogoaccount.tools;
 
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -69,10 +71,10 @@ public class BirthdayCalendarOfParties {
             return;
         }
 
-        ArrayList<Party> partiesWithBirthdate = new ArrayList<>();
+        List<Party> partiesWithBirthdate = new ArrayList<>();
         try {
-            Document db = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
-            Party[] parties = db.getParties();
+            Document document = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
+            List<Party> parties = ObjectFactory.create(PartyService.class).findAllParties(document);
             for (Party party : parties) {
                 if (party.getBirthDate() != null && !"oud-lid".equals(party.getType())) {
                     partiesWithBirthdate.add(party);

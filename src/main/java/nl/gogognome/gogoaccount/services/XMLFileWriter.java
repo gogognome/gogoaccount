@@ -20,6 +20,8 @@ import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
@@ -78,7 +80,8 @@ public class XMLFileWriter {
 
 			rootElement.appendChild(createElementForAccounts(new ConfigurationService().findAllAccounts(document)));
 
-			rootElement.appendChild(createElementForParties(document.getParties()));
+			List<Party> parties = ObjectFactory.create(PartyService.class).findAllParties(document);
+			rootElement.appendChild(createElementForParties(parties));
 			appendElementsForJournals(rootElement);
 			rootElement.appendChild(createElementForInvoices());
 			rootElement.appendChild(createElementForImportedAccounts());
@@ -150,7 +153,7 @@ public class XMLFileWriter {
 		return groupElem;
 	}
 
-	private Element createElementForParties(Party[] parties) {
+	private Element createElementForParties(List<Party> parties) {
 		Element groupElem = doc.createElement("parties");
 		for (Party party : parties) {
 			Element elem = doc.createElement("party");

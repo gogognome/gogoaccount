@@ -4,6 +4,8 @@ import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -29,6 +31,7 @@ public abstract class AbstractBookkeepingTest {
 
     private final BookkeepingService bookkeepingService = new BookkeepingService();
     private final ConfigurationService configurationService = new ConfigurationService();
+    private final PartyService partyService = new PartyService();
 
 	protected Document document;
     protected Bookkeeping bookkeeping;
@@ -47,7 +50,11 @@ public abstract class AbstractBookkeepingTest {
 		bookkeeping.setCurrency(Currency.getInstance("EUR"));
         bookkeeping.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
         configurationService.updateBookkeeping(document, bookkeeping);
-        document.setParties(createParties());
+
+		PartyService partyService = new PartyService();
+		for (Party party : createParties()) {
+			partyService.createParty(document, party);
+		}
 
         for (Account account : createAccounts()) {
             configurationService.createAccount(document, account);
@@ -79,8 +86,8 @@ public abstract class AbstractBookkeepingTest {
 
 		String[] descriptions = new String[] { "Contributie 2011", "Contributie" };
 		Amount[] amounts = new Amount[] { null, createAmount(20) };
-		Invoice invoice = new Invoice(journal.getIdOfCreatedInvoice(),
-				document.getParty("1101"), document.getParty("1101"),
+        Party party = new PartyService().getParty(document, "1101");
+		Invoice invoice = new Invoice(journal.getIdOfCreatedInvoice(), party, party,
 				createAmount(20), journal.getDate(), descriptions, amounts);
 		document.addInvoicAndJournal(invoice, journal);
 
@@ -108,13 +115,25 @@ public abstract class AbstractBookkeepingTest {
         );
 	}
 
-	private Party[] createParties() {
-		return new Party[] {
-			new Party("1101", "Pietje Puk", "Eikenlaan 64", "1535 DS", "Den Bosch",
-					DateUtil.createDate(1980, 2, 23), null, "Is vaak afwezig"),
-			new Party("1102", "Jan Pieterszoon", "Sterrenlaan 532", "5217 FG", "Eindhoven",
-					null, null, null)
-		};
+	private List<Party> createParties() {
+        List<Party> parties = new ArrayList<>();
+        Party party = new Party("1101");
+        party.setName("Pietje Puk");
+        party.setAddress("Eikenlaan 64");
+        party.setZipCode("1535 DS");
+        party.setCity("Den Bosch");
+        party.setBirthDate(DateUtil.createDate(1980, 2, 23));
+        party.setRemarks("Is vaak afwezig");
+        parties.add(party);
+
+        party = new Party("1102");
+        party.setName("Jan Pieterszoon");
+        party.setAddress("Sterrenlaan 532");
+        party.setZipCode("5217 FG");
+        party.setCity("Eindhoven");
+        parties.add(party);
+
+        return parties;
 	}
 
 	private void addStartBalance() throws Exception {
@@ -193,7 +212,13 @@ public abstract class AbstractBookkeepingTest {
 	 */
 	public void assertEqualDatabase(Document expected, Document actual) throws ServiceException, SQLException {
 		assertEquals(configurationService.findAllAccounts(expected).toString(), configurationService.findAllAccounts(actual).toString());
-		assertEquals(Arrays.toString(expected.getParties()), Arrays.toString(actual.getParties()));
+
+        List<Party> expectedParties = partyService.findAllParties(expected);
+        List<Party> actualParties = partyService.findAllParties(actual);
+        assertEquals(expectedParties.size(), actualParties.size());
+        for (int i=0; i<expectedParties.size(); i++) {
+            assertEqualParty(expectedParties.get(i), actualParties.get(i));
+        }
 
         Bookkeeping expectedBookkeeping = configurationService.getBookkeeping(expected);
         Bookkeeping actualBookkeeping = configurationService.getBookkeeping(actual);
@@ -220,7 +245,7 @@ public abstract class AbstractBookkeepingTest {
 		assertEquals(expectedReport.getTotalCreditors(), actualReport.getTotalCreditors());
 	}
 
-	public void assertEqualParty(Party expected, Party actual) {
+    public void assertEqualParty(Party expected, Party actual) {
 		assertEquals(expected.getId(), actual.getId());
 		assertEquals(expected.getName(), actual.getName());
 		assertEquals(expected.getAddress(), actual.getAddress());
@@ -251,7 +276,6 @@ public abstract class AbstractBookkeepingTest {
 		assertEquals(expected.getPaymentId(), actual.getPaymentId());
 		assertEquals(expected.isDebet(), actual.isDebet());
 	}
-
 
 	public void assertEqualInvoice(Invoice expected, Invoice actual) {
 		assertEquals(expected.getId(), actual.getId());

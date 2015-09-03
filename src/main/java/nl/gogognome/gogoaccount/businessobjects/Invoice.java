@@ -18,6 +18,7 @@ package nl.gogognome.gogoaccount.businessobjects;
 
 import java.util.Date;
 
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.text.Amount;
 
 /**

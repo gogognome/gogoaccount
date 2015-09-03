@@ -1,46 +1,36 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.swing.JComponent;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.components.PartyTypeBean;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.models.*;
+import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.models.ListModel;
+import nl.gogognome.lib.swing.models.ModelChangeListener;
+import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.OkCancelView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class implements a view to edit a party. Either an existing party or
  * a new party can be edited.
- *
- * @author Sander Kooijmans
  */
 public class EditPartyView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
+
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final Logger logger = LoggerFactory.getLogger(EditPartyView.class);
 
     private final Document document;
 
@@ -49,7 +39,7 @@ public class EditPartyView extends OkCancelView {
     private final StringModel addressModel = new StringModel();
     private final StringModel zipCodeModel = new StringModel();
     private final StringModel cityModel = new StringModel();
-    private final ListModel<String> typeListModel = new ListModel<String>();
+    private final ListModel<String> typeListModel = new ListModel<>();
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
     private final JTextArea taRemarks = new JTextArea(5, 30);
@@ -71,16 +61,21 @@ public class EditPartyView extends OkCancelView {
 
     @Override
 	public void onInit() {
-    	initModels();
-        addComponents();
-        addListeners();
-        updateIdMessage();
+        try {
+            initModels();
+            addComponents();
+            addListeners();
+            updateIdMessage();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
     }
 
-    private void initModels() {
-    	List<String> items = new ArrayList<String>();
+    private void initModels() throws ServiceException {
+    	List<String> items = new ArrayList<>();
     	items.add("");
-    	items.addAll(Arrays.asList(document.getPartyTypes()));
+    	items.addAll(partyService.findPartyTypes(document));
     	typeListModel.setItems(items);
 
     	if (initialParty != null) {
@@ -124,15 +119,20 @@ public class EditPartyView extends OkCancelView {
     }
 
     private void addListeners() {
-    	idUpdateListener = new IdChangeListener();
+        idUpdateListener = model -> updateIdMessage();
         idModel.addModelChangeListener(idUpdateListener);
     }
 
     @Override
     protected void onOk() {
-        resultParty = new Party(idModel.getString(), nameModel.getString(),
-                addressModel.getString(), zipCodeModel.getString(), cityModel.getString(),
-                birthDateModel.getDate(), typeListModel.getSelectedItem(), taRemarks.getText());
+        resultParty = new Party(idModel.getString());
+        resultParty.setName(nameModel.getString());
+        resultParty.setAddress(addressModel.getString());
+        resultParty.setZipCode(zipCodeModel.getString());
+        resultParty.setCity(cityModel.getString());
+        resultParty.setBirthDate(birthDateModel.getDate());
+        resultParty.setType(typeListModel.getSelectedItem());
+        resultParty.setRemarks(taRemarks.getText());
         requestClose();
     }
 
@@ -154,18 +154,22 @@ public class EditPartyView extends OkCancelView {
     }
 
     private void updateIdMessage() {
-        String remark = "";
-        String id = idModel.getString();
-        if (initialParty == null && document.getParty(id) != null ) {
-            remark = textResource.getString("editPartyView.idExistsAlready");
-        } else if (id.length() == 0) {
-            remark = textResource.getString("editPartyView.idIsEmpty");
+        try {
+            String remark = "";
+            String id = idModel.getString();
+            if (initialParty == null && partyService.existsParty(document, id)) {
+                remark = textResource.getString("editPartyView.idExistsAlready");
+            } else if (id.length() == 0) {
+                remark = textResource.getString("editPartyView.idIsEmpty");
+            }
+            lbIdRemark.setText(remark);
+        } catch (ServiceException e) {
+            logger.warn("Ignored exception", e);
         }
-        lbIdRemark.setText(remark);
     }
 
-    private String suggestNewId() {
-        Party[] parties = document.getParties();
+    private String suggestNewId() throws ServiceException {
+        List<Party> parties = partyService.findAllParties(document);
 
         String suggestion = null;
         for (Party party : parties) {
@@ -209,17 +213,11 @@ public class EditPartyView extends OkCancelView {
 
 	@Override
 	public void onClose() {
-		removeListeners();
+        removeListeners();
     }
 
 	private void removeListeners() {
 		idModel.removeModelChangeListener(idUpdateListener);
 	}
 
-	private final class IdChangeListener implements ModelChangeListener {
-		@Override
-		public void modelChanged(AbstractModel model) {
-			updateIdMessage();
-		}
-	}
 }

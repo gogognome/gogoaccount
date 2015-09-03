@@ -16,10 +16,12 @@
 */
 package nl.gogognome.gogoaccount.tools;
 
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -29,6 +31,7 @@ import nl.gogognome.lib.util.Factory;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -95,8 +98,8 @@ public class PrintAgeOfParties {
         }
 
         try {
-            Document db = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
-            Party[] parties = db.getParties();
+            Document document = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
+            List<Party> parties = ObjectFactory.create(PartyService.class).findAllParties(document);
             for (Party party : parties) {
                 Date birthDay = party.getBirthDate();
                 System.out.print(party.getId() + " - " + party.getName() + ": ");

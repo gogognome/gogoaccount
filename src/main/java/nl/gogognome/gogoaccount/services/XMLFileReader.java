@@ -4,6 +4,8 @@ import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -29,8 +31,9 @@ public class XMLFileReader {
 
 	private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
-	private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-	private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+	private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	private Document document;
 	private String fileVersion;
@@ -196,55 +199,32 @@ public class XMLFileReader {
 	/**
 	 * Parses parties.
 	 * @param nodes a node list containing parties.
-	 * @throws XMLParseException if a syntax error is found in the nodes
-	 * @throws DocumentModificationFailedException
 	 */
-	private void parseAndAddParties(NodeList nodes) throws XMLParseException, DocumentModificationFailedException {
-		ArrayList<Party> parties = new ArrayList<>();
-		for (int i=0; i<nodes.getLength(); i++) {
+	private void parseAndAddParties(NodeList nodes) throws XMLParseException, ServiceException {
+        for (int i=0; i<nodes.getLength(); i++) {
 			Element elem = (Element)nodes.item(i);
 			NodeList partyNodes = elem.getElementsByTagName("party");
 			for (int j=0; j<partyNodes.getLength(); j++) {
 				Element partyElem = (Element)partyNodes.item(j);
-				String id = partyElem.getAttribute("id");
-				String name = partyElem.getAttribute("name");
-				String address = partyElem.getAttribute("address");
-				if (address.length() == 0) {
-					address = null;
-				}
-				String zipCode = partyElem.getAttribute("zip");
-				if (zipCode.length() == 0) {
-					zipCode = null;
-				}
-				String city = partyElem.getAttribute("city");
-				if (city.length() == 0) {
-					city = null;
-				}
-
-				String type = partyElem.getAttribute("type");
-				if (type.length() == 0) {
-					type = null;
-				}
-
-				String remarks = partyElem.getAttribute("remarks");
-				if (remarks.length() == 0) {
-					remarks = null;
-				}
+				Party party = new Party(partyElem.getAttribute("id"));
+				party.setName(partyElem.getAttribute("name"));
+				party.setAddress(emptyToNull(partyElem.getAttribute("address")));
+                party.setZipCode(emptyToNull(partyElem.getAttribute("zip")));
+                party.setCity(emptyToNull(partyElem.getAttribute("city")));
+                party.setType(emptyToNull(partyElem.getAttribute("type")));
+                party.setRemarks(emptyToNull(partyElem.getAttribute("remarks")));
 
 				String birthDateString = partyElem.getAttribute("birthdate");
-				Date birthDate = null;
-				if (birthDateString.length() > 0) {
+                if (birthDateString.length() > 0) {
 					try {
-						birthDate = DATE_FORMAT.parse(birthDateString);
+						party.setBirthDate(DATE_FORMAT.parse(birthDateString));
 					} catch (java.text.ParseException e) {
 						throw new XMLParseException("Invalid birth date: \"" + birthDateString + "\"");
-					}
-				}
-				parties.add(new Party(id, name, address, zipCode, city, birthDate, type, remarks));
+                    }
+                }
+                partyService.createParty(document, party);
 			}
 		}
-
-		document.setParties(parties.toArray(new Party[parties.size()]));
 	}
 
 	/**
@@ -252,7 +232,7 @@ public class XMLFileReader {
 	 * @param nodes a node list containing invoices.
 	 * @throws XMLParseException if a syntax error is found in the nodes
 	 */
-	private void parseAndAddInvoices(NodeList nodes) throws XMLParseException {
+	private void parseAndAddInvoices(NodeList nodes) throws XMLParseException, ServiceException {
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element elem = (Element)nodes.item(i);
 			NodeList invoiceNodes = elem.getElementsByTagName("invoice");
@@ -266,12 +246,12 @@ public class XMLFileReader {
 					throw new XMLParseException("Invalid amount: " + invoiceElem.getAttribute("amountToBePaid"));
 				}
 
-				Party concerningParty = document.getParty(invoiceElem.getAttribute("concerningParty"));
+				Party concerningParty = partyService.getParty(document, invoiceElem.getAttribute("concerningParty"));
 				if (concerningParty == null) {
 					throw new XMLParseException("No (valid) party specified for the invoice \"" + id + "\"");
 				}
 
-				Party payingParty = document.getParty(invoiceElem.getAttribute("payingParty"));
+				Party payingParty = partyService.getParty(document, invoiceElem.getAttribute("payingParty"));
 
 				NodeList lineNodes = invoiceElem.getElementsByTagName("line");
 				int numNodes = lineNodes.getLength();
@@ -337,6 +317,10 @@ public class XMLFileReader {
 			}
 		}
 	}
+
+    private static String emptyToNull(String s) {
+        return s == null || !s.isEmpty() ? s : null;
+    }
 
 	private void parseAndAddImportedAccounts(NodeList nodes) {
 		if (StringUtil.isNullOrEmpty(fileVersion)) {

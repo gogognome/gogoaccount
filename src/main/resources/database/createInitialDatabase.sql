@@ -15,4 +15,16 @@ CREATE TABLE bookkeeping (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE party (
+  id varchar2(100),
+  name varchar2(1000),
+  address varchar2(1000),
+  zip_code varchar2(1000),
+  city varchar2(1000),
+  birth_date date,
+  type varchar2(1000),
+  remarks varchar2(10000),
+  PRIMARY KEY (id)
+);
+
 INSERT INTO bookkeeping (id, description, start_of_period, currency) values (1, 'New bookkeeping', current_date(), 'EUR');

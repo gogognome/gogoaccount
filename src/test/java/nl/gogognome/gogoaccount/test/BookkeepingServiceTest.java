@@ -17,6 +17,8 @@ import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -28,13 +30,12 @@ import org.junit.Test;
 
 /**
  * Tests the bookkeeping service.
- *
- * @author Sander Kooijmans
  */
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
-	private final ConfigurationService configurationService = new ConfigurationService();
 	private final BookkeepingService bookkeepingService = new BookkeepingService();
+	private final ConfigurationService configurationService = new ConfigurationService();
+	private final PartyService partyService = new PartyService();
 
 	@Test
 	public void testStartBalance() throws Exception {
@@ -85,15 +86,16 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 			report.getAssetsInclLossAccount().toString());
 
 		assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Winst]",
-				report.getLiabilitiesInclProfitAccount().toString());
+                report.getLiabilitiesInclProfitAccount().toString());
 
 		checkAmount(20, report.getAmount(new Account("", "", AccountType.LIABILITY)));
 
 		assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
 		assertEquals("[]", report.getCreditors().toString());
 
-		checkAmount(10, report.getBalanceForDebtor(document.getParty("1101")));
-		checkAmount(0, report.getBalanceForCreditor(document.getParty("1101")));
+        Party party = partyService.getParty(document, "1101");
+        checkAmount(10, report.getBalanceForDebtor(party));
+		checkAmount(0, report.getBalanceForCreditor(party));
 
 		assertEquals("[ null beginsaldo 30000 null, " +
 						"20110510 t2 Payment 1000 null inv1,  " +
@@ -132,8 +134,9 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 		assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
 		assertEquals("[]", report.getCreditors().toString());
 
-		checkAmount(20, report.getBalanceForDebtor(document.getParty("1101")));
-		checkAmount(0, report.getBalanceForCreditor(document.getParty("1101")));
+        Party party = partyService.getParty(document, "1101");
+        checkAmount(20, report.getBalanceForDebtor(party));
+		checkAmount(0, report.getBalanceForCreditor(party));
 
 		assertEquals("[ null beginsaldo 30000 null,  " +
 						"null totaal mutaties 0 0,  " +
@@ -172,8 +175,9 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 		assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
 		assertEquals("[]", report.getCreditors().toString());
 
-		checkAmount(10, report.getBalanceForDebtor(document.getParty("1101")));
-		checkAmount(0, report.getBalanceForCreditor(document.getParty("1101")));
+        Party party = partyService.getParty(document, "1101");
+        checkAmount(10, report.getBalanceForDebtor(party));
+		checkAmount(0, report.getBalanceForCreditor(party));
 
 		checkAmount(420, report.getAmount(configurationService.getAccount(document, "200")));
 		checkAmount(0, report.getAmount(configurationService.getAccount(document, "300")));

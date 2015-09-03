@@ -1,7 +1,7 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;

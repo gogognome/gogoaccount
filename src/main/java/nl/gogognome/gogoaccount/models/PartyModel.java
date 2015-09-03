@@ -16,7 +16,7 @@
 */
 package nl.gogognome.gogoaccount.models;
 
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 

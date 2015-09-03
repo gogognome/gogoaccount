@@ -24,7 +24,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;

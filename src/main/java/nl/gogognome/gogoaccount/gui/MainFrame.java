@@ -3,11 +3,13 @@ package nl.gogognome.gogoaccount.gui;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
 import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
@@ -57,8 +59,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 	private TextResource textResource = Factory.getInstance(TextResource.class);
 	private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
-    private BookkeepingService bookkeepingService = new BookkeepingService();
-	private ConfigurationService configurationService = new ConfigurationService();
+	private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+	private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+	private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	public MainFrame() {
 		super();
@@ -461,9 +464,16 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 	}
 
 	private void handlePrintAddressLabels() {
-	    AddressLabelPrinter alp = new AddressLabelPrinter(document.getParties());
-	    try {
-            alp.printAddressLabels();
+        AddressLabelPrinter alp = null;
+        try {
+            alp = new AddressLabelPrinter(partyService.findAllParties(document));
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            return;
+        }
+
+        try {
+			alp.printAddressLabels();
         } catch (PrinterException e) {
 	        MessageDialog.showMessage(this, "gen.error", "mf.problemWhilePrinting");
         }

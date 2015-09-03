@@ -5,6 +5,8 @@ import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -39,10 +41,9 @@ public class BookkeepingService {
             configurationService.updateBookkeeping(newDocument, newBookkeeping);
 
             // Copy the parties
-            try {
-                newDocument.setParties(document.getParties());
-            } catch (DocumentModificationFailedException e) {
-                throw new ServiceException("Failed to copy parties to the new bookkeeping.", e);
+            PartyService partyService = ObjectFactory.create(PartyService.class);
+            for (Party party : partyService.findAllParties(document)) {
+                partyService.createParty(newDocument, party);
             }
 
             // Copy the accounts
@@ -241,7 +242,7 @@ public class BookkeepingService {
      * @param account the account
      * @return <code>true</code> if the account is used; <code>false</code> otherwise
      */
-    public static boolean inUse(Document document, Account account) throws ServiceException {
+    public boolean inUse(Document document, Account account) throws ServiceException {
         if (!getStartBalance(document, account).isZero()) {
             return true;
         }
