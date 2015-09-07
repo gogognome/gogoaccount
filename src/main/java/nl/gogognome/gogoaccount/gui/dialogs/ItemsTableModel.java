@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.swing.AbstractListTableModel;

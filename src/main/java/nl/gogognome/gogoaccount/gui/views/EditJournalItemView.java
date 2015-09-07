@@ -17,7 +17,7 @@
 
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;

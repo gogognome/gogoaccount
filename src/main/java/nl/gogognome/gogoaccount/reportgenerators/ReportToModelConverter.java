@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -22,6 +23,8 @@ import java.util.*;
 public class ReportToModelConverter {
 
 	private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+	private final PartyService partyService = ObjectFactory.create(PartyService.class);
+
 	private final Document document;
     private final Report report;
 
@@ -175,14 +178,14 @@ public class ReportToModelConverter {
 		return accounts;
 	}
 
-	private Map<String, Object> createAccount(Account account) {
+	private Map<String, Object> createAccount(Account account) throws ServiceException {
 		Map<String,Object> map = new HashMap<>();
 		map.put("title", account.getId() + ' ' + account.getName());
 		map.put("lines", createAccountLines(account));
 		return map;
 	}
 
-	private Object createAccountLines(Account account) {
+	private Object createAccountLines(Account account) throws ServiceException {
 		List<Map<String, Object>> lines = new ArrayList<>();
 		for (LedgerLine line: report.getLedgerLinesForAccount(account)) {
 			lines.add(createLine(line));
@@ -190,7 +193,7 @@ public class ReportToModelConverter {
 		return lines;
 	}
 
-	private Map<String, Object> createLine(LedgerLine line) {
+	private Map<String, Object> createLine(LedgerLine line) throws ServiceException {
 		Map<String,Object> map = new HashMap<>();
 		map.put("date", line.date != null ? textResource.formatDate("gen.dateFormat", line.date) : "");
 		map.put("id", line.id);
@@ -200,7 +203,7 @@ public class ReportToModelConverter {
 		map.put("credit", line.creditAmount != null ?
 				amountFormat.formatAmountWithoutCurrency(line.creditAmount) : "");
 		map.put("invoice", line.invoice != null ?
-				line.invoice.getId() + " (" + line.invoice.getConcerningParty().getName() + ')' : "");
+				line.invoice.getId() + " (" + partyService.getParty(document, line.invoice.getConcerningPartyId()).getName() + ')' : "");
 		return map;
 	}
 

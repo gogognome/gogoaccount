@@ -15,22 +15,6 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
         super("party", null, document.getBookkeepingId());
     }
 
-    public Party get(String partyId) throws SQLException {
-        Party party = find(new NameValuePairs().add("id", partyId));
-        if (party == null) {
-            throw new NoRecordFoundException("No party exists with id " + partyId);
-        }
-        return party;
-    }
-
-    public void delete(String partyId) throws SQLException {
-        delete(new NameValuePairs().add("id", partyId));
-    }
-
-    public boolean exists(String partyId) throws SQLException {
-        return exists(new NameValuePairs().add("id", partyId));
-    }
-
     /**
      * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
      */

@@ -9,14 +9,13 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
-import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceLineDefinition;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;

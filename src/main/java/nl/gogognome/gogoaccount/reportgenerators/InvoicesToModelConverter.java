@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;

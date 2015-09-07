@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;

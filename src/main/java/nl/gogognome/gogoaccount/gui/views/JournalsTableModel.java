@@ -23,7 +23,7 @@ import java.util.List;
 
 import javax.swing.event.TableModelListener;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.components.document.DocumentListener;

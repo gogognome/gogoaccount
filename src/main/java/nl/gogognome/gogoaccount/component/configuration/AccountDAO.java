@@ -19,18 +19,6 @@ class AccountDAO extends AbstractDomainClassDAO<Account> {
         super("account", null, document.getBookkeepingId());
     }
 
-    public Account get(String accountId) throws SQLException {
-        Account account = find(new NameValuePairs().add("id", accountId));
-        if (account == null) {
-            throw new NoRecordFoundException("No account exists with id " + accountId);
-        }
-        return account;
-    }
-
-    public void delete(String accountId) throws SQLException {
-        delete(new NameValuePairs().add("id", accountId));
-    }
-
     public List<Account> findAssets() throws SQLException {
         return findAll(new NameValuePairs().add("type", ASSET.name(), DEBTOR.name()), "id");
     }

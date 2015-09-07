@@ -38,8 +38,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.InvoiceSearchCriteria;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.SwingUtils;

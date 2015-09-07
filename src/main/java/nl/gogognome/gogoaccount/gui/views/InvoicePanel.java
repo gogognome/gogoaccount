@@ -34,7 +34,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.SwingUtils;

@@ -1,11 +1,16 @@
 package nl.gogognome.gogoaccount.components.document;
 
 import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
-import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 import org.h2.jdbcx.JdbcDataSource;
@@ -20,20 +25,16 @@ public class Document {
 
 	private final ArrayList<Journal> journals = new ArrayList<>();
 
-	/** Maps ids of invoices to <code>Invoice</code> instances. */
-	private HashMap<String, Invoice> idsToInvoicesMap = new HashMap<>();
-
 	/** Maps ids of invoices to a map of payment ids to Payments. */
 	private final HashMap<String, HashMap<String, Payment>> idToInvoiceToPaymentMap = new HashMap<>();
-
-	/** Contains the next payment identifier. */
-	private String nextPaymentId = "p1";
 
 	/** Indicates whether this database has unsaved changes. */
 	private boolean changed;
 
 	/** The name of the file from which the database was loaded. */
 	private String fileName;
+
+	private Locale locale = Locale.US;
 
 	/** Maps accounts from imported transactions to accounts of gogo account. */
 	private final Map<String, String> importedTransactionAccountToAccountMap = new HashMap<>();
@@ -108,6 +109,14 @@ public class Document {
 		return changed;
 	}
 
+	public Locale getLocale() {
+		return locale;
+	}
+
+	public void setLocale(Locale locale) {
+		this.locale = locale;
+	}
+
 	/**
 	 * Adds payments to invoices that are referred to by the journal.
 	 * To each invoice (referred to by the journal) a new payment is added for the
@@ -118,10 +127,11 @@ public class Document {
 	 * @param journal the journal
 	 * @throws DocumentModificationFailedException if creation of payments fails
 	 */
-	private void createPaymentsForItemsOfJournal(Journal journal) throws DocumentModificationFailedException {
+	private void createPaymentsForItemsOfJournal(Journal journal) throws DocumentModificationFailedException, ServiceException {
 		JournalItem[] items = journal.getItems();
+        InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 		for (JournalItem item : items) {
-			Invoice invoice = getInvoice(item.getInvoiceId());
+			Invoice invoice = invoiceService.getInvoice(this, item.getInvoiceId());
 			if (invoice != null) {
 				Payment payment = createPaymentForJournalItem(journal, item);
 				addPayment(invoice.getId(), payment);
@@ -148,51 +158,6 @@ public class Document {
 	}
 
 	/**
-	 * Creates a unique payment id.
-	 * @return a unique payment id
-	 */
-	public String createPaymentId() {
-		String result = nextPaymentId;
-
-		StringBuilder sb = new StringBuilder(nextPaymentId);
-		char c = sb.charAt(sb.length() - 1);
-		if (c < '0' || c > '9') {
-			sb.append('0');
-		}
-		int index = sb.length() - 1;
-		boolean done;
-		do {
-			c = sb.charAt(index);
-			c++;
-			if (c <= '9') {
-				sb.setCharAt(index, c);
-				done = true;
-			} else {
-				sb.setCharAt(index, '0');
-				if (index > 0 && sb.charAt(index-1) >= '0' && sb.charAt(index-1) <= '9') {
-					index--;
-				} else {
-					sb.insert(index, '0');
-				}
-				done = false;
-			}
-		} while (!done);
-
-		nextPaymentId = sb.toString();
-
-		return result;
-	}
-
-	/**
-	 * Sets the highest payment ID. This method will typically be called when a database is loaded
-	 * from file.
-	 * @param highestPaymentId the highest payment id in use thus far.
-	 */
-	public void setNextPaymentId(String highestPaymentId) {
-		nextPaymentId = highestPaymentId;
-	}
-
-	/**
 	 * Adds a journal to the database.
 	 *
 	 * <p>Optionally, this method can update invoices that are referred to by the journal.
@@ -204,7 +169,7 @@ public class Document {
 	 *        to by the journal; <code>false</code> if no payments are not to be created.
 	 * @throws DocumentModificationFailedException if a problem occurs while adding the journal
 	 */
-	public void addJournal(Journal journal, boolean createPayments) throws DocumentModificationFailedException {
+	public void addJournal(Journal journal, boolean createPayments) throws DocumentModificationFailedException, ServiceException {
 		if (createPayments) {
 			createPaymentsForItemsOfJournal(journal);
 		}
@@ -225,10 +190,6 @@ public class Document {
 		if (!id.equals(journal.getIdOfCreatedInvoice())) {
 			throw new DocumentModificationFailedException("The journal does not create the invoice with id " + id);
 		}
-		if (idsToInvoicesMap.get(id) != null) {
-			throw new DocumentModificationFailedException("An invoice with ID " + id + " already exists!");
-		}
-		idsToInvoicesMap.put(id, invoice);
 
 		journals.add(journal);
 	}
@@ -248,25 +209,13 @@ public class Document {
 	}
 
 	/**
-	 * Removes an invoice.
-	 * @param invoiceId the id of the invoice
-	 * @throws DocumentModificationFailedException if no invoice with the specified ID exists.
-	 */
-	public void removeInvoice(String invoiceId) throws DocumentModificationFailedException {
-		Invoice invoice = idsToInvoicesMap.remove(invoiceId);
-		if (invoice == null) {
-			throw new DocumentModificationFailedException("No invoice with ID " + invoiceId + " exists.");
-		}
-	}
-
-	/**
 	 * Updates a journal. Payments that are modified by the update of the journal
 	 * are updated in the corresponding invoice.
 	 * @param oldJournal the journal to be replaced
 	 * @param newJournal the journal that replaces <code>oldJournal</code>
 	 * @throws DocumentModificationFailedException if a problem occurs while updating the journal
 	 */
-	public void updateJournal(Journal oldJournal, Journal newJournal) throws DocumentModificationFailedException {
+	public void updateJournal(Journal oldJournal, Journal newJournal) throws DocumentModificationFailedException, ServiceException {
 		// Check for payments without paymentId. These payments can exist in old XML files.
 		JournalItem[] items = oldJournal.getItems();
 		for (JournalItem item2 : items) {
@@ -283,16 +232,17 @@ public class Document {
 		journals.set(index, newJournal);
 
 		// Update payments. Remove payments from old journal and add payments of the new journal.
+		InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 		items = oldJournal.getItems();
 		for (JournalItem item1 : items) {
-			Invoice invoice = getInvoice(item1.getInvoiceId());
+			Invoice invoice = invoiceService.getInvoice(this, item1.getInvoiceId());
 			if (invoice != null) {
 				removePayment(invoice.getId(), item1.getPaymentId());
 			}
 		}
 		items = newJournal.getItems();
 		for (JournalItem item : items) {
-			Invoice invoice = getInvoice(item.getInvoiceId());
+			Invoice invoice = invoiceService.getInvoice(this, item.getInvoiceId());
 			if (invoice != null) {
 				Payment payment = createPaymentForJournalItem(newJournal, item);
 				addPayment(invoice.getId(), payment);
@@ -322,111 +272,6 @@ public class Document {
 	{
 		this.fileName = fileName;
 		notifyChange();
-	}
-
-	/**
-	 * Adds an invoice to the database. Does not notify changes.
-	 * @param invoice the invoice to be added
-	 * @throws DocumentModificationFailedException if another invoice exists with the same id.
-	 */
-	public void addInvoice(Invoice invoice) throws DocumentModificationFailedException {
-		String id = invoice.getId();
-		if (idsToInvoicesMap.get(id) != null) {
-			throw new DocumentModificationFailedException("An invoice with ID " + id + " already exists!");
-		}
-		idsToInvoicesMap.put(id, invoice);
-	}
-
-	/**
-	 * Updates an existing invoice.
-	 * @param id the id of the existing invoice
-	 * @param newInvoice the new invoice
-	 * @throws DocumentModificationFailedException if no invoice with the specified id exists or if
-	 *         the id of the new invoice differs from the id
-	 */
-	public void updateInvoice(String id, Invoice newInvoice) throws DocumentModificationFailedException {
-		if (idsToInvoicesMap.get(id) == null) {
-			throw new DocumentModificationFailedException("An invoice with ID " + id + " does not exist, so it cannot be updated!");
-		}
-		if (!id.equals(newInvoice.getId())) {
-			throw new DocumentModificationFailedException("The ID of the updated invoice differs from the original ID. Therefore, the invoice cannot be udpated!");
-		}
-
-		idsToInvoicesMap.put(id, newInvoice);
-		notifyChange();
-	}
-
-	/**
-	 * Sets the invoices for the database. Any invoices present in the database
-	 * are replaced.
-	 * @param invoices the invoices
-	 * @throws DocumentModificationFailedException if at least two invoices are added
-	 *         with the same id.
-	 */
-	public void setInvoices(Invoice[] invoices) throws DocumentModificationFailedException {
-		HashMap<String, Invoice> newIdsToInvoicesMap = new HashMap<>();
-		for (Invoice invoice : invoices) {
-			String id = invoice.getId();
-			if (newIdsToInvoicesMap.get(id) != null) {
-				throw new DocumentModificationFailedException("Two invoices with the id " + id + " are being added!");
-			}
-			newIdsToInvoicesMap.put(id, invoice);
-		}
-
-		idsToInvoicesMap = newIdsToInvoicesMap;
-		notifyChange();
-	}
-
-	/**
-	 * Gets the invoice with the specified id.
-	 * @param id the id of the invoice
-	 * @return the invoice or <code>null</code> if the invoice was not found
-	 */
-	public Invoice getInvoice(String id) {
-		return idsToInvoicesMap.get(id);
-	}
-
-	/**
-	 * Gets a suggestion for an unused invoice id.
-	 * @param id a possibly existing invoice id
-	 * @return an invoice id that does not exist yet in this database
-	 */
-	public String suggestNewInvoiceId(String id) {
-		String newId;
-		Set<String> existingInvoiceIds = idsToInvoicesMap.keySet();
-		int serialNumber = 1;
-		do {
-			newId = id + "-" + serialNumber;
-			serialNumber++;
-		} while (existingInvoiceIds.contains(newId));
-		return newId;
-	}
-
-	/**
-	 * Gets all invoices, sorted on ID.
-	 * @return the invoices
-	 */
-	public Invoice[] getInvoices() {
-		Invoice[] result = idsToInvoicesMap.values().toArray(new Invoice[idsToInvoicesMap.size()]);
-		Arrays.sort(result);
-		return result;
-	}
-
-	/**
-	 * Gets the invoices that match the search criteria.
-	 * @param searchCriteria the search criteria
-	 * @return the matching invoices. Will never return <code>null</code>.
-	 */
-	public Invoice[] getInvoices(InvoiceSearchCriteria searchCriteria) {
-		ArrayList<Invoice> matchingInvoices = new ArrayList<>();
-		for (Invoice invoice : idsToInvoicesMap.values()) {
-			if (searchCriteria.matches(this, invoice)) {
-				matchingInvoices.add(invoice);
-			}
-		}
-		Invoice[] result = new Invoice[matchingInvoices.size()];
-		matchingInvoices.toArray(result);
-		return result;
 	}
 
 	/**

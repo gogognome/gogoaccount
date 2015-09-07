@@ -20,7 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
@@ -30,7 +30,7 @@ import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.gui.controllers.EditInvoiceController;
 import nl.gogognome.gogoaccount.models.PartyModel;
-import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;

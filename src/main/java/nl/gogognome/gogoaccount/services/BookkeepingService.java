@@ -5,6 +5,8 @@ import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
@@ -21,7 +23,8 @@ import java.util.*;
  */
 public class BookkeepingService {
 
-    private ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 
     public Document closeBookkeeping(Document document, String description, Date date, Account equity) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
@@ -99,21 +102,12 @@ public class BookkeepingService {
 
             // Copy the open invoices including their payments
             List<Invoice> newInvoices = new ArrayList<>(100);
-            for (Invoice invoice : document.getInvoices()) {
-                if (!InvoiceService.isPaid(document, invoice.getId(), dayBeforeStart)) {
-                    newInvoices.add(new Invoice(invoice.getId(), invoice.getPayingParty(), invoice.getConcerningParty(),
-                            invoice.getAmountToBePaid(), invoice.getIssueDate(), invoice.getDescriptions(), invoice.getAmounts()));
+            for (Invoice invoice : invoiceService.findAllInvoices(document)) {
+                if (!invoiceService.isPaid(document, invoice.getId(), dayBeforeStart)) {
+                    invoiceService.createInvoice(newDocument, invoice);
+                    invoiceService.createDetails(newDocument, invoiceService.findDescriptions(document, invoice), invoice.findAmounts(document, invoice));
+                    invoiceService.createPayments(newDocument, invoiceService.findPayments(document, invoice));
                 }
-            }
-            try {
-                newDocument.setInvoices(newInvoices.toArray(new Invoice[newInvoices.size()]));
-                for (Invoice invoice : newInvoices) {
-                    for (Payment payment : document.getPayments(invoice.getId())) {
-                        newDocument.addPayment(invoice.getId(), payment);
-                    }
-                }
-            } catch (DocumentModificationFailedException e) {
-                throw new ServiceException("Failed to copy open invoices to the new bookkeeping.", e);
             }
 
             // Notify unsaved changes in the new database.
@@ -144,7 +138,7 @@ public class BookkeepingService {
      * @param journal the journal to be deleted
      * @throws ServiceException if a problem occurs while deleting the journal
      */
-    public static void removeJournal(Document document, Journal journal) throws ServiceException {
+    public void removeJournal(Document document, Journal journal) throws ServiceException {
         // Check for payments without payment ID.
         for (JournalItem item : journal.getItems()) {
             if (item.getInvoiceId() != null && item.getPaymentId() == null) {
@@ -169,7 +163,7 @@ public class BookkeepingService {
             // Check if the journal created an invoice. If so, remove the invoice too.
             if (journal.createsInvoice()) {
                 try {
-                    document.removeInvoice(journal.getIdOfCreatedInvoice());
+                    invoiceService.deleteInvoice(document, journal.getIdOfCreatedInvoice());
                 } catch (DocumentModificationFailedException e) {
                     throw new ServiceException("Could not delete the invoice " + journal.getIdOfCreatedInvoice()
                         + " created by the journal.", e);
@@ -271,7 +265,7 @@ public class BookkeepingService {
                 }
             }
 
-            for (Invoice invoice : document.getInvoices()) {
+            for (Invoice invoice : invoiceService.findAllInvoices(document)) {
                 if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
                     rb.addInvoice(invoice);
                 }
