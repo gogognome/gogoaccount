@@ -29,9 +29,11 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.models.PartyModel;
@@ -60,7 +62,11 @@ public class EditInvoiceView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-	private Document document;
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+
+    private Document document;
     private Currency currency;
 
     private String titleId;
@@ -79,6 +85,8 @@ public class EditInvoiceView extends OkCancelView {
     private DescriptionAndAmountTableModel tableModel;
 
     private Invoice editedInvoice;
+    private List<String> editedDescriptions;
+    private List<Amount> editedAmounts;
 
     private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
@@ -120,21 +128,21 @@ public class EditInvoiceView extends OkCancelView {
     }
 
 	private void initModels() throws ServiceException {
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         currency = bookkeeping.getCurrency();
 
         if (initialInvoice != null) {
             idModel.setString(initialInvoice.getId());
             idModel.setEnabled(false, null);
             dateModel.setDate(initialInvoice.getIssueDate());
-            concerningPartyModel.setParty(initialInvoice.getConcerningParty());
-            payingPartyModel.setParty(initialInvoice.getPayingParty());
+            concerningPartyModel.setParty(partyService.getParty(document, initialInvoice.getConcerningPartyId()));
+            payingPartyModel.setParty(partyService.getParty(document, initialInvoice.getPayingPartyId()));
             amountModel.setString(amountFormat.formatAmountWithoutCurrency(
                 initialInvoice.getAmountToBePaid()));
         } else {
             dateModel.setDate(new Date());
-            idModel.setString(document.suggestNewInvoiceId(
-                textResource.formatDate("editInvoiceView.dateFormatForNewId", dateModel.getDate())));
+            idModel.setString(invoiceService.suggestNewInvoiceId(document,
+                    textResource.formatDate("editInvoiceView.dateFormatForNewId", dateModel.getDate())));
         }
 
 	}
@@ -162,29 +170,35 @@ public class EditInvoiceView extends OkCancelView {
 
     @Override
 	protected JComponent createCenterComponent() {
-        // Create panel with descriptions and amounts table.
-        JPanel middlePanel = new JPanel(new BorderLayout());
-        List<Tuple<String, Amount>> tuples = new ArrayList<>();
-        if (initialInvoice != null) {
-        	String[] descriptions = initialInvoice.getDescriptions();
-        	Amount[] amounts = initialInvoice.getAmounts();
-        	for (int i=0; i<descriptions.length; i++) {
-        		tuples.add(new Tuple<>(descriptions[i], amounts[i]));
-        	}
+        try {
+            // Create panel with descriptions and amounts table.
+            JPanel middlePanel = new JPanel(new BorderLayout());
+            // TODO: replace by InvoiceDetail
+            List<Tuple<String, Amount>> tuples = new ArrayList<>();
+            if (initialInvoice != null) {
+                List<String> descriptions = invoiceService.findDescriptions(document, initialInvoice);
+                List<Amount> amounts = invoiceService.findAmounts(document, initialInvoice);
+                for (int i = 0; i < descriptions.size(); i++) {
+                    tuples.add(new Tuple<>(descriptions.get(i), amounts.get(i)));
+                }
+            }
+            tableModel = new DescriptionAndAmountTableModel(tuples);
+            table = widgetFactory.createTable(tableModel);
+            JScrollPane scrollPane = widgetFactory.createScrollPane(table);
+            middlePanel.add(scrollPane, BorderLayout.CENTER);
+
+            ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
+            buttonPanel.addButton("editInvoiceView.addRow", new AddAction());
+            buttonPanel.addButton("editInvoiceView.editRow", new EditAction());
+            buttonPanel.addButton("editInvoiceView.deleteRow", new DeleteAction());
+
+            middlePanel.add(buttonPanel, BorderLayout.EAST);
+
+            return middlePanel;
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            throw new RuntimeException(e);
         }
-        tableModel = new DescriptionAndAmountTableModel(tuples);
-        table = widgetFactory.createTable(tableModel);
-        JScrollPane scrollPane =widgetFactory.createScrollPane(table);
-        middlePanel.add(scrollPane, BorderLayout.CENTER);
-
-        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
-        buttonPanel.addButton("editInvoiceView.addRow", new AddAction());
-        buttonPanel.addButton("editInvoiceView.editRow", new EditAction());
-        buttonPanel.addButton("editInvoiceView.deleteRow", new DeleteAction());
-
-        middlePanel.add(buttonPanel, BorderLayout.EAST);
-
-        return middlePanel;
     }
 
     /**
@@ -193,6 +207,14 @@ public class EditInvoiceView extends OkCancelView {
      */
     public Invoice getEditedInvoice() {
         return editedInvoice;
+    }
+
+    public List<String> getEditedDescriptions() {
+        return editedDescriptions;
+    }
+
+    public List<Amount> getEditedAmounts() {
+        return editedAmounts;
     }
 
     /**
@@ -280,17 +302,18 @@ public class EditInvoiceView extends OkCancelView {
         }
 
         List<Tuple<String, Amount>> tuples = tableModel.getRows();
-        String[] descriptions = new String[tuples.size()];
-        Amount[] amounts = new Amount[tuples.size()];
-        for (int i=0; i<tuples.size(); i++) {
-        	descriptions[i] = tuples.get(i).getFirst();
-        	amounts[i] = tuples.get(i).getSecond();
-        	if (amounts[i] != null && amounts[i].isZero()) {
-        		amounts[i] = null;
-        	}
+        editedDescriptions = new ArrayList<>();
+        editedAmounts = new ArrayList<>();
+        for (Tuple<String, Amount> tuple : tuples) {
+        	editedDescriptions.add(tuple.getFirst());
+        	editedAmounts.add(tuple.getSecond() == null || tuple.getSecond().isZero() ? null : tuple.getSecond());
         }
 
-        editedInvoice = new Invoice(id, payingParty, concerningParty, amount, issueDate, descriptions, amounts);
+        editedInvoice = new Invoice(id);
+        editedInvoice.setPayingPartyId(payingParty != null ? payingParty.getId() : null);
+        editedInvoice.setConcerningPartyId(concerningParty != null ? concerningParty.getId() : null);
+        editedInvoice.setAmountToBePaid(amount);
+        editedInvoice.setIssueDate(issueDate);
         closeAction.actionPerformed(null);
     }
 

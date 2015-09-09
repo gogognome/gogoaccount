@@ -243,12 +243,12 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 	public void removeJournalWithPayment() throws Exception {
 		assertNotNull(findJournal("t2"));
 		assertEquals("[20110510 pay1 Betaalrekening]",
-				document.getPayments("inv1").toString());
+				document.findPayments("inv1").toString());
 
 		bookkeepingService.removeJournal(document, findJournal("t2"));
 
 		assertNull(findJournal("t2"));
-		assertEquals("[]", document.getPayments("inv1").toString());
+		assertEquals("[]", document.findPayments("inv1").toString());
 	}
 
 	@Test

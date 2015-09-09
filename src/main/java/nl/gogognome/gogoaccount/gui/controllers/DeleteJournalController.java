@@ -1,35 +1,22 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.controllers;
 
-import java.awt.Component;
-
 import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
+
+import java.awt.*;
 
 /**
  * This controller lets the user delete an existing journal.
- *
- * @author Sander Kooijmans
  */
 public class DeleteJournalController {
+
+    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+	private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 
 	private Component owner;
 	private Document document;
@@ -50,8 +37,8 @@ public class DeleteJournalController {
 		this.journal = journal;
 	}
 
-	public void execute() {
-        if (!document.getPayments(journal.getIdOfCreatedInvoice()).isEmpty()) {
+	public void execute() throws ServiceException {
+        if (invoiceService.hasPayments(document, journal.getIdOfCreatedInvoice())) {
             MessageDialog.showWarningMessage(owner, "editJournalsView.journalCreatingInvoiceCannotBeDeleted");
             return;
         }
@@ -63,7 +50,7 @@ public class DeleteJournalController {
 	    }
 
 	    try {
-	        BookkeepingService.removeJournal(document, journal);
+	        bookkeepingService.removeJournal(document, journal);
 	        journalDeleted = true;
 	    } catch (ServiceException e) {
 	        MessageDialog.showErrorMessage(owner, e, "DeleteJournalController.serviceException");

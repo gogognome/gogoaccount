@@ -8,7 +8,7 @@ import nl.gogognome.gogoaccount.components.document.Document;
 import java.sql.SQLException;
 import java.util.Currency;
 
-public class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
+class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
 
     private final static long SINGLETON_ID = 1;
 

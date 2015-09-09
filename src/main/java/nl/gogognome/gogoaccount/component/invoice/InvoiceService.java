@@ -2,7 +2,6 @@ package nl.gogognome.gogoaccount.component.invoice;
 
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
@@ -19,6 +18,8 @@ import nl.gogognome.lib.util.StringUtil;
 
 import java.sql.SQLException;
 import java.util.*;
+
+import static java.util.stream.Collectors.*;
 
 /**
  * This class offers methods for handling invoices.
@@ -60,6 +61,7 @@ public class InvoiceService {
             boolean changedDatabase = false;
 
             InvoiceDAO invoiceDAO = ObjectFactory.create(InvoiceDAO.class);
+            InvoiceDetailDAO invoiceDetailsDAO = ObjectFactory.create(InvoiceDetailDAO.class);
             List<Party> partiesForWhichCreationFailed = new LinkedList<>();
 
             for (Party party : parties) {
@@ -139,7 +141,7 @@ public class InvoiceService {
                 try {
                     document.addInvoicAndJournal(invoice, journal);
                     invoice = invoiceDAO.create(invoice);
-                    invoiceDAO.createDetails(invoice.getId(), descriptions, amounts);
+                    invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
                     changedDatabase = true;
                 } catch (SQLException | DocumentModificationFailedException e) {
                     partiesForWhichCreationFailed.add(party);
@@ -233,7 +235,7 @@ public class InvoiceService {
         return ServiceTransaction.withResult(() -> {
             Invoice invoice = new InvoiceDAO(document).get(invoiceId);
             Amount result = invoice.getAmountToBePaid();
-            for (Payment p : document.getPayments(invoiceId)) {
+            for (Payment p : findPayments(document, invoice)) {
                 if (DateUtil.compareDayOfYear(p.getDate(), date) <= 0) {
                     result = result.subtract(p.getAmount());
                 }
@@ -253,15 +255,6 @@ public class InvoiceService {
     	return getRemainingAmountToBePaid(document, invoiceId, date).isZero();
     }
 
-    /**
-     * Gets all payments for the specified invoice.
-     * @param document database containing the bookkeeping
-     * @param invoiceId the ID of the invoice
-     * @return the payments
-     */
-    public List<Payment> getPayments(Document document, String invoiceId) {
-        return document.getPayments(invoiceId);
-    }
 
     /**
      * Gets a suggestion for an unused invoice id.
@@ -283,6 +276,10 @@ public class InvoiceService {
         });
     }
 
+    public Invoice createInvoice(Document document, Invoice invoice) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new InvoiceDAO(document).create(invoice));
+    }
+
     /**
      * Gets the invoices that match the search criteria.
 
@@ -290,7 +287,7 @@ public class InvoiceService {
      * @param searchCriteria the search criteria
      * @return the matching invoices. Will never return <code>null</code>.
      */
-    public List<Invoice> getInvoices(Document document, InvoiceSearchCriteria searchCriteria) throws ServiceException {
+    public List<Invoice> findInvoices(Document document, InvoiceSearchCriteria searchCriteria) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             List<Invoice> invoices = new InvoiceDAO(document).findAll("id");
             List<Invoice> matchingInvoices = new ArrayList<>();
@@ -301,6 +298,36 @@ public class InvoiceService {
             }
             return matchingInvoices;
         });
+    }
+
+    public void createDetails(Document document, Invoice invoice, List<String> descriptions, List<Amount> amounts) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> {
+            if (descriptions.size() != amounts.size()) {
+                throw new IllegalArgumentException("Descriptions and amounts must have the same size");
+            }
+            InvoiceDetailDAO invoiceDetailDAO = new InvoiceDetailDAO(document);
+            for (int i=0; i<descriptions.size(); i++) {
+                InvoiceDetail invoiceDetail = new InvoiceDetail();
+                invoiceDetail.setInvoiceId(invoice.getId());
+                invoiceDetail.setDescription(descriptions.get(i));
+                invoiceDetail.setAmount(amounts.get(i));
+                invoiceDetailDAO.create(invoiceDetail);
+            }
+        });
+    }
+
+    public void deleteInvoice(Document document, String invoiceId) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> new InvoiceDAO(document).delete(invoiceId));
+    }
+
+    public List<String> findDescriptions(Document document, Invoice invoice) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new InvoiceDetailDAO(document).findForInvoice(invoice.getId())
+                .stream().map(detail -> detail.getDescription()).collect(toList()));
+    }
+
+    public List<Amount> findAmounts(Document document, Invoice invoice) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new InvoiceDetailDAO(document).findForInvoice(invoice.getId())
+                .stream().map(detail -> detail.getAmount()).collect(toList()));
     }
 
     /**
@@ -332,5 +359,37 @@ public class InvoiceService {
      */
     private boolean matches(String criteria, String value) {
         return value != null && value.toLowerCase().contains(criteria.toLowerCase());
+    }
+
+    public List<Payment> findPayments(Document document, Invoice invoice) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new PaymentDAO(document).findForInvoice(invoice.getId()));
+    }
+
+    public void createPayments(Document document, List<Payment> payments) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> {
+            PaymentDAO paymentDAO = new PaymentDAO(document);
+            for (Payment payment : payments) {
+                paymentDAO.create(payment);
+            }
+        });
+    }
+
+    public Payment createPayment(Document document, Payment payment) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            Payment createdPayment = new PaymentDAO(document).create(payment);
+            document.notifyChange();
+            return createdPayment;
+        });
+    }
+
+    public void removePayment(Document document, String paymentId) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> {
+            new PaymentDAO(document).delete(paymentId);
+            document.notifyChange();
+        });
+    }
+
+    public boolean hasPayments(Document document, String invoiceId) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new PaymentDAO(document).hasPayments(invoiceId));
     }
 }

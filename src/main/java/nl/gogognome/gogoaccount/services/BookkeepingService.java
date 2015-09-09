@@ -101,11 +101,11 @@ public class BookkeepingService {
             }
 
             // Copy the open invoices including their payments
-            List<Invoice> newInvoices = new ArrayList<>(100);
             for (Invoice invoice : invoiceService.findAllInvoices(document)) {
                 if (!invoiceService.isPaid(document, invoice.getId(), dayBeforeStart)) {
                     invoiceService.createInvoice(newDocument, invoice);
-                    invoiceService.createDetails(newDocument, invoiceService.findDescriptions(document, invoice), invoice.findAmounts(document, invoice));
+                    invoiceService.createDetails(newDocument, invoice,
+                            invoiceService.findDescriptions(document, invoice), invoiceService.findAmounts(document, invoice));
                     invoiceService.createPayments(newDocument, invoiceService.findPayments(document, invoice));
                 }
             }
@@ -152,22 +152,13 @@ public class BookkeepingService {
                 String invoiceId = item.getInvoiceId();
                 String paymentId = item.getPaymentId();
                 if (invoiceId != null && paymentId != null) {
-                    try {
-                        document.removePayment(invoiceId, paymentId);
-                    } catch (DocumentModificationFailedException e) {
-                        throw new ServiceException("Could not delete payment " + paymentId, e);
-                    }
+                    invoiceService.removePayment(document, paymentId);
                 }
             }
 
             // Check if the journal created an invoice. If so, remove the invoice too.
             if (journal.createsInvoice()) {
-                try {
-                    invoiceService.deleteInvoice(document, journal.getIdOfCreatedInvoice());
-                } catch (DocumentModificationFailedException e) {
-                    throw new ServiceException("Could not delete the invoice " + journal.getIdOfCreatedInvoice()
-                        + " created by the journal.", e);
-                }
+                invoiceService.deleteInvoice(document, journal.getIdOfCreatedInvoice());
             }
 
             try {
@@ -259,11 +250,7 @@ public class BookkeepingService {
             rb.setExpenses(configurationService.findExpenses(document));
             rb.setRevenues(configurationService.findRevenues(document));
 
-            for (Journal j : document.getJournals()) {
-                if (DateUtil.compareDayOfYear(j.getDate(), date) <= 0) {
-                    rb.addJournal(j);
-                }
-            }
+            document.getJournals().stream().filter(j -> DateUtil.compareDayOfYear(j.getDate(), date) <= 0).forEach(rb::addJournal);
 
             for (Invoice invoice : invoiceService.findAllInvoices(document)) {
                 if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {

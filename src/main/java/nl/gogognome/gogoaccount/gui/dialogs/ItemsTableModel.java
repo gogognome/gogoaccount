@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.dialogs;
 
 import java.util.Arrays;
@@ -22,19 +6,28 @@ import java.util.List;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Table model for journal items.
- *
- * @author Sander Kooijmans
  */
 public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
+
+    private final Logger logger = LoggerFactory.getLogger(ItemsTableModel.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	private static final long serialVersionUID = 1L;
 
@@ -55,12 +48,8 @@ public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
 	private final static List<ColumnDefinition> COLUMN_DEFINTIIONS =
 		Arrays.asList(ACCOUNT, DEBET, CREDIT, INVOICE);
 
-    private Document document;
+    private final Document document;
 
-    /**
-     * Constructor.
-     * @param document the database
-     */
     public ItemsTableModel(Document document) {
     	super(COLUMN_DEFINTIIONS, Collections.<JournalItem>emptyList());
         this.document = document;
@@ -84,9 +73,16 @@ public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
         } else if (CREDIT == colDef) {
             result = item.isCredit() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
         } else if (INVOICE == colDef) {
-            Invoice invoice = document.getInvoice(item.getInvoiceId());
-            result = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getId()
-                + " - " + invoice.getPayingParty().getName() + ")" : "";
+            if (item.getInvoiceId() != null) {
+                try {
+                    Invoice invoice = invoiceService.getInvoice(document, item.getInvoiceId());
+                    Party party = partyService.getParty(document, invoice.getPayingPartyId());
+                    result = invoice != null ? invoice.getId() + " (" + party.getId() + " - " + party.getName() + ")" : "";
+                } catch (ServiceException e) {
+                    logger.warn("Ignroed exception: " + e.getMessage(), e);
+                    result = "???";
+                }
+            }
         }
         return result;
     }

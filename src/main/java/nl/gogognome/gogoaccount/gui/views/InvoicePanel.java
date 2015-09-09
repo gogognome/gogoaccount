@@ -35,7 +35,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;

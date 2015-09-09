@@ -3,7 +3,7 @@ package nl.gogognome.gogoaccount.components.document;
 import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
@@ -24,9 +24,6 @@ public class Document {
 	private Connection connectionToKeepInMemoryDatabaseAlive;
 
 	private final ArrayList<Journal> journals = new ArrayList<>();
-
-	/** Maps ids of invoices to a map of payment ids to Payments. */
-	private final HashMap<String, HashMap<String, Payment>> idToInvoiceToPaymentMap = new HashMap<>();
 
 	/** Indicates whether this database has unsaved changes. */
 	private boolean changed;
@@ -131,10 +128,9 @@ public class Document {
 		JournalItem[] items = journal.getItems();
         InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 		for (JournalItem item : items) {
-			Invoice invoice = invoiceService.getInvoice(this, item.getInvoiceId());
-			if (invoice != null) {
+			if (item.getInvoiceId() != null) {
 				Payment payment = createPaymentForJournalItem(journal, item);
-				addPayment(invoice.getId(), payment);
+				invoiceService.createPayment(this, payment);
 			}
 		}
 	}
@@ -154,7 +150,12 @@ public class Document {
 		}
 		Date date = journal.getDate();
 		String description = journalItem.getAccount().getName();
-		return new Payment(journalItem.getPaymentId(), amount, date, description);
+		Payment payment = new Payment(journalItem.getPaymentId());
+		payment.setDescription(description);
+		payment.setAmount(amount);
+        payment.setDate(date);
+        payment.setInvoiceId(journalItem.getInvoiceId());
+		return payment;
 	}
 
 	/**
@@ -234,18 +235,17 @@ public class Document {
 		// Update payments. Remove payments from old journal and add payments of the new journal.
 		InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 		items = oldJournal.getItems();
-		for (JournalItem item1 : items) {
-			Invoice invoice = invoiceService.getInvoice(this, item1.getInvoiceId());
-			if (invoice != null) {
-				removePayment(invoice.getId(), item1.getPaymentId());
+		for (JournalItem item : items) {
+			Invoice invoice = invoiceService.getInvoice(this, item.getInvoiceId());
+			if (item.getPaymentId() != null) {
+				invoiceService.removePayment(this, item.getPaymentId());
 			}
 		}
 		items = newJournal.getItems();
 		for (JournalItem item : items) {
-			Invoice invoice = invoiceService.getInvoice(this, item.getInvoiceId());
-			if (invoice != null) {
+            if (item.getInvoiceId() != null) {
 				Payment payment = createPaymentForJournalItem(newJournal, item);
-				addPayment(invoice.getId(), payment);
+				invoiceService.createPayment(this, payment);
 			}
 		}
 
@@ -288,59 +288,6 @@ public class Document {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Adds a payment to an invoice.
-	 * @param invoiceId the invoice
-	 * @param payment the payment
-	 * @throws DocumentModificationFailedException if a problem occurs while adding the payment
-	 */
-	public void addPayment(String invoiceId, Payment payment) throws DocumentModificationFailedException {
-		if (payment.getId() == null) {
-			throw new DocumentModificationFailedException("The payment has no id");
-		}
-		HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
-		if (paymentsForInvoice == null) {
-			paymentsForInvoice = new HashMap<>();
-			idToInvoiceToPaymentMap.put(invoiceId, paymentsForInvoice);
-		}
-		if (paymentsForInvoice.get(payment.getId()) != null) {
-			throw new DocumentModificationFailedException("A payment with id " + payment.getId() + " already exists.");
-		}
-		paymentsForInvoice.put(payment.getId(), payment);
-	}
-
-	/**
-	 * Removes a payment from an invoice.
-	 * @param invoiceId the id of the invoice
-	 * @param paymentId the id of the payment
-	 * @throws DocumentModificationFailedException if a problem occurs while deleting the payment
-	 */
-	public void removePayment(String invoiceId, String paymentId) throws DocumentModificationFailedException {
-		HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
-		if (paymentsForInvoice != null) {
-			if (paymentsForInvoice.get(paymentId) == null) {
-				throw new DocumentModificationFailedException("No payment with the id " + paymentId + " exists for invoice " + invoiceId);
-			}
-			paymentsForInvoice.remove(paymentId);
-			notifyChange();
-		}
-	}
-
-	/**
-	 * Gets all payments for the specified invoice.
-	 * @param invoiceId the ID of the invoice
-	 * @return the payments
-	 */
-	public List<Payment> getPayments(String invoiceId) {
-		HashMap<String, Payment> paymentsForInvoice = idToInvoiceToPaymentMap.get(invoiceId);
-		ArrayList<Payment> payments = new ArrayList<>(10);
-		if (paymentsForInvoice != null) {
-			payments.addAll(paymentsForInvoice.values());
-			Collections.sort(payments, (o1, o2) -> DateUtil.compareDayOfYear(o1.getDate(), o2.getDate()));
-		}
-		return payments;
 	}
 
 	/**
