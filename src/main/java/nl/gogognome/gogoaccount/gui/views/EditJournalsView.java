@@ -1,35 +1,4 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
-
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.components.document.Document;
@@ -37,15 +6,21 @@ import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.ButtonPanel;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+
 /**
  * This class allows the user to browse the journals and to edit individual journals.
- *
- * @author Sander Kooijmans
  */
 public class EditJournalsView extends View {
 
@@ -177,7 +152,11 @@ public class EditJournalsView extends View {
         if (row != -1) {
         	DeleteJournalController controller =
         		new DeleteJournalController(this, document, journalsTableModel.getRow(row));
-        	controller.execute();
+            try {
+                controller.execute();
+            } catch (ServiceException e) {
+                MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            }
         }
     }
 

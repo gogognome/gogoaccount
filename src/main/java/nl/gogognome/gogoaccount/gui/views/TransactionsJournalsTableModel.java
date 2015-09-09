@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 import java.util.Arrays;
@@ -22,15 +6,26 @@ import java.util.List;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction> {
 
-	private Document document;
+    private final Logger logger = LoggerFactory.getLogger(TransactionsJournalsTableModel.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+
+	private final Document document;
 
     private final static ColumnDefinition DATE =
         new ColumnDefinition("importBankStatementView.date", Date.class, 70);
@@ -86,11 +81,14 @@ class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction>
             return getRow(rowIndex).getJournal() != null ? getRow(rowIndex).getJournal().getDescription() : null;
         } else if (INVOICE.equals(colDef)) {
         	Journal journal = getRow(rowIndex).getJournal();
-            if (journal != null) {
-                String id = journal.getIdOfCreatedInvoice();
-                if (id != null) {
-                    Invoice invoice = document.getInvoice(id);
-                    return invoice.getId() + " (" + invoice.getConcerningParty().getName() + ")";
+            if (journal != null && journal.getIdOfCreatedInvoice() != null) {
+                try {
+                    Invoice invoice = invoiceService.getInvoice(document, journal.getIdOfCreatedInvoice());
+                    Party party = partyService.getParty(document, invoice.getConcerningPartyId());
+                    return invoice.getId() + " (" + party.getName() + ")";
+                } catch (ServiceException e) {
+                    logger.warn("Ignored exception: " + e.getMessage(), e);
+                    return "???";
                 }
             }
         }

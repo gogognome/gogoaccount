@@ -274,7 +274,7 @@ public class EditJournalView extends View {
         }
 	}
 
-	protected void createNewJournal(Journal journal) throws DocumentModificationFailedException {
+	protected void createNewJournal(Journal journal) throws DocumentModificationFailedException, ServiceException {
 		document.addJournal(journal, true);
 	}
 

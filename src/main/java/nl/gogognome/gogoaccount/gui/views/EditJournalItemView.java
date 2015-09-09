@@ -1,20 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
@@ -22,6 +5,7 @@ import nl.gogognome.gogoaccount.businessobjects.JournalItem;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
@@ -43,12 +27,12 @@ import java.util.List;
 
 /**
  * This view allows the user to edit a journal item.
- *
- * @author Sander Kooijmans
  */
 public class EditJournalItemView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
+
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 
 	private Document document;
     private InvoiceBean invoiceBean;
@@ -105,12 +89,12 @@ public class EditJournalItemView extends OkCancelView {
         }
 	}
 
-	private void initModelsForItemToBeEdited() {
+	private void initModelsForItemToBeEdited() throws ServiceException {
 		accountListModel.setSelectedItem(itemToBeEdited.getAccount(), null);
 		amountModel.setString(amountFormat.formatAmountWithoutCurrency(itemToBeEdited.getAmount()));
 		sideListModel.setSelectedIndex(itemToBeEdited.isDebet() ? 0 : 1, null);
 
-		Invoice invoice = document.getInvoice(itemToBeEdited.getInvoiceId());
+		Invoice invoice = itemToBeEdited.getInvoiceId() != null ? invoiceService.getInvoice(document, itemToBeEdited.getInvoiceId()) : null;
 		invoiceBean.setSelectedInvoice(invoice);
 	}
 
@@ -159,7 +143,7 @@ public class EditJournalItemView extends OkCancelView {
 
             enteredJournalItem = new JournalItem(amount, account, debet,
                     invoice != null ? invoice.getId() : null,
-                    invoice != null ? document.createPaymentId() : null);
+                    invoice != null ? "TODO: Fix this" : null);
             requestClose();
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");

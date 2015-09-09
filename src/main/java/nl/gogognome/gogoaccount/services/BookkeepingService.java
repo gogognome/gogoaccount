@@ -250,7 +250,11 @@ public class BookkeepingService {
             rb.setExpenses(configurationService.findExpenses(document));
             rb.setRevenues(configurationService.findRevenues(document));
 
-            document.getJournals().stream().filter(j -> DateUtil.compareDayOfYear(j.getDate(), date) <= 0).forEach(rb::addJournal);
+            for (Journal journal : document.getJournals()) {
+                if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
+                    rb.addJournal(journal);
+                }
+            }
 
             for (Invoice invoice : invoiceService.findAllInvoices(document)) {
                 if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {

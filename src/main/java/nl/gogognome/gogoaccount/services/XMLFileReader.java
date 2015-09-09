@@ -5,6 +5,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
@@ -35,6 +36,7 @@ public class XMLFileReader {
 
     private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 	private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	private Document document;
@@ -177,8 +179,6 @@ public class XMLFileReader {
 				document.addJournal(new Journal(id, description, date, items, idOfCreatedInvoice), false);
 			}
 		}
-
-		document.setNextPaymentId("p" + (highestPaymentId + 1));
 	}
 
 	private List<Account> parseAccounts(NodeList nodes, AccountType type) {
@@ -248,28 +248,33 @@ public class XMLFileReader {
 					throw new XMLParseException("Invalid amount: " + invoiceElem.getAttribute("amountToBePaid"));
 				}
 
-				Party concerningParty = partyService.getParty(document, invoiceElem.getAttribute("concerningParty"));
-				if (concerningParty == null) {
-					throw new XMLParseException("No (valid) party specified for the invoice \"" + id + "\"");
+				String concerningPartyId = invoiceElem.getAttribute("concerningParty");
+				if (!partyService.existsParty(document, concerningPartyId)) {
+					throw new XMLParseException("No (valid) concerning party specified for the invoice \"" + id + "\"");
 				}
 
-				Party payingParty = partyService.getParty(document, invoiceElem.getAttribute("payingParty"));
+				String payingPartyId = invoiceElem.getAttribute("payingParty");
+                if (payingPartyId != null && !partyService.existsParty(document, payingPartyId)) {
+                    throw new XMLParseException("No (valid) paying party specified for the invoice \"" + id + "\"");
+                }
 
 				NodeList lineNodes = invoiceElem.getElementsByTagName("line");
 				int numNodes = lineNodes.getLength();
-				String[] descriptions = new String[numNodes];
-				Amount[] amounts = new Amount[numNodes];
+				List<String> descriptions = new ArrayList<>(numNodes);
+				List<Amount> amounts = new ArrayList<>(numNodes);
 				for (int l=0; l<numNodes; l++) {
 					Element lineElem = (Element)lineNodes.item(l);
-					descriptions[l] = lineElem.getAttribute("description");
+					descriptions.add(lineElem.getAttribute("description"));
 					String amountString = lineElem.getAttribute("amount");
 					if (amountString != null && amountString.length() > 0) {
 						try {
-							amounts[l] = AMOUNT_FORMAT.parse(amountString);
+							amounts.add(AMOUNT_FORMAT.parse(amountString));
 						} catch (ParseException e) {
 							throw new XMLParseException("Invalid amount: " + amountString);
 						}
-					}
+					} else {
+                        amounts.add(null);
+                    }
 				}
 
 				Date issueDate;
@@ -281,41 +286,38 @@ public class XMLFileReader {
 
 				NodeList paymentNodes = invoiceElem.getElementsByTagName("payment");
 				numNodes = paymentNodes.getLength();
-				Payment[] payments = new Payment[numNodes];
+				List<Payment> payments = new ArrayList<>(numNodes);
 				for (int p=0; p<numNodes; p++) {
 					Element paymentElem = (Element)paymentNodes.item(p);
 					String paymentId;
-					Amount amount;
-					Date date;
-					String description;
 					paymentId = paymentElem.getAttribute("id");
 					if (StringUtil.isNullOrEmpty(paymentId)) {
 						paymentId = "p" + id + "-" + p;
 					}
 
-					try {
-						date = DATE_FORMAT.parse(paymentElem.getAttribute("date"));
-					} catch (ParseException e1) {
-						throw new XMLParseException("Invalid date: " + paymentElem.getAttribute("date"));
-					}
-					try {
-						amount = AMOUNT_FORMAT.parse(paymentElem.getAttribute("amount"));
-					} catch (ParseException e) {
-						throw new XMLParseException("Invalid amount: " + paymentElem.getAttribute("amount"));
-					}
-					description = paymentElem.getAttribute("description");
-					payments[p] = new Payment(paymentId, amount, date, description);
+                    Payment payment = new Payment(paymentId);
+                    try {
+                        payment.setDate(DATE_FORMAT.parse(paymentElem.getAttribute("date")));
+                    } catch (ParseException e1) {
+                        throw new XMLParseException("Invalid date: " + paymentElem.getAttribute("date"));
+                    }
+                    try {
+                        payment.setAmount(AMOUNT_FORMAT.parse(paymentElem.getAttribute("amount")));
+                    } catch (ParseException e) {
+                        throw new XMLParseException("Invalid amount: " + paymentElem.getAttribute("amount"));
+                    }
+                    payment.setDescription(paymentElem.getAttribute("description"));
+                    payments.add(payment);
 				}
 
-				try {
-					document.addInvoice(new Invoice(id, payingParty, concerningParty, amountToBePaid,
-							issueDate, descriptions, amounts));
-					for (Payment p : payments) {
-						document.addPayment(id, p);
-					}
-				} catch (DocumentModificationFailedException e) {
-					throw new XMLParseException(e);
-				}
+                Invoice invoice = new Invoice(id);
+                invoice.setPayingPartyId(payingPartyId);
+                invoice.setConcerningPartyId(concerningPartyId);
+                invoice.setAmountToBePaid(amountToBePaid);
+                invoice.setIssueDate(issueDate);
+                invoiceService.createInvoice(document, invoice);
+                invoiceService.createDetails(document, invoice, descriptions, amounts);
+                invoiceService.createPayments(document, payments);
 			}
 		}
 	}

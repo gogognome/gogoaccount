@@ -1,32 +1,11 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-
-import javax.swing.JLabel;
-
-import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Journal;
 import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
@@ -34,12 +13,13 @@ import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 
+import javax.swing.*;
+import java.awt.*;
+
 /**
  * This class extends the {@link EditJournalView} so that it can
  * shows details about the transaction for which a journal is created.
  * The initial values of the view depend on the current transaction.
- *
- * @author Sander Kooijmans
  */
 public class AddJournalForTransactionView extends EditJournalView {
 
@@ -108,7 +88,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	@Override
-	protected void createNewJournal(Journal journal) throws DocumentModificationFailedException {
+	protected void createNewJournal(Journal journal) throws DocumentModificationFailedException, ServiceException {
 		super.createNewJournal(journal);
 		plugin.journalAdded(journal);
 	}

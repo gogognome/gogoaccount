@@ -44,6 +44,8 @@ public class InvoiceGeneratorView extends View {
 
 	private static final long serialVersionUID = 1L;
 
+	private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+
 	private final Document document;
 
     private List<Account> accounts;
@@ -337,15 +339,13 @@ public class InvoiceGeneratorView extends View {
 			}
 
 			if (line.getAccount() == null) {
-				MessageDialog.showMessage(this, "gen.titleError",
-						"invoiceGeneratorView.emptyAccountFound");
+				MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.emptyAccountFound");
 				return;
 			}
 		}
 
 		if (!amountToBePaidSelected) {
-			MessageDialog.showMessage(this, "gen.titleError",
-					"invoiceGeneratorView.noAmountToBePaidSelected");
+			MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.noAmountToBePaidSelected");
 			return;
 		}
 
@@ -362,23 +362,19 @@ public class InvoiceGeneratorView extends View {
 		}
 
 		// Ask the user whether he/she is sure to generate the invoices.
-		int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
-				"invoiceGeneratorView.areYouSure");
+		int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "invoiceGeneratorView.areYouSure");
 		if (choice != MessageDialog.YES_OPTION) {
 			// The user canceled the operation.
 			return;
 		}
 
 		try {
-			InvoiceService.createInvoiceAndJournalForParties(document, tfId.getText(), Arrays.asList(parties), date,
-					tfDescription.getText(), invoiceLines);
+			invoiceService.createInvoiceAndJournalForParties(document, tfId.getText(), Arrays.asList(parties), date, tfDescription.getText(), invoiceLines);
 		} catch (ServiceException e) {
-			MessageDialog.showMessage(this, "gen.titleError",
-					e.getMessage());
+			MessageDialog.showMessage(this, "gen.titleError", e.getMessage());
 			return;
 		}
-		MessageDialog.showMessage(this, "gen.titleMessage",
-				"invoiceGeneratorView.messageSuccess");
+		MessageDialog.showMessage(this, "gen.titleMessage", "invoiceGeneratorView.messageSuccess");
 	}
 
 	private void onInvoiceTypeChanged() {

@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -21,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 public class ReportBuilder {
+
+	private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	private final Document document;
 	private final Bookkeeping bookkeeping;
@@ -47,18 +51,18 @@ public class ReportBuilder {
 		return report;
 	}
 
-	private void determineBalanceForDebtorsAndCreditors() {
+	private void determineBalanceForDebtorsAndCreditors() throws ServiceException {
 		for (Invoice invoice : report.getInvoices()) {
-			Party p = invoice.getPayingParty();
+			Party party = partyService.getParty(document, invoice.getPayingPartyId() != null ? invoice.getPayingPartyId() : invoice.getConcerningPartyId());
 			Amount amount = report.getRemaingAmountForInvoice(invoice);
 			if (amount.isPositive()) {
-				Amount balance = report.getBalanceForDebtor(p);
+				Amount balance = report.getBalanceForDebtor(party);
 				balance = balance.add(amount);
-				report.setBalanceForDebtor(p, balance);
+				report.setBalanceForDebtor(party, balance);
 			} else if (amount.isNegative()) {
-				Amount balance = report.getBalanceForCreditor(p);
+				Amount balance = report.getBalanceForCreditor(party);
 				balance = balance.subtract(amount);
-				report.setBalanceForCreditor(p, balance);
+				report.setBalanceForCreditor(party, balance);
 			}
 		}
 	}
@@ -79,13 +83,13 @@ public class ReportBuilder {
 		report.setRevenues(revenues);
 	}
 
-	public void addJournal(Journal journal) {
+	public void addJournal(Journal journal) throws ServiceException {
 		for (JournalItem item : journal.getItems()) {
 			addJournalItem(journal, item);
 		}
 	}
 
-	private void addJournalItem(Journal journal, JournalItem item) {
+	private void addJournalItem(Journal journal, JournalItem item) throws ServiceException {
 		addAmountToTotalForAccount(item);
 		addLedgerLineForAccount(journal, item);
 		addAmountToTotalDebetOrCredit(item); // must come after ledger line has been added
@@ -105,16 +109,18 @@ public class ReportBuilder {
 		report.setAmount(account, accountAmount);
 	}
 
-	private void addLedgerLineForAccount(Journal journal, JournalItem item) {
+	private void addLedgerLineForAccount(Journal journal, JournalItem item) throws ServiceException {
 		if (DateUtil.compareDayOfYear(journal.getDate(), bookkeeping.getStartOfPeriod()) >= 0) {
 			Account account = item.getAccount();
 			if (!hasStartBalanceLineBeenAdded(account)) {
 				addStartLedgerLineForAccount(account, accountToTotalDebet.get(account),
 						accountToTotalCredit.get(account));
 			}
-			Invoice invoice = document.getInvoice(item.getInvoiceId());
-			if (invoice == null) {
-				invoice = document.getInvoice(journal.getIdOfCreatedInvoice());
+			Invoice invoice = null;
+            if (item.getInvoiceId() != null) {
+                invoice = invoiceService.getInvoice(document, item.getInvoiceId());
+            } else  if (journal.getIdOfCreatedInvoice() == null) {
+				invoice = invoiceService.getInvoice(document, journal.getIdOfCreatedInvoice());
 			}
 			addLedgerLineForAccount(account, journal, item, invoice);
 		}
@@ -163,10 +169,10 @@ public class ReportBuilder {
 		return !report.getLedgerLinesForAccount(account).isEmpty();
 	}
 
-	public void addInvoice(Invoice invoice) {
+	public void addInvoice(Invoice invoice) throws ServiceException {
 		report.addInvoice(invoice);
 
-		InvoiceService.getPayments(document, invoice.getId()).stream()
+		invoiceService.findPayments(document, invoice).stream()
 				.filter(p -> DateUtil.compareDayOfYear(p.getDate(), report.getEndDate()) <= 0)
 				.forEach(p -> report.addPayment(invoice, p.getAmount()));
 	}

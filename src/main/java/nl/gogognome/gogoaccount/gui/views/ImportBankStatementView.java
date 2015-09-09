@@ -45,6 +45,7 @@ import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 import nl.gogognome.gogoaccount.services.importers.RabobankCSVImporter;
 import nl.gogognome.gogoaccount.services.importers.TransactionImporter;
@@ -81,13 +82,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
 	private FileModel fileSelectionModel = new FileModel();
 
-    private JTable itemsTable;
     private ItemsTableModel itemsTableModel;
 
     private JTable transactionsJournalsTable;
     private TransactionsJournalsTableModel transactionJournalsTableModel;
 
-    private ListModel<TransactionImporter> importersModel = new ListModel<TransactionImporter>();
+    private ListModel<TransactionImporter> importersModel = new ListModel<>();
 
     private JButton importButton;
     private JButton addButton;
@@ -96,9 +96,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     Document document;
 
-    private InputFieldsColumn ifc;
-
-	/**
+    /**
 	 * Creates the view.
 	 * @param document the database
 	 */
@@ -120,17 +118,17 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 	}
 
 	private void initModels() {
-		List<TransactionImporter> importers = new ArrayList<TransactionImporter>();
+		List<TransactionImporter> importers = new ArrayList<>();
 		importers.add(new RabobankCSVImporter());
 		importersModel.setItems(importers);
 	}
 
 	private void addComponents() {
-		ifc = new InputFieldsColumn();
+        InputFieldsColumn ifc = new InputFieldsColumn();
 		addCloseable(ifc);
 		ifc.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
 		ifc.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
-				new ImporterFormatter());
+                new ImporterFormatter());
 
 		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
 		importButton = buttonPanel.addButton("importBankStatementView.import", new ImportAction());
@@ -147,7 +145,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
 		// Create table of items
 		itemsTableModel = new ItemsTableModel(document);
-		itemsTable = widgetFactory.createTable(itemsTableModel);
+        JTable itemsTable = widgetFactory.createTable(itemsTableModel);
 		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
 
@@ -252,9 +250,6 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     	}
 	}
 
-	/**
-     * This method lets the user edit the selected journal.
-     */
     private void editJournalForSelectedTransaction() {
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
@@ -267,28 +262,26 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         }
     }
 
-    /**
-     * This method lets the user add new journals.
-     */
     private void addJournalForSelectedTransaction() {
         AddJournalForTransactionView view = new AddJournalForTransactionView(document, this);
         ViewDialog dialog = new ViewDialog(this, view);
         dialog.showDialog();
     }
 
-    /**
-     * This method lets the user delete the selected journal.
-     */
     private void deleteJournalFromSelectedTransaction() {
-        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
-        if (row != -1) {
-            Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-        	DeleteJournalController controller = new DeleteJournalController(this, document, journal);
-        	controller.execute();
+        try {
+            int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+            if (row != -1) {
+                Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
+                DeleteJournalController controller = new DeleteJournalController(this, document, journal);
+                controller.execute();
 
-        	if (controller.isJournalDeleted()) {
-        		updateTransactionJournal(row, null);
-        	}
+                if (controller.isJournalDeleted()) {
+                    updateTransactionJournal(row, null);
+                }
+            }
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
     }
 

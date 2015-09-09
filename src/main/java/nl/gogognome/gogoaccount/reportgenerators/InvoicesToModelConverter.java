@@ -21,8 +21,6 @@ import nl.gogognome.lib.util.StringUtil;
 
 /**
  * Converts invoices to a model for ODT generation.
- *
- * @author Sander Kooijmans
  */
 public class InvoicesToModelConverter {
 
