@@ -6,9 +6,12 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
@@ -29,10 +32,13 @@ import java.util.List;
  *
  * A <i>report</i> consists of a balance, operational result, and a list
  * of debtors and creditors.
- *
- * @author Sander Kooijmans
  */
 public class ReportTask implements Task {
+
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+
     private Document document;
     private Bookkeeping bookkeeping;
     private Date date;
@@ -70,7 +76,7 @@ public class ReportTask implements Task {
      */
     @Override
 	public Object execute(TaskProgressListener progressListener) throws Exception {
-        bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        bookkeeping = configurationService.getBookkeeping(document);
     	this.progressListener = progressListener;
     	progressListener.onProgressUpdate(0);
         switch(fileType) {
@@ -96,7 +102,7 @@ public class ReportTask implements Task {
     /**
      * Writes a report to the specified writer.
      */
-    private void printReport() {
+    private void printReport() throws ServiceException {
         writer.println(textFormat.getStartOfDocument());
         progressListener.onProgressUpdate(20);
         printBalance();
@@ -340,7 +346,7 @@ public class ReportTask implements Task {
 		return party.getId() + " - " + party.getName();
 	}
 
-	private void printJournals(List<Journal> journals, Date startDate, Date endDate) {
+	private void printJournals(List<Journal> journals, Date startDate, Date endDate) throws ServiceException {
         int startIndex = 0;
         int endIndex = 0;
         for (int i=0; i<journals.size(); i++) {
@@ -387,9 +393,9 @@ public class ReportTask implements Task {
                 values[6] = "";
                 String idOfCreatedInvoice = journals.get(i).getIdOfCreatedInvoice();
                 if (idOfCreatedInvoice != null) {
-                    Invoice invoice = document.getInvoice(idOfCreatedInvoice);
+                    Invoice invoice = invoiceService.getInvoice(document, idOfCreatedInvoice);
                     values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid())
-                        + " " + invoice.getId() + " (" + invoice.getConcerningParty().getName() + ')';
+                        + " " + invoice.getId() + " (" + partyService.getParty(document, invoice.getConcerningPartyId()).getName() + ')';
                 } else {
                     values[8] = "";
                 }
@@ -404,8 +410,12 @@ public class ReportTask implements Task {
                     values[6] = "";
                     values[item.isDebet() ? 4 : 6] =
                             amountFormat.formatAmountWithoutCurrency(item.getAmount());
-                    Invoice invoice = document.getInvoice(item.getInvoiceId());
-                    values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
+                    if (item.getInvoiceId() != null) {
+                        Invoice invoice = invoiceService.getInvoice(document, item.getInvoiceId());
+                        values[8] = invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")";
+                    } else {
+                        values[8] = "";
+                    }
                     result.append(textFormat.getRow(values));
                 }
 
@@ -415,7 +425,7 @@ public class ReportTask implements Task {
         writer.println(result.toString());
     }
 
-    private void printLedger() {
+    private void printLedger() throws ServiceException {
         StringBuilder result = new StringBuilder(10000);
 
         result.append(textFormat.getNewParagraph());
@@ -452,7 +462,7 @@ public class ReportTask implements Task {
                 values[8] = "";
 
                 Invoice invoice = line.invoice;
-                values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
+                values[8] = invoice != null ? invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")" : "";
 
                 result.append(textFormat.getRow(values));
             }

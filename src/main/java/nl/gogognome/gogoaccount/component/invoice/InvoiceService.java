@@ -316,8 +316,19 @@ public class InvoiceService {
         });
     }
 
+    public void updateInvoice(Document document, Invoice invoice, List<String> newDescriptions, List<Amount> newAmounts) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> {
+            new InvoiceDAO(document).update(invoice);
+            new InvoiceDetailDAO(document).updateDetails(invoice.getId(), newDescriptions, newAmounts);
+            document.notifyChange();
+        });
+    }
+
     public void deleteInvoice(Document document, String invoiceId) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> new InvoiceDAO(document).delete(invoiceId));
+        ServiceTransaction.withoutResult(() -> {
+            new InvoiceDAO(document).delete(invoiceId);
+            document.notifyChange();
+        });
     }
 
     public List<String> findDescriptions(Document document, Invoice invoice) throws ServiceException {

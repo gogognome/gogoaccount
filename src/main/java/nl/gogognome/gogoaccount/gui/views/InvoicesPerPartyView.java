@@ -1,6 +1,5 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.DefaultFocusTraversalPolicy;
@@ -25,6 +24,7 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.components.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
@@ -44,6 +44,8 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.util.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This view shows all invoices per party or all invoices for a single party.
@@ -51,6 +53,10 @@ import nl.gogognome.lib.util.DateUtil;
 public class InvoicesPerPartyView extends View {
 
 	private static final long serialVersionUID = 1L;
+
+    private final Logger logger = LoggerFactory.getLogger(InvoicesPerPartyView.class);
+	private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	private Document document;
 	private DocumentListener documentListener;
@@ -168,7 +174,7 @@ public class InvoicesPerPartyView extends View {
 		partyModel.removeModelChangeListener(listener);
 	}
 
-	private void updateInvoicePanel() {
+	private void updateInvoicePanel() throws ServiceException {
 		updateTitleBorder();
 		updateInvoicesInPanel();
 	}
@@ -189,7 +195,7 @@ public class InvoicesPerPartyView extends View {
 		}
 	}
 
-	private void updateInvoicesInPanel() {
+	private void updateInvoicesInPanel() throws ServiceException {
 		Date date = dateModel.getDate();
 		Party party = partyModel.getParty();
 
@@ -199,34 +205,34 @@ public class InvoicesPerPartyView extends View {
 			return;
 		}
 
-        Invoice[] invoices = document.getInvoices();
+        List<Invoice> invoices = invoiceService.findAllInvoices(document);
         sortInvoices(invoices, party);
         addInvoicesToPanel(invoices, party, date);
 
         validate();
 	}
 
-	private void sortInvoices(Invoice[] invoices, Party party) {
+	private void sortInvoices(List<Invoice> invoices, Party party) {
         sortInvoicesOnDate(invoices);
         if (party == null) {
         	sortInvoicesPerParty(invoices);
         }
 	}
 
-	private void sortInvoicesOnDate(Invoice[] invoices) {
-		Arrays.sort(invoices, (o1, o2) -> DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate()));
+	private void sortInvoicesOnDate(List<Invoice> invoices) {
+		Collections.sort(invoices, (o1, o2) -> DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate()));
 	}
 
-	private void sortInvoicesPerParty(Invoice[] invoices) {
-		Arrays.sort(invoices, (o1, o2) -> o1.getConcerningParty().getId().compareTo(o2.getConcerningParty().getId()));
+	private void sortInvoicesPerParty(List<Invoice> invoices) {
+		Collections.sort(invoices, (o1, o2) -> o1.getConcerningPartyId().compareTo(o2.getConcerningPartyId()));
 	}
 
-	private void addInvoicesToPanel(Invoice[] invoices, Party party, Date date) {
+	private void addInvoicesToPanel(List<Invoice> invoices, Party party, Date date) throws ServiceException {
 		int row = 0;
         Party prevParty = null;
         for (Invoice invoice : invoices) {
         	if (mustInvoiceBeIncluded(invoice, date)) {
-        		Party concerningParty = invoice.getConcerningParty();
+        		Party concerningParty = partyService.getParty(document, invoice.getConcerningPartyId());
         		boolean addInvoice = false;
             	if (party == null) {
             		addInvoice = true;
@@ -242,8 +248,11 @@ public class InvoicesPerPartyView extends View {
             	}
 
             	if (addInvoice) {
-            		List<Payment> payments = InvoiceService.getPayments(document, invoice.getId());
-            		InvoicePanel ip = new InvoicePanel(invoice, payments, date, currency);
+            		List<Payment> payments = invoiceService.findPayments(document, invoice);
+            		InvoicePanel ip = new InvoicePanel(invoice,
+                            invoiceService.findDescriptions(document, invoice),
+                            invoiceService.findAmounts(document, invoice),
+                            payments, partyService.getParty(document, invoice.getPayingPartyId()), date, currency);
             		invoicesPanel.add(ip, SwingUtils.createPanelGBConstraints(0, row));
             		row++;
             	}
@@ -251,7 +260,7 @@ public class InvoicesPerPartyView extends View {
         }
 	}
 
-	private boolean mustInvoiceBeIncluded(Invoice invoice, Date date) {
+	private boolean mustInvoiceBeIncluded(Invoice invoice, Date date) throws ServiceException {
 		return isInvoiceCreatedBeforeDate(invoice, date)
 			&& isInvoiceClosedAndMustItBeIncluded(invoice, date);
 	}
@@ -260,8 +269,8 @@ public class InvoicesPerPartyView extends View {
 		return DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0;
 	}
 
-	private boolean isInvoiceClosedAndMustItBeIncluded(Invoice invoice, Date date) {
-        return includeClosedInvoicesModel.getBoolean() || !InvoiceService.isPaid(document, invoice.getId(), date);
+	private boolean isInvoiceClosedAndMustItBeIncluded(Invoice invoice, Date date) throws ServiceException {
+        return includeClosedInvoicesModel.getBoolean() || !invoiceService.isPaid(document, invoice.getId(), date);
     }
 
 	private void editSelectedInvoice() {
@@ -295,7 +304,11 @@ public class InvoicesPerPartyView extends View {
 	private final class ModelChangeListenerImpl implements ModelChangeListener {
 		@Override
 		public void modelChanged(AbstractModel model) {
-			updateInvoicePanel();
+            try {
+                updateInvoicePanel();
+            } catch (ServiceException e) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 
@@ -303,7 +316,12 @@ public class InvoicesPerPartyView extends View {
 
 		@Override
 		public void documentChanged(Document document) {
-			updateInvoicesInPanel();
+
+            try {
+                updateInvoicesInPanel();
+            } catch (ServiceException e) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 

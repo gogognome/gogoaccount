@@ -5,12 +5,14 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.components.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -24,7 +26,6 @@ import java.util.*;
 
 import static junit.framework.Assert.*;
 
-
 /**
  * Abstract class that sets up a bookkeeping in an in-memory database. A new database instance is used per test.
  */
@@ -32,6 +33,7 @@ public abstract class AbstractBookkeepingTest {
 
     private final BookkeepingService bookkeepingService = new BookkeepingService();
     private final ConfigurationService configurationService = new ConfigurationService();
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
     private final PartyService partyService = new PartyService();
 
 	protected Document document;
@@ -85,11 +87,16 @@ public abstract class AbstractBookkeepingTest {
 		Journal journal = new Journal("t1", "Payment", DateUtil.createDate(2011, 3, 5),
 				items, "inv1");
 
-		String[] descriptions = new String[] { "Contributie 2011", "Contributie" };
-		Amount[] amounts = new Amount[] { null, createAmount(20) };
+		List<String> descriptions = Arrays.asList("Contributie 2011", "Contributie");
+		List<Amount> amounts = Arrays.asList(null, createAmount(20));
         Party party = new PartyService().getParty(document, "1101");
-		Invoice invoice = new Invoice(journal.getIdOfCreatedInvoice(), party, party,
-				createAmount(20), journal.getDate(), descriptions, amounts);
+		Invoice invoice = new Invoice(journal.getIdOfCreatedInvoice());
+		invoice.setConcerningPartyId(party.getId());
+        invoice.setPayingPartyId(party.getId());
+        invoice.setAmountToBePaid(createAmount(20));
+        invoice.setIssueDate(journal.getDate());
+        invoiceService.createInvoice(document, invoice);
+        invoiceService.createDetails(document, invoice, descriptions, amounts);
 		document.addInvoicAndJournal(invoice, journal);
 
 		items = new ArrayList<>();

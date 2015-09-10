@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.businessobjects.Report;
@@ -32,6 +16,8 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,12 +25,12 @@ import java.util.Date;
 
 /**
  * This view shows all mutations for an account.
- *
- * @author Sander Kooijmans
  */
 public class AccountMutationsView extends View {
 
 	private static final long serialVersionUID = 1L;
+
+    private final Logger logger = LoggerFactory.getLogger(AccountMutationsView.class);
 
 	private Document document;
 
@@ -71,14 +57,19 @@ public class AccountMutationsView extends View {
 
 	@Override
 	public void onInit() {
-		initModels();
-		addComponents();
-		addListeners();
-		updateTableModel();
+		try {
+            initModels();
+            addComponents();
+            addListeners();
+            updateTableModel();
 
-		if (!accountListModel.getItems().isEmpty()) {
-			accountListModel.setSelectedIndex(0, null);
-		}
+            if (!accountListModel.getItems().isEmpty()) {
+                accountListModel.setSelectedIndex(0, null);
+            }
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
 	}
 
 	private void initModels() {
@@ -131,7 +122,7 @@ public class AccountMutationsView extends View {
 		accountListModel.removeModelChangeListener(modelListener);
 	}
 
-	private void updateReportAndTableModel() {
+	private void updateReportAndTableModel() throws ServiceException {
 		Date date = dateModel.getDate();
 		if (date != null) {
 			updateReport(date);
@@ -151,9 +142,9 @@ public class AccountMutationsView extends View {
 		}
 	}
 
-	private void updateTableModel() {
+	private void updateTableModel() throws ServiceException {
 		Account account = accountListModel.getSelectedItem();
-		tableModel.setAccountAndDate(report, account);
+		tableModel.setAccountAndDate(document, report, account);
 
 		if (account != null && report != null) {
 			tableScrollPane.setBorder(widgetFactory.createTitleBorder("vao.accountAtDate",
@@ -176,19 +167,27 @@ public class AccountMutationsView extends View {
 	private final class ModelChangeListenerImpl implements ModelChangeListener {
 		@Override
 		public void modelChanged(AbstractModel model) {
-			if (model == accountListModel && report != null) {
-				updateTableModel();
-			} else {
-				updateReportAndTableModel();
-			}
+            try {
+                if (model == accountListModel && report != null) {
+                    updateTableModel();
+                } else {
+                    updateReportAndTableModel();
+                }
+            } catch (ServiceException e ) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 
 	private final class DocumentListenerImpl implements DocumentListener {
 		@Override
 		public void documentChanged(Document document) {
-			setAccountsInListModel();
-			updateReportAndTableModel();
+            try {
+                setAccountsInListModel();
+                updateReportAndTableModel();
+            } catch (ServiceException e) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 }

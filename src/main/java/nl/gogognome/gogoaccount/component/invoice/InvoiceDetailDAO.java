@@ -34,6 +34,11 @@ class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
         }
     }
 
+    public void updateDetails(String invoiceId, List<String> newDescriptions, List<Amount> newAmounts) throws SQLException {
+        delete(new NameValuePairs().add("invoice_id", invoiceId));
+        createDetails(invoiceId, newDescriptions, newAmounts);
+    }
+
     public List<InvoiceDetail> findForInvoice(String invoiceId) throws SQLException {
         return findAll(new NameValuePairs().add("invoice_id", invoiceId));
     }
