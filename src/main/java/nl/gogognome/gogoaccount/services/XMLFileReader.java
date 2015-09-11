@@ -296,6 +296,7 @@ public class XMLFileReader {
                     }
 
                     Payment payment = new Payment(paymentId);
+                    payment.setInvoiceId(id);
                     try {
                         payment.setDate(DATE_FORMAT.parse(paymentElem.getAttribute("date")));
                     } catch (ParseException e1) {
