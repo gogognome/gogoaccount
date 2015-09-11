@@ -205,7 +205,7 @@ public class BookkeepingService {
      * @param account the account
      * @return the balance of this account at start of the bookkeeping
      */
-    public static Amount getStartBalance(Document document, Account account) throws ServiceException {
+    public Amount getStartBalance(Document document, Account account) throws ServiceException {
         Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
         Date date = bookkeeping.getStartOfPeriod();
 

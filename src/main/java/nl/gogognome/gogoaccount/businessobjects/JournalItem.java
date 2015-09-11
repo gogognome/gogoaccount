@@ -94,6 +94,10 @@ public class JournalItem
         return paymentId;
     }
 
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
+    }
+
     public boolean isDebet() {
         return debet;
     }

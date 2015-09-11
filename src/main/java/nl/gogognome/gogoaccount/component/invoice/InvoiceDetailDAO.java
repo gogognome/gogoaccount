@@ -35,7 +35,7 @@ class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
     }
 
     public void updateDetails(String invoiceId, List<String> newDescriptions, List<Amount> newAmounts) throws SQLException {
-        delete(new NameValuePairs().add("invoice_id", invoiceId));
+        deleteWhere(new NameValuePairs().add("invoice_id", invoiceId));
         createDetails(invoiceId, newDescriptions, newAmounts);
     }
 
@@ -48,12 +48,7 @@ class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
         InvoiceDetail invoiceDetail = new InvoiceDetail(result.getLong("id"));
         invoiceDetail.setInvoiceId(result.getString("invoice_id"));
         invoiceDetail.setDescription(result.getString("description"));
-        try {
-            AmountFormat amountFormat = new AmountFormat(document.getLocale());
-            invoiceDetail.setAmount(amountFormat.parse(result.getString("amount")));
-        } catch (ParseException e) {
-            throw new SQLException("Could not parse amount " + result.getString("amount"));
-        }
+        invoiceDetail.setAmount(document.toAmount(result.getString("amount")));
         return invoiceDetail;
     }
 
@@ -63,6 +58,6 @@ class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
                 .add("id", invoiceDetail.getId())
                 .add("invoice_id", invoiceDetail.getInvoiceId())
                 .add("description", invoiceDetail.getDescription())
-                .add("amount", new AmountFormat(document.getLocale()).formatAmount(invoiceDetail.getAmount()));
+                .add("amount", document.toString(invoiceDetail.getAmount()));
     }
 }

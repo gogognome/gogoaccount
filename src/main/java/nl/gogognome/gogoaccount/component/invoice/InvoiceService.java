@@ -30,11 +30,6 @@ public class InvoiceService {
 
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
-    /** Private constructor to avoid instantiation. */
-    private InvoiceService() {
-        throw new IllegalStateException();
-    }
-
     public Invoice getInvoice(Document document, String invoiceId) throws ServiceException {
         return ServiceTransaction.withResult(() -> new InvoiceDAO(document).get(invoiceId));
     }
@@ -60,8 +55,8 @@ public class InvoiceService {
             validateInvoice(issueDate, invoiceLineDefinitions);
             boolean changedDatabase = false;
 
-            InvoiceDAO invoiceDAO = ObjectFactory.create(InvoiceDAO.class);
-            InvoiceDetailDAO invoiceDetailsDAO = ObjectFactory.create(InvoiceDetailDAO.class);
+            InvoiceDAO invoiceDAO = new InvoiceDAO(document);
+            InvoiceDetailDAO invoiceDetailsDAO = new InvoiceDetailDAO(document);
             List<Party> partiesForWhichCreationFailed = new LinkedList<>();
 
             for (Party party : parties) {
@@ -278,6 +273,10 @@ public class InvoiceService {
 
     public Invoice createInvoice(Document document, Invoice invoice) throws ServiceException {
         return ServiceTransaction.withResult(() -> new InvoiceDAO(document).create(invoice));
+    }
+
+    public boolean existsInvoice(Document document, String invoiceId) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new InvoiceDAO(document).exists(invoiceId));
     }
 
     /**
