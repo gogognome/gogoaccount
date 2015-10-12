@@ -4,9 +4,9 @@ import java.awt.Component;
 import java.util.Arrays;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.views.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.views.EditJournalView;
@@ -25,34 +25,34 @@ public class EditJournalController {
 
 	private Component owner;
 	private Document document;
-	private Journal journal;
-	private Journal updatedJournal;
+	private JournalEntry journalEntry;
+	private JournalEntry updatedJournalEntry;
 
 	/**
 	 * Constructs the controller.
 	 * @param owner the component that uses this controller
 	 * @param document the database
-	 * @param journal the journal to be edited
+	 * @param journalEntry the journal to be edited
 	 */
-	public EditJournalController(Component owner, Document document, Journal journal) {
+	public EditJournalController(Component owner, Document document, JournalEntry journalEntry) {
 		super();
 		this.owner = owner;
 		this.document = document;
-		this.journal = journal;
+		this.journalEntry = journalEntry;
 	}
 
 	public void execute() {
-        EditJournalView view = new EditJournalView(document, "ajd.title", journal);
+        EditJournalView view = new EditJournalView(document, "ajd.title", journalEntry);
         ViewDialog dialog = new ViewDialog(owner, view);
         dialog.showDialog();
 
-        updatedJournal = view.getEditedJournal();
+        updatedJournalEntry = view.getEditedJournalEntry();
         if (journalModified()) {
             try {
-                if (journal.createsInvoice()) {
+                if (journalEntry.createsInvoice()) {
                     updateInvoiceCreatedByJournal();
                 }
-                document.updateJournal(journal, updatedJournal);
+                document.updateJournal(journalEntry, updatedJournalEntry);
             } catch (ServiceException | DocumentModificationFailedException e) {
                 MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateJournalException");
             }
@@ -60,14 +60,14 @@ public class EditJournalController {
 	}
 
 	private boolean journalModified() {
-        return updatedJournal != null && !(ComparatorUtil.equals(journal.getId(), updatedJournal.getId()) && ComparatorUtil.equals(journal.getDate(), updatedJournal.getDate()) && ComparatorUtil.equals(journal.getDescription(), updatedJournal.getDescription()) && Arrays.equals(journal.getItems(), updatedJournal.getItems()));
+        return updatedJournalEntry != null && !(ComparatorUtil.equals(journalEntry.getId(), updatedJournalEntry.getId()) && ComparatorUtil.equals(journalEntry.getDate(), updatedJournalEntry.getDate()) && ComparatorUtil.equals(journalEntry.getDescription(), updatedJournalEntry.getDescription()) && Arrays.equals(journalEntry.getItems(), updatedJournalEntry.getItems()));
 
     }
 
 	private void updateInvoiceCreatedByJournal() throws ServiceException {
 		EditInvoiceView editInvoiceView = new EditInvoiceView(document,
 				"EditJournalController.editInvoiceTitle",
-                journal.getIdOfCreatedInvoice() != null ? invoiceService.getInvoice(document, journal.getIdOfCreatedInvoice()) : null);
+                journalEntry.getIdOfCreatedInvoice() != null ? invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice()) : null);
 		ViewDialog editInvoiceDialog = new ViewDialog(owner, editInvoiceView);
 		editInvoiceDialog.showDialog();
 		Invoice newInvoice = editInvoiceView.getEditedInvoice();
@@ -81,10 +81,10 @@ public class EditJournalController {
 	}
 
 	public boolean isJournalUpdated() {
-		return updatedJournal != null;
+		return updatedJournalEntry != null;
 	}
 
-	public Journal getUpdatedJournal() {
-		return updatedJournal;
+	public JournalEntry getUpdatedJournalEntry() {
+		return updatedJournalEntry;
 	}
 }

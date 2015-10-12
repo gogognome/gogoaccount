@@ -2,9 +2,8 @@ package nl.gogognome.gogoaccount.component.party;
 
 import nl.gogognome.dataaccess.dao.AbstractDomainClassDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
-import nl.gogognome.dataaccess.dao.NoRecordFoundException;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 
 import java.sql.SQLException;
 import java.util.List;

@@ -1,8 +1,8 @@
 package nl.gogognome.gogoaccount.gui.controllers;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -20,7 +20,7 @@ public class DeleteJournalController {
 
 	private Component owner;
 	private Document document;
-	private Journal journal;
+	private JournalEntry journalEntry;
 
 	private boolean journalDeleted;
 
@@ -28,17 +28,17 @@ public class DeleteJournalController {
 	 * Constructs the controller.
 	 * @param owner the component that uses this controller
 	 * @param document the database
-	 * @param journal the journal to be deleted
+	 * @param journalEntry the journal to be deleted
 	 */
-	public DeleteJournalController(Component owner, Document document, Journal journal) {
+	public DeleteJournalController(Component owner, Document document, JournalEntry journalEntry) {
 		super();
 		this.owner = owner;
 		this.document = document;
-		this.journal = journal;
+		this.journalEntry = journalEntry;
 	}
 
 	public void execute() throws ServiceException {
-        if (invoiceService.hasPayments(document, journal.getIdOfCreatedInvoice())) {
+        if (invoiceService.hasPayments(document, journalEntry.getIdOfCreatedInvoice())) {
             MessageDialog.showWarningMessage(owner, "editJournalsView.journalCreatingInvoiceCannotBeDeleted");
             return;
         }
@@ -50,7 +50,7 @@ public class DeleteJournalController {
 	    }
 
 	    try {
-	        bookkeepingService.removeJournal(document, journal);
+	        bookkeepingService.removeJournal(document, journalEntry);
 	        journalDeleted = true;
 	    } catch (ServiceException e) {
 	        MessageDialog.showErrorMessage(owner, e, "DeleteJournalController.serviceException");

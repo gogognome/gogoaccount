@@ -6,10 +6,9 @@ import java.util.Locale;
 
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.Start;
 import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.TaskProgressListener;

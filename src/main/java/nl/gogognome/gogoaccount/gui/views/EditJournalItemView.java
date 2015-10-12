@@ -1,12 +1,12 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -36,13 +36,13 @@ public class EditJournalItemView extends OkCancelView {
 
 	private Document document;
     private InvoiceBean invoiceBean;
-    private JournalItem itemToBeEdited;
+    private JournalEntryDetail itemToBeEdited;
 
     private ListModel<Account> accountListModel = new ListModel<>();
     private StringModel amountModel = new StringModel();
     private ListModel<String> sideListModel = new ListModel<>();
 
-    private JournalItem enteredJournalItem;
+    private JournalEntryDetail enteredJournalEntryDetail;
 
     private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
@@ -51,7 +51,7 @@ public class EditJournalItemView extends OkCancelView {
      * @param document the database
      * @param item the item used to fill in the initial values of the fields.
      */
-    public EditJournalItemView(Document document, JournalItem item) {
+    public EditJournalItemView(Document document, JournalEntryDetail item) {
     	this.document = document;
     	this.itemToBeEdited = item;
     }
@@ -118,8 +118,8 @@ public class EditJournalItemView extends OkCancelView {
      * are correct. Otherwise, this variable will be null.
      * @return the entered journal item or null
      */
-    public JournalItem getEnteredJournalItem() {
-        return enteredJournalItem;
+    public JournalEntryDetail getEnteredJournalEntryDetail() {
+        return enteredJournalEntryDetail;
     }
 
 	@Override
@@ -141,7 +141,7 @@ public class EditJournalItemView extends OkCancelView {
                 return;
             }
 
-            enteredJournalItem = new JournalItem(amount, account, debet,
+            enteredJournalEntryDetail = new JournalEntryDetail(amount, account, debet,
                     invoice != null ? invoice.getId() : null,
                     invoice != null ? "TODO: Fix this" : null);
             requestClose();

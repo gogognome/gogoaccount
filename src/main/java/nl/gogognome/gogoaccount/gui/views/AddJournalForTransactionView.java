@@ -1,10 +1,10 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -25,7 +25,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 
 	public interface Plugin {
 		ImportedTransaction getNextImportedTransaction();
-		void journalAdded(Journal journal);
+		void journalAdded(JournalEntry journalEntry);
 	}
 
 	private Plugin plugin;
@@ -88,9 +88,9 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	@Override
-	protected void createNewJournal(Journal journal) throws DocumentModificationFailedException, ServiceException {
-		super.createNewJournal(journal);
-		plugin.journalAdded(journal);
+	protected void createNewJournal(JournalEntry journalEntry) throws DocumentModificationFailedException, ServiceException {
+		super.createNewJournal(journalEntry);
+		plugin.journalAdded(journalEntry);
 	}
 
 	private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
@@ -124,14 +124,14 @@ public class AddJournalForTransactionView extends EditJournalView {
 	}
 
 	@Override
-	protected JournalItem createDefaultItemToBeAdded() throws ServiceException {
+	protected JournalEntryDetail createDefaultItemToBeAdded() throws ServiceException {
 		switch (itemsTableModel.getRowCount()) {
 		case 0: { // first item
 			Account account = new ImportBankStatementService(document).getToAccount(importedTransaction);
 			if (account == null) {
                 account = getDefaultAccount();
             }
-			return new JournalItem(importedTransaction.getAmount(), account, true);
+			return new JournalEntryDetail(importedTransaction.getAmount(), account, true);
 		}
 
 		case 1: { // second item
@@ -139,7 +139,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 			if (account == null) {
 				account = getDefaultAccount();
 			}
-			return new JournalItem(importedTransaction.getAmount(), account, false);
+			return new JournalEntryDetail(importedTransaction.getAmount(), account, false);
 		}
 		default: // other item
 			return null;

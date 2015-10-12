@@ -38,9 +38,9 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
@@ -203,12 +203,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      */
     private void updateJournalItemTable() {
     	int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
-    	JournalItem[] items;
+    	JournalEntryDetail[] items;
     	if (row != -1) {
-	    	Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-	    	items = journal != null ? journal.getItems() : new JournalItem[0];
+	    	JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
+	    	items = journalEntry != null ? journalEntry.getItems() : new JournalEntryDetail[0];
     	} else {
-    		items = new JournalItem[0];
+    		items = new JournalEntryDetail[0];
     	}
     	itemsTableModel.setJournalItems(items);
     }
@@ -253,11 +253,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private void editJournalForSelectedTransaction() {
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
-            Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-            EditJournalController controller = new EditJournalController(this, document, journal);
+            JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
+            EditJournalController controller = new EditJournalController(this, document, journalEntry);
             controller.execute();
             if (controller.isJournalUpdated()) {
-            	updateTransactionJournal(row, controller.getUpdatedJournal());
+            	updateTransactionJournal(row, controller.getUpdatedJournalEntry());
             }
         }
     }
@@ -272,8 +272,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         try {
             int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
             if (row != -1) {
-                Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
-                DeleteJournalController controller = new DeleteJournalController(this, document, journal);
+                JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
+                DeleteJournalController controller = new DeleteJournalController(this, document, journalEntry);
                 controller.execute();
 
                 if (controller.isJournalDeleted()) {
@@ -285,9 +285,9 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         }
     }
 
-	private void updateTransactionJournal(int row, Journal journal) {
+	private void updateTransactionJournal(int row, JournalEntry journalEntry) {
         Transaction t = transactionJournalsTableModel.getRow(row);
-    	t.setJournal(journal);
+    	t.setJournalEntry(journalEntry);
 		transactionJournalsTableModel.updateRow(row, t);
 		updateJournalItemTable();
 	}
@@ -295,7 +295,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 	private void disableEnableButtons() {
 		int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
 		boolean rowSelected = row != -1;
-		boolean journalPresent = rowSelected && transactionJournalsTableModel.getRow(row).getJournal() != null;
+		boolean journalPresent = rowSelected && transactionJournalsTableModel.getRow(row).getJournalEntry() != null;
 		addButton.setEnabled(rowSelected);
 		editButton.setEnabled(journalPresent);
 		deleteButton.setEnabled(journalPresent);
@@ -324,23 +324,23 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 	}
 
 	@Override
-	public void journalAdded(Journal journal) {
+	public void journalAdded(JournalEntry journalEntry) {
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
-        	updateTransactionJournal(row, journal);
+        	updateTransactionJournal(row, journalEntry);
         	setLinkBetweenImportedTransactionAccountAndAccount(
-        			transactionJournalsTableModel.getRow(row).getImportedTransaction(), journal);
+        			transactionJournalsTableModel.getRow(row).getImportedTransaction(), journalEntry);
         } else {
         	MessageDialog.showErrorMessage(this, "ImportBankStatementView.JournalCreatedButNoTransactionSelected");
         }
 	}
 
 	private void setLinkBetweenImportedTransactionAccountAndAccount(
-			ImportedTransaction transaction, Journal journal) {
-		JournalItem[] items = journal.getItems();
+			ImportedTransaction transaction, JournalEntry journalEntry) {
+		JournalEntryDetail[] items = journalEntry.getItems();
 		ImportBankStatementService service = new ImportBankStatementService(document);
 		if (items.length == 2) {
-			for (JournalItem item : items) {
+			for (JournalEntryDetail item : items) {
 				if (item.isDebet()) {
 					service.setImportedToAccount(transaction, item.getAccount());
 				} else {
@@ -357,7 +357,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
         	while (row < transactionJournalsTableModel.getRowCount()) {
-	        	if (transactionJournalsTableModel.getRow(row).getJournal() != null) {
+	        	if (transactionJournalsTableModel.getRow(row).getJournalEntry() != null) {
 	        		row++;
 	        	} else {
 	        		break;

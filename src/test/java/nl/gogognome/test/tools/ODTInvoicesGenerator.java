@@ -1,7 +1,7 @@
 package nl.gogognome.test.tools;
 
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.Start;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;

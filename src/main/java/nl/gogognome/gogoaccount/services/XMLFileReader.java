@@ -1,15 +1,17 @@
 package nl.gogognome.gogoaccount.services;
 
-import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
@@ -150,7 +152,7 @@ public class XMLFileReader {
                 }
                 description = journalElem.getAttribute("description");
                 NodeList itemNodes = journalElem.getElementsByTagName("item");
-                ArrayList<JournalItem> itemsList = new ArrayList<>();
+                ArrayList<JournalEntryDetail> itemsList = new ArrayList<>();
                 for (int k=0; k<itemNodes.getLength(); k++) {
                     Element itemElem = (Element)itemNodes.item(k);
                     String itemId = itemElem.getAttribute("id");
@@ -171,12 +173,12 @@ public class XMLFileReader {
                         }
                     }
 
-                    itemsList.add(new JournalItem(amount, configurationService.getAccount(document, itemId),
+                    itemsList.add(new JournalEntryDetail(amount, configurationService.getAccount(document, itemId),
                             "debet".equals(side), invoiceId, paymentId));
                 }
 
-                JournalItem[] items = itemsList.toArray(new JournalItem[itemsList.size()]);
-                document.addJournal(new Journal(id, description, date, items, idOfCreatedInvoice), false);
+                JournalEntryDetail[] items = itemsList.toArray(new JournalEntryDetail[itemsList.size()]);
+                document.addJournal(new JournalEntry(id, description, date, items, idOfCreatedInvoice), false);
             }
         }
     }

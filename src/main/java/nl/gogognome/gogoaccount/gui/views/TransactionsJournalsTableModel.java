@@ -5,11 +5,11 @@ import java.util.Date;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.AbstractListTableModel;
@@ -76,14 +76,14 @@ class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction>
         } else if (DESCRIPTION1.equals(colDef)) {
             return getRow(rowIndex).getImportedTransaction().getDescription();
         } else if (ID.equals(colDef)) {
-            return getRow(rowIndex).getJournal() != null ? getRow(rowIndex).getJournal().getId() : null;
+            return getRow(rowIndex).getJournalEntry() != null ? getRow(rowIndex).getJournalEntry().getId() : null;
         } else if (DESCRIPTION2.equals(colDef)) {
-            return getRow(rowIndex).getJournal() != null ? getRow(rowIndex).getJournal().getDescription() : null;
+            return getRow(rowIndex).getJournalEntry() != null ? getRow(rowIndex).getJournalEntry().getDescription() : null;
         } else if (INVOICE.equals(colDef)) {
-        	Journal journal = getRow(rowIndex).getJournal();
-            if (journal != null && journal.getIdOfCreatedInvoice() != null) {
+        	JournalEntry journalEntry = getRow(rowIndex).getJournalEntry();
+            if (journalEntry != null && journalEntry.getIdOfCreatedInvoice() != null) {
                 try {
-                    Invoice invoice = invoiceService.getInvoice(document, journal.getIdOfCreatedInvoice());
+                    Invoice invoice = invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice());
                     Party party = partyService.getParty(document, invoice.getConcerningPartyId());
                     return invoice.getId() + " (" + party.getName() + ")";
                 } catch (ServiceException e) {

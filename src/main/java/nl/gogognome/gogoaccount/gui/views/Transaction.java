@@ -16,7 +16,7 @@
 */
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 
 /**
@@ -27,22 +27,22 @@ import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
  */
 class Transaction {
 	private final ImportedTransaction importedTransaction;
-	private Journal journal;
+	private JournalEntry journalEntry;
 
-	public Transaction(ImportedTransaction importedTransaction, Journal journal) {
+	public Transaction(ImportedTransaction importedTransaction, JournalEntry journalEntry) {
 		this.importedTransaction = importedTransaction;
-		this.journal = journal;
+		this.journalEntry = journalEntry;
 	}
 
 	public ImportedTransaction getImportedTransaction() {
 		return importedTransaction;
 	}
 
-	public Journal getJournal() {
-		return journal;
+	public JournalEntry getJournalEntry() {
+		return journalEntry;
 	}
 
-	public void setJournal(Journal journal) {
-		this.journal = journal;
+	public void setJournalEntry(JournalEntry journalEntry) {
+		this.journalEntry = journalEntry;
 	}
 }

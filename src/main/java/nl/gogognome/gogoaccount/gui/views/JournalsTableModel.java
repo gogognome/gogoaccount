@@ -8,12 +8,12 @@ import java.util.List;
 import javax.swing.event.TableModelListener;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
-import nl.gogognome.gogoaccount.components.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.AbstractListTableModel;
@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class implements a table model for a table containing journals.
  */
-public class JournalsTableModel extends AbstractListTableModel<Journal> implements DocumentListener {
+public class JournalsTableModel extends AbstractListTableModel<JournalEntry> implements DocumentListener {
 
     private final Logger logger = LoggerFactory.getLogger(JournalsTableModel.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
@@ -55,31 +55,31 @@ public class JournalsTableModel extends AbstractListTableModel<Journal> implemen
      * @param document the database from which to take the data
      */
     public JournalsTableModel(Document document) {
-    	super(COLUMNS, document.getJournals());
+    	super(COLUMNS, document.getJournalEntries());
         this.document = document;
         document.addListener(this);
     }
 
     @Override
 	public void documentChanged(Document document) {
-        replaceRows(this.document.getJournals());
+        replaceRows(this.document.getJournalEntries());
     }
 
 	@Override
 	public Object getValueAt(int row, int col) {
-        Journal journal = getRow(row);
+        JournalEntry journalEntry = getRow(row);
         Object result = null;
         ColumnDefinition colDef = COLUMNS.get(col);
         if (DATE == colDef) {
-            result = journal.getDate();
+            result = journalEntry.getDate();
         } else if (ID == colDef) {
-            result = journal.getId();
+            result = journalEntry.getId();
         } else if (DESCRIPTION == colDef) {
-            result = journal.getDescription();
+            result = journalEntry.getDescription();
         } else if (INVOICE == colDef) {
-            if (journal.getIdOfCreatedInvoice() != null) {
+            if (journalEntry.getIdOfCreatedInvoice() != null) {
                 try {
-                    Invoice invoice = invoiceService.getInvoice(document, journal.getIdOfCreatedInvoice());
+                    Invoice invoice = invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice());
                     Party party = partyService.getParty(document, invoice.getPayingPartyId());
                     result = invoice.getId() + " (" + party.getId() + " - " + party.getName() + ")";
                 } catch (ServiceException e) {

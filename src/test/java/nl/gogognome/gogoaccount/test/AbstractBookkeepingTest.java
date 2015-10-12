@@ -2,14 +2,17 @@ package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
@@ -82,29 +85,29 @@ public abstract class AbstractBookkeepingTest {
     }
 
     private void addJournals() throws Exception {
-        List<JournalItem> items = new ArrayList<>();
+        List<JournalEntryDetail> items = new ArrayList<>();
         items.add(createItem(20, "190", true));
         items.add(createItem(20, "300", false));
-        Journal journal = new Journal("t1", "Payment", DateUtil.createDate(2011, 3, 5),
+        JournalEntry journalEntry = new JournalEntry("t1", "Payment", DateUtil.createDate(2011, 3, 5),
                 items, "inv1");
 
         List<String> descriptions = Arrays.asList("Contributie 2011", "Contributie");
         List<Amount> amounts = Arrays.asList(null, createAmount(20));
         Party party = new PartyService().getParty(document, "1101");
-        Invoice invoice = new Invoice(journal.getIdOfCreatedInvoice());
+        Invoice invoice = new Invoice(journalEntry.getIdOfCreatedInvoice());
         invoice.setConcerningPartyId(party.getId());
         invoice.setPayingPartyId(party.getId());
         invoice.setAmountToBePaid(createAmount(20));
-        invoice.setIssueDate(journal.getDate());
+        invoice.setIssueDate(journalEntry.getDate());
         invoiceService.createInvoice(document, invoice);
         invoiceService.createDetails(document, invoice, descriptions, amounts);
-        document.addInvoicAndJournal(invoice, journal);
+        document.addInvoicAndJournal(invoice, journalEntry);
 
         items = new ArrayList<>();
         items.add(createItem(10, "101", true, "inv1", "pay1"));
         items.add(createItem(10, "190", false));
-        journal = new Journal("t2", "Payment", DateUtil.createDate(2011, 5, 10), items, null);
-        document.addJournal(journal, true);
+        journalEntry = new JournalEntry("t2", "Payment", DateUtil.createDate(2011, 5, 10), items, null);
+        document.addJournal(journalEntry, true);
     }
 
     private List<Account> createAccounts() {
@@ -146,29 +149,29 @@ public abstract class AbstractBookkeepingTest {
     }
 
     private void addStartBalance() throws Exception {
-        List<JournalItem> items = new ArrayList<>();
+        List<JournalEntryDetail> items = new ArrayList<>();
         items.add(createItem(100, "100", true));
         items.add(createItem(300, "101", true));
         items.add(createItem(400, "200", false));
-        Journal journal = new Journal("start", "Start balance",
+        JournalEntry journalEntry = new JournalEntry("start", "Start balance",
                 DateUtil.addDays(bookkeeping.getStartOfPeriod(), -1),
                 items, null);
-        document.addJournal(journal, false);
+        document.addJournal(journalEntry, false);
     }
 
-    protected JournalItem createItem(int amountInt, String accountId, boolean debet) throws ServiceException {
+    protected JournalEntryDetail createItem(int amountInt, String accountId, boolean debet) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Account account = configurationService.getAccount(document, accountId);
             Amount amount = createAmount(amountInt);
-            return new JournalItem(amount, account, debet);
+            return new JournalEntryDetail(amount, account, debet);
         });
     }
 
-    protected JournalItem createItem(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
+    protected JournalEntryDetail createItem(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Account account = configurationService.getAccount(document, accountId);
             Amount amount = createAmount(amountInt);
-            return new JournalItem(amount, account, debet, invoiceId, paymentId);
+            return new JournalEntryDetail(amount, account, debet, invoiceId, paymentId);
         });
     }
 
@@ -182,8 +185,8 @@ public abstract class AbstractBookkeepingTest {
                 amountFormat.formatAmount(actualAmount));
     }
 
-    protected Journal findJournal(String id) {
-        for (Journal j : document.getJournals()) {
+    protected JournalEntry findJournal(String id) {
+        for (JournalEntry j : document.getJournalEntries()) {
             if (j.getId().equals(id)) {
                 return j;
             }
@@ -254,7 +257,7 @@ public abstract class AbstractBookkeepingTest {
             }
         }
 
-        assertEquals(expected.getJournals().toString(), actual.getJournals().toString());
+        assertEquals(expected.getJournalEntries().toString(), actual.getJournalEntries().toString());
 
         Report expectedReport = bookkeepingService.createReport(expected, DateUtil.addYears(expectedBookkeeping.getStartOfPeriod(), 1));
         Report actualReport = bookkeepingService.createReport(actual, DateUtil.addYears(actualBookkeeping.getStartOfPeriod(), 1));
@@ -278,21 +281,21 @@ public abstract class AbstractBookkeepingTest {
         assertEqualDayOfYear(expected.getBirthDate(), actual.getBirthDate());
     }
 
-    public void assertEqualJournal(Journal expected, Journal actual) {
+    public void assertEqualJournal(JournalEntry expected, JournalEntry actual) {
         assertEquals(expected.getId(), actual.getId());
         assertEqualDayOfYear(expected.getDate(), actual.getDate());
         assertEquals(expected.getDescription(), actual.getDescription());
         assertEquals(expected.getIdOfCreatedInvoice(), actual.getIdOfCreatedInvoice());
         assertEquals(expected.getItems().length, actual.getItems().length);
 
-        JournalItem[] expectedItems = expected.getItems();
-        JournalItem[] actualItems = actual.getItems();
+        JournalEntryDetail[] expectedItems = expected.getItems();
+        JournalEntryDetail[] actualItems = actual.getItems();
         for (int i=0; i<expectedItems.length; i++) {
             assertEqualItem(expectedItems[i], actualItems[i]);
         }
     }
 
-    public void assertEqualItem(JournalItem expected, JournalItem actual) {
+    public void assertEqualItem(JournalEntryDetail expected, JournalEntryDetail actual) {
         assertEquals(expected.getAccount(), actual.getAccount());
         assertEquals(expected.getAmount(), actual.getAmount());
         assertEquals(expected.getInvoiceId(), actual.getInvoiceId());

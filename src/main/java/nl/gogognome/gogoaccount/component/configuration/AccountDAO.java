@@ -2,16 +2,14 @@ package nl.gogognome.gogoaccount.component.configuration;
 
 import nl.gogognome.dataaccess.dao.AbstractDomainClassDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
-import nl.gogognome.dataaccess.dao.NoRecordFoundException;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 
 import java.sql.SQLException;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static nl.gogognome.gogoaccount.businessobjects.AccountType.*;
+import static nl.gogognome.gogoaccount.component.configuration.AccountType.*;
 
 class AccountDAO extends AbstractDomainClassDAO<Account> {
 

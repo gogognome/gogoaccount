@@ -5,9 +5,11 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -83,20 +85,20 @@ public class ReportBuilder {
         report.setRevenues(revenues);
     }
 
-    public void addJournal(Journal journal) throws ServiceException {
-        for (JournalItem item : journal.getItems()) {
-            addJournalItem(journal, item);
+    public void addJournal(JournalEntry journalEntry) throws ServiceException {
+        for (JournalEntryDetail item : journalEntry.getItems()) {
+            addJournalItem(journalEntry, item);
         }
     }
 
-    private void addJournalItem(Journal journal, JournalItem item) throws ServiceException {
+    private void addJournalItem(JournalEntry journalEntry, JournalEntryDetail item) throws ServiceException {
         addAmountToTotalForAccount(item);
-        addLedgerLineForAccount(journal, item);
+        addLedgerLineForAccount(journalEntry, item);
         addAmountToTotalDebetOrCredit(item); // must come after ledger line has been added
         // otherwise the amount for the first line is added to the start line
     }
 
-    private void addAmountToTotalForAccount(JournalItem item) {
+    private void addAmountToTotalForAccount(JournalEntryDetail item) {
         Account account = item.getAccount();
         Amount accountAmount = report.getAmount(account);
 
@@ -109,8 +111,8 @@ public class ReportBuilder {
         report.setAmount(account, accountAmount);
     }
 
-    private void addLedgerLineForAccount(Journal journal, JournalItem item) throws ServiceException {
-        if (DateUtil.compareDayOfYear(journal.getDate(), bookkeeping.getStartOfPeriod()) >= 0) {
+    private void addLedgerLineForAccount(JournalEntry journalEntry, JournalEntryDetail item) throws ServiceException {
+        if (DateUtil.compareDayOfYear(journalEntry.getDate(), bookkeeping.getStartOfPeriod()) >= 0) {
             Account account = item.getAccount();
             if (!hasStartBalanceLineBeenAdded(account)) {
                 addStartLedgerLineForAccount(account, accountToTotalDebet.get(account),
@@ -119,10 +121,10 @@ public class ReportBuilder {
             Invoice invoice = null;
             if (item.getInvoiceId() != null) {
                 invoice = invoiceService.getInvoice(document, item.getInvoiceId());
-            } else  if (journal.getIdOfCreatedInvoice() != null) {
-                invoice = invoiceService.getInvoice(document, journal.getIdOfCreatedInvoice());
+            } else  if (journalEntry.getIdOfCreatedInvoice() != null) {
+                invoice = invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice());
             }
-            addLedgerLineForAccount(account, journal, item, invoice);
+            addLedgerLineForAccount(account, journalEntry, item, invoice);
         }
     }
 
@@ -143,18 +145,18 @@ public class ReportBuilder {
         line.creditAmount = balance.isNegative() || (balance.isZero() && account.isCredit()) ? balance.negate() : null;
     }
 
-    void addLedgerLineForAccount(Account account, Journal journal, JournalItem item, Invoice invoice) {
+    void addLedgerLineForAccount(Account account, JournalEntry journalEntry, JournalEntryDetail item, Invoice invoice) {
         LedgerLine line = new LedgerLine();
-        line.date = journal.getDate();
-        line.id = journal.getId();
-        line.description = journal.getDescription();
+        line.date = journalEntry.getDate();
+        line.id = journalEntry.getId();
+        line.description = journalEntry.getDescription();
         line.debetAmount = item.isDebet() ? item.getAmount() : null;
         line.creditAmount = item.isCredit() ? item.getAmount() : null;
         line.invoice = invoice;
         report.addLedgerLineForAccount(account, line);
     }
 
-    private void addAmountToTotalDebetOrCredit(JournalItem item) {
+    private void addAmountToTotalDebetOrCredit(JournalEntryDetail item) {
         Account account = item.getAccount();
         if (item.isDebet()) {
             Amount totalAmount = nullToZero(accountToTotalDebet.get(account)).add(item.getAmount());

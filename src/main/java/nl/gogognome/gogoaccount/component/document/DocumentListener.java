@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.components.document;
+package nl.gogognome.gogoaccount.component.document;
 
 /**
  * This interface specifies a listener to changes in the document.

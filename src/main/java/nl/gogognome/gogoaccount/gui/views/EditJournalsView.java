@@ -1,8 +1,8 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.components.document.Document;
-import nl.gogognome.gogoaccount.components.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
@@ -122,8 +122,8 @@ public class EditJournalsView extends View {
     private void editJournal() {
         int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
         if (row != -1) {
-            Journal journal = journalsTableModel.getRow(row);
-            EditJournalController controller = new EditJournalController(this, document, journal);
+            JournalEntry journalEntry = journalsTableModel.getRow(row);
+            EditJournalController controller = new EditJournalController(this, document, journalEntry);
             controller.execute();
             updateJournalItemTable(row);
         }
@@ -213,7 +213,7 @@ public class EditJournalsView extends View {
 	private class DocumentListenerImpl implements DocumentListener {
 		@Override
 		public void documentChanged(Document document) {
-			journalsTableModel.replaceRows(document.getJournals());
+			journalsTableModel.replaceRows(document.getJournalEntries());
 		}
 	}
 }

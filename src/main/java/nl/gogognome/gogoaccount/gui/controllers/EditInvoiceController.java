@@ -1,9 +1,9 @@
 package nl.gogognome.gogoaccount.gui.controllers;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.views.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.views.EditJournalView;
@@ -48,9 +48,9 @@ public class EditInvoiceController {
         dialog.showDialog();
 
         updatedInvoice = view.getEditedInvoice();
-        Journal journal = document.getCreatingJournal(invoice.getId());
-        if (journal != null) {
-            updateJournalCreatingInvoice(journal);
+        JournalEntry journalEntry = document.getCreatingJournal(invoice.getId());
+        if (journalEntry != null) {
+            updateJournalCreatingInvoice(journalEntry);
         }
 
         try {
@@ -60,15 +60,15 @@ public class EditInvoiceController {
         }
 	}
 
-	private void updateJournalCreatingInvoice(Journal journal) {
+	private void updateJournalCreatingInvoice(JournalEntry journalEntry) {
 		EditJournalView view = new EditJournalView(document,
-				"EditInvoiceController.editJournalTitle", journal);
+				"EditInvoiceController.editJournalTitle", journalEntry);
 		ViewDialog dialog = new ViewDialog(owner, view);
 		dialog.showDialog();
-		Journal updatedJournal = view.getEditedJournal();
-		if (updatedJournal != null) {
+		JournalEntry updatedJournalEntry = view.getEditedJournalEntry();
+		if (updatedJournalEntry != null) {
 		    try {
-		        document.updateJournal(journal, updatedJournal);
+		        document.updateJournal(journalEntry, updatedJournalEntry);
 		    } catch (ServiceException | DocumentModificationFailedException e) {
 		        MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateJournalException");
 		    }

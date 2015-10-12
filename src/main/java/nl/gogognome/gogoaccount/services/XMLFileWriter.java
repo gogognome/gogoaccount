@@ -1,15 +1,17 @@
 package nl.gogognome.gogoaccount.services;
 
-import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
@@ -37,6 +39,7 @@ public class XMLFileWriter {
 
     private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
@@ -79,21 +82,21 @@ public class XMLFileWriter {
         });
     }
 
-    private void appendElementsForJournals(Element rootElement) {
+    private void appendElementsForJournals(Element rootElement) throws ServiceException {
         Element journalsElem = doc.createElement("journals");
-        List<Journal> journals = document.getJournals();
-        for (Journal journal : journals) {
+        List<JournalEntry> journalEntries = document.getJournalEntries();
+        for (JournalEntry journalEntry : journalEntries) {
             Element journalElem = doc.createElement("journal");
-            journalElem.setAttribute("id", journal.getId());
-            journalElem.setAttribute("date", DATE_FORMAT.format(journal.getDate()));
-            journalElem.setAttribute("description", journal.getDescription());
-            if (journal.createsInvoice()) {
-                journalElem.setAttribute("createdInvoice", journal.getIdOfCreatedInvoice());
+            journalElem.setAttribute("id", journalEntry.getId());
+            journalElem.setAttribute("date", DATE_FORMAT.format(journalEntry.getDate()));
+            journalElem.setAttribute("description", journalEntry.getDescription());
+            if (journalEntry.createsInvoice()) {
+                journalElem.setAttribute("createdInvoice", journalEntry.getIdOfCreatedInvoice());
             }
-            JournalItem[] items = journal.getItems();
-            for (JournalItem item1 : items) {
+            List<JournalEntryDetail> details = ledgerService.findJournalEntryDetails(document, journalEntry);
+            for (JournalEntryDetail item1 : details) {
                 Element item = doc.createElement("item");
-                item.setAttribute("id", item1.getAccount().getId());
+                item.setAttribute("id", item1.getAccountId());
                 item.setAttribute("amount", AMOUNT_FORMAT.formatAmount(item1.getAmount()));
                 item.setAttribute("side", item1.isDebet() ? "debet" : "credit");
                 if (item1.getInvoiceId() != null) {

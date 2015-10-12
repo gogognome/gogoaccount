@@ -1,11 +1,12 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
@@ -110,7 +111,7 @@ public class InvoiceService {
                 invoice.setIssueDate(issueDate);
 
                 // Create the journal.
-                JournalItem[] items = new JournalItem[invoiceLineDefinitions.size()];
+                JournalEntryDetail[] items = new JournalEntryDetail[invoiceLineDefinitions.size()];
                 int n = 0;
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                     Account account = line.getAccount();
@@ -122,19 +123,19 @@ public class InvoiceService {
                     }
 
                     assert amount != null; // has been checked before
-                    items[n] = new JournalItem(amount, account, debet, null, null);
+                    items[n] = new JournalEntryDetail(amount, account, debet, null, null);
                     n++;
                 }
 
-                Journal journal;
+                JournalEntry journalEntry;
                 try {
-                    journal = new Journal(specificId, specificDescription, issueDate, items, specificId);
+                    journalEntry = new JournalEntry(specificId, specificDescription, issueDate, items, specificId);
                 } catch (IllegalArgumentException e) {
                     throw new ServiceException("The debet and credit amounts are not in balance!", e);
                 }
 
                 try {
-                    document.addInvoicAndJournal(invoice, journal);
+                    ObjectFactory.create(LedgerService.class).createJournalEntry(document, journalEntry);
                     invoice = invoiceDAO.create(invoice);
                     invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
                     changedDatabase = true;

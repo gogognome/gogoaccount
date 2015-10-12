@@ -1,21 +1,17 @@
 package nl.gogognome.gogoaccount.test;
 
-import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static junit.framework.Assert.*;
 
@@ -51,30 +47,30 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
     @Test
     public void updateExistingJournal() throws Exception {
-        Journal oldJournal = findJournal("t1");
-        assertNotNull(oldJournal);
+        JournalEntry oldJournalEntry = findJournal("t1");
+        assertNotNull(oldJournalEntry);
 
-        List<JournalItem> items = Arrays.asList(
-                new JournalItem(createAmount(20), configurationService.getAccount(document, "100"), true),
-                new JournalItem(createAmount(20), configurationService.getAccount(document, "190"), false)
+        List<JournalEntryDetail> items = Arrays.asList(
+                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "100"), true),
+                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "190"), false)
                 );
-        Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
+        JournalEntry newJournalEntry = new JournalEntry("t7", "test", DateUtil.createDate(2011, 9, 3),
                 items, null);
-        document.updateJournal(oldJournal, newJournal);
+        document.updateJournal(oldJournalEntry, newJournalEntry);
 
-        assertEqualJournal(newJournal, findJournal(newJournal.getId()));
+        assertEqualJournal(newJournalEntry, findJournal(newJournalEntry.getId()));
     }
 
     @Test(expected = DocumentModificationFailedException.class)
     public void updateNonExistingJournalFails() throws Exception {
-        List<JournalItem> items = Arrays.asList(
-                new JournalItem(createAmount(20), configurationService.getAccount(document, "100"), true),
-                new JournalItem(createAmount(20), configurationService.getAccount(document, "190"), false)
+        List<JournalEntryDetail> items = Arrays.asList(
+                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "100"), true),
+                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "190"), false)
                 );
-        Journal newJournal = new Journal("t7", "test", DateUtil.createDate(2011, 9, 3),
+        JournalEntry newJournalEntry = new JournalEntry("t7", "test", DateUtil.createDate(2011, 9, 3),
                 items, null);
 
-        assertNull(findJournal(newJournal.getId()));
-        document.updateJournal(newJournal, newJournal);
+        assertNull(findJournal(newJournalEntry.getId()));
+        document.updateJournal(newJournalEntry, newJournalEntry);
     }
 }

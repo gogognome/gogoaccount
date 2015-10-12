@@ -1,8 +1,6 @@
 package nl.gogognome.gogoaccount.component.configuration;
 
 
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-
 /**
  * This class represents an account.
  */

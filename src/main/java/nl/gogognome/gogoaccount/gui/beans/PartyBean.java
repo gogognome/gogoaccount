@@ -27,7 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.lib.gui.Closeable;

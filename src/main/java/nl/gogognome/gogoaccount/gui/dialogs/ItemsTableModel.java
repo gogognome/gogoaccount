@@ -5,11 +5,11 @@ import java.util.Collections;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.AbstractListTableModel;
@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Table model for journal items.
  */
-public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
+public class ItemsTableModel extends AbstractListTableModel<JournalEntryDetail> {
 
     private final Logger logger = LoggerFactory.getLogger(ItemsTableModel.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
@@ -51,11 +51,11 @@ public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
     private final Document document;
 
     public ItemsTableModel(Document document) {
-    	super(COLUMN_DEFINTIIONS, Collections.<JournalItem>emptyList());
+    	super(COLUMN_DEFINTIIONS, Collections.<JournalEntryDetail>emptyList());
         this.document = document;
     }
 
-    public void setJournalItems(JournalItem[] itemsArray) {
+    public void setJournalItems(JournalEntryDetail[] itemsArray) {
     	replaceRows(Arrays.asList(itemsArray));
     }
 
@@ -64,7 +64,7 @@ public class ItemsTableModel extends AbstractListTableModel<JournalItem> {
     	ColumnDefinition colDef = COLUMN_DEFINTIIONS.get(col);
         AmountFormat af = Factory.getInstance(AmountFormat.class);
         String result = null;
-        JournalItem item = getRow(row);
+        JournalEntryDetail item = getRow(row);
 
         if (ACCOUNT == colDef) {
             result = item.getAccount().getId() + " " + item.getAccount().getName();

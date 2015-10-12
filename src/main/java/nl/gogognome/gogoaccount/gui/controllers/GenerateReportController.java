@@ -20,7 +20,7 @@ import java.awt.Window;
 import java.io.File;
 import java.util.Date;
 
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.views.GenerateReportView;
 import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.ReportTask;

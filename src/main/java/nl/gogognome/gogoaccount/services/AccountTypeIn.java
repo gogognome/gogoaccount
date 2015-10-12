@@ -6,7 +6,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
 
 import com.google.common.base.Predicate;
 

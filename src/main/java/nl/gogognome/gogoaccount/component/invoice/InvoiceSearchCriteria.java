@@ -1,9 +1,5 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
-import java.util.Date;
-
-import nl.gogognome.gogoaccount.components.document.Document;
-
 /**
  * This class represents search criteria for invoices.
  */

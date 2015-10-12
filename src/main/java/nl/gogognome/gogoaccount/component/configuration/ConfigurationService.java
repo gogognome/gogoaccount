@@ -1,7 +1,6 @@
 package nl.gogognome.gogoaccount.component.configuration;
 
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;

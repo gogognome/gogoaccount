@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.*;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransactionRabobankCsv;

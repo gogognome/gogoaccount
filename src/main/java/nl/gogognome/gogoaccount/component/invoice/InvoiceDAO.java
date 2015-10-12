@@ -3,7 +3,7 @@ package nl.gogognome.gogoaccount.component.invoice;
 import nl.gogognome.dataaccess.dao.AbstractDomainClassDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.lib.text.AmountFormat;
 
 import java.sql.SQLException;

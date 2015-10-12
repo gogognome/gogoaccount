@@ -7,9 +7,11 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
@@ -57,19 +59,19 @@ public class BookkeepingService {
             // Create start balance
             Date dayBeforeStart = DateUtil.addDays(date, -1);
 
-            List<JournalItem> journalItems = new ArrayList<>(20);
+            List<JournalEntryDetail> journalEntryDetails = new ArrayList<>(20);
             for (Account account : this.configurationService.findAssets(document)) {
-                JournalItem item = new JournalItem(getAccountBalance(document, account, dayBeforeStart),
+                JournalEntryDetail item = new JournalEntryDetail(getAccountBalance(document, account, dayBeforeStart),
                         this.configurationService.getAccount(newDocument, account.getId()), true, null, null);
                 if (!item.getAmount().isZero()) {
-                    journalItems.add(item);
+                    journalEntryDetails.add(item);
                 }
             }
             for (Account account : this.configurationService.findLiabilities(document)) {
-                JournalItem item = new JournalItem(getAccountBalance(document, account, dayBeforeStart),
+                JournalEntryDetail item = new JournalEntryDetail(getAccountBalance(document, account, dayBeforeStart),
                         this.configurationService.getAccount(newDocument, account.getId()), false, null, null);
                 if (!item.getAmount().isZero()) {
-                    journalItems.add(item);
+                    journalEntryDetails.add(item);
                 }
             }
 
@@ -77,23 +79,23 @@ public class BookkeepingService {
             Report report = createReport(document, dayBeforeStart);
             Amount resultOfOperations = report.getResultOfOperations();
             if (resultOfOperations.isPositive()) {
-                journalItems.add(new JournalItem(resultOfOperations, this.configurationService.getAccount(newDocument, equity.getId()), false, null, null));
+                journalEntryDetails.add(new JournalEntryDetail(resultOfOperations, this.configurationService.getAccount(newDocument, equity.getId()), false, null, null));
             } else if (resultOfOperations.isNegative()) {
-                journalItems.add(new JournalItem(resultOfOperations.negate(), this.configurationService.getAccount(newDocument, equity.getId()), true, null, null));
+                journalEntryDetails.add(new JournalEntryDetail(resultOfOperations.negate(), this.configurationService.getAccount(newDocument, equity.getId()), true, null, null));
             }
             try {
-                Journal startBalance = new Journal("start", "start balance", dayBeforeStart,
-                        journalItems.toArray(new JournalItem[journalItems.size()]), null);
+                JournalEntry startBalance = new JournalEntry("start", "start balance", dayBeforeStart,
+                        journalEntryDetails.toArray(new JournalEntryDetail[journalEntryDetails.size()]), null);
                 newDocument.addJournal(startBalance, false);
             } catch (IllegalArgumentException | DocumentModificationFailedException e) {
                 throw new ServiceException("Failed to create journal for start balance.", e);
             }
 
             // Copy journals starting from the specified date
-            for (Journal journal : document.getJournals()) {
-                if (DateUtil.compareDayOfYear(date, journal.getDate()) <= 0) {
+            for (JournalEntry journalEntry : document.getJournalEntries()) {
+                if (DateUtil.compareDayOfYear(date, journalEntry.getDate()) <= 0) {
                     try {
-                        newDocument.addJournal(copyJournal(journal, newDocument), false);
+                        newDocument.addJournal(copyJournal(journalEntry, newDocument), false);
                     } catch (DocumentModificationFailedException e) {
                         throw new ServiceException("Failed to copy a journal to the new bookkeeping.", e);
                     }
@@ -117,15 +119,15 @@ public class BookkeepingService {
         });
     }
 
-    private Journal copyJournal(Journal journal, Document newDocument) throws ServiceException {
-        return new Journal(journal.getId(), journal.getDescription(), journal.getDate(),
-            copyJournalItems(journal.getItems(), newDocument), journal.getIdOfCreatedInvoice());
+    private JournalEntry copyJournal(JournalEntry journalEntry, Document newDocument) throws ServiceException {
+        return new JournalEntry(journalEntry.getId(), journalEntry.getDescription(), journalEntry.getDate(),
+            copyJournalItems(journalEntry.getItems(), newDocument), journalEntry.getIdOfCreatedInvoice());
     }
 
-    private JournalItem[] copyJournalItems(JournalItem[] items, Document newDocument) throws ServiceException {
-        JournalItem[] newItems = new JournalItem[items.length];
+    private JournalEntryDetail[] copyJournalItems(JournalEntryDetail[] items, Document newDocument) throws ServiceException {
+        JournalEntryDetail[] newItems = new JournalEntryDetail[items.length];
         for (int i=0; i<items.length; i++) {
-            newItems[i] = new JournalItem(items[i].getAmount(), configurationService.getAccount(newDocument, items[i].getAccount().getId()),
+            newItems[i] = new JournalEntryDetail(items[i].getAmount(), configurationService.getAccount(newDocument, items[i].getAccount().getId()),
                 items[i].isDebet(), items[i].getInvoiceId(), items[i].getPaymentId());
         }
         return newItems;
@@ -135,12 +137,12 @@ public class BookkeepingService {
      * Removes a journal from the database. Payments booked in the journal or invoices created
      * by the journal are also removed.
      * @param document the database from which the journal has to be removed
-     * @param journal the journal to be deleted
+     * @param journalEntry the journal to be deleted
      * @throws ServiceException if a problem occurs while deleting the journal
      */
-    public void removeJournal(Document document, Journal journal) throws ServiceException {
+    public void removeJournal(Document document, JournalEntry journalEntry) throws ServiceException {
         // Check for payments without payment ID.
-        for (JournalItem item : journal.getItems()) {
+        for (JournalEntryDetail item : journalEntry.getItems()) {
             if (item.getInvoiceId() != null && item.getPaymentId() == null) {
                 throw new ServiceException("The journal has a payment without an id. Therefore, it cannot be removed.");
             }
@@ -148,7 +150,7 @@ public class BookkeepingService {
 
         try {
             // Remove payments.
-            for (JournalItem item : journal.getItems()) {
+            for (JournalEntryDetail item : journalEntry.getItems()) {
                 String invoiceId = item.getInvoiceId();
                 String paymentId = item.getPaymentId();
                 if (invoiceId != null && paymentId != null) {
@@ -157,12 +159,12 @@ public class BookkeepingService {
             }
 
             // Check if the journal created an invoice. If so, remove the invoice too.
-            if (journal.createsInvoice()) {
-                invoiceService.deleteInvoice(document, journal.getIdOfCreatedInvoice());
+            if (journalEntry.createsInvoice()) {
+                invoiceService.deleteInvoice(document, journalEntry.getIdOfCreatedInvoice());
             }
 
             try {
-                document.removeJournal(journal);
+                document.removeJournal(journalEntry);
             } catch (DocumentModificationFailedException e) {
                 throw new ServiceException("Could not delete journal.", e);
             }
@@ -179,13 +181,13 @@ public class BookkeepingService {
      * @return the balance of this account at the specified date
      */
     public static Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
-        List<Journal> journals = document.getJournals();
+        List<JournalEntry> journalEntries = document.getJournalEntries();
         Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
         Amount result = Amount.getZero(bookkeeping.getCurrency());
-        for (Journal journal : journals) {
-            if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
-                JournalItem[] items = journal.getItems();
-                for (JournalItem item : items) {
+        for (JournalEntry journalEntry : journalEntries) {
+            if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
+                JournalEntryDetail[] items = journalEntry.getItems();
+                for (JournalEntryDetail item : items) {
                     if (item.getAccount().equals(account)) {
                         if (account.isDebet() == item.isDebet()) {
                             result = result.add(item.getAmount());
@@ -232,8 +234,8 @@ public class BookkeepingService {
             return true;
         }
 
-        for (Journal j : document.getJournals()) {
-            for (JournalItem i : j.getItems()) {
+        for (JournalEntry j : document.getJournalEntries()) {
+            for (JournalEntryDetail i : j.getItems()) {
                 if (account.equals(i.getAccount())) {
                     return true;
                 }
@@ -250,9 +252,9 @@ public class BookkeepingService {
             rb.setExpenses(configurationService.findExpenses(document));
             rb.setRevenues(configurationService.findRevenues(document));
 
-            for (Journal journal : document.getJournals()) {
-                if (DateUtil.compareDayOfYear(journal.getDate(), date) <= 0) {
-                    rb.addJournal(journal);
+            for (JournalEntry journalEntry : document.getJournalEntries()) {
+                if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
+                    rb.addJournal(journalEntry);
                 }
             }
 

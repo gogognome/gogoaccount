@@ -7,9 +7,11 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -114,9 +116,9 @@ public class ReportTask implements Task {
         printCreditors();
         progressListener.onProgressUpdate(60);
 
-        List<Journal> journals = document.getJournals();
+        List<JournalEntry> journalEntries = document.getJournalEntries();
         progressListener.onProgressUpdate(70);
-        printJournals(journals, bookkeeping.getStartOfPeriod(), date);
+        printJournals(journalEntries, bookkeeping.getStartOfPeriod(), date);
         progressListener.onProgressUpdate(80);
         printLedger();
 
@@ -346,14 +348,14 @@ public class ReportTask implements Task {
 		return party.getId() + " - " + party.getName();
 	}
 
-	private void printJournals(List<Journal> journals, Date startDate, Date endDate) throws ServiceException {
+	private void printJournals(List<JournalEntry> journalEntries, Date startDate, Date endDate) throws ServiceException {
         int startIndex = 0;
         int endIndex = 0;
-        for (int i=0; i<journals.size(); i++) {
-            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), endDate) <= 0) {
+        for (int i=0; i< journalEntries.size(); i++) {
+            if (DateUtil.compareDayOfYear(journalEntries.get(i).getDate(), endDate) <= 0) {
                 endIndex = i+1;
             }
-            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), startDate) < 0) {
+            if (DateUtil.compareDayOfYear(journalEntries.get(i).getDate(), startDate) < 0) {
                 startIndex = i+1;
             }
         }
@@ -387,11 +389,11 @@ public class ReportTask implements Task {
             result.append(textFormat.getHorizontalSeparator());
 
             for (int i=startIndex; i<endIndex; i++) {
-                values[0] = textResource.formatDate("gen.dateFormat", journals.get(i).getDate());
-                values[2] = journals.get(i).getId() + " - " + journals.get(i).getDescription();
+                values[0] = textResource.formatDate("gen.dateFormat", journalEntries.get(i).getDate());
+                values[2] = journalEntries.get(i).getId() + " - " + journalEntries.get(i).getDescription();
                 values[4] = "";
                 values[6] = "";
-                String idOfCreatedInvoice = journals.get(i).getIdOfCreatedInvoice();
+                String idOfCreatedInvoice = journalEntries.get(i).getIdOfCreatedInvoice();
                 if (idOfCreatedInvoice != null) {
                     Invoice invoice = invoiceService.getInvoice(document, idOfCreatedInvoice);
                     values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid())
@@ -401,8 +403,8 @@ public class ReportTask implements Task {
                 }
                 result.append(textFormat.getRow(values));
 
-                JournalItem[] items = journals.get(i).getItems();
-                for (JournalItem item : items) {
+                JournalEntryDetail[] items = journalEntries.get(i).getItems();
+                for (JournalEntryDetail item : items) {
                     values[0] = "";
                     values[2] = item.getAccount().getId() + " - "
                             + item.getAccount().getName();

@@ -1,8 +1,8 @@
-package nl.gogognome.gogoaccount.components.document;
+package nl.gogognome.gogoaccount.component.document;
 
 import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -13,7 +13,6 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.util.DateUtil;
 import org.h2.jdbcx.JdbcDataSource;
 
 import java.sql.Connection;
@@ -24,8 +23,6 @@ import java.util.*;
 public class Document {
 
     private Connection connectionToKeepInMemoryDatabaseAlive;
-
-    private final ArrayList<Journal> journals = new ArrayList<>();
 
     /** Indicates whether this database has unsaved changes. */
     private boolean changed;
@@ -123,15 +120,15 @@ public class Document {
      *
      * <p>This method does not notify changes in the database!
      *
-     * @param journal the journal
+     * @param journalEntry the journal
      * @throws DocumentModificationFailedException if creation of payments fails
      */
-    private void createPaymentsForItemsOfJournal(Journal journal) throws DocumentModificationFailedException, ServiceException {
-        JournalItem[] items = journal.getItems();
+    private void createPaymentsForItemsOfJournal(JournalEntry journalEntry) throws DocumentModificationFailedException, ServiceException {
+        JournalEntryDetail[] items = journalEntry.getItems();
         InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-        for (JournalItem item : items) {
+        for (JournalEntryDetail item : items) {
             if (item.getInvoiceId() != null) {
-                Payment payment = createPaymentForJournalItem(journal, item);
+                Payment payment = createPaymentForJournalItem(journalEntry, item);
                 payment = invoiceService.createPayment(this, payment);
                 item.setPaymentId(payment.getId());
             }
@@ -140,24 +137,24 @@ public class Document {
 
     /**
      * Creates a payment for a journal item.
-     * @param journal the journal that contains the item
-     * @param journalItem the journal item
+     * @param journalEntry the journal that contains the item
+     * @param journalEntryDetail the journal item
      * @return the payment
      */
-    private Payment createPaymentForJournalItem(Journal journal, JournalItem journalItem) {
+    private Payment createPaymentForJournalItem(JournalEntry journalEntry, JournalEntryDetail journalEntryDetail) {
         Amount amount;
-        if (journalItem.isDebet()) {
-            amount = journalItem.getAmount();
+        if (journalEntryDetail.isDebet()) {
+            amount = journalEntryDetail.getAmount();
         } else {
-            amount = journalItem.getAmount().negate();
+            amount = journalEntryDetail.getAmount().negate();
         }
-        Date date = journal.getDate();
-        String description = journalItem.getAccount().getName();
-        Payment payment = new Payment(journalItem.getPaymentId());
+        Date date = journalEntry.getDate();
+        String description = journalEntryDetail.getAccount().getName();
+        Payment payment = new Payment(journalEntryDetail.getPaymentId());
         payment.setDescription(description);
         payment.setAmount(amount);
         payment.setDate(date);
-        payment.setInvoiceId(journalItem.getInvoiceId());
+        payment.setInvoiceId(journalEntryDetail.getInvoiceId());
         return payment;
     }
 
@@ -168,85 +165,68 @@ public class Document {
      * To each invoice (referred to by the journal) a new payment is added for the
      * corresponding journal item.
      *
-     * @param journal the journal to be added
+     * @param journalEntry the journal to be added
      * @param createPayments <code>true</code> if payments have to be added for invoices referred
      *        to by the journal; <code>false</code> if no payments are not to be created.
      * @throws DocumentModificationFailedException if a problem occurs while adding the journal
      */
-    public void addJournal(Journal journal, boolean createPayments) throws DocumentModificationFailedException, ServiceException {
+    public void addJournal(JournalEntry journalEntry, boolean createPayments) throws DocumentModificationFailedException, ServiceException {
         if (createPayments) {
-            createPaymentsForItemsOfJournal(journal);
+            createPaymentsForItemsOfJournal(journalEntry);
         }
-        journals.add(journal);
+        journalEntries.add(journalEntry);
         notifyChange();
     }
 
     /**
-     * Adds an invoice and journal to the database. The invoice is created by the journal.
-     * <p>This method will either completely succeed or completely fail.
-     * @param invoice the invoice
-     * @param journal the journal
-     * @throws DocumentModificationFailedException if a problem occurs while adding the invoice or journal.
-     *         In this case the database will not have been changed.
-     */
-    public void addInvoicAndJournal(Invoice invoice, Journal journal) throws DocumentModificationFailedException {
-        String id = invoice.getId();
-        if (!id.equals(journal.getIdOfCreatedInvoice())) {
-            throw new DocumentModificationFailedException("The journal does not create the invoice with id " + id);
-        }
-
-        journals.add(journal);
-    }
-
-    /**
      * Removes a journal from the database. Payments booked in the journal are also removed.
-     * @param journal the journal to be deleted
+     * @param journalEntry the journal to be deleted
      * @throws DocumentModificationFailedException
      */
-    public void removeJournal(Journal journal) throws DocumentModificationFailedException {
-        if (!journals.contains(journal)) {
+    public void removeJournal(JournalEntry journalEntry) throws DocumentModificationFailedException {
+        if (!journalEntries.contains(journalEntry)) {
             throw new DocumentModificationFailedException("The journal to be removed does not exist.");
         }
 
         // Remove the journal.
-        journals.remove(journal);
+        journalEntries.remove(journalEntry);
     }
 
     /**
      * Updates a journal. Payments that are modified by the update of the journal
      * are updated in the corresponding invoice.
-     * @param oldJournal the journal to be replaced
-     * @param newJournal the journal that replaces <code>oldJournal</code>
+     * @param oldJournalEntry the journal to be replaced
+     * @param newJournalEntry the journal that replaces <code>oldJournal</code>
      * @throws DocumentModificationFailedException if a problem occurs while updating the journal
      */
-    public void updateJournal(Journal oldJournal, Journal newJournal) throws DocumentModificationFailedException, ServiceException {
+    public void updateJournal(JournalEntry oldJournalEntry, JournalEntry newJournalEntry) throws DocumentModificationFailedException, ServiceException {
         // Check for payments without paymentId. These payments can exist in old XML files.
-        JournalItem[] items = oldJournal.getItems();
-        for (JournalItem item2 : items) {
+        JournalEntryDetail[] items = oldJournalEntry.getItems();
+        for (JournalEntryDetail item2 : items) {
             if (item2.getInvoiceId() != null && item2.getPaymentId() == null) {
                 throw new DocumentModificationFailedException("The old journal contains a payment without id. It cannot therefore not be updated.");
             }
         }
 
-        int index = journals.indexOf(oldJournal);
+        int index = journalEntries.indexOf(oldJournalEntry);
         if (index == -1) {
             throw new DocumentModificationFailedException("The old journal does not exist in the database.");
         }
 
-        journals.set(index, newJournal);
+        journalEntries.set(index, newJournalEntry);
 
         // Update payments. Remove payments from old journal and add payments of the new journal.
         InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-        items = oldJournal.getItems();
-        for (JournalItem item : items) {
+        items = oldJournalEntry.getItems();
+        for (JournalEntryDetail item : items) {
             if (item.getPaymentId() != null) {
                 invoiceService.removePayment(this, item.getPaymentId());
             }
         }
-        items = newJournal.getItems();
-        for (JournalItem item : items) {
+        items = newJournalEntry.getItems();
+        for (JournalEntryDetail item : items) {
             if (item.getInvoiceId() != null) {
-                Payment payment = createPaymentForJournalItem(newJournal, item);
+                Payment payment = createPaymentForJournalItem(newJournalEntry, item);
                 invoiceService.createPayment(this, payment);
             }
         }
@@ -258,8 +238,8 @@ public class Document {
      * Gets the journals of the database
      * @return the journals sorted on date
      */
-    public List<Journal> getJournals() {
-        List<Journal> result = new ArrayList<>(journals);
+    public List<JournalEntry> getJournalEntries() {
+        List<JournalEntry> result = new ArrayList<>(journalEntries);
         Collections.sort(result);
         return result;
     }
@@ -283,8 +263,8 @@ public class Document {
      *         typically happens when the invoice was created in the previous
      *         year.
      */
-    public Journal getCreatingJournal(String invoiceId) {
-        for (Journal j : journals) {
+    public JournalEntry getCreatingJournal(String invoiceId) {
+        for (JournalEntry j : journalEntries) {
             if (invoiceId.equals(j.getIdOfCreatedInvoice())) {
                 return j;
             }
@@ -299,8 +279,8 @@ public class Document {
      * @return <code>true</code> if the account is used; <code>false</code> if the account is unused
      */
     public boolean isAccountUsed(String accountId) {
-        for (Journal journal : journals) {
-            for (JournalItem item : journal.getItems()) {
+        for (JournalEntry journalEntry : journalEntries) {
+            for (JournalEntryDetail item : journalEntry.getItems()) {
                 if (item.getAccount().getId().equals(accountId)) {
                     return true;
                 }

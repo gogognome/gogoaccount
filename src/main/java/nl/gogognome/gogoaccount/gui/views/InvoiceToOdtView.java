@@ -24,7 +24,7 @@ import java.util.Date;
 import javax.swing.AbstractAction;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;

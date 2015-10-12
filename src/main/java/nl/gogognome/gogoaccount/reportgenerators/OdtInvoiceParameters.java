@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 
 
 /**

@@ -25,7 +25,7 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.components.BalanceComponent;
 import nl.gogognome.gogoaccount.gui.components.OperationalResultComponent;
 import nl.gogognome.gogoaccount.services.ServiceException;

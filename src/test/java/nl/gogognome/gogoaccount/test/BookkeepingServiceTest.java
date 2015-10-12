@@ -11,9 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -21,7 +21,7 @@ import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.components.document.Document;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -191,30 +191,30 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test(expected = ServiceException.class)
     public void testCloseBookkeepingWithUnsavedChangesFails() throws Exception {
-        List<JournalItem> items = Arrays.asList(
+        List<JournalEntryDetail> items = Arrays.asList(
                 createItem(20, "100", true),
                 createItem(20, "101", false));
-        Journal journal = new Journal("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
+        JournalEntry journalEntry = new JournalEntry("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
 
-        document.addJournal(journal, false);
+        document.addJournal(journalEntry, false);
         bookkeepingService.closeBookkeeping(document, "new bookkeeping",
                 DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
     }
 
     @Test
     public void testCloseBookkeepingWithJournalsCopiedToNewBookkeeping() throws Exception {
-        List<JournalItem> items = Arrays.asList(
+        List<JournalEntryDetail> items = Arrays.asList(
                 createItem(20, "100", true),
                 createItem(20, "101", false));
-        Journal journal = new Journal("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
+        JournalEntry journalEntry = new JournalEntry("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
 
-        document.addJournal(journal, false);
+        document.addJournal(journalEntry, false);
         document.databaseConsistentWithFile();
         Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
                 DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
 
         assertEquals("[20111231 start start balance, 20120110 ABC Test]",
-                newDocument.getJournals().toString());
+                newDocument.getJournalEntries().toString());
     }
 
     @Test
