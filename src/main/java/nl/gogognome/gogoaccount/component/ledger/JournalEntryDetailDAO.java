@@ -23,6 +23,14 @@ class JournalEntryDetailDAO extends AbstractDomainClassDAO<JournalEntryDetail> {
         return findAll(new NameValuePairs().add("journal_entry_id", journalEntryUniqueId), "id");
     }
 
+    public void deleteByJournalEntry(long journalEntryUniqueId) throws SQLException {
+        deleteWhere(new NameValuePairs().add("journal_entry_id", journalEntryUniqueId));
+    }
+
+    public JournalEntryDetail findByInvoiceId(String invoiceId) throws SQLException {
+        return first(new NameValuePairs().add("invoice_id", invoiceId));
+    }
+
     @Override
     protected JournalEntryDetail getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
         JournalEntryDetail detail = new JournalEntryDetail(result.getLong("id"));

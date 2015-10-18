@@ -28,6 +28,10 @@ public class JournalEntry implements Comparable<JournalEntry> {
      */
     private String idOfCreatedInvoice;
 
+    public JournalEntry() {
+        this(-1);
+    }
+
     public JournalEntry(long uniqueId) {
         this.uniqueId = uniqueId;
     }

@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 import java.awt.BorderLayout;
@@ -51,17 +35,13 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 
 /**
  * This class implements the dialog for editing a single journal.
- *
- * @author Sander Kooijmans
  */
 public class EditJournalView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	/** The database. */
     protected Document document;
 
-    /** The id of the title. */
     private String titleId;
 
     /**
@@ -69,6 +49,12 @@ public class EditJournalView extends View {
      * is to be edited.
      */
     protected JournalEntry journalEntryToBeEdited;
+
+    /**
+     * The journal details used to initialize the view. <code>null</code> indicates that a new journal
+     * is to be edited.
+     */
+    protected List<JournalEntryDetail> journalEntryDetailsToBeEdited;
 
     /**
      * The id of the invoice that is created by the edited journal. If <code>null</code>, then
@@ -102,10 +88,11 @@ public class EditJournalView extends View {
      * @param journalEntry the journal used to initialize the elements of the view. Must be <code>null</code>
      *        to edit a new journal
      */
-    public EditJournalView(Document document, String titleId, JournalEntry journalEntry) {
+    public EditJournalView(Document document, String titleId, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
         this.document = document;
         this.titleId = titleId;
         this.journalEntryToBeEdited = journalEntry;
+        this.journalEntryDetailsToBeEdited = journalEntryDetails;
     }
 
     @Override
@@ -119,14 +106,14 @@ public class EditJournalView extends View {
             itemsTableModel = new ItemsTableModel(document);
             itemsTableModel.setJournalItems(new JournalEntryDetail[0]);
 
-            initModelsForJournal(journalEntryToBeEdited);
+            initModelsForJournal(journalEntryToBeEdited, journalEntryDetailsToBeEdited);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
             close();
         }
 	}
 
-	private void initModelsForJournal(JournalEntry initialValuesJournalEntry) throws ServiceException {
+	private void initModelsForJournal(JournalEntry initialValuesJournalEntry, List<JournalEntryDetail> initialDetails) throws ServiceException {
 		if (initialValuesJournalEntry == null) {
         	dateModel.setDate(new Date(), null);
         } else {
@@ -135,7 +122,7 @@ public class EditJournalView extends View {
             dateModel.setDate(initialValuesJournalEntry.getDate());
             descriptionModel.setString(initialValuesJournalEntry.getDescription());
 
-            for (JournalEntryDetail item : initialValuesJournalEntry.getItems()) {
+            for (JournalEntryDetail item : initialDetails) {
                 itemsTableModel.addRow(item);
             }
         }
@@ -239,7 +226,7 @@ public class EditJournalView extends View {
 
     /** Handles the OK button. Closes the dialog. */
     private void handleOkButtonPressed() {
-        JournalEntry journalEntry = getJournalFromDialog();
+        JournalEntry journalEntry = getJournalEntryFromDialog();
         if (journalEntry != null) {
         	try {
         		createNewOrStoreUpdatedJournal(journalEntry);
@@ -252,7 +239,7 @@ public class EditJournalView extends View {
 
 	/** Handles the Ok + next button. */
     private void handleOkAndNextButtonPressed() {
-        JournalEntry journalEntry = getJournalFromDialog();
+        JournalEntry journalEntry = getJournalEntryFromDialog();
         if (journalEntry != null) {
             try {
                 createNewOrStoreUpdatedJournal(journalEntry);
@@ -281,30 +268,18 @@ public class EditJournalView extends View {
 	protected void initValuesForNextJournal() throws ServiceException {
 	}
 
-    /**
-     * Gets the journal from the values filled in the dialog.
-     * @return the journal or <code>null</code> if the values are not valid,
-     *          in which case the user has been notified about the problem with
-     *          the input values.
-     */
-    private JournalEntry getJournalFromDialog() {
-        Date date = dateModel.getDate();
-        if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
-            return null;
-        }
+    private JournalEntry getJournalEntryFromDialog() {
+        JournalEntry journalEntry = new JournalEntry();
+        journalEntry.setDate(dateModel.getDate());
+        journalEntry.setId(idModel.getString());
+        journalEntry.setIdOfCreatedInvoice(idOfCreatedInvoice);
+        journalEntry.setDescription(descriptionModel.getString());
 
-        String id = idModel.getString();
-        String description = descriptionModel.getString();
-        List<JournalEntryDetail> items = itemsTableModel.getRows();
+        return journalEntry;
+    }
 
-        try {
-            return new JournalEntry(id, description, date, items, idOfCreatedInvoice);
-        }
-        catch (IllegalArgumentException e) {
-            MessageDialog.showMessage(this, "gen.titleError", "gen.itemsNotInBalance");
-            return null;
-        }
+    private List<JournalEntryDetail> getJournalEntryDetailsFromDialg() {
+        return itemsTableModel.getRows();
     }
 
     /** Handles the add button. Lets the user add a journal item. */
