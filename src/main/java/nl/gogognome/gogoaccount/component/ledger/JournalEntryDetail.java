@@ -30,6 +30,10 @@ public class JournalEntryDetail {
      */
     private boolean debet;
 
+    public JournalEntryDetail() {
+        this(-1);
+    }
+
     public JournalEntryDetail(long id) {
         this.id = id;
     }
@@ -84,6 +88,10 @@ public class JournalEntryDetail {
 
     public void setDebet(boolean debet) {
         this.debet = debet;
+    }
+
+    public boolean isCredit() {
+        return !isDebet();
     }
 
     /**

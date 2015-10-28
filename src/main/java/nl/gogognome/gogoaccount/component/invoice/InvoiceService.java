@@ -111,8 +111,7 @@ public class InvoiceService {
                 invoice.setIssueDate(issueDate);
 
                 // Create the journal.
-                JournalEntryDetail[] items = new JournalEntryDetail[invoiceLineDefinitions.size()];
-                int n = 0;
+                List<JournalEntryDetail> journalEntryDetails = new ArrayList<JournalEntryDetail>();
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                     Account account = line.getAccount();
                     assert account != null; // has been checked before
@@ -123,23 +122,31 @@ public class InvoiceService {
                     }
 
                     assert amount != null; // has been checked before
-                    items[n] = new JournalEntryDetail(amount, account, debet, null, null);
-                    n++;
+                    JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+                    journalEntryDetail.setAmount(amount);
+                    journalEntryDetail.setAccountId(account.getId());
+                    journalEntryDetail.setDebet(debet);
+                    journalEntryDetails.add(journalEntryDetail);
                 }
 
                 JournalEntry journalEntry;
                 try {
-                    journalEntry = new JournalEntry(specificId, specificDescription, issueDate, items, specificId);
+                    journalEntry = new JournalEntry();
+                    journalEntry.setId(specificId);
+                    journalEntry.setDescription(specificDescription);
+                    journalEntry.setDate(issueDate);
+                    journalEntry.setIdOfCreatedInvoice(specificId);
                 } catch (IllegalArgumentException e) {
                     throw new ServiceException("The debet and credit amounts are not in balance!", e);
                 }
 
                 try {
-                    ObjectFactory.create(LedgerService.class).createJournalEntry(document, journalEntry);
+                    LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+                    ledgerService.createJournalEntry(document, journalEntry, journalEntryDetails);
                     invoice = invoiceDAO.create(invoice);
                     invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
                     changedDatabase = true;
-                } catch (SQLException | DocumentModificationFailedException e) {
+                } catch (SQLException e) {
                     partiesForWhichCreationFailed.add(party);
                 }
             }

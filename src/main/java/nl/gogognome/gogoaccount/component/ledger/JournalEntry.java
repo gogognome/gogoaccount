@@ -36,63 +36,6 @@ public class JournalEntry implements Comparable<JournalEntry> {
         this.uniqueId = uniqueId;
     }
 
-    /**
-     * Creates a journal.
-     * @param id the id of the journal
-     * @param description the description of the journal
-     * @param date the date of the journal
-     * @param items the items of the journal. The sums of the debet
-     *        and credit amounts must be equal!
-     * @param idOfCreatedInvoice if not <code>null</code>, then this contains the id of the invoice
-     *        that is created by this journal
-     * @throws IllegalArgumentException if the sum of debet and credit amounts differ
-     *          or if more than one item with a party has been specified.
-     */
-    private JournalEntry(String id, String description, Date date, JournalEntryDetail[] items, String idOfCreatedInvoice) {
-        this.id = id;
-        this.description = description;
-        this.date = date;
-        this.items = items;
-        this.idOfCreatedInvoice = idOfCreatedInvoice;
-
-        Amount totalDebet = null;
-        Amount totalCredit = null;
-        for (int i=0; i<items.length; i++) {
-            if (items[i].isDebet()) {
-                totalDebet = addNullable(totalDebet, items[i].getAmount());
-            } else {
-                totalCredit = addNullable(totalCredit, items[i].getAmount());
-            }
-        }
-
-        if (!nullableAmountsEqual(totalDebet, totalCredit)) {
-            AmountFormat af = new AmountFormat(Locale.getDefault());
-            throw new IllegalArgumentException(
-                    "The sum of debet and credit amounts differ for journal " + id
-                    + "! debet: " + af.formatAmount(totalDebet) +
-                    "; credit: " + af.formatAmount(totalCredit));
-        }
-    }
-
-    private Amount addNullable(Amount a, Amount b) {
-        if (a == null) {
-            return b;
-        } else if (b == null) {
-            return a;
-        } else {
-            return a.add(b);
-        }
-    }
-
-    private boolean nullableAmountsEqual(Amount a, Amount b) {
-        if (a == null && b == null) {
-            return true;
-        } else if (a != null && b != null) {
-            return a.equals(b);
-        } else {
-            return false;
-        }
-    }
 
     public Date getDate() {
         return date;

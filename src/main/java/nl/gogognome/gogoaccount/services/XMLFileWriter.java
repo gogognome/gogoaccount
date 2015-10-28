@@ -84,7 +84,7 @@ public class XMLFileWriter {
 
     private void appendElementsForJournals(Element rootElement) throws ServiceException {
         Element journalsElem = doc.createElement("journals");
-        List<JournalEntry> journalEntries = document.getJournalEntries();
+        List<JournalEntry> journalEntries = ledgerService.findJournalEntries(document);
         for (JournalEntry journalEntry : journalEntries) {
             Element journalElem = doc.createElement("journal");
             journalElem.setAttribute("id", journalEntry.getId());

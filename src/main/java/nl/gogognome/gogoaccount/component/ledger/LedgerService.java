@@ -1,6 +1,5 @@
 package nl.gogognome.gogoaccount.component.ledger;
 
-import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
@@ -9,9 +8,11 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class LedgerService {
 
@@ -28,16 +29,20 @@ public class LedgerService {
      *         typically happens when the invoice was created in the previous
      *         year.
      */
-    public JournalEntry findCreatingJournal(Document document, String invoiceId) {
-        return ServiceTransaction.withoutResult(() -> {
+    public JournalEntry findJournalThatCreatesInvoice(Document document, String invoiceId) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
             JournalEntryDetail journalEntryDetail = new JournalEntryDetailDAO(document).findByInvoiceId(invoiceId);
             return journalEntryDetail != null ? new JournalEntryDAO(document).get(journalEntryDetail.getJournalEntryUniqueId()) : null;
         });
     }
 
-    public JournalEntry createJournalEntry(Document document, JournalEntry journalEntry) throws ServiceException {
+    public JournalEntry createJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             JournalEntry createdJournalEntry = new JournalEntryDAO(document).create(journalEntry);
+            JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
+            for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
+                journalEntryDetailDAO.create(journalEntryDetail);
+            }
             document.notifyChange();
             return createdJournalEntry;
         });
@@ -63,6 +68,24 @@ public class LedgerService {
     public void addJournal(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails, boolean createPayments)
             throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            Amount totalDebet = null;
+            Amount totalCredit = null;
+            for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
+                if (journalEntryDetail.isDebet()) {
+                    totalDebet = Amount.add(totalDebet, journalEntryDetail.getAmount());
+                } else {
+                    totalCredit = Amount.add(totalCredit, journalEntryDetail.getAmount());
+                }
+            }
+
+            if (!Amount.areEqual(totalDebet, totalCredit)) {
+                AmountFormat af = new AmountFormat(Locale.getDefault());
+                throw new IllegalArgumentException(
+                        "The sum of debet and credit amounts differ for journal " + journalEntry.getId()
+                                + "! debet: " + af.formatAmount(totalDebet) +
+                                "; credit: " + af.formatAmount(totalCredit));
+            }
+
             if (createPayments) {
                 createPaymentsForItemsOfJournal(document, journalEntry, journalEntryDetails);
             }
@@ -157,6 +180,17 @@ public class LedgerService {
             new JournalEntryDAO(document).delete(journalEntry.getUniqueId());
             document.notifyChange();
         });
+    }
+
+    /**
+     * Checks whether an account is used in the database. If it is unused, the account
+     * can be removed from the database without destroying its integrity.
+     * @param document the document
+     * @param accountId the ID of the account
+     * @return <code>true</code> if the account is used; <code>false</code> if the account is unused
+     */
+    public boolean isAccountUsed(Document document, String accountId) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new JournalEntryDetailDAO(document).isAccountUsed(accountId));
     }
 
 }

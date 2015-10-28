@@ -9,6 +9,7 @@ import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -35,6 +36,8 @@ public class BookkeepingService {
                         "First save the changes before closing the bookkeeping.");
             }
 
+            LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+
             Document newDocument = createNewDatabase("New bookkeeping");
             newDocument.setFileName(null);
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
@@ -60,18 +63,21 @@ public class BookkeepingService {
             Date dayBeforeStart = DateUtil.addDays(date, -1);
 
             List<JournalEntryDetail> journalEntryDetails = new ArrayList<>(20);
-            for (Account account : this.configurationService.findAssets(document)) {
-                JournalEntryDetail item = new JournalEntryDetail(getAccountBalance(document, account, dayBeforeStart),
-                        this.configurationService.getAccount(newDocument, account.getId()), true, null, null);
-                if (!item.getAmount().isZero()) {
-                    journalEntryDetails.add(item);
+            for (Account account : configurationService.findAssets(document)) {
+                JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+                journalEntryDetail.setAmount(getAccountBalance(document, account, dayBeforeStart));
+                journalEntryDetail.setAccountId(account.getId());
+                journalEntryDetail.setDebet(true);
+                if (!journalEntryDetail.getAmount().isZero()) {
+                    journalEntryDetails.add(journalEntryDetail);
                 }
             }
-            for (Account account : this.configurationService.findLiabilities(document)) {
-                JournalEntryDetail item = new JournalEntryDetail(getAccountBalance(document, account, dayBeforeStart),
-                        this.configurationService.getAccount(newDocument, account.getId()), false, null, null);
-                if (!item.getAmount().isZero()) {
-                    journalEntryDetails.add(item);
+            for (Account account : configurationService.findLiabilities(document)) {
+                JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+                journalEntryDetail.setAmount(getAccountBalance(document, account, dayBeforeStart));
+                journalEntryDetail.setAccountId(account.getId());
+                if (!journalEntryDetail.getAmount().isZero()) {
+                    journalEntryDetails.add(journalEntryDetail);
                 }
             }
 
@@ -79,26 +85,32 @@ public class BookkeepingService {
             Report report = createReport(document, dayBeforeStart);
             Amount resultOfOperations = report.getResultOfOperations();
             if (resultOfOperations.isPositive()) {
-                journalEntryDetails.add(new JournalEntryDetail(resultOfOperations, this.configurationService.getAccount(newDocument, equity.getId()), false, null, null));
+                JournalEntryDetail profit = new JournalEntryDetail();
+                profit.setAmount(resultOfOperations);
+                profit.setAccountId(equity.getId());
+                profit.setDebet(false);
+                journalEntryDetails.add(profit);
             } else if (resultOfOperations.isNegative()) {
-                journalEntryDetails.add(new JournalEntryDetail(resultOfOperations.negate(), this.configurationService.getAccount(newDocument, equity.getId()), true, null, null));
+                JournalEntryDetail loss = new JournalEntryDetail();
+                loss.setAmount(resultOfOperations.negate());
+                loss.setAccountId(equity.getId());
+                loss.setDebet(true);
+                journalEntryDetails.add(loss);
             }
             try {
-                JournalEntry startBalance = new JournalEntry("start", "start balance", dayBeforeStart,
-                        journalEntryDetails.toArray(new JournalEntryDetail[journalEntryDetails.size()]), null);
-                newDocument.addJournal(startBalance, false);
-            } catch (IllegalArgumentException | DocumentModificationFailedException e) {
+                JournalEntry startBalance = new JournalEntry();
+                startBalance.setId("start");
+                startBalance.setDescription("start balance");
+                startBalance.setDate(dayBeforeStart);
+                ledgerService.createJournalEntry(newDocument, startBalance, journalEntryDetails);
+            } catch (IllegalArgumentException  e) {
                 throw new ServiceException("Failed to create journal for start balance.", e);
             }
 
             // Copy journals starting from the specified date
-            for (JournalEntry journalEntry : document.getJournalEntries()) {
+            for (JournalEntry journalEntry : ledgerService.findJournalEntries(document)) {
                 if (DateUtil.compareDayOfYear(date, journalEntry.getDate()) <= 0) {
-                    try {
-                        newDocument.addJournal(copyJournal(journalEntry, newDocument), false);
-                    } catch (DocumentModificationFailedException e) {
-                        throw new ServiceException("Failed to copy a journal to the new bookkeeping.", e);
-                    }
+                    ledgerService.createJournalEntry(newDocument, journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
                 }
             }
 
@@ -117,20 +129,6 @@ public class BookkeepingService {
 
             return newDocument;
         });
-    }
-
-    private JournalEntry copyJournal(JournalEntry journalEntry, Document newDocument) throws ServiceException {
-        return new JournalEntry(journalEntry.getId(), journalEntry.getDescription(), journalEntry.getDate(),
-            copyJournalItems(journalEntry.getItems(), newDocument), journalEntry.getIdOfCreatedInvoice());
-    }
-
-    private JournalEntryDetail[] copyJournalItems(JournalEntryDetail[] items, Document newDocument) throws ServiceException {
-        JournalEntryDetail[] newItems = new JournalEntryDetail[items.length];
-        for (int i=0; i<items.length; i++) {
-            newItems[i] = new JournalEntryDetail(items[i].getAmount(), configurationService.getAccount(newDocument, items[i].getAccount().getId()),
-                items[i].isDebet(), items[i].getInvoiceId(), items[i].getPaymentId());
-        }
-        return newItems;
     }
 
     /**

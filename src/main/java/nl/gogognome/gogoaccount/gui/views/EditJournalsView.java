@@ -5,7 +5,7 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
-import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
+import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -27,7 +27,7 @@ public class EditJournalsView extends View {
 	private static final long serialVersionUID = 1L;
 
     private JTable itemsTable;
-    private ItemsTableModel itemsTableModel;
+    private JournalEntryDetailsTableModel itemsTableModel;
 
     private JournalsTableModel journalsTableModel;
     private JTable journalsTable;
@@ -54,7 +54,7 @@ public class EditJournalsView extends View {
 		journalsTable = widgetFactory.createSortedTable(journalsTableModel);
 
 		// Create table of items
-		itemsTableModel = new ItemsTableModel(document);
+		itemsTableModel = new JournalEntryDetailsTableModel(document);
 		itemsTable = widgetFactory.createTable(itemsTableModel);
 		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
@@ -113,7 +113,7 @@ public class EditJournalsView extends View {
      * @param row the row of the journal whose items should be shown.
      */
     private void updateJournalItemTable(int row) {
-        itemsTableModel.setJournalItems(journalsTableModel.getRow(row).getItems());
+        itemsTableModel.setJournalEntryDetails(journalsTableModel.getRow(row).getItems());
     }
 
     /**

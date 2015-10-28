@@ -20,10 +20,12 @@ import javax.swing.border.EmptyBorder;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.ActionRunner;
-import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
+import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -69,7 +71,7 @@ public class EditJournalView extends View {
     /** The table containing journal items. */
     private JTable itemsTable;
 
-    protected ItemsTableModel itemsTableModel;
+    protected JournalEntryDetailsTableModel itemsTableModel;
 
     /** The date model used to edit the date. */
     protected DateModel dateModel = new DateModel();
@@ -103,8 +105,7 @@ public class EditJournalView extends View {
 
     private void initModels() {
         try {
-            itemsTableModel = new ItemsTableModel(document);
-            itemsTableModel.setJournalItems(new JournalEntryDetail[0]);
+            itemsTableModel = new JournalEntryDetailsTableModel(document);
 
             initModelsForJournal(journalEntryToBeEdited, journalEntryDetailsToBeEdited);
         } catch (ServiceException e) {
@@ -229,7 +230,7 @@ public class EditJournalView extends View {
         JournalEntry journalEntry = getJournalEntryFromDialog();
         if (journalEntry != null) {
         	try {
-        		createNewOrStoreUpdatedJournal(journalEntry);
+        		createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
                 requestClose();
         	} catch (Exception e) {
                 MessageDialog.showErrorMessage(this,e, "ajd.addJournalException");
@@ -242,7 +243,7 @@ public class EditJournalView extends View {
         JournalEntry journalEntry = getJournalEntryFromDialog();
         if (journalEntry != null) {
             try {
-                createNewOrStoreUpdatedJournal(journalEntry);
+                createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
                 itemsTableModel.clear();
                 valuesEditPanel.requestFocus();
                 initValuesForNextJournal();
@@ -252,17 +253,17 @@ public class EditJournalView extends View {
         }
     }
 
-	private void createNewOrStoreUpdatedJournal(JournalEntry journalEntry) throws Exception {
+	private void createNewOrStoreUpdatedJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws Exception {
         if (journalEntryToBeEdited == null) {
-            createNewJournal(journalEntry);
+            createNewJournal(journalEntry, journalEntryDetails);
         } else {
             // Set the edited journal
             editedJournalEntry = journalEntry;
         }
 	}
 
-	protected void createNewJournal(JournalEntry journalEntry) throws DocumentModificationFailedException, ServiceException {
-		document.addJournal(journalEntry, true);
+	protected void createNewJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
+		ObjectFactory.create(LedgerService.class).createJournalEntry(document, journalEntry, journalEntryDetails);
 	}
 
 	protected void initValuesForNextJournal() throws ServiceException {
@@ -278,7 +279,7 @@ public class EditJournalView extends View {
         return journalEntry;
     }
 
-    private List<JournalEntryDetail> getJournalEntryDetailsFromDialg() {
+    private List<JournalEntryDetail> getJournalEntryDetailsFromDialog() {
         return itemsTableModel.getRows();
     }
 

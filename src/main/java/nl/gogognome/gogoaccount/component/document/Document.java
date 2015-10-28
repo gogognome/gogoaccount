@@ -1,17 +1,9 @@
 package nl.gogognome.gogoaccount.component.document;
 
 import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import org.h2.jdbcx.JdbcDataSource;
@@ -123,23 +115,6 @@ public class Document {
     {
         this.fileName = fileName;
         notifyChange();
-    }
-
-    /**
-     * Checks whether an account is used in the database. If it is unused, the account
-     * can be removed from the database without destroying its integrity.
-     * @param accountId the ID of the account
-     * @return <code>true</code> if the account is used; <code>false</code> if the account is unused
-     */
-    public boolean isAccountUsed(String accountId) {
-        for (JournalEntry journalEntry : journalEntries) {
-            for (JournalEntryDetail item : journalEntry.getItems()) {
-                if (item.getAccount().getId().equals(accountId)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     /**

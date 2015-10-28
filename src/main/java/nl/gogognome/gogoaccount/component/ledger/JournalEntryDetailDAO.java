@@ -31,6 +31,10 @@ class JournalEntryDetailDAO extends AbstractDomainClassDAO<JournalEntryDetail> {
         return first(new NameValuePairs().add("invoice_id", invoiceId));
     }
 
+    public boolean isAccountUsed(String accountId) throws SQLException {
+        return count(new NameValuePairs().add("account_id", accountId)) > 0;
+    }
+
     @Override
     protected JournalEntryDetail getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
         JournalEntryDetail detail = new JournalEntryDetail(result.getLong("id"));

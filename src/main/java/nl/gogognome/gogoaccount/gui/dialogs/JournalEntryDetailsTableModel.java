@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
@@ -20,12 +22,12 @@ import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Table model for journal items.
- */
-public class ItemsTableModel extends AbstractListTableModel<JournalEntryDetail> {
+public class JournalEntryDetailsTableModel extends AbstractListTableModel<JournalEntryDetail> {
 
-    private final Logger logger = LoggerFactory.getLogger(ItemsTableModel.class);
+    private final Logger logger = LoggerFactory.getLogger(JournalEntryDetailsTableModel.class);
+
+    // TODO: Get rid of these services.
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
@@ -50,13 +52,15 @@ public class ItemsTableModel extends AbstractListTableModel<JournalEntryDetail> 
 
     private final Document document;
 
-    public ItemsTableModel(Document document) {
-    	super(COLUMN_DEFINTIIONS, Collections.<JournalEntryDetail>emptyList());
+    public JournalEntryDetailsTableModel(Document document) {
+    	super(COLUMN_DEFINTIIONS, Collections.emptyList());
         this.document = document;
     }
 
-    public void setJournalItems(JournalEntryDetail[] itemsArray) {
-    	replaceRows(Arrays.asList(itemsArray));
+    // TODO: replace parameter by list of objects that contain all details to be shown so that no service calls are needed by this class.
+    @Deprecated
+    public void setJournalEntryDetails(List<JournalEntryDetail> journalEntryDetails) {
+    	replaceRows(journalEntryDetails);
     }
 
     @Override
@@ -64,22 +68,28 @@ public class ItemsTableModel extends AbstractListTableModel<JournalEntryDetail> 
     	ColumnDefinition colDef = COLUMN_DEFINTIIONS.get(col);
         AmountFormat af = Factory.getInstance(AmountFormat.class);
         String result = null;
-        JournalEntryDetail item = getRow(row);
+        JournalEntryDetail journalEntryDetail = getRow(row);
 
         if (ACCOUNT == colDef) {
-            result = item.getAccount().getId() + " " + item.getAccount().getName();
+            try {
+                Account account = configurationService.getAccount(document, journalEntryDetail.getAccountId());
+                result = account.getId() + " " + account.getName();
+            } catch (ServiceException e) {
+                logger.warn("Ignored exception: " + e.getMessage(), e);
+                result = "???";
+            }
         } else if (DEBET == colDef) {
-            result = item.isDebet() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
+            result = journalEntryDetail.isDebet() ? af.formatAmountWithoutCurrency(journalEntryDetail.getAmount()) : "" ;
         } else if (CREDIT == colDef) {
-            result = item.isCredit() ? af.formatAmountWithoutCurrency(item.getAmount()) : "" ;
+            result = journalEntryDetail.isCredit() ? af.formatAmountWithoutCurrency(journalEntryDetail.getAmount()) : "" ;
         } else if (INVOICE == colDef) {
-            if (item.getInvoiceId() != null) {
+            if (journalEntryDetail.getInvoiceId() != null) {
                 try {
-                    Invoice invoice = invoiceService.getInvoice(document, item.getInvoiceId());
+                    Invoice invoice = invoiceService.getInvoice(document, journalEntryDetail.getInvoiceId());
                     Party party = partyService.getParty(document, invoice.getPayingPartyId());
                     result = invoice != null ? invoice.getId() + " (" + party.getId() + " - " + party.getName() + ")" : "";
                 } catch (ServiceException e) {
-                    logger.warn("Ignroed exception: " + e.getMessage(), e);
+                    logger.warn("Ignored exception: " + e.getMessage(), e);
                     result = "???";
                 }
             }

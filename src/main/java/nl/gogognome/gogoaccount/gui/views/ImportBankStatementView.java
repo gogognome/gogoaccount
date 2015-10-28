@@ -43,7 +43,7 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
-import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
+import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
@@ -82,7 +82,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
 	private FileModel fileSelectionModel = new FileModel();
 
-    private ItemsTableModel itemsTableModel;
+    private JournalEntryDetailsTableModel itemsTableModel;
 
     private JTable transactionsJournalsTable;
     private TransactionsJournalsTableModel transactionJournalsTableModel;
@@ -144,7 +144,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 		transactionsJournalsTable = widgetFactory.createSortedTable(transactionJournalsTableModel);
 
 		// Create table of items
-		itemsTableModel = new ItemsTableModel(document);
+		itemsTableModel = new JournalEntryDetailsTableModel(document);
         JTable itemsTable = widgetFactory.createTable(itemsTableModel);
 		itemsTable.setRowSelectionAllowed(false);
 		itemsTable.setColumnSelectionAllowed(false);
@@ -210,7 +210,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     	} else {
     		items = new JournalEntryDetail[0];
     	}
-    	itemsTableModel.setJournalItems(items);
+    	itemsTableModel.setJournalEntryDetails(items);
     }
 
 	private void handleImport() {
