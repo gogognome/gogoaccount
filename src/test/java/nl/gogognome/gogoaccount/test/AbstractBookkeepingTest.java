@@ -10,6 +10,7 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -38,7 +39,8 @@ public abstract class AbstractBookkeepingTest {
     private final BookkeepingService bookkeepingService = new BookkeepingService();
     private final ConfigurationService configurationService = new ConfigurationService();
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final PartyService partyService = new PartyService();
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     protected Document document;
     protected Bookkeeping bookkeeping;
@@ -85,11 +87,14 @@ public abstract class AbstractBookkeepingTest {
     }
 
     private void addJournals() throws Exception {
-        List<JournalEntryDetail> items = new ArrayList<>();
-        items.add(createItem(20, "190", true));
-        items.add(createItem(20, "300", false));
-        JournalEntry journalEntry = new JournalEntry("t1", "Payment", DateUtil.createDate(2011, 3, 5),
-                items, "inv1");
+        List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
+        journalEntryDetails.add(createItem(20, "190", true));
+        journalEntryDetails.add(createItem(20, "300", false));
+        JournalEntry journalEntry = new JournalEntry();
+        journalEntry.setId("t1");
+        journalEntry.setDescription("Payment");
+        journalEntry.setDate(DateUtil.createDate(2011, 3, 5));
+        journalEntry.setIdOfCreatedInvoice("inv1");
 
         List<String> descriptions = Arrays.asList("Contributie 2011", "Contributie");
         List<Amount> amounts = Arrays.asList(null, createAmount(20));
@@ -101,13 +106,16 @@ public abstract class AbstractBookkeepingTest {
         invoice.setIssueDate(journalEntry.getDate());
         invoiceService.createInvoice(document, invoice);
         invoiceService.createDetails(document, invoice, descriptions, amounts);
-        document.addInvoicAndJournal(invoice, journalEntry);
+        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
 
-        items = new ArrayList<>();
-        items.add(createItem(10, "101", true, "inv1", "pay1"));
-        items.add(createItem(10, "190", false));
-        journalEntry = new JournalEntry("t2", "Payment", DateUtil.createDate(2011, 5, 10), items, null);
-        document.addJournal(journalEntry, true);
+        journalEntryDetails = new ArrayList<>();
+        journalEntryDetails.add(createItem(10, "101", true, "inv1", "pay1"));
+        journalEntryDetails.add(createItem(10, "190", false));
+        journalEntry = new JournalEntry();
+        journalEntry.setId("t2");
+        journalEntry.setDescription("Payment");
+        journalEntry.setDate(DateUtil.createDate(2011, 5, 10));
+        ledgerService.addJournal(document, journalEntry, journalEntryDetails, true);
     }
 
     private List<Account> createAccounts() {
@@ -149,29 +157,38 @@ public abstract class AbstractBookkeepingTest {
     }
 
     private void addStartBalance() throws Exception {
-        List<JournalEntryDetail> items = new ArrayList<>();
-        items.add(createItem(100, "100", true));
-        items.add(createItem(300, "101", true));
-        items.add(createItem(400, "200", false));
-        JournalEntry journalEntry = new JournalEntry("start", "Start balance",
-                DateUtil.addDays(bookkeeping.getStartOfPeriod(), -1),
-                items, null);
-        document.addJournal(journalEntry, false);
+        List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
+        journalEntryDetails.add(createItem(100, "100", true));
+        journalEntryDetails.add(createItem(300, "101", true));
+        journalEntryDetails.add(createItem(400, "200", false));
+        JournalEntry journalEntry = new JournalEntry();
+        journalEntry.setId("start");
+        journalEntry.setDescription("Start balance");
+        journalEntry.setDate(DateUtil.addDays(bookkeeping.getStartOfPeriod(), -1));
+        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
     }
 
     protected JournalEntryDetail createItem(int amountInt, String accountId, boolean debet) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            Account account = configurationService.getAccount(document, accountId);
             Amount amount = createAmount(amountInt);
-            return new JournalEntryDetail(amount, account, debet);
+            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+            journalEntryDetail.setAmount(amount);
+            journalEntryDetail.setAccountId(accountId);
+            journalEntryDetail.setDebet(debet);
+            return journalEntryDetail;
         });
     }
 
     protected JournalEntryDetail createItem(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            Account account = configurationService.getAccount(document, accountId);
             Amount amount = createAmount(amountInt);
-            return new JournalEntryDetail(amount, account, debet, invoiceId, paymentId);
+            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+            journalEntryDetail.setAmount(amount);
+            journalEntryDetail.setAccountId(accountId);
+            journalEntryDetail.setDebet(debet);
+            journalEntryDetail.setInvoiceId(invoiceId);
+            journalEntryDetail.setPaymentId(paymentId);
+            return journalEntryDetail;
         });
     }
 
@@ -185,13 +202,12 @@ public abstract class AbstractBookkeepingTest {
                 amountFormat.formatAmount(actualAmount));
     }
 
-    protected JournalEntry findJournal(String id) {
-        for (JournalEntry j : document.getJournalEntries()) {
-            if (j.getId().equals(id)) {
-                return j;
-            }
-        }
-        return null;
+    protected JournalEntry findJournalEntry(String id) throws ServiceException {
+        return ledgerService.findJournalEntry(document, id);
+    }
+
+    protected List<JournalEntryDetail> findJournalEntryDetails(String journalEntryId) throws ServiceException {
+        return ledgerService.findJournalEntryDetails(document, findJournalEntry(journalEntryId));
     }
 
     /**
@@ -257,7 +273,7 @@ public abstract class AbstractBookkeepingTest {
             }
         }
 
-        assertEquals(expected.getJournalEntries().toString(), actual.getJournalEntries().toString());
+        assertEquals(ledgerService.findJournalEntries(expected).toString(),  ledgerService.findJournalEntries(actual).toString());
 
         Report expectedReport = bookkeepingService.createReport(expected, DateUtil.addYears(expectedBookkeeping.getStartOfPeriod(), 1));
         Report actualReport = bookkeepingService.createReport(actual, DateUtil.addYears(actualBookkeeping.getStartOfPeriod(), 1));
@@ -281,22 +297,23 @@ public abstract class AbstractBookkeepingTest {
         assertEqualDayOfYear(expected.getBirthDate(), actual.getBirthDate());
     }
 
-    public void assertEqualJournal(JournalEntry expected, JournalEntry actual) {
+    public void assertEqualJournalEntry(JournalEntry expected, JournalEntry actual) {
         assertEquals(expected.getId(), actual.getId());
         assertEqualDayOfYear(expected.getDate(), actual.getDate());
         assertEquals(expected.getDescription(), actual.getDescription());
         assertEquals(expected.getIdOfCreatedInvoice(), actual.getIdOfCreatedInvoice());
-        assertEquals(expected.getItems().length, actual.getItems().length);
+    }
 
-        JournalEntryDetail[] expectedItems = expected.getItems();
-        JournalEntryDetail[] actualItems = actual.getItems();
-        for (int i=0; i<expectedItems.length; i++) {
-            assertEqualItem(expectedItems[i], actualItems[i]);
+    public void assertEqualJournalEntryDetails(List<JournalEntryDetail> expected, List<JournalEntryDetail> actual) {
+        assertEquals(expected.size(), actual.size());
+
+        for (int i=0; i<expected.size(); i++) {
+            assertEqualItem(expected.get(i), actual.get(i));
         }
     }
 
     public void assertEqualItem(JournalEntryDetail expected, JournalEntryDetail actual) {
-        assertEquals(expected.getAccount(), actual.getAccount());
+        assertEquals(expected.getAccountId(), actual.getAccountId());
         assertEquals(expected.getAmount(), actual.getAmount());
         assertEquals(expected.getInvoiceId(), actual.getInvoiceId());
         assertEquals(expected.getPaymentId(), actual.getPaymentId());

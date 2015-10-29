@@ -1,10 +1,10 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -23,24 +23,24 @@ import java.awt.*;
  */
 public class AddJournalForTransactionView extends EditJournalView {
 
-	public interface Plugin {
-		ImportedTransaction getNextImportedTransaction();
-		void journalAdded(JournalEntry journalEntry);
-	}
+    public interface Plugin {
+        ImportedTransaction getNextImportedTransaction();
+        void journalAdded(JournalEntry journalEntry);
+    }
 
-	private Plugin plugin;
+    private Plugin plugin;
 
-	private ImportedTransaction importedTransaction;
+    private ImportedTransaction importedTransaction;
 
-	private JLabel fromAccount = new JLabel();
+    private JLabel fromAccount = new JLabel();
 
-	private JLabel amount = new JLabel();
+    private JLabel amount = new JLabel();
 
-	private JLabel date = new JLabel();
+    private JLabel date = new JLabel();
 
-	private JLabel toAccount = new JLabel();
+    private JLabel toAccount = new JLabel();
 
-	private JLabel description = new JLabel();
+    private JLabel description = new JLabel();
 
     /**
      * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
@@ -49,102 +49,111 @@ public class AddJournalForTransactionView extends EditJournalView {
      * @param document the database to which the journal must be added
      * @param plugin plugin used to determine initial values for a new journal
      */
-	public AddJournalForTransactionView(Document document, Plugin plugin) {
-		super(document, "ajd.title", null);
-		this.plugin = plugin;
-	}
+    public AddJournalForTransactionView(Document document, Plugin plugin) {
+        super(document, "ajd.title", null, null);
+        this.plugin = plugin;
+    }
 
-	@Override
-	public void onInit() {
-		super.onInit();
+    @Override
+    public void onInit() {
+        super.onInit();
 
-		addImportedTransactionComponent();
-	}
+        addImportedTransactionComponent();
+    }
 
-	private void addImportedTransactionComponent() {
-		InputFieldsColumn vep = new InputFieldsColumn();
-		addCloseable(vep);
-		vep.addVariableSizeField("AddJournalForTransactionView.date", date);
-		// Order is "to account" and then "from account". This corresponds typically
-		// with values on the debet and credit sides respectively.
-		vep.addVariableSizeField("AddJournalForTransactionView.toAccount", toAccount);
-		vep.addVariableSizeField("AddJournalForTransactionView.fromAccount", fromAccount);
-		vep.addVariableSizeField("AddJournalForTransactionView.amount", amount);
-		vep.addVariableSizeField("AddJournalForTransactionView.description", description);
-		vep.setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("AddJournalForTransactionView.transaction"));
+    private void addImportedTransactionComponent() {
+        InputFieldsColumn vep = new InputFieldsColumn();
+        addCloseable(vep);
+        vep.addVariableSizeField("AddJournalForTransactionView.date", date);
+        // Order is "to account" and then "from account". This corresponds typically
+        // with values on the debet and credit sides respectively.
+        vep.addVariableSizeField("AddJournalForTransactionView.toAccount", toAccount);
+        vep.addVariableSizeField("AddJournalForTransactionView.fromAccount", fromAccount);
+        vep.addVariableSizeField("AddJournalForTransactionView.amount", amount);
+        vep.addVariableSizeField("AddJournalForTransactionView.description", description);
+        vep.setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("AddJournalForTransactionView.transaction"));
 
-		add(vep, BorderLayout.NORTH);
-	}
+        add(vep, BorderLayout.NORTH);
+    }
 
-	@Override
-	protected void initValuesForNextJournal() throws ServiceException {
-		importedTransaction = plugin.getNextImportedTransaction();
-		if (importedTransaction != null) {
-			initValuesForImportedTransaction(importedTransaction);
-			updateLabelsForImportedTransaction(importedTransaction);
-		} else {
-			requestClose();
-		}
-	}
+    @Override
+    protected void initValuesForNextJournal() throws ServiceException {
+        importedTransaction = plugin.getNextImportedTransaction();
+        if (importedTransaction != null) {
+            initValuesForImportedTransaction(importedTransaction);
+            updateLabelsForImportedTransaction(importedTransaction);
+        } else {
+            requestClose();
+        }
+    }
 
-	@Override
-	protected void createNewJournal(JournalEntry journalEntry) throws DocumentModificationFailedException, ServiceException {
-		super.createNewJournal(journalEntry);
-		plugin.journalAdded(journalEntry);
-	}
+    @Override
+    protected void createNewJournal(JournalEntry journalEntry, java.util.List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
+        super.createNewJournal(journalEntry, journalEntryDetails);
+        plugin.journalAdded(journalEntry);
+    }
 
-	private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
-		dateModel.setDate(t.getDate());
-		descriptionModel.setString(t.getDescription());
-		ImportBankStatementService service = new ImportBankStatementService(document);
-		Account debetAccount = service.getFromAccount(t);
-		Account creditAccount = service.getToAccount(t);
-		if (debetAccount != null && creditAccount != null) {
-			itemsTableModel.addRow(createDefaultItemToBeAdded());
-			itemsTableModel.addRow(createDefaultItemToBeAdded());
-		}
-	}
+    private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
+        dateModel.setDate(t.getDate());
+        descriptionModel.setString(t.getDescription());
+        ImportBankStatementService service = new ImportBankStatementService(document);
+        Account debetAccount = service.getFromAccount(t);
+        Account creditAccount = service.getToAccount(t);
+        if (debetAccount != null && creditAccount != null) {
+            itemsTableModel.addRow(createDefaultItemToBeAdded());
+            itemsTableModel.addRow(createDefaultItemToBeAdded());
+        }
+    }
 
-	private void updateLabelsForImportedTransaction(ImportedTransaction t) {
-		date.setText(textResource.formatDate("gen.dateFormat", t.getDate()));
-		fromAccount.setText(formatAccountAndName(t.getFromAccount(), t.getFromName()));
-		toAccount.setText(formatAccountAndName(t.getToAccount(), t.getToName()));
-		amount.setText(Factory.getInstance(AmountFormat.class).formatAmount(t.getAmount()));
-		description.setText(t.getDescription());
-	}
+    private void updateLabelsForImportedTransaction(ImportedTransaction t) {
+        date.setText(textResource.formatDate("gen.dateFormat", t.getDate()));
+        fromAccount.setText(formatAccountAndName(t.getFromAccount(), t.getFromName()));
+        toAccount.setText(formatAccountAndName(t.getToAccount(), t.getToName()));
+        amount.setText(Factory.getInstance(AmountFormat.class).formatAmount(t.getAmount()));
+        description.setText(t.getDescription());
+    }
 
-	private String formatAccountAndName(String account, String name) {
-		if (account != null && name != null) {
-			return account + " (" + name + ")";
-		} else if (account != null) {
-			return account;
-		} else {
-			return name;
-		}
-	}
+    private String formatAccountAndName(String account, String name) {
+        if (account != null && name != null) {
+            return account + " (" + name + ")";
+        } else if (account != null) {
+            return account;
+        } else {
+            return name;
+        }
+    }
 
-	@Override
-	protected JournalEntryDetail createDefaultItemToBeAdded() throws ServiceException {
-		switch (itemsTableModel.getRowCount()) {
-		case 0: { // first item
-			Account account = new ImportBankStatementService(document).getToAccount(importedTransaction);
-			if (account == null) {
+    @Override
+    protected JournalEntryDetail createDefaultItemToBeAdded() throws ServiceException {
+        switch (itemsTableModel.getRowCount()) {
+        case 0: { // first item
+            Account account = new ImportBankStatementService(document).getToAccount(importedTransaction);
+            if (account == null) {
                 account = getDefaultAccount();
             }
-			return new JournalEntryDetail(importedTransaction.getAmount(), account, true);
-		}
 
-		case 1: { // second item
-			Account account = new ImportBankStatementService(document).getFromAccount(importedTransaction);
-			if (account == null) {
-				account = getDefaultAccount();
-			}
-			return new JournalEntryDetail(importedTransaction.getAmount(), account, false);
-		}
-		default: // other item
-			return null;
-		}
-	}
+            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+            journalEntryDetail.setAmount(importedTransaction.getAmount());
+            journalEntryDetail.setAccountId(account != null ? account.getId() : null);
+            journalEntryDetail.setDebet(true);
+            return journalEntryDetail;
+        }
+
+        case 1: { // second item
+            Account account = new ImportBankStatementService(document).getFromAccount(importedTransaction);
+            if (account == null) {
+                account = getDefaultAccount();
+            }
+            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+            journalEntryDetail.setAmount(importedTransaction.getAmount());
+            journalEntryDetail.setAccountId(account != null ? account.getId() : null);
+            journalEntryDetail.setDebet(false);
+            return journalEntryDetail;
+        }
+        default: // other item
+            return null;
+        }
+    }
 
     private Account getDefaultAccount() {
         try {

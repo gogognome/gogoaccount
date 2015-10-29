@@ -19,6 +19,7 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -36,19 +37,17 @@ import org.junit.Test;
  */
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
-    private final BookkeepingService bookkeepingService = new BookkeepingService();
-    private final ConfigurationService configurationService = new ConfigurationService();
+    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     @Test
     public void testStartBalance() throws Exception {
-        checkAmount(100,
-                bookkeepingService.getStartBalance(document, configurationService.getAccount(document, "100")));
-        checkAmount(300,
-                bookkeepingService.getStartBalance(document, configurationService.getAccount(document, "101")));
-        checkAmount(400,
-                bookkeepingService.getStartBalance(document, configurationService.getAccount(document, "200")));
+        checkAmount(100, ledgerService.getStartBalance(document, configurationService.getAccount(document, "100")));
+        checkAmount(300, ledgerService.getStartBalance(document, configurationService.getAccount(document, "101")));
+        checkAmount(400, ledgerService.getStartBalance(document, configurationService.getAccount(document, "200")));
     }
 
     @Test
@@ -191,63 +190,68 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test(expected = ServiceException.class)
     public void testCloseBookkeepingWithUnsavedChangesFails() throws Exception {
-        List<JournalEntryDetail> items = Arrays.asList(
+        List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
                 createItem(20, "100", true),
                 createItem(20, "101", false));
-        JournalEntry journalEntry = new JournalEntry("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
+        JournalEntry journalEntry = new JournalEntry();
+        journalEntry.setId("ABC");
+        journalEntry.setDescription("Test");
+        journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
 
-        document.addJournal(journalEntry, false);
+        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
         bookkeepingService.closeBookkeeping(document, "new bookkeeping",
                 DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
     }
 
     @Test
     public void testCloseBookkeepingWithJournalsCopiedToNewBookkeeping() throws Exception {
-        List<JournalEntryDetail> items = Arrays.asList(
+        List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
                 createItem(20, "100", true),
                 createItem(20, "101", false));
-        JournalEntry journalEntry = new JournalEntry("ABC", "Test", DateUtil.createDate(2012, 1, 10), items, null);
+        JournalEntry journalEntry = new JournalEntry();
+        journalEntry.setId("ABC");
+        journalEntry.setDescription("Test");
+        journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
 
-        document.addJournal(journalEntry, false);
+        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
         document.databaseConsistentWithFile();
         Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
                 DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
 
-        assertEquals("[20111231 start start balance, 20120110 ABC Test]",
-                newDocument.getJournalEntries().toString());
+        assertEquals("[20111231 start start balance, 20120110 ABC Test]", ledgerService.findJournalEntries(newDocument).toString());
     }
 
     @Test
     public void checkInUseForUsedAccount() throws ServiceException {
-        assertTrue(bookkeepingService.inUse(document, configurationService.getAccount(document, "190")));
-        assertTrue(bookkeepingService.inUse(document, configurationService.getAccount(document, "200")));
+        assertTrue(ledgerService.isAccountUsed(document, "190"));
+        assertTrue(ledgerService.isAccountUsed(document, "200"));
     }
 
     @Test
     public void checkInUseForUnusedAccount() throws ServiceException {
-        assertFalse(bookkeepingService.inUse(document, configurationService.getAccount(document, "400")));
+        assertFalse(ledgerService.isAccountUsed(document, "400"));
     }
 
     @Test
     public void removeJournalThatCreatesInvoice() throws Exception {
-        assertNotNull(findJournal("t1"));
+        assertNotNull(findJournalEntry("t1"));
         assertTrue(invoiceService.existsInvoice(document, "inv1"));
 
-        bookkeepingService.removeJournal(document, findJournal("t1"));
+        ledgerService.removeJournal(document, findJournalEntry("t1"));
 
-        assertNull(findJournal("t1"));
+        assertNull(findJournalEntry("t1"));
         assertFalse(invoiceService.existsInvoice(document, "inv1"));
     }
 
     @Test
     public void removeJournalWithPayment() throws Exception {
-        assertNotNull(findJournal("t2"));
+        assertNotNull(findJournalEntry("t2"));
         Invoice invoice = invoiceService.getInvoice(document, "inv1");
         assertFalse(invoiceService.findPayments(document, invoice).isEmpty());
 
-        bookkeepingService.removeJournal(document, findJournal("t2"));
+        ledgerService.removeJournal(document, findJournalEntry("t2"));
 
-        assertNull(findJournal("t2"));
+        assertNull(findJournalEntry("t2"));
         assertTrue(invoiceService.findPayments(document, invoice).isEmpty());
     }
 

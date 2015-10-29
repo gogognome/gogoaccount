@@ -432,7 +432,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 	    if (!configurationService.hasAccounts(document)) {
 	        MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
 	    } else {
-            EditJournalView view = new EditJournalView(document, "ajd.title", null);
+            EditJournalView view = new EditJournalView(document, "ajd.title", null, null);
             ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();
 	    }

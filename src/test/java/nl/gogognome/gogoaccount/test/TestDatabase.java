@@ -4,12 +4,16 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,9 +21,10 @@ import static junit.framework.Assert.*;
 
 public class TestDatabase extends AbstractBookkeepingTest {
 
-    private final ConfigurationService configurationService = new ConfigurationService();
-    private final BookkeepingService bookkeepingService = new BookkeepingService();
-    private final PartyService partyService = new PartyService();
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     @Test
     public void testGetAllAccounts() throws Exception {
@@ -34,8 +39,8 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
     @Test
     public void testGetCreatingInvoice() throws Exception {
-        assertEquals("t1", document.getCreatingJournal("inv1").getId());
-        assertNull(document.getCreatingJournal("bla"));
+        assertEquals("t1", ledgerService.findJournalThatCreatesInvoice(document, "inv1").getId());
+        assertNull(ledgerService.findJournalThatCreatesInvoice(document, "bla"));
     }
 
     @Test
@@ -47,30 +52,53 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
     @Test
     public void updateExistingJournal() throws Exception {
-        JournalEntry oldJournalEntry = findJournal("t1");
+        JournalEntry oldJournalEntry = findJournalEntry("t1");
         assertNotNull(oldJournalEntry);
 
-        List<JournalEntryDetail> items = Arrays.asList(
-                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "100"), true),
-                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "190"), false)
-                );
-        JournalEntry newJournalEntry = new JournalEntry("t7", "test", DateUtil.createDate(2011, 9, 3),
-                items, null);
-        document.updateJournal(oldJournalEntry, newJournalEntry);
+        List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
+        JournalEntryDetail d1 = new JournalEntryDetail();
+        d1.setAmount(createAmount(20));
+        d1.setAccountId("100");
+        d1.setDebet(true);
+        journalEntryDetails.add(d1);
 
-        assertEqualJournal(newJournalEntry, findJournal(newJournalEntry.getId()));
+        JournalEntryDetail d2 = new JournalEntryDetail();
+        d2.setAmount(createAmount(20));
+        d2.setAccountId("150");
+        d2.setDebet(false);
+        journalEntryDetails.add(d2);
+
+        JournalEntry newJournalEntry = new JournalEntry();
+        newJournalEntry.setId("t7");
+        newJournalEntry.setDescription("test");
+        newJournalEntry.setDate(DateUtil.createDate(2011, 9, 3));
+        ledgerService.updateJournal(document, newJournalEntry, journalEntryDetails);
+
+        assertEqualJournalEntry(newJournalEntry, findJournalEntry(newJournalEntry.getId()));
+        assertEqualJournalEntryDetails(journalEntryDetails, findJournalEntryDetails(newJournalEntry.getId()));
     }
 
-    @Test(expected = DocumentModificationFailedException.class)
+    @Test(expected = ServiceException.class)
     public void updateNonExistingJournalFails() throws Exception {
-        List<JournalEntryDetail> items = Arrays.asList(
-                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "100"), true),
-                new JournalEntryDetail(createAmount(20), configurationService.getAccount(document, "190"), false)
-                );
-        JournalEntry newJournalEntry = new JournalEntry("t7", "test", DateUtil.createDate(2011, 9, 3),
-                items, null);
+        List<JournalEntryDetail> newJournalEntryDetails = new ArrayList<>();
+        JournalEntryDetail d1 = new JournalEntryDetail();
+        d1.setAmount(createAmount(20));
+        d1.setAccountId("100");
+        d1.setDebet(true);
+        newJournalEntryDetails.add(d1);
 
-        assertNull(findJournal(newJournalEntry.getId()));
-        document.updateJournal(newJournalEntry, newJournalEntry);
+        JournalEntryDetail d2 = new JournalEntryDetail();
+        d2.setAmount(createAmount(20));
+        d2.setAccountId("190");
+        d2.setDebet(false);
+        newJournalEntryDetails.add(d2);
+
+        JournalEntry newJournalEntry = new JournalEntry();
+        newJournalEntry.setId("t7");
+        newJournalEntry.setDescription("test");
+        newJournalEntry.setDate(DateUtil.createDate(2011, 9, 3));
+
+        assertNull(findJournalEntry(newJournalEntry.getId()));
+        ledgerService.updateJournal(document, newJournalEntry, newJournalEntryDetails);
     }
 }

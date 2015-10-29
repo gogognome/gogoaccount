@@ -1,25 +1,23 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.event.TableModelListener;
-
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class implements a table model for a table containing journals.
@@ -45,24 +43,25 @@ public class JournalsTableModel extends AbstractListTableModel<JournalEntry> imp
 	private final static List<ColumnDefinition> COLUMNS =
 		Arrays.asList(DATE, ID, DESCRIPTION, INVOICE);
 
-    /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
-    private ArrayList<TableModelListener> journalsTableModelListeners = new ArrayList<TableModelListener>();
-
-    private Document document;
+    private final Document document;
 
     /**
      * Constructor.
      * @param document the database from which to take the data
      */
-    public JournalsTableModel(Document document) {
-    	super(COLUMNS, document.getJournalEntries());
+    public JournalsTableModel(Document document) throws ServiceException {
+    	super(COLUMNS, ObjectFactory.create(LedgerService.class).findJournalEntries(document));
         this.document = document;
         document.addListener(this);
     }
 
     @Override
 	public void documentChanged(Document document) {
-        replaceRows(this.document.getJournalEntries());
+        try {
+            replaceRows(ObjectFactory.create(LedgerService.class).findJournalEntries(document));
+        } catch (ServiceException e) {
+            logger.warn("Ignored exception: " + e.getMessage(), e);
+        }
     }
 
 	@Override

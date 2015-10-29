@@ -79,6 +79,8 @@ public class EditJournalView extends View {
     /** The journal edited by the journal. This will only be filled when the user is editing a journal. */
     protected JournalEntry editedJournalEntry;
 
+    protected List<JournalEntryDetail> editedJournalEntryDetails;
+
     private InputFieldsColumn valuesEditPanel;
 
     /**
@@ -259,6 +261,7 @@ public class EditJournalView extends View {
         } else {
             // Set the edited journal
             editedJournalEntry = journalEntry;
+            editedJournalEntryDetails = journalEntryDetails;
         }
 	}
 
@@ -335,6 +338,10 @@ public class EditJournalView extends View {
      */
     public JournalEntry getEditedJournalEntry() {
         return editedJournalEntry;
+    }
+
+    public List<JournalEntryDetail> getEditedJournalEntryDetails() {
+        return editedJournalEntryDetails;
     }
 
     @Override

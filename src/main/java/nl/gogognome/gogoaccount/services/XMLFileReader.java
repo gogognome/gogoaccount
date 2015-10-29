@@ -9,6 +9,7 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -39,6 +40,7 @@ public class XMLFileReader {
     private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     private Document document;
@@ -136,26 +138,28 @@ public class XMLFileReader {
 
     private void parseAndAddJournals(int highestPaymentId, Element rootElement)
             throws ParseException, DocumentModificationFailedException, ServiceException {
-        String description;
         NodeList journalsNodes = rootElement.getElementsByTagName("journals");
         for (int i=0; i<journalsNodes.getLength(); i++) {
             Element elem = (Element)journalsNodes.item(i);
             NodeList journalNodes = elem.getElementsByTagName("journal");
             for (int j=0; j<journalNodes.getLength(); j++) {
                 Element journalElem = (Element)journalNodes.item(j);
-                String id = journalElem.getAttribute("id");
+                JournalEntry journalEntry = new JournalEntry();
+                journalEntry.setId(journalElem.getAttribute("id"));
                 String dateString = journalElem.getAttribute("date");
-                Date date = DATE_FORMAT.parse(dateString);
+                journalEntry.setDate(DATE_FORMAT.parse(dateString));
                 String idOfCreatedInvoice = journalElem.getAttribute("createdInvoice");
                 if (idOfCreatedInvoice.length() == 0) {
                     idOfCreatedInvoice = null;
                 }
-                description = journalElem.getAttribute("description");
+                journalEntry.setIdOfCreatedInvoice(idOfCreatedInvoice);
+
+                journalEntry.setDescription(journalElem.getAttribute("description"));
                 NodeList itemNodes = journalElem.getElementsByTagName("item");
-                ArrayList<JournalEntryDetail> itemsList = new ArrayList<>();
+                ArrayList<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
                 for (int k=0; k<itemNodes.getLength(); k++) {
                     Element itemElem = (Element)itemNodes.item(k);
-                    String itemId = itemElem.getAttribute("id");
+                    String accountId = itemElem.getAttribute("id");
                     String amountString = itemElem.getAttribute("amount");
                     Amount amount = AMOUNT_FORMAT.parse(amountString);
                     String side = itemElem.getAttribute("side");
@@ -173,12 +177,16 @@ public class XMLFileReader {
                         }
                     }
 
-                    itemsList.add(new JournalEntryDetail(amount, configurationService.getAccount(document, itemId),
-                            "debet".equals(side), invoiceId, paymentId));
+                    JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+                    journalEntryDetail.setAmount(amount);
+                    journalEntryDetail.setAccountId(accountId);
+                    journalEntryDetail.setDebet("debet".equals(side));
+                    journalEntryDetail.setInvoiceId(invoiceId);
+                    journalEntryDetail.setPaymentId(paymentId);
+                    journalEntryDetails.add(journalEntryDetail);
                 }
 
-                JournalEntryDetail[] items = itemsList.toArray(new JournalEntryDetail[itemsList.size()]);
-                document.addJournal(new JournalEntry(id, description, date, items, idOfCreatedInvoice), false);
+                ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
             }
         }
     }

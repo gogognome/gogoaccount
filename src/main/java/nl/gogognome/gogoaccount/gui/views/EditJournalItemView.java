@@ -1,12 +1,12 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -30,11 +30,12 @@ import java.util.List;
  */
 public class EditJournalItemView extends OkCancelView {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 
-	private Document document;
+    private Document document;
     private InvoiceBean invoiceBean;
     private JournalEntryDetail itemToBeEdited;
 
@@ -52,25 +53,25 @@ public class EditJournalItemView extends OkCancelView {
      * @param item the item used to fill in the initial values of the fields.
      */
     public EditJournalItemView(Document document, JournalEntryDetail item) {
-    	this.document = document;
-    	this.itemToBeEdited = item;
+        this.document = document;
+        this.itemToBeEdited = item;
     }
 
-	@Override
-	public String getTitle() {
-		String id = itemToBeEdited != null ? "EditJournalItemView.titleAdd"
-				: "EditJournalItemView.titleEdit";
-		return textResource.getString(id);
-	}
+    @Override
+    public String getTitle() {
+        String id = itemToBeEdited != null ? "EditJournalItemView.titleAdd"
+                : "EditJournalItemView.titleEdit";
+        return textResource.getString(id);
+    }
 
-	@Override
-	public void onInit() {
-		initModels();
-		addComponents();
-	}
+    @Override
+    public void onInit() {
+        initModels();
+        addComponents();
+    }
 
-	private void initModels() {
-		try {
+    private void initModels() {
+        try {
             accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
 
             List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
@@ -87,30 +88,30 @@ public class EditJournalItemView extends OkCancelView {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
             close();
         }
-	}
+    }
 
-	private void initModelsForItemToBeEdited() throws ServiceException {
-		accountListModel.setSelectedItem(itemToBeEdited.getAccount(), null);
-		amountModel.setString(amountFormat.formatAmountWithoutCurrency(itemToBeEdited.getAmount()));
-		sideListModel.setSelectedIndex(itemToBeEdited.isDebet() ? 0 : 1, null);
+    private void initModelsForItemToBeEdited() throws ServiceException {
+        accountListModel.setSelectedItem(configurationService.getAccount(document, itemToBeEdited.getAccountId()), null);
+        amountModel.setString(amountFormat.formatAmountWithoutCurrency(itemToBeEdited.getAmount()));
+        sideListModel.setSelectedIndex(itemToBeEdited.isDebet() ? 0 : 1, null);
 
-		Invoice invoice = itemToBeEdited.getInvoiceId() != null ? invoiceService.getInvoice(document, itemToBeEdited.getInvoiceId()) : null;
-		invoiceBean.setSelectedInvoice(invoice);
-	}
+        Invoice invoice = itemToBeEdited.getInvoiceId() != null ? invoiceService.getInvoice(document, itemToBeEdited.getInvoiceId()) : null;
+        invoiceBean.setSelectedInvoice(invoice);
+    }
 
-	@Override
-	protected JComponent createCenterComponent() {
-		InputFieldsColumn column = new InputFieldsColumn();
-		addCloseable(column);
+    @Override
+    protected JComponent createCenterComponent() {
+        InputFieldsColumn column = new InputFieldsColumn();
+        addCloseable(column);
 
-		column.addComboBoxField("EditJournalItemView.account", accountListModel,
-				new AccountFormatter());
-		column.addField("EditJournalItemView.amount", amountModel);
-		column.addComboBoxField("EditJournalItemView.side", sideListModel, null);
-		column.addVariableSizeField("EditJournalItemView.invoice", invoiceBean);
+        column.addComboBoxField("EditJournalItemView.account", accountListModel,
+                new AccountFormatter());
+        column.addField("EditJournalItemView.amount", amountModel);
+        column.addComboBoxField("EditJournalItemView.side", sideListModel, null);
+        column.addVariableSizeField("EditJournalItemView.invoice", invoiceBean);
 
-		return column;
-	}
+        return column;
+    }
 
     /**
      * Gets the journal item has has been entered.
@@ -122,8 +123,8 @@ public class EditJournalItemView extends OkCancelView {
         return enteredJournalEntryDetail;
     }
 
-	@Override
-	protected void onOk() {
+    @Override
+    protected void onOk() {
         try {
             Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
             Amount amount;
@@ -141,30 +142,33 @@ public class EditJournalItemView extends OkCancelView {
                 return;
             }
 
-            enteredJournalEntryDetail = new JournalEntryDetail(amount, account, debet,
-                    invoice != null ? invoice.getId() : null,
-                    invoice != null ? "TODO: Fix this" : null);
+            enteredJournalEntryDetail = new JournalEntryDetail();
+            enteredJournalEntryDetail.setAmount(amount);
+            enteredJournalEntryDetail.setAccountId(account.getId());
+            enteredJournalEntryDetail.setDebet(debet);
+            enteredJournalEntryDetail.setInvoiceId(invoice != null ? invoice.getId() : null);
+            enteredJournalEntryDetail.setPaymentId(invoice != null ? "TODO: Fix this" : null);
             requestClose();
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
-	}
+    }
 
-	private boolean validateInput(Amount amount, Account account) {
-		if (amount == null) {
-        	MessageDialog.showWarningMessage(this, "gen.invalidAmount");
-        	return false;
-		}
+    private boolean validateInput(Amount amount, Account account) {
+        if (amount == null) {
+            MessageDialog.showWarningMessage(this, "gen.invalidAmount");
+            return false;
+        }
 
-		if (account == null) {
-        	MessageDialog.showWarningMessage(this, "EditJournalItemView.noAccountSelected");
-		}
+        if (account == null) {
+            MessageDialog.showWarningMessage(this, "EditJournalItemView.noAccountSelected");
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	@Override
-	public void onClose() {
-	}
+    @Override
+    public void onClose() {
+    }
 
 }

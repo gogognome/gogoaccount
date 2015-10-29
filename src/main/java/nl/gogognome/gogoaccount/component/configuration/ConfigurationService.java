@@ -1,8 +1,8 @@
 package nl.gogognome.gogoaccount.component.configuration;
 
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -57,7 +57,7 @@ public class ConfigurationService {
     public void deleteAccount(Document document, Account account) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             // TODO: Remove dependency on BookkeepingService. Will disappear when foreign keys are used
-            if (ObjectFactory.create(BookkeepingService.class).inUse(document, account)) {
+            if (ObjectFactory.create(LedgerService.class).isAccountUsed(document, account.getId())) {
                 throw new DocumentModificationFailedException("The account " + account + " is in use and can therefore not be deleted!");
             }
             new AccountDAO(document).delete(account.getId());

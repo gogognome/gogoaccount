@@ -9,6 +9,7 @@ import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -28,6 +29,8 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * This class generates reports in a text-format.
@@ -39,6 +42,7 @@ public class ReportTask implements Task {
 
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     private Document document;
@@ -116,7 +120,7 @@ public class ReportTask implements Task {
         printCreditors();
         progressListener.onProgressUpdate(60);
 
-        List<JournalEntry> journalEntries = document.getJournalEntries();
+        List<JournalEntry> journalEntries = ledgerService.findJournalEntries(document);
         progressListener.onProgressUpdate(70);
         printJournals(journalEntries, bookkeeping.getStartOfPeriod(), date);
         progressListener.onProgressUpdate(80);
@@ -388,6 +392,8 @@ public class ReportTask implements Task {
 
             result.append(textFormat.getHorizontalSeparator());
 
+            Map<String, Account> idToAccount = configurationService.findAllAccounts(document).stream().collect(Collectors.toMap(a -> a.getId(), a -> a));
+
             for (int i=startIndex; i<endIndex; i++) {
                 values[0] = textResource.formatDate("gen.dateFormat", journalEntries.get(i).getDate());
                 values[2] = journalEntries.get(i).getId() + " - " + journalEntries.get(i).getDescription();
@@ -403,11 +409,10 @@ public class ReportTask implements Task {
                 }
                 result.append(textFormat.getRow(values));
 
-                JournalEntryDetail[] items = journalEntries.get(i).getItems();
-                for (JournalEntryDetail item : items) {
+                List<JournalEntryDetail> journalEntryDetails = ledgerService.findJournalEntryDetails(document, journalEntries.get(i));
+                for (JournalEntryDetail item : journalEntryDetails) {
                     values[0] = "";
-                    values[2] = item.getAccount().getId() + " - "
-                            + item.getAccount().getName();
+                    values[2] = item.getAccountId() + " - " + idToAccount.get(item.getAccountId()).getName();
                     values[4] = "";
                     values[6] = "";
                     values[item.isDebet() ? 4 : 6] =

@@ -4,13 +4,14 @@ import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
@@ -23,15 +24,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.stream.Collectors.toMap;
+
 public class ReportBuilder {
 
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     private final Document document;
     private final Bookkeeping bookkeeping;
     private final Report report;
 
+    private Map<String, Account> idToAccount;
     private Map<Account, Amount> accountToTotalDebet = new HashMap<>();
     private Map<Account, Amount> accountToTotalCredit = new HashMap<>();
     private Map<Account, Amount> accountToStartDebet = new HashMap<>();
@@ -41,6 +47,7 @@ public class ReportBuilder {
 
     public ReportBuilder(Document document, Date date) throws ServiceException {
         this.document = document;
+        idToAccount = configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
         bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
         this.report = new Report(date, bookkeeping.getCurrency());
     }
@@ -86,7 +93,7 @@ public class ReportBuilder {
     }
 
     public void addJournal(JournalEntry journalEntry) throws ServiceException {
-        for (JournalEntryDetail item : journalEntry.getItems()) {
+        for (JournalEntryDetail item : ledgerService.findJournalEntryDetails(document, journalEntry)) {
             addJournalItem(journalEntry, item);
         }
     }
@@ -98,14 +105,14 @@ public class ReportBuilder {
         // otherwise the amount for the first line is added to the start line
     }
 
-    private void addAmountToTotalForAccount(JournalEntryDetail item) {
-        Account account = item.getAccount();
+    private void addAmountToTotalForAccount(JournalEntryDetail journalEntryDetail) throws ServiceException {
+        Account account = idToAccount.get(journalEntryDetail.getAccountId());
         Amount accountAmount = report.getAmount(account);
 
-        if (account.isDebet() == item.isDebet()) {
-            accountAmount = accountAmount.add(item.getAmount());
+        if (account.isDebet() == journalEntryDetail.isDebet()) {
+            accountAmount = accountAmount.add(journalEntryDetail.getAmount());
         } else {
-            accountAmount = accountAmount.subtract(item.getAmount());
+            accountAmount = accountAmount.subtract(journalEntryDetail.getAmount());
         }
 
         report.setAmount(account, accountAmount);
@@ -113,7 +120,7 @@ public class ReportBuilder {
 
     private void addLedgerLineForAccount(JournalEntry journalEntry, JournalEntryDetail item) throws ServiceException {
         if (DateUtil.compareDayOfYear(journalEntry.getDate(), bookkeeping.getStartOfPeriod()) >= 0) {
-            Account account = item.getAccount();
+            Account account = idToAccount.get(item.getAccountId());
             if (!hasStartBalanceLineBeenAdded(account)) {
                 addStartLedgerLineForAccount(account, accountToTotalDebet.get(account),
                         accountToTotalCredit.get(account));
@@ -156,13 +163,13 @@ public class ReportBuilder {
         report.addLedgerLineForAccount(account, line);
     }
 
-    private void addAmountToTotalDebetOrCredit(JournalEntryDetail item) {
-        Account account = item.getAccount();
-        if (item.isDebet()) {
-            Amount totalAmount = nullToZero(accountToTotalDebet.get(account)).add(item.getAmount());
+    private void addAmountToTotalDebetOrCredit(JournalEntryDetail journalEntryDetail) {
+        Account account = idToAccount.get(journalEntryDetail.getAccountId());
+        if (journalEntryDetail.isDebet()) {
+            Amount totalAmount = nullToZero(accountToTotalDebet.get(account)).add(journalEntryDetail.getAmount());
             accountToTotalDebet.put(account, totalAmount);
         } else {
-            Amount totalAmount = nullToZero(accountToTotalCredit.get(account)).add(item.getAmount());
+            Amount totalAmount = nullToZero(accountToTotalCredit.get(account)).add(journalEntryDetail.getAmount());
             accountToTotalCredit.put(account, totalAmount);
         }
     }

@@ -6,7 +6,6 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
-import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -20,6 +19,10 @@ import java.util.List;
 import java.util.Locale;
 
 public class LedgerService {
+
+    public JournalEntry findJournalEntry(Document document, String id) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).find(id));
+    }
 
     public List<JournalEntry> findJournalEntries(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
@@ -248,6 +251,5 @@ public class LedgerService {
 
         return getAccountBalance(document, account, date);
     }
-
 
 }
