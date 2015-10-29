@@ -1,15 +1,20 @@
 package nl.gogognome.gogoaccount.component.ledger;
 
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.util.DateUtil;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -192,5 +197,57 @@ public class LedgerService {
     public boolean isAccountUsed(Document document, String accountId) throws ServiceException {
         return ServiceTransaction.withResult(() -> new JournalEntryDetailDAO(document).isAccountUsed(accountId));
     }
+
+    /**
+     * Gets the balance of the specified account at the specified date.
+     * @param document the database from which to take the data
+     * @param account the account
+     * @param date the date
+     * @return the balance of this account at the specified date
+     */
+    public static Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            List<JournalEntry> journalEntries = new JournalEntryDAO(document).findAll();
+            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            Amount result = Amount.getZero(bookkeeping.getCurrency());
+            JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
+            for (JournalEntry journalEntry : journalEntries) {
+                if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
+                    List<JournalEntryDetail> journalEntryDetails = journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId());
+                    for (JournalEntryDetail detail : journalEntryDetails) {
+                        if (detail.getAccountId().equals(account.getId())) {
+                            if (account.isDebet() == detail.isDebet()) {
+                                result = result.add(detail.getAmount());
+                            } else {
+                                result = result.subtract(detail.getAmount());
+                            }
+                        }
+                    }
+                }
+            }
+            return result;
+        });
+    }
+
+    /**
+     * Gets the balance of the specified account at start of the bookkeeping.
+     * @param document the database from which to take the data
+     * @param account the account
+     * @return the balance of this account at start of the bookkeeping
+     */
+    public Amount getStartBalance(Document document, Account account) throws ServiceException {
+        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        Date date = bookkeeping.getStartOfPeriod();
+
+        // Subtract one day of the period start date, because otherwise the changes
+        // made on that day will be taken into account too.
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.DAY_OF_YEAR, -1);
+        date = cal.getTime();
+
+        return getAccountBalance(document, account, date);
+    }
+
 
 }

@@ -65,7 +65,7 @@ public class BookkeepingService {
             List<JournalEntryDetail> journalEntryDetails = new ArrayList<>(20);
             for (Account account : configurationService.findAssets(document)) {
                 JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-                journalEntryDetail.setAmount(getAccountBalance(document, account, dayBeforeStart));
+                journalEntryDetail.setAmount(ledgerService.getAccountBalance(document, account, dayBeforeStart));
                 journalEntryDetail.setAccountId(account.getId());
                 journalEntryDetail.setDebet(true);
                 if (!journalEntryDetail.getAmount().isZero()) {
@@ -74,7 +74,7 @@ public class BookkeepingService {
             }
             for (Account account : configurationService.findLiabilities(document)) {
                 JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-                journalEntryDetail.setAmount(getAccountBalance(document, account, dayBeforeStart));
+                journalEntryDetail.setAmount(ledgerService.getAccountBalance(document, account, dayBeforeStart));
                 journalEntryDetail.setAccountId(account.getId());
                 if (!journalEntryDetail.getAmount().isZero()) {
                     journalEntryDetails.add(journalEntryDetail);
@@ -131,117 +131,7 @@ public class BookkeepingService {
         });
     }
 
-    /**
-     * Removes a journal from the database. Payments booked in the journal or invoices created
-     * by the journal are also removed.
-     * @param document the database from which the journal has to be removed
-     * @param journalEntry the journal to be deleted
-     * @throws ServiceException if a problem occurs while deleting the journal
-     */
-    public void removeJournal(Document document, JournalEntry journalEntry) throws ServiceException {
-        // Check for payments without payment ID.
-        for (JournalEntryDetail item : journalEntry.getItems()) {
-            if (item.getInvoiceId() != null && item.getPaymentId() == null) {
-                throw new ServiceException("The journal has a payment without an id. Therefore, it cannot be removed.");
-            }
-        }
-
-        try {
-            // Remove payments.
-            for (JournalEntryDetail item : journalEntry.getItems()) {
-                String invoiceId = item.getInvoiceId();
-                String paymentId = item.getPaymentId();
-                if (invoiceId != null && paymentId != null) {
-                    invoiceService.removePayment(document, paymentId);
-                }
-            }
-
-            // Check if the journal created an invoice. If so, remove the invoice too.
-            if (journalEntry.createsInvoice()) {
-                invoiceService.deleteInvoice(document, journalEntry.getIdOfCreatedInvoice());
-            }
-
-            try {
-                document.removeJournal(journalEntry);
-            } catch (DocumentModificationFailedException e) {
-                throw new ServiceException("Could not delete journal.", e);
-            }
-        } finally {
-            document.notifyChange();
-        }
-    }
-
-    /**
-     * Gets the balance of the specified account at the specified date.
-     * @param document the database from which to take the data
-     * @param account the account
-     * @param date the date
-     * @return the balance of this account at the specified date
-     */
-    public static Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
-        List<JournalEntry> journalEntries = document.getJournalEntries();
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-        Amount result = Amount.getZero(bookkeeping.getCurrency());
-        for (JournalEntry journalEntry : journalEntries) {
-            if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
-                JournalEntryDetail[] items = journalEntry.getItems();
-                for (JournalEntryDetail item : items) {
-                    if (item.getAccount().equals(account)) {
-                        if (account.isDebet() == item.isDebet()) {
-                            result = result.add(item.getAmount());
-                        } else {
-                            result = result.subtract(item.getAmount());
-                        }
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Gets the balance of the specified account at start of the bookkeeping.
-     * @param document the database from which to take the data
-     * @param account the account
-     * @return the balance of this account at start of the bookkeeping
-     */
-    public Amount getStartBalance(Document document, Account account) throws ServiceException {
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-        Date date = bookkeeping.getStartOfPeriod();
-
-        // Subtract one day of the period start date, because otherwise the changes
-        // made on that day will be taken into account too.
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        cal.add(Calendar.DAY_OF_YEAR, -1);
-        date = cal.getTime();
-
-        return getAccountBalance(document, account, date);
-    }
-
-    /**
-     * Checks whether the specified account is used in the database. An account is considered
-     * "in use" if it has a non-zero start balance or if one or more journals use the account.
-     *
-     * @param document the database
-     * @param account the account
-     * @return <code>true</code> if the account is used; <code>false</code> otherwise
-     */
-    public boolean inUse(Document document, Account account) throws ServiceException {
-        if (!getStartBalance(document, account).isZero()) {
-            return true;
-        }
-
-        for (JournalEntry j : document.getJournalEntries()) {
-            for (JournalEntryDetail i : j.getItems()) {
-                if (account.equals(i.getAccount())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
+    // TODO: move to new report component
     public Report createReport(Document document, Date date) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             ReportBuilder rb = new ReportBuilder(document, date);
@@ -250,7 +140,8 @@ public class BookkeepingService {
             rb.setExpenses(configurationService.findExpenses(document));
             rb.setRevenues(configurationService.findRevenues(document));
 
-            for (JournalEntry journalEntry : document.getJournalEntries()) {
+            List<JournalEntry> journalEntries = ObjectFactory.create(LedgerService.class).findJournalEntries(document);
+            for (JournalEntry journalEntry : journalEntries) {
                 if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
                     rb.addJournal(journalEntry);
                 }
