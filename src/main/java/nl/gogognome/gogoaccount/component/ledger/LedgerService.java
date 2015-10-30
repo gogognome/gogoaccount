@@ -21,13 +21,11 @@ import java.util.Locale;
 public class LedgerService {
 
     public JournalEntry findJournalEntry(Document document, String id) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).find(id));
+        return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findById(id));
     }
 
     public List<JournalEntry> findJournalEntries(Document document) throws ServiceException {
-        return ServiceTransaction.withResult(() -> {
-            return new JournalEntryDAO(document).findAll("date");
-        });
+        return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findAll("date"));
     }
 
     /**
@@ -38,10 +36,7 @@ public class LedgerService {
      *         year.
      */
     public JournalEntry findJournalThatCreatesInvoice(Document document, String invoiceId) throws ServiceException {
-        return ServiceTransaction.withResult(() -> {
-            JournalEntryDetail journalEntryDetail = new JournalEntryDetailDAO(document).findByInvoiceId(invoiceId);
-            return journalEntryDetail != null ? new JournalEntryDAO(document).get(journalEntryDetail.getJournalEntryUniqueId()) : null;
-        });
+        return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findByInvoiceId(invoiceId));
     }
 
     public JournalEntry createJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
@@ -49,6 +44,7 @@ public class LedgerService {
             JournalEntry createdJournalEntry = new JournalEntryDAO(document).create(journalEntry);
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
             for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
+                journalEntryDetail.setJournalEntryUniqueId(createdJournalEntry.getUniqueId());
                 journalEntryDetailDAO.create(journalEntryDetail);
             }
             document.notifyChange();
@@ -97,8 +93,9 @@ public class LedgerService {
             if (createPayments) {
                 createPaymentsForItemsOfJournal(document, journalEntry, journalEntryDetails);
             }
-            new JournalEntryDAO(document).create(journalEntry);
+            long createdId = new JournalEntryDAO(document).create(journalEntry).getUniqueId();
             for (JournalEntryDetail detail : journalEntryDetails) {
+                detail.setJournalEntryUniqueId(createdId);
                 new JournalEntryDetailDAO(document).create(detail);
             }
             document.notifyChange();
@@ -166,6 +163,7 @@ public class LedgerService {
             new JournalEntryDAO(document).update(journalEntry);
             journalEntryDetailDAO.deleteByJournalEntry(journalEntry.getUniqueId());
             for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
+                journalEntryDetail.setJournalEntryUniqueId(journalEntry.getUniqueId());
                 journalEntryDetailDAO.create(journalEntryDetail);
             }
 
@@ -179,13 +177,18 @@ public class LedgerService {
     public void removeJournal(Document document, JournalEntry journalEntry) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-            List<JournalEntryDetail> journalEntryDetails = new JournalEntryDetailDAO(document).findByJournalEntry(journalEntry.getUniqueId());
+            JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
+            List<JournalEntryDetail> journalEntryDetails = journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId());
             for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
+                journalEntryDetailDAO.delete(journalEntryDetail.getId());
                 if (journalEntryDetail.getPaymentId() != null) {
                     invoiceService.removePayment(document, journalEntryDetail.getPaymentId());
                 }
             }
             new JournalEntryDAO(document).delete(journalEntry.getUniqueId());
+            if (journalEntry.getIdOfCreatedInvoice() != null) {
+                invoiceService.deleteInvoice(document, journalEntry.getIdOfCreatedInvoice());
+            }
             document.notifyChange();
         });
     }

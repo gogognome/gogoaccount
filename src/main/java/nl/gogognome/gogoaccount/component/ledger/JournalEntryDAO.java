@@ -14,12 +14,20 @@ class JournalEntryDAO extends AbstractDomainClassDAO<JournalEntry> {
     }
 
 
+    public JournalEntry findById(String id) throws SQLException {
+        return first(new NameValuePairs().add("tag", id));
+    }
+
+    public JournalEntry findByInvoiceId(String invoiceId) throws SQLException {
+        return first(new NameValuePairs().add("create_invoice_id", invoiceId));
+    }
+
     @Override
     protected JournalEntry getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
         JournalEntry journalEntry = new JournalEntry(result.getLong("id"));
         journalEntry.setId(result.getString("tag"));
         journalEntry.setDate(result.getDate("date"));
-        journalEntry.setIdOfCreatedInvoice("created_invoice_id");
+        journalEntry.setIdOfCreatedInvoice(result.getString("create_invoice_id"));
         journalEntry.setDescription(result.getString("description"));
         return journalEntry;
     }

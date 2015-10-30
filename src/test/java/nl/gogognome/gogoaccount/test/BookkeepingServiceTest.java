@@ -237,6 +237,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         assertNotNull(findJournalEntry("t1"));
         assertTrue(invoiceService.existsInvoice(document, "inv1"));
 
+        ledgerService.removeJournal(document, findJournalEntry("t2")); // must remove journal with payment too to prevent foreign key violation
         ledgerService.removeJournal(document, findJournalEntry("t1"));
 
         assertNull(findJournalEntry("t1"));

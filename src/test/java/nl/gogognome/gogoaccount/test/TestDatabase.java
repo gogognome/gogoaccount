@@ -68,7 +68,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
         d2.setDebet(false);
         journalEntryDetails.add(d2);
 
-        JournalEntry newJournalEntry = new JournalEntry();
+        JournalEntry newJournalEntry = new JournalEntry(oldJournalEntry.getUniqueId());
         newJournalEntry.setId("t7");
         newJournalEntry.setDescription("test");
         newJournalEntry.setDate(DateUtil.createDate(2011, 9, 3));

@@ -57,4 +57,28 @@ CREATE TABLE payment (
   CONSTRAINT fk_payment_invoice_id FOREIGN KEY (invoice_id) REFERENCES invoice(id) ON DELETE CASCADE
 );
 
+CREATE TABLE journal_entry (
+  id INT,
+  tag VARCHAR2(100),
+  description VARCHAR2(1000),
+  date DATE,
+  create_invoice_id VARCHAR2(100),
+  PRIMARY KEY (id),
+  CONSTRAINT fk_journalentry_invoice_id FOREIGN KEY (create_invoice_id) REFERENCES invoice(id)
+);
+
+CREATE TABLE journal_entry_detail (
+  id INT,
+  journal_entry_id INT,
+  amount VARCHAR2(1000),
+  account_id VARCHAR2(100),
+  invoice_id VARCHAR2(100),
+  payment_id VARCHAR2(100),
+  debet BOOLEAN,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_detail_journalentry_id FOREIGN KEY (journal_entry_id) REFERENCES journal_entry(id),
+  CONSTRAINT fk_detail_invoice_id FOREIGN KEY (invoice_id) REFERENCES invoice(id),
+  CONSTRAINT fk_detail_payment_id FOREIGN KEY (payment_id) REFERENCES payment(id)
+);
+
 INSERT INTO bookkeeping (id, description, start_of_period, currency) values (1, 'New bookkeeping', current_date(), 'EUR');

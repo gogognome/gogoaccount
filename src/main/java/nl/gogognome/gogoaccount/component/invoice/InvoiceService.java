@@ -1,13 +1,12 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -20,7 +19,7 @@ import nl.gogognome.lib.util.StringUtil;
 import java.sql.SQLException;
 import java.util.*;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 /**
  * This class offers methods for handling invoices.
@@ -49,7 +48,7 @@ public class InvoiceService {
      * @param invoiceLineDefinitions the lines of a single invoice
      * @throws ServiceException if a problem occurs while creating invoices for one or more of the parties
      */
-    // TODO: move creation of journals to bookkeeping component
+    // TODO: move creation of journals to ledger component
     public void createInvoiceAndJournalForParties(Document document, String id, List<Party> parties,
             Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
@@ -141,10 +140,11 @@ public class InvoiceService {
                 }
 
                 try {
-                    LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-                    ledgerService.createJournalEntry(document, journalEntry, journalEntryDetails);
                     invoice = invoiceDAO.create(invoice);
                     invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
+                    LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+                    journalEntry.setIdOfCreatedInvoice(invoice.getId());
+                    ledgerService.createJournalEntry(document, journalEntry, journalEntryDetails);
                     changedDatabase = true;
                 } catch (SQLException e) {
                     partiesForWhichCreationFailed.add(party);

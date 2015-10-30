@@ -56,8 +56,10 @@ class JournalEntryDetailDAO extends AbstractDomainClassDAO<JournalEntryDetail> {
     protected NameValuePairs getNameValuePairs(JournalEntryDetail journalEntryDetail) throws SQLException {
         return new NameValuePairs()
                 .add("id", journalEntryDetail.getId())
+                .add("journal_entry_id", journalEntryDetail.getJournalEntryUniqueId())
                 .add("amount", new AmountFormat(document.getLocale()).formatAmount(journalEntryDetail.getAmount()))
                 .add("account_id", journalEntryDetail.getAccountId())
+                .add("debet", journalEntryDetail.isDebet())
                 .add("invoice_id", journalEntryDetail.getInvoiceId())
                 .add("payment_id", journalEntryDetail.getPaymentId());
     }
