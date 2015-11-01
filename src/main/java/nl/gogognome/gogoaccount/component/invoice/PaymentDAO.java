@@ -39,7 +39,7 @@ class PaymentDAO extends AbstractDomainClassDAO<Payment> {
     }
 
     public boolean hasPayments(String invoiceId) throws SQLException {
-        return exists(new NameValuePairs().add("invoice_id", invoiceId));
+        return existsAtLeastOne(new NameValuePairs().add("invoice_id", invoiceId));
     }
 
     @Override

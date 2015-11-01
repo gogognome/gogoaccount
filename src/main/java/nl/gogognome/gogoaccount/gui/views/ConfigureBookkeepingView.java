@@ -42,7 +42,7 @@ public class ConfigureBookkeepingView extends View {
     private static final long serialVersionUID = 1L;
 
     private final Document document;
-    private final ConfigurationService configurationService = Factory.getInstance(ConfigurationService.class);
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
     private final StringModel descriptionModel = new StringModel();

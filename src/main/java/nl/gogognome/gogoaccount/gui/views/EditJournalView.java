@@ -273,7 +273,7 @@ public class EditJournalView extends View {
 	}
 
     private JournalEntry getJournalEntryFromDialog() {
-        JournalEntry journalEntry = new JournalEntry();
+        JournalEntry journalEntry = new JournalEntry(journalEntryToBeEdited != null ? journalEntryToBeEdited.getUniqueId() : -1);
         journalEntry.setDate(dateModel.getDate());
         journalEntry.setId(idModel.getString());
         journalEntry.setIdOfCreatedInvoice(idOfCreatedInvoice);
