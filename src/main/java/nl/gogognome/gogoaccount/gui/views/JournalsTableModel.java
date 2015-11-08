@@ -1,42 +1,32 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.util.ArrayList;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.lib.swing.AbstractListTableModel;
+import nl.gogognome.lib.swing.ColumnDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.event.TableModelListener;
-
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
-import nl.gogognome.lib.swing.AbstractListTableModel;
-import nl.gogognome.lib.swing.ColumnDefinition;
-
 /**
  * This class implements a table model for a table containing journals.
- *
- * @author Sander Kooijmans
  */
-public class JournalsTableModel extends AbstractListTableModel<Journal>
-		implements DatabaseListener {
+public class JournalsTableModel extends AbstractListTableModel<JournalEntry> implements DocumentListener {
+
+    private final Logger logger = LoggerFactory.getLogger(JournalsTableModel.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	private final static ColumnDefinition DATE =
 		new ColumnDefinition("gen.date", Date.class, 200);
@@ -53,42 +43,48 @@ public class JournalsTableModel extends AbstractListTableModel<Journal>
 	private final static List<ColumnDefinition> COLUMNS =
 		Arrays.asList(DATE, ID, DESCRIPTION, INVOICE);
 
-    /** Contains the <code>TableModelListener</code>s of this <code>TableModel</code>. */
-    private ArrayList<TableModelListener> journalsTableModelListeners = new ArrayList<TableModelListener>();
-
-    private Database database;
+    private final Document document;
 
     /**
      * Constructor.
-     * @param database the database from which to take the data
+     * @param document the database from which to take the data
      */
-    public JournalsTableModel(Database database) {
-    	super(COLUMNS, database.getJournals());
-        this.database = database;
-        database.addListener(this);
+    public JournalsTableModel(Document document) throws ServiceException {
+    	super(COLUMNS, ObjectFactory.create(LedgerService.class).findJournalEntries(document));
+        this.document = document;
+        document.addListener(this);
     }
 
     @Override
-	public void databaseChanged(Database db) {
-        replaceRows(database.getJournals());
+	public void documentChanged(Document document) {
+        try {
+            replaceRows(ObjectFactory.create(LedgerService.class).findJournalEntries(document));
+        } catch (ServiceException e) {
+            logger.warn("Ignored exception: " + e.getMessage(), e);
+        }
     }
 
 	@Override
 	public Object getValueAt(int row, int col) {
-        Journal journal = getRow(row);
+        JournalEntry journalEntry = getRow(row);
         Object result = null;
         ColumnDefinition colDef = COLUMNS.get(col);
         if (DATE == colDef) {
-            result = journal.getDate();
+            result = journalEntry.getDate();
         } else if (ID == colDef) {
-            result = journal.getId();
+            result = journalEntry.getId();
         } else if (DESCRIPTION == colDef) {
-            result = journal.getDescription();
+            result = journalEntry.getDescription();
         } else if (INVOICE == colDef) {
-            String id = journal.getIdOfCreatedInvoice();
-            if (id != null) {
-                Invoice invoice = database.getInvoice(id);
-                result = invoice.getId() + " (" + invoice.getConcerningParty().getName() + ")";
+            if (journalEntry.getIdOfCreatedInvoice() != null) {
+                try {
+                    Invoice invoice = invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice());
+                    Party party = partyService.getParty(document, invoice.getPayingPartyId());
+                    result = invoice.getId() + " (" + party.getId() + " - " + party.getName() + ")";
+                } catch (ServiceException e) {
+                    logger.warn("Ignroed exception: " + e.getMessage(), e);
+                    result = "???";
+                }
             }
         }
         return result;

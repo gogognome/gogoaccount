@@ -1,56 +1,17 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
- */
 package nl.gogognome.gogoaccount.gui.views;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.AbstractAction;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.AccountType;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.components.AmountTextField;
-import nl.gogognome.gogoaccount.services.InvoiceLineDefinition;
-import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceLineDefinition;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.DateSelectionBean;
@@ -62,35 +23,52 @@ import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 
+import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.*;
+import java.util.List;
+
+import static com.google.common.collect.Lists.newArrayList;
+
 /**
  * This class implements a view in which the user can generate invoices
  * for multiple parties.
- *
- * @author Sander Kooijmans
  */
 public class InvoiceGeneratorView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	private final Database database;
+	private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+
+	private final Document document;
+
+    private List<Account> accounts;
+    private Currency currency;
 
 	private final JTextField tfDescription = new JTextField();
 	private DateModel invoiceGenerationDateModel;
 	private final JTextField tfId = new JTextField();
 	private JRadioButton rbSalesInvoice;
-	private JRadioButton rbPurchaseInvoice;
 	private final ButtonGroup invoiceTypeButtonGroup = new ButtonGroup();
 
 	/** Instances of this class represent a single line of the invoice template. */
 	private class TemplateLine {
 		JRadioButton rbAmountToBePaid = new JRadioButton();
-		private final ListModel<Account> accountListModel = new ListModel<Account>();
-		AmountTextField tfDebet = new AmountTextField(database.getCurrency());
-		AmountTextField tfCredit = new AmountTextField(database.getCurrency());
+		private final ListModel<Account> accountListModel = new ListModel<>();
+		AmountTextField tfDebet;
+		AmountTextField tfCredit;
 
-		public TemplateLine() {
+		public TemplateLine(List<Account> accounts, Currency currency) {
+			tfDebet = new AmountTextField(currency);
+			tfCredit = new AmountTextField(currency);
 			templateLinesButtonGroup.add(rbAmountToBePaid);
-			accountListModel.setItems(database.getAllAccounts());
+			accountListModel.setItems(accounts);
 		}
 	}
 
@@ -98,8 +76,8 @@ public class InvoiceGeneratorView extends View {
 	private final ArrayList<TemplateLine> templateLines = newArrayList();
 	private JPanel templateLinesPanel;
 
-	public InvoiceGeneratorView(Database database) {
-		this.database = database;
+	public InvoiceGeneratorView(Document document) {
+        this.document = document;
 	}
 
 	@Override
@@ -113,6 +91,16 @@ public class InvoiceGeneratorView extends View {
 
 	@Override
 	public void onInit() {
+        try {
+			Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+			accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
+			currency = bookkeeping.getCurrency();
+        } catch (ServiceException e) {
+            MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
+			close();
+            return;
+        }
+
 		JPanel invoiceTypePanel = createInvoiceTypePanel();
 		JPanel headerPanel = createHeaderPanel();
 		initTemplateLinesPanel();
@@ -157,7 +145,7 @@ public class InvoiceGeneratorView extends View {
 
 		// Add two empty lines so the user can start editing the template.
 		for (int i=0; i<2; i++) {
-			templateLines.add(new TemplateLine());
+			templateLines.add(new TemplateLine(accounts, currency));
 		}
 		updateTemplateLinesPanel();
 	}
@@ -174,7 +162,7 @@ public class InvoiceGeneratorView extends View {
 				SwingUtils.createTextFieldGBConstraints(1, row));
 		row++;
 
-		rbPurchaseInvoice = new JRadioButton();
+		JRadioButton rbPurchaseInvoice = new JRadioButton();
 		invoiceTypePanel.add(rbPurchaseInvoice,
 				SwingUtils.createGBConstraints(0, row, 1, 1, 0.0, 0.0,
 						GridBagConstraints.CENTER, GridBagConstraints.NONE,
@@ -183,12 +171,7 @@ public class InvoiceGeneratorView extends View {
 				SwingUtils.createTextFieldGBConstraints(1, row));
 		row++;
 
-		ChangeListener changeListener = new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				onInvoiceTypeChanged();
-			}
-		};
+		ChangeListener changeListener = e -> onInvoiceTypeChanged();
 		rbSalesInvoice.addChangeListener(changeListener);
 		rbPurchaseInvoice.addChangeListener(changeListener);
 		invoiceTypeButtonGroup.add(rbSalesInvoice);
@@ -283,7 +266,7 @@ public class InvoiceGeneratorView extends View {
 		JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
-				templateLines.add(new TemplateLine());
+				templateLines.add(new TemplateLine(accounts, currency));
 				updateTemplateLinesPanelAndRepaint();
 			}
 		});
@@ -327,7 +310,7 @@ public class InvoiceGeneratorView extends View {
 			return;
 		}
 
-		List<InvoiceLineDefinition> invoiceLines = new ArrayList<InvoiceLineDefinition>(templateLines.size());
+		List<InvoiceLineDefinition> invoiceLines = new ArrayList<>(templateLines.size());
 		for (TemplateLine line : templateLines) {
 			invoiceLines.add(new InvoiceLineDefinition(line.tfDebet.getAmount(), line.tfCredit.getAmount(),
 					line.accountListModel.getSelectedItem(), line.rbAmountToBePaid.isSelected()));
@@ -356,20 +339,18 @@ public class InvoiceGeneratorView extends View {
 			}
 
 			if (line.getAccount() == null) {
-				MessageDialog.showMessage(this, "gen.titleError",
-						"invoiceGeneratorView.emptyAccountFound");
+				MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.emptyAccountFound");
 				return;
 			}
 		}
 
 		if (!amountToBePaidSelected) {
-			MessageDialog.showMessage(this, "gen.titleError",
-					"invoiceGeneratorView.noAmountToBePaidSelected");
+			MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.noAmountToBePaidSelected");
 			return;
 		}
 
 		// Let the user select the parties.
-		PartiesView partiesView = new PartiesView(database);
+		PartiesView partiesView = new PartiesView(document);
 		partiesView.setSelectioEnabled(true);
 		partiesView.setMultiSelectionEnabled(true);
 		ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
@@ -381,23 +362,19 @@ public class InvoiceGeneratorView extends View {
 		}
 
 		// Ask the user whether he/she is sure to generate the invoices.
-		int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
-				"invoiceGeneratorView.areYouSure");
+		int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "invoiceGeneratorView.areYouSure");
 		if (choice != MessageDialog.YES_OPTION) {
 			// The user canceled the operation.
 			return;
 		}
 
 		try {
-			InvoiceService.createInvoiceAndJournalForParties(database, tfId.getText(), Arrays.asList(parties), date,
-					tfDescription.getText(), invoiceLines);
+			invoiceService.createInvoiceAndJournalForParties(document, tfId.getText(), Arrays.asList(parties), date, tfDescription.getText(), invoiceLines);
 		} catch (ServiceException e) {
-			MessageDialog.showMessage(this, "gen.titleError",
-					e.getMessage());
+			MessageDialog.showMessage(this, "gen.titleError", e.getMessage());
 			return;
 		}
-		MessageDialog.showMessage(this, "gen.titleMessage",
-				"invoiceGeneratorView.messageSuccess");
+		MessageDialog.showMessage(this, "gen.titleMessage", "invoiceGeneratorView.messageSuccess");
 	}
 
 	private void onInvoiceTypeChanged() {
@@ -418,10 +395,15 @@ public class InvoiceGeneratorView extends View {
 			templateLine.tfCredit.setText(totalAmount);
 			accountType = AccountType.CREDITOR;
 		}
-		List<Account> accounts = database.getAccountsOfType(accountType);
-		if (!accounts.isEmpty()) {
-			templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
-		}
+
+        try {
+			List<Account> accounts = ObjectFactory.create(ConfigurationService.class).findAccountsOfType(document, accountType);
+			if (!accounts.isEmpty()) {
+				templateLine.accountListModel.setSelectedItem(accounts.get(0), null);
+			}
+        } catch (ServiceException e) {
+            MessageDialog.showMessage(this, "gen.error", "gen.problemOccurred");
+        }
 	}
 
 }

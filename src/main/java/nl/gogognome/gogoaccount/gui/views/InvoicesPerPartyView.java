@@ -1,21 +1,4 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
-
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -26,10 +9,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -39,18 +19,24 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.Payment;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.gui.controllers.EditInvoiceController;
 import nl.gogognome.gogoaccount.models.PartyModel;
-import nl.gogognome.gogoaccount.services.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.ButtonPanel;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.BooleanModel;
@@ -58,18 +44,23 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.util.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This view shows all invoices per party or all invoices for a single party.
- *
- * @author Sander Kooijmans
  */
 public class InvoicesPerPartyView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
-	private DatabaseListener databaseListener;
+    private final Logger logger = LoggerFactory.getLogger(InvoicesPerPartyView.class);
+	private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+
+	private Document document;
+	private DocumentListener documentListener;
+    private Currency currency;
 
 	private JScrollPane invoicesScrollPane;
 	private JPanel invoicesPanel;
@@ -83,9 +74,9 @@ public class InvoicesPerPartyView extends View {
 
 	private ModelChangeListener listener;
 
-	public InvoicesPerPartyView(Database database) {
+	public InvoicesPerPartyView(Document document) {
 		super();
-		this.database = database;
+		this.document = document;
 	}
 
 	@Override
@@ -95,10 +86,18 @@ public class InvoicesPerPartyView extends View {
 
 	@Override
 	public void onInit() {
-		initModels();
-		addComponents();
-		addListeners();
-		updateInvoicePanel();
+        try {
+            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            currency = bookkeeping.getCurrency();
+
+            initModels();
+            addComponents();
+            addListeners();
+            updateInvoicePanel();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
 	}
 
 	private void initModels() {
@@ -130,7 +129,7 @@ public class InvoicesPerPartyView extends View {
 	private JPanel createInvoiceSelectionPanel() {
 		InputFieldsRow row = new InputFieldsRow();
 		addCloseable(row);
-		row.addVariableSizeField("InvoicesSinglePartyView.party", new PartyBean(database, partyModel));
+		row.addVariableSizeField("InvoicesSinglePartyView.party", new PartyBean(document, partyModel));
 		row.addField("InvoicesSinglePartyView.date", dateModel);
 		row.addField("InvoicesSinglePartyView.includeClosedInvoices", includeClosedInvoicesModel);
 		return row;
@@ -157,8 +156,8 @@ public class InvoicesPerPartyView extends View {
 		dateModel.addModelChangeListener(listener);
 		includeClosedInvoicesModel.addModelChangeListener(listener);
 
-		databaseListener = new DatabaseListenerImpl();
-		database.addListener(databaseListener);
+		documentListener = new DocumentListenerImpl();
+		document.addListener(documentListener);
 
 		KeyboardFocusManager focusManager =
 		    KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -168,14 +167,14 @@ public class InvoicesPerPartyView extends View {
 	}
 
 	private void removeListeners() {
-		database.removeListener(databaseListener);
+		document.removeListener(documentListener);
 
 		includeClosedInvoicesModel.removeModelChangeListener(listener);
 		dateModel.removeModelChangeListener(listener);
 		partyModel.removeModelChangeListener(listener);
 	}
 
-	private void updateInvoicePanel() {
+	private void updateInvoicePanel() throws ServiceException {
 		updateTitleBorder();
 		updateInvoicesInPanel();
 	}
@@ -196,7 +195,7 @@ public class InvoicesPerPartyView extends View {
 		}
 	}
 
-	private void updateInvoicesInPanel() {
+	private void updateInvoicesInPanel() throws ServiceException {
 		Date date = dateModel.getDate();
 		Party party = partyModel.getParty();
 
@@ -206,44 +205,34 @@ public class InvoicesPerPartyView extends View {
 			return;
 		}
 
-        Invoice[] invoices = database.getInvoices();
+        List<Invoice> invoices = invoiceService.findAllInvoices(document);
         sortInvoices(invoices, party);
         addInvoicesToPanel(invoices, party, date);
 
         validate();
 	}
 
-	private void sortInvoices(Invoice[] invoices, Party party) {
+	private void sortInvoices(List<Invoice> invoices, Party party) {
         sortInvoicesOnDate(invoices);
         if (party == null) {
         	sortInvoicesPerParty(invoices);
         }
 	}
 
-	private void sortInvoicesOnDate(Invoice[] invoices) {
-		Arrays.sort(invoices, new Comparator<Invoice>() {
-            @Override
-			public int compare(Invoice o1, Invoice o2) {
-                return DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate());
-            }
-        });
+	private void sortInvoicesOnDate(List<Invoice> invoices) {
+		Collections.sort(invoices, (o1, o2) -> DateUtil.compareDayOfYear(o1.getIssueDate(), o2.getIssueDate()));
 	}
 
-	private void sortInvoicesPerParty(Invoice[] invoices) {
-		Arrays.sort(invoices, new Comparator<Invoice>() {
-            @Override
-			public int compare(Invoice o1, Invoice o2) {
-                return o1.getConcerningParty().getId().compareTo(o2.getConcerningParty().getId());
-            }
-        });
+	private void sortInvoicesPerParty(List<Invoice> invoices) {
+		Collections.sort(invoices, (o1, o2) -> o1.getConcerningPartyId().compareTo(o2.getConcerningPartyId()));
 	}
 
-	private void addInvoicesToPanel(Invoice[] invoices, Party party, Date date) {
-        int row = 0;
+	private void addInvoicesToPanel(List<Invoice> invoices, Party party, Date date) throws ServiceException {
+		int row = 0;
         Party prevParty = null;
         for (Invoice invoice : invoices) {
         	if (mustInvoiceBeIncluded(invoice, date)) {
-        		Party concerningParty = invoice.getConcerningParty();
+        		Party concerningParty = partyService.getParty(document, invoice.getConcerningPartyId());
         		boolean addInvoice = false;
             	if (party == null) {
             		addInvoice = true;
@@ -259,9 +248,11 @@ public class InvoicesPerPartyView extends View {
             	}
 
             	if (addInvoice) {
-            		List<Payment> payments = InvoiceService.getPayments(database, invoice.getId());
-            		InvoicePanel ip = new InvoicePanel(invoice, payments, date,
-            				database.getCurrency());
+            		List<Payment> payments = invoiceService.findPayments(document, invoice);
+            		InvoicePanel ip = new InvoicePanel(invoice,
+                            invoiceService.findDescriptions(document, invoice),
+                            invoiceService.findAmounts(document, invoice),
+                            payments, partyService.getParty(document, invoice.getPayingPartyId()), date, currency);
             		invoicesPanel.add(ip, SwingUtils.createPanelGBConstraints(0, row));
             		row++;
             	}
@@ -269,7 +260,7 @@ public class InvoicesPerPartyView extends View {
         }
 	}
 
-	private boolean mustInvoiceBeIncluded(Invoice invoice, Date date) {
+	private boolean mustInvoiceBeIncluded(Invoice invoice, Date date) throws ServiceException {
 		return isInvoiceCreatedBeforeDate(invoice, date)
 			&& isInvoiceClosedAndMustItBeIncluded(invoice, date);
 	}
@@ -278,17 +269,13 @@ public class InvoicesPerPartyView extends View {
 		return DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0;
 	}
 
-	private boolean isInvoiceClosedAndMustItBeIncluded(Invoice invoice, Date date) {
-		if (includeClosedInvoicesModel.getBoolean()) {
-			return true;
-		} else {
-			return !InvoiceService.isPaid(database, invoice.getId(), date);
-		}
-	}
+	private boolean isInvoiceClosedAndMustItBeIncluded(Invoice invoice, Date date) throws ServiceException {
+        return includeClosedInvoicesModel.getBoolean() || !invoiceService.isPaid(document, invoice.getId(), date);
+    }
 
 	private void editSelectedInvoice() {
 		EditInvoiceController controller =
-			new EditInvoiceController(this, database, selectedInvoicePanel.getInvoice());
+			new EditInvoiceController(this, document, selectedInvoicePanel.getInvoice());
 		controller.execute();
 	}
 
@@ -317,15 +304,24 @@ public class InvoicesPerPartyView extends View {
 	private final class ModelChangeListenerImpl implements ModelChangeListener {
 		@Override
 		public void modelChanged(AbstractModel model) {
-			updateInvoicePanel();
+            try {
+                updateInvoicePanel();
+            } catch (ServiceException e) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 
-	private class DatabaseListenerImpl implements DatabaseListener {
+	private class DocumentListenerImpl implements DocumentListener {
 
 		@Override
-		public void databaseChanged(Database db) {
-			updateInvoicesInPanel();
+		public void documentChanged(Document document) {
+
+            try {
+                updateInvoicesInPanel();
+            } catch (ServiceException e) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 

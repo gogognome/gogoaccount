@@ -1,110 +1,82 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.controllers;
 
-import java.awt.Component;
-import java.util.Arrays;
-
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.gui.views.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.views.EditJournalView;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.util.ComparatorUtil;
+
+import java.awt.*;
 
 /**
  * This controller lets the user edit an existing journal.
- *
- * @author Sander Kooijmans
  */
 public class EditJournalController {
 
-	private Component owner;
-	private Database database;
-	private Journal journal;
-	private Journal updatedJournal;
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+	private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
-	/**
-	 * Constructs the controller.
-	 * @param owner the component that uses this controller
-	 * @param database the database
-	 * @param journal the journal to be edited
-	 */
-	public EditJournalController(Component owner, Database database, Journal journal) {
-		super();
-		this.owner = owner;
-		this.database = database;
-		this.journal = journal;
-	}
+    private Component owner;
+    private Document document;
+    private JournalEntry journalEntry;
+    private JournalEntry updatedJournalEntry;
 
-	public void execute() {
-        EditJournalView view = new EditJournalView(database, "ajd.title", journal);
-        ViewDialog dialog = new ViewDialog(owner, view);
-        dialog.showDialog();
+    /**
+     * Constructs the controller.
+     * @param owner the component that uses this controller
+     * @param document the database
+     * @param journalEntry the journal to be edited
+     */
+    public EditJournalController(Component owner, Document document, JournalEntry journalEntry) {
+        super();
+        this.owner = owner;
+        this.document = document;
+        this.journalEntry = journalEntry;
+    }
 
-        updatedJournal = view.getEditedJournal();
-        if (journalModified()) {
-            if (journal.createsInvoice()) {
-                updateInvoiceCreatedByJournal();
-            }
+    public void execute() {
+		try {
+			EditJournalView view = new EditJournalView(document, "ajd.title", journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
+			ViewDialog dialog = new ViewDialog(owner, view);
+			dialog.showDialog();
 
+			updatedJournalEntry = view.getEditedJournalEntry();
+			if (journalEntry.createsInvoice()) {
+				updateInvoiceCreatedByJournal();
+			}
+			ledgerService.updateJournal(document, updatedJournalEntry, view.getEditedJournalEntryDetails());
+		} catch (ServiceException  e) {
+			MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateJournalException");
+		}
+    }
+
+    private void updateInvoiceCreatedByJournal() throws ServiceException {
+        EditInvoiceView editInvoiceView = new EditInvoiceView(document,
+                "EditJournalController.editInvoiceTitle",
+                journalEntry.getIdOfCreatedInvoice() != null ? invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice()) : null);
+        ViewDialog editInvoiceDialog = new ViewDialog(owner, editInvoiceView);
+        editInvoiceDialog.showDialog();
+        Invoice newInvoice = editInvoiceView.getEditedInvoice();
+        if (newInvoice != null) {
             try {
-                database.updateJournal(journal, updatedJournal);
-            } catch (DatabaseModificationFailedException e) {
-                MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateJournalException");
+                invoiceService.updateInvoice(document, newInvoice, editInvoiceView.getEditedDescriptions(), editInvoiceView.getEditedAmounts());
+            } catch (ServiceException e) {
+                MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateInvoiceException");
             }
         }
-	}
+    }
 
-	private boolean journalModified() {
-		if (updatedJournal == null) {
-			return false;
-		}
+    public boolean isJournalUpdated() {
+        return updatedJournalEntry != null;
+    }
 
-		return !(ComparatorUtil.equals(journal.getId(), updatedJournal.getId())
-			&& ComparatorUtil.equals(journal.getDate(), updatedJournal.getDate())
-			&& ComparatorUtil.equals(journal.getDescription(), updatedJournal.getDescription())
-			&& Arrays.equals(journal.getItems(), updatedJournal.getItems()));
-	}
-
-	private void updateInvoiceCreatedByJournal() {
-		EditInvoiceView editInvoiceView = new EditInvoiceView(database,
-				"EditJournalController.editInvoiceTitle",
-				database.getInvoice(journal.getIdOfCreatedInvoice()));
-		ViewDialog editInvoiceDialog = new ViewDialog(owner, editInvoiceView);
-		editInvoiceDialog.showDialog();
-		Invoice newInvoice = editInvoiceView.getEditedInvoice();
-		if (newInvoice != null) {
-		    try {
-		        database.updateInvoice(journal.getIdOfCreatedInvoice(), newInvoice);
-		    } catch (DatabaseModificationFailedException e) {
-		        MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateInvoiceException");
-		    }
-		}
-	}
-
-	public boolean isJournalUpdated() {
-		return updatedJournal != null;
-	}
-
-	public Journal getUpdatedJournal() {
-		return updatedJournal;
-	}
+    public JournalEntry getUpdatedJournalEntry() {
+        return updatedJournalEntry;
+    }
 }

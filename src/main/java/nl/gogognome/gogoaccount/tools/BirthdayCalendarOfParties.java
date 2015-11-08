@@ -16,24 +16,21 @@
 */
 package nl.gogognome.gogoaccount.tools;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Locale;
-
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
-import nl.gogognome.gogoaccount.services.XMLParseException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * This class implements a small application that prints a birthday calendar of all parties.
@@ -51,20 +48,20 @@ public class BirthdayCalendarOfParties {
         // arguments are shown in the specified language.
         initFactory(Locale.getDefault());
         TextResource tr = Factory.getInstance(TextResource.class);
-        for (int i=0; i<args.length; i++) {
-            if (args[i].startsWith("-lang=")) {
-                initFactory(new Locale(args[i].substring(6)));
+        for (String arg : args) {
+            if (arg.startsWith("-lang=")) {
+                initFactory(new Locale(arg.substring(6)));
             }
         }
 
-        for (int i=0; i<args.length; i++) {
-            if (args[i].startsWith("-xml-file=")) {
+        for (String arg : args) {
+            if (arg.startsWith("-xml-file=")) {
                 if (xmlFileName != null) {
                     System.out.println(tr.getString("printAge.moreThanOneXmlFile"));
                     printUsage();
                     return;
                 }
-                xmlFileName = args[i].substring(10);
+                xmlFileName = arg.substring(10);
             }
         }
 
@@ -74,32 +71,27 @@ public class BirthdayCalendarOfParties {
             return;
         }
 
-        ArrayList<Party> partiesWithBirthdate = new ArrayList<Party>();
+        List<Party> partiesWithBirthdate = new ArrayList<>();
         try {
-            Database db = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
-            Party[] parties = db.getParties();
-            for (int i = 0; i < parties.length; i++) {
-                if (parties[i].getBirthDate() != null && !"oud-lid".equals(parties[i].getType())) {
-                    partiesWithBirthdate.add(parties[i]);
+            Document document = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
+            List<Party> parties = ObjectFactory.create(PartyService.class).findAllParties(document);
+            for (Party party : parties) {
+                if (party.getBirthDate() != null && !"oud-lid".equals(party.getType())) {
+                    partiesWithBirthdate.add(party);
                 }
             }
-        } catch (XMLParseException e) {
-            System.out.println(tr.getString("printAge.syntaxError", e.getMessage()));
-        } catch (IOException e) {
-            System.out.println(tr.getString("printAge.ioError", e.getMessage()));
+        } catch (ServiceException e) {
+            System.out.println(tr.getString("gen.problemOccurred", e.getMessage()));
         }
-        Collections.sort(partiesWithBirthdate, new Comparator<Party>() {
-            @Override
-			public int compare(Party p1, Party p2) {
-                int m1 = DateUtil.getField(p1.getBirthDate(), Calendar.MONTH);
-                int d1 = DateUtil.getField(p1.getBirthDate(), Calendar.DATE);
-                int m2 = DateUtil.getField(p2.getBirthDate(), Calendar.MONTH);
-                int d2 = DateUtil.getField(p2.getBirthDate(), Calendar.DATE);
-                if (m1 != m2) {
-                    return m1 - m2;
-                } else {
-                    return d1 - d2;
-                }
+        Collections.sort(partiesWithBirthdate, (p1, p2) -> {
+            int m1 = DateUtil.getField(p1.getBirthDate(), Calendar.MONTH);
+            int d1 = DateUtil.getField(p1.getBirthDate(), Calendar.DATE);
+            int m2 = DateUtil.getField(p2.getBirthDate(), Calendar.MONTH);
+            int d2 = DateUtil.getField(p2.getBirthDate(), Calendar.DATE);
+            if (m1 != m2) {
+                return m1 - m2;
+            } else {
+                return d1 - d2;
             }
         });
 

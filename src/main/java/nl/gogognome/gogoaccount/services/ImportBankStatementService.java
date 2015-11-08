@@ -16,8 +16,8 @@
 */
 package nl.gogognome.gogoaccount.services;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 
 /**
@@ -27,17 +27,17 @@ import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
  */
 public class ImportBankStatementService {
 
-	private final Database database;
+	private final Document document;
 
-	public ImportBankStatementService(Database database) {
-		this.database = database;
+	public ImportBankStatementService(Document document) {
+		this.document = document;
 	}
 
 	/**
 	 * @return the account corresponding to the "from account" of the imported transaction;
 	 *         null if no account was found
 	 */
-	public Account getFromAccount(ImportedTransaction transaction) {
+	public Account getFromAccount(ImportedTransaction transaction) throws ServiceException {
 		return getAccountForImportedAccount(transaction.getFromAccount(), transaction.getFromName());
 	}
 
@@ -45,13 +45,15 @@ public class ImportBankStatementService {
 	 * @return the account corresponding to the "to account" of the imported transaction;
 	 *         null if no account was found
 	 */
-	public Account getToAccount(ImportedTransaction transaction) {
+	public Account getToAccount(ImportedTransaction transaction) throws ServiceException {
 		return getAccountForImportedAccount(transaction.getToAccount(), transaction.getToName());
 	}
 
-	private Account getAccountForImportedAccount(String account, String name) {
-		String key = getKey(account, name);
-		return database.getAccountForImportedAccount(key);
+	private Account getAccountForImportedAccount(String account, String name) throws ServiceException {
+		return ServiceTransaction.withResult(() -> {
+            String key = getKey(account, name);
+            return document.getAccountForImportedAccount(key);
+        });
 	}
 
 	public void setImportedToAccount(ImportedTransaction transaction, Account account) {
@@ -64,7 +66,7 @@ public class ImportBankStatementService {
 
 	private void setAccountForImportedAccount(String importedAccount, String name, Account account) {
 		String key = getKey(importedAccount, name);
-		database.setImportedAccount(key, account.getId());
+		document.setImportedAccount(key, account.getId());
 	}
 
 	private String getKey(String account, String name) {

@@ -1,3 +1,9 @@
 .idea
 *.iml
 target
+.project
+.classpath
+generated
+.settings
+eclipse_output
+ant_output

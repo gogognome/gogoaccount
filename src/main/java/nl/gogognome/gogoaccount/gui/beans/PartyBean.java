@@ -26,8 +26,8 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.lib.gui.Closeable;
@@ -45,7 +45,7 @@ import nl.gogognome.lib.util.Factory;
  */
 public class PartyBean extends JPanel implements Closeable {
 
-	private Database database;
+	private Document document;
     private JTextField tfDescription;
 
     private JButton btSelect;
@@ -57,8 +57,8 @@ public class PartyBean extends JPanel implements Closeable {
     /**
      * Constructor.
      */
-    public PartyBean(Database database, PartyModel model) {
-        this.database = database;
+    public PartyBean(Document document, PartyModel model) {
+        this.document = document;
         this.model = model;
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
@@ -108,7 +108,7 @@ public class PartyBean extends JPanel implements Closeable {
     public void selectParty() {
         Container parent = SwingUtils.getTopLevelContainer(this);
 
-        PartiesView partiesView = new PartiesView(database);
+        PartiesView partiesView = new PartiesView(document);
         partiesView.setSelectioEnabled(true);
         ViewDialog dialog = new ViewDialog(parent, partiesView);
         dialog.showDialog();

@@ -1,38 +1,21 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Date;
-import java.util.List;
-
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.businessobjects.Party;
-import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.businessobjects.ReportType;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
@@ -41,16 +24,29 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * This class generates reports in a text-format.
  *
  * A <i>report</i> consists of a balance, operational result, and a list
  * of debtors and creditors.
- *
- * @author Sander Kooijmans
  */
 public class ReportTask implements Task {
-    private Database database;
+
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+
+    private Document document;
+    private Bookkeeping bookkeeping;
     private Date date;
     private Report report;
 
@@ -67,13 +63,13 @@ public class ReportTask implements Task {
 
     /**
      * Constructor.
-     * @param database
-     * @param date
-     * @param file
+     * @param document the document for which the report must be generated
+     * @param date the start date of the period for which the report must be generated
+     * @param file the file of the report to be created
      * @param fileType the type of file to be created. Only PLAIN_TEXT is allowed
      */
-    public ReportTask(Database database, Date date, File file, ReportType fileType) {
-        this.database = database;
+    public ReportTask(Document document, Date date, File file, ReportType fileType) {
+        this.document = document;
         this.date = date;
         this.file = file;
         this.fileType = fileType;
@@ -86,28 +82,23 @@ public class ReportTask implements Task {
      */
     @Override
 	public Object execute(TaskProgressListener progressListener) throws Exception {
+        bookkeeping = configurationService.getBookkeeping(document);
     	this.progressListener = progressListener;
     	progressListener.onProgressUpdate(0);
-        try {
-	        switch(fileType) {
-	            case PLAIN_TEXT:
-	                textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
-	                break;
-	            default:
-	                throw new IllegalArgumentException("Illegal file type: " + fileType);
-	        }
+        switch(fileType) {
+            case PLAIN_TEXT:
+                textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal file type: " + fileType);
+        }
 
-	        report = BookkeepingService.createReport(database, date);
-	        progressListener.onProgressUpdate(10);
+        report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
+        progressListener.onProgressUpdate(10);
 
-	        writer = new PrintWriter(new FileWriter(file));
-	        printReport();
-	        writer.close();
-        } catch (IOException e) {
-            if (writer != null) {
-                writer.close();
-            }
-            throw e;
+        try (PrintWriter writer = new PrintWriter(new FileWriter(file))){
+            this.writer = writer;
+            printReport();
         }
 
         progressListener.onProgressUpdate(100);
@@ -117,7 +108,7 @@ public class ReportTask implements Task {
     /**
      * Writes a report to the specified writer.
      */
-    private void printReport() {
+    private void printReport() throws ServiceException {
         writer.println(textFormat.getStartOfDocument());
         progressListener.onProgressUpdate(20);
         printBalance();
@@ -129,9 +120,9 @@ public class ReportTask implements Task {
         printCreditors();
         progressListener.onProgressUpdate(60);
 
-        List<Journal> journals = database.getJournals();
+        List<JournalEntry> journalEntries = ledgerService.findJournalEntries(document);
         progressListener.onProgressUpdate(70);
-        printJournals(journals, database.getStartOfPeriod(), date);
+        printJournals(journalEntries, bookkeeping.getStartOfPeriod(), date);
         progressListener.onProgressUpdate(80);
         printLedger();
 
@@ -294,7 +285,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noDebtors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(database.getCurrency());
+            Amount total = Amount.getZero(bookkeeping.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -333,7 +324,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noCreditors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(database.getCurrency());
+            Amount total = Amount.getZero(bookkeeping.getCurrency());
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -361,14 +352,14 @@ public class ReportTask implements Task {
 		return party.getId() + " - " + party.getName();
 	}
 
-	private void printJournals(List<Journal> journals, Date startDate, Date endDate) {
+	private void printJournals(List<JournalEntry> journalEntries, Date startDate, Date endDate) throws ServiceException {
         int startIndex = 0;
         int endIndex = 0;
-        for (int i=0; i<journals.size(); i++) {
-            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), endDate) <= 0) {
+        for (int i=0; i< journalEntries.size(); i++) {
+            if (DateUtil.compareDayOfYear(journalEntries.get(i).getDate(), endDate) <= 0) {
                 endIndex = i+1;
             }
-            if (DateUtil.compareDayOfYear(journals.get(i).getDate(), startDate) < 0) {
+            if (DateUtil.compareDayOfYear(journalEntries.get(i).getDate(), startDate) < 0) {
                 startIndex = i+1;
             }
         }
@@ -401,32 +392,37 @@ public class ReportTask implements Task {
 
             result.append(textFormat.getHorizontalSeparator());
 
+            Map<String, Account> idToAccount = configurationService.findAllAccounts(document).stream().collect(Collectors.toMap(a -> a.getId(), a -> a));
+
             for (int i=startIndex; i<endIndex; i++) {
-                values[0] = textResource.formatDate("gen.dateFormat", journals.get(i).getDate());
-                values[2] = journals.get(i).getId() + " - " + journals.get(i).getDescription();
+                values[0] = textResource.formatDate("gen.dateFormat", journalEntries.get(i).getDate());
+                values[2] = journalEntries.get(i).getId() + " - " + journalEntries.get(i).getDescription();
                 values[4] = "";
                 values[6] = "";
-                String idOfCreatedInvoice = journals.get(i).getIdOfCreatedInvoice();
+                String idOfCreatedInvoice = journalEntries.get(i).getIdOfCreatedInvoice();
                 if (idOfCreatedInvoice != null) {
-                    Invoice invoice = database.getInvoice(idOfCreatedInvoice);
+                    Invoice invoice = invoiceService.getInvoice(document, idOfCreatedInvoice);
                     values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid())
-                        + " " + invoice.getId() + " (" + invoice.getConcerningParty().getName() + ')';
+                        + " " + invoice.getId() + " (" + partyService.getParty(document, invoice.getConcerningPartyId()).getName() + ')';
                 } else {
                     values[8] = "";
                 }
                 result.append(textFormat.getRow(values));
 
-                JournalItem[] items = journals.get(i).getItems();
-                for (int j = 0; j < items.length; j++) {
+                List<JournalEntryDetail> journalEntryDetails = ledgerService.findJournalEntryDetails(document, journalEntries.get(i));
+                for (JournalEntryDetail item : journalEntryDetails) {
                     values[0] = "";
-                    values[2] = items[j].getAccount().getId() + " - "
-                    	+ items[j].getAccount().getName();
+                    values[2] = item.getAccountId() + " - " + idToAccount.get(item.getAccountId()).getName();
                     values[4] = "";
                     values[6] = "";
-                    values[items[j].isDebet() ? 4 : 6] =
-                        amountFormat.formatAmountWithoutCurrency(items[j].getAmount());
-                    Invoice invoice = database.getInvoice(items[j].getInvoiceId());
-                    values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
+                    values[item.isDebet() ? 4 : 6] =
+                            amountFormat.formatAmountWithoutCurrency(item.getAmount());
+                    if (item.getInvoiceId() != null) {
+                        Invoice invoice = invoiceService.getInvoice(document, item.getInvoiceId());
+                        values[8] = invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")";
+                    } else {
+                        values[8] = "";
+                    }
                     result.append(textFormat.getRow(values));
                 }
 
@@ -436,7 +432,7 @@ public class ReportTask implements Task {
         writer.println(result.toString());
     }
 
-    private void printLedger() {
+    private void printLedger() throws ServiceException {
         StringBuilder result = new StringBuilder(10000);
 
         result.append(textFormat.getNewParagraph());
@@ -473,7 +469,7 @@ public class ReportTask implements Task {
                 values[8] = "";
 
                 Invoice invoice = line.invoice;
-                values[8] = invoice != null ? invoice.getId() + " (" + invoice.getPayingParty().getName() + ")" : "";
+                values[8] = invoice != null ? invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")" : "";
 
                 result.append(textFormat.getRow(values));
             }

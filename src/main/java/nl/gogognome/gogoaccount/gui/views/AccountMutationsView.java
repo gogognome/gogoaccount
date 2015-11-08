@@ -1,36 +1,14 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.util.Date;
-
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-
-import nl.gogognome.gogoaccount.businessobjects.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.AbstractModel;
@@ -38,33 +16,38 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.Date;
 
 /**
  * This view shows all mutations for an account.
- *
- * @author Sander Kooijmans
  */
 public class AccountMutationsView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	private Database database;
+    private final Logger logger = LoggerFactory.getLogger(AccountMutationsView.class);
 
-	private JTable table;
+	private Document document;
+
 	private JScrollPane tableScrollPane;
 	private AccountOverviewTableModel tableModel;
 
 	private DateModel dateModel = new DateModel(new Date());
-	private ListModel<Account> accountListModel = new ListModel<Account>();
+	private ListModel<Account> accountListModel = new ListModel<>();
 
 	private ModelChangeListener modelListener;
-	private DatabaseListener databaseListener;
+	private DocumentListener documentListener;
 
 	private Report report;
 
-	public AccountMutationsView(Database database) {
+	public AccountMutationsView(Document document) {
 		super();
-		this.database = database;
+		this.document = document;
 	}
 
 	@Override
@@ -74,14 +57,19 @@ public class AccountMutationsView extends View {
 
 	@Override
 	public void onInit() {
-		initModels();
-		addComponents();
-		addListeners();
-		updateTableModel();
+		try {
+            initModels();
+            addComponents();
+            addListeners();
+            updateTableModel();
 
-		if (!accountListModel.getItems().isEmpty()) {
-			accountListModel.setSelectedIndex(0, null);
-		}
+            if (!accountListModel.getItems().isEmpty()) {
+                accountListModel.setSelectedIndex(0, null);
+            }
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
 	}
 
 	private void initModels() {
@@ -93,7 +81,7 @@ public class AccountMutationsView extends View {
 		JPanel northPanel = createInputFieldsPanel();
 		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
 
-		table = widgetFactory.createSortedTable(tableModel);
+		JTable table = widgetFactory.createSortedTable(tableModel);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		tableScrollPane = widgetFactory.createScrollPane(table);
 
@@ -124,17 +112,17 @@ public class AccountMutationsView extends View {
 		dateModel.addModelChangeListener(modelListener);
 		accountListModel.addModelChangeListener(modelListener);
 
-		databaseListener = new DatabaseListenerImpl();
-		database.addListener(databaseListener);
+		documentListener = new DocumentListenerImpl();
+		document.addListener(documentListener);
 	}
 
 	private void removeListeners() {
-		database.removeListener(databaseListener);
+		document.removeListener(documentListener);
 		dateModel.removeModelChangeListener(modelListener);
 		accountListModel.removeModelChangeListener(modelListener);
 	}
 
-	private void updateReportAndTableModel() {
+	private void updateReportAndTableModel() throws ServiceException {
 		Date date = dateModel.getDate();
 		if (date != null) {
 			updateReport(date);
@@ -147,16 +135,16 @@ public class AccountMutationsView extends View {
 
 	private void updateReport(Date date) {
 		try {
-			report = BookkeepingService.createReport(database, date);
+			report = new BookkeepingService().createReport(document, date);
 		} catch (ServiceException e) {
 			report = null;
 			MessageDialog.showErrorMessage(this, e, "gen.internalError");
 		}
 	}
 
-	private void updateTableModel() {
+	private void updateTableModel() throws ServiceException {
 		Account account = accountListModel.getSelectedItem();
-		tableModel.setAccountAndDate(report, account);
+		tableModel.setAccountAndDate(document, report, account);
 
 		if (account != null && report != null) {
 			tableScrollPane.setBorder(widgetFactory.createTitleBorder("vao.accountAtDate",
@@ -169,25 +157,37 @@ public class AccountMutationsView extends View {
 	}
 
 	private void setAccountsInListModel() {
-		accountListModel.setItems(database.getAllAccounts());
-	}
+        try {
+            accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        }
+    }
 
 	private final class ModelChangeListenerImpl implements ModelChangeListener {
 		@Override
 		public void modelChanged(AbstractModel model) {
-			if (model == accountListModel && report != null) {
-				updateTableModel();
-			} else {
-				updateReportAndTableModel();
-			}
+            try {
+                if (model == accountListModel && report != null) {
+                    updateTableModel();
+                } else {
+                    updateReportAndTableModel();
+                }
+            } catch (ServiceException e ) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 
-	private final class DatabaseListenerImpl implements DatabaseListener {
+	private final class DocumentListenerImpl implements DocumentListener {
 		@Override
-		public void databaseChanged(Database db) {
-			setAccountsInListModel();
-			updateReportAndTableModel();
+		public void documentChanged(Document document) {
+            try {
+                setAccountsInListModel();
+                updateReportAndTableModel();
+            } catch (ServiceException e) {
+                logger.warn("ignored exception: " + e.getMessage(), e);
+            }
 		}
 	}
 }

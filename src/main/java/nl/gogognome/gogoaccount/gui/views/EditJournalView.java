@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 import java.awt.BorderLayout;
@@ -33,11 +17,15 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.gogoaccount.businessobjects.Journal;
-import nl.gogognome.gogoaccount.businessobjects.JournalItem;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
-import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
+import nl.gogognome.gogoaccount.gui.ActionRunner;
+import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -49,24 +37,26 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 
 /**
  * This class implements the dialog for editing a single journal.
- *
- * @author Sander Kooijmans
  */
 public class EditJournalView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-	/** The database. */
-    protected Database database;
+    protected Document document;
 
-    /** The id of the title. */
     private String titleId;
 
     /**
      * The journal used to initialize the view. <code>null</code> indicates that a new journal
      * is to be edited.
      */
-    protected Journal journalToBeEdited;
+    protected JournalEntry journalEntryToBeEdited;
+
+    /**
+     * The journal details used to initialize the view. <code>null</code> indicates that a new journal
+     * is to be edited.
+     */
+    protected List<JournalEntryDetail> journalEntryDetailsToBeEdited;
 
     /**
      * The id of the invoice that is created by the edited journal. If <code>null</code>, then
@@ -81,13 +71,15 @@ public class EditJournalView extends View {
     /** The table containing journal items. */
     private JTable itemsTable;
 
-    protected ItemsTableModel itemsTableModel;
+    protected JournalEntryDetailsTableModel itemsTableModel;
 
     /** The date model used to edit the date. */
     protected DateModel dateModel = new DateModel();
 
     /** The journal edited by the journal. This will only be filled when the user is editing a journal. */
-    protected Journal editedJournal;
+    protected JournalEntry editedJournalEntry;
+
+    protected List<JournalEntryDetail> editedJournalEntryDetails;
 
     private InputFieldsColumn valuesEditPanel;
 
@@ -95,15 +87,16 @@ public class EditJournalView extends View {
      * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
      * To add one or more new journals, set <code>journal</code> to <code>null</code>.
      *
-     * @param database the database to which the journal must be added
+     * @param document the database to which the journal must be added
      * @param titleId the id of the title
-     * @param journal the journal used to initialize the elements of the view. Must be <code>null</code>
+     * @param journalEntry the journal used to initialize the elements of the view. Must be <code>null</code>
      *        to edit a new journal
      */
-    public EditJournalView(Database database, String titleId, Journal journal) {
-        this.database = database;
+    public EditJournalView(Document document, String titleId, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
+        this.document = document;
         this.titleId = titleId;
-        this.journalToBeEdited = journal;
+        this.journalEntryToBeEdited = journalEntry;
+        this.journalEntryDetailsToBeEdited = journalEntryDetails;
     }
 
     @Override
@@ -113,22 +106,26 @@ public class EditJournalView extends View {
     }
 
     private void initModels() {
-        itemsTableModel = new ItemsTableModel(database);
-        itemsTableModel.setJournalItems(new JournalItem[0]);
+        try {
+            itemsTableModel = new JournalEntryDetailsTableModel(document);
 
-        initModelsForJournal(journalToBeEdited);
+            initModelsForJournal(journalEntryToBeEdited, journalEntryDetailsToBeEdited);
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            close();
+        }
 	}
 
-	private void initModelsForJournal(Journal initialValuesJournal) {
-		if (initialValuesJournal == null) {
+	private void initModelsForJournal(JournalEntry initialValuesJournalEntry, List<JournalEntryDetail> initialDetails) throws ServiceException {
+		if (initialValuesJournalEntry == null) {
         	dateModel.setDate(new Date(), null);
         } else {
-            idOfCreatedInvoice = initialValuesJournal.getIdOfCreatedInvoice();
-            idModel.setString(initialValuesJournal.getId());
-            dateModel.setDate(initialValuesJournal.getDate());
-            descriptionModel.setString(initialValuesJournal.getDescription());
+            idOfCreatedInvoice = initialValuesJournalEntry.getIdOfCreatedInvoice();
+            idModel.setString(initialValuesJournalEntry.getId());
+            dateModel.setDate(initialValuesJournalEntry.getDate());
+            descriptionModel.setString(initialValuesJournalEntry.getDescription());
 
-            for (JournalItem item : initialValuesJournal.getItems()) {
+            for (JournalEntryDetail item : initialDetails) {
                 itemsTableModel.addRow(item);
             }
         }
@@ -157,7 +154,7 @@ public class EditJournalView extends View {
         buttonPanel.add(new JLabel());
         buttonPanel.add(createOkButton());
 
-        if (journalToBeEdited == null) {
+        if (journalEntryToBeEdited == null) {
 	        buttonPanel.add(createOkAndNextButton());
         }
 
@@ -189,7 +186,7 @@ public class EditJournalView extends View {
 	    return widgetFactory.createButton("ajd.addItem", new AbstractAction() {
 	        @Override
 			public void actionPerformed(ActionEvent evt) {
-	            handleAddButtonPressed();
+	            ActionRunner.run(EditJournalView.this, () -> handleAddButtonPressed());
 	        }
 	    });
     }
@@ -232,10 +229,10 @@ public class EditJournalView extends View {
 
     /** Handles the OK button. Closes the dialog. */
     private void handleOkButtonPressed() {
-        Journal journal = getJournalFromDialog();
-        if (journal != null) {
+        JournalEntry journalEntry = getJournalEntryFromDialog();
+        if (journalEntry != null) {
         	try {
-        		createNewOrStoreUpdatedJournal(journal);
+        		createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
                 requestClose();
         	} catch (Exception e) {
                 MessageDialog.showErrorMessage(this,e, "ajd.addJournalException");
@@ -245,10 +242,10 @@ public class EditJournalView extends View {
 
 	/** Handles the Ok + next button. */
     private void handleOkAndNextButtonPressed() {
-        Journal journal = getJournalFromDialog();
-        if (journal != null) {
+        JournalEntry journalEntry = getJournalEntryFromDialog();
+        if (journalEntry != null) {
             try {
-                createNewOrStoreUpdatedJournal(journal);
+                createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
                 itemsTableModel.clear();
                 valuesEditPanel.requestFocus();
                 initValuesForNextJournal();
@@ -258,56 +255,45 @@ public class EditJournalView extends View {
         }
     }
 
-	private void createNewOrStoreUpdatedJournal(Journal journal) throws Exception {
-        if (journalToBeEdited == null) {
-            createNewJournal(journal);
+	private void createNewOrStoreUpdatedJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws Exception {
+        if (journalEntryToBeEdited == null) {
+            createNewJournal(journalEntry, journalEntryDetails);
         } else {
             // Set the edited journal
-            editedJournal = journal;
+            editedJournalEntry = journalEntry;
+            editedJournalEntryDetails = journalEntryDetails;
         }
 	}
 
-	protected void createNewJournal(Journal journal) throws DatabaseModificationFailedException {
-		database.addJournal(journal, true);
+	protected void createNewJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
+		ObjectFactory.create(LedgerService.class).addJournalEntry(document, journalEntry, journalEntryDetails, true);
 	}
 
-	protected void initValuesForNextJournal() {
+	protected void initValuesForNextJournal() throws ServiceException {
 	}
 
-    /**
-     * Gets the journal from the values filled in the dialog.
-     * @return the journal or <code>null</code> if the values are not valid,
-     *          in which case the user has been notified about the problem with
-     *          the input values.
-     */
-    private Journal getJournalFromDialog() {
-        Date date = dateModel.getDate();
-        if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
-            return null;
-        }
+    private JournalEntry getJournalEntryFromDialog() {
+        JournalEntry journalEntry = new JournalEntry(journalEntryToBeEdited != null ? journalEntryToBeEdited.getUniqueId() : -1);
+        journalEntry.setDate(dateModel.getDate());
+        journalEntry.setId(idModel.getString());
+        journalEntry.setIdOfCreatedInvoice(idOfCreatedInvoice);
+        journalEntry.setDescription(descriptionModel.getString());
 
-        String id = idModel.getString();
-        String description = descriptionModel.getString();
-        List<JournalItem> items = itemsTableModel.getRows();
+        return journalEntry;
+    }
 
-        try {
-            return new Journal(id, description, date, items, idOfCreatedInvoice);
-        }
-        catch (IllegalArgumentException e) {
-            MessageDialog.showMessage(this, "gen.titleError", "gen.itemsNotInBalance");
-            return null;
-        }
+    private List<JournalEntryDetail> getJournalEntryDetailsFromDialog() {
+        return itemsTableModel.getRows();
     }
 
     /** Handles the add button. Lets the user add a journal item. */
-    private void handleAddButtonPressed() {
-    	JournalItem defaultItem = createDefaultItemToBeAdded();
-    	EditJournalItemView view = new EditJournalItemView(database, defaultItem);
+    private void handleAddButtonPressed() throws ServiceException {
+    	JournalEntryDetail defaultItem = createDefaultItemToBeAdded();
+    	EditJournalItemView view = new EditJournalItemView(document, defaultItem);
     	ViewDialog dialog = new ViewDialog(this, view);
     	dialog.showDialog();
 
-        JournalItem item = view.getEnteredJournalItem();
+        JournalEntryDetail item = view.getEnteredJournalEntryDetail();
         if (item != null) {
             itemsTableModel.addRow(item);
         }
@@ -319,20 +305,20 @@ public class EditJournalView extends View {
      * of the new journal item.
      * @return the journal item containing the initial values; null is allowed
      */
-    protected JournalItem createDefaultItemToBeAdded() {
+    protected JournalEntryDetail createDefaultItemToBeAdded() throws ServiceException {
 		return null;
 	}
 
 	/** Handles the edit button. Lets the user edit a journal item. */
     private void handleEditButtonPressed() {
         int row = itemsTable.getSelectedRow();
-        JournalItem item = itemsTableModel.getRow(row);
+        JournalEntryDetail item = itemsTableModel.getRow(row);
         if (item != null) {
-        	EditJournalItemView view = new EditJournalItemView(database, item);
+        	EditJournalItemView view = new EditJournalItemView(document, item);
         	ViewDialog dialog = new ViewDialog(this, view);
         	dialog.showDialog();
 
-	        item = view.getEnteredJournalItem();
+	        item = view.getEnteredJournalEntryDetail();
 	        if (item != null) {
 	            itemsTableModel.updateRow(row, item);
 	        }
@@ -350,8 +336,12 @@ public class EditJournalView extends View {
      * Ok button. Otherwise, this method returns <code>null</code>.
      * @return the journal entered by the user or <code>null</code>
      */
-    public Journal getEditedJournal() {
-        return editedJournal;
+    public JournalEntry getEditedJournalEntry() {
+        return editedJournalEntry;
+    }
+
+    public List<JournalEntryDetail> getEditedJournalEntryDetails() {
+        return editedJournalEntryDetails;
     }
 
     @Override

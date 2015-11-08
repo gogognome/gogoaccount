@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.components;
 
 import java.awt.Color;
@@ -24,13 +8,16 @@ import java.util.List;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.database.Database;
-import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -49,30 +36,31 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
 	private static final long serialVersionUID = 1L;
 
-    private final Database database;
+    private final Document document;
     private final DateModel dateModel;
     private final BalanceSheet balanceSheet;
 
     private Report report;
 
-    private DatabaseListener databaseListener;
+    private DocumentListener documentListener;
     private ModelChangeListener modelChangeListener;
 
-    private final TextResource textResource = Factory.getInstance(TextResource.class);
     private final WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
     /**
      * Creates a new <code>OperationalResultComponent</code>.
-     * @param database the database used to create the operational result
+     * @param document the database used to create the operational result
      * @param dateModel the date model used to determine the date of the operational result
      */
-    public OperationalResultComponent(Database database, DateModel dateModel) {
+    public OperationalResultComponent(Document document, DateModel dateModel) throws ServiceException {
         super();
-        this.database = database;
+        this.document = document;
         this.dateModel = dateModel;
 
+        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        TextResource textResource = Factory.getInstance(TextResource.class);
         balanceSheet = new BalanceSheet(textResource.getString("gen.expenses"),
-        		textResource.getString("gen.revenues"), database.getCurrency());
+        		textResource.getString("gen.revenues"), bookkeeping.getCurrency());
         balanceSheet.setOpaque(false);
         balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
         setViewportView(balanceSheet);
@@ -82,8 +70,8 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
     }
 
     private void addListeners() {
-        databaseListener = new DatabaseListenerImpl();
-        database.addListener(databaseListener);
+        documentListener = new DocumentListenerImpl();
+        document.addListener(documentListener);
 
         modelChangeListener = new ModelChangeListenerImpl();
         dateModel.addModelChangeListener(modelChangeListener);
@@ -96,7 +84,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
     private void removeListeners() {
     	dateModel.removeModelChangeListener(modelChangeListener);
-    	database.removeListener(databaseListener);
+    	document.removeListener(documentListener);
     }
 
     private void initComponents() {
@@ -106,25 +94,25 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
         }
 
         try {
-			report = BookkeepingService.createReport(database, date);
+			report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
+
+            setBorder(widgetFactory.createTitleBorder("operationalResultComponent.title",
+                    report.getEndDate()));
+
+            List<Row> leftRows = convertAccountsToRows(report.getExpenses());
+            List<Row> rightRows = convertAccountsToRows(report.getRevenues());
+
+            balanceSheet.setLeftRows(leftRows);
+            balanceSheet.setRightRows(rightRows);
+            balanceSheet.update();
 		} catch (ServiceException e) {
 			MessageDialog.showErrorMessage(this, e, "gen.internalError");
-			return;
+            close();
 		}
-
-        setBorder(widgetFactory.createTitleBorder("operationalResultComponent.title",
-        		report.getEndDate()));
-
-        List<Row> leftRows = convertAccountsToRows(report.getExpenses());
-        List<Row> rightRows = convertAccountsToRows(report.getRevenues());
-
-        balanceSheet.setLeftRows(leftRows);
-        balanceSheet.setRightRows(rightRows);
-        balanceSheet.update();
     }
 
     private List<Row> convertAccountsToRows(List<Account> accounts) {
-        List<Row> rows = new ArrayList<Row>();
+        List<Row> rows = new ArrayList<>();
 
         for (Account a : accounts) {
         	Row row = new Row();
@@ -159,9 +147,9 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 		}
 	}
 
-	private final class DatabaseListenerImpl implements DatabaseListener {
+	private final class DocumentListenerImpl implements DocumentListener {
 		@Override
-		public void databaseChanged(Database db) {
+		public void documentChanged(Document document) {
 		    initComponents();
 		    validate();
 		}

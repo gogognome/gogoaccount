@@ -19,8 +19,8 @@ package nl.gogognome.gogoaccount.reportgenerators;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.businessobjects.Invoice;
-import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.document.Document;
 
 
 /**
@@ -31,16 +31,16 @@ import nl.gogognome.gogoaccount.database.Database;
  */
 public class OdtInvoiceParameters {
 
-	private final Database database;
+	private final Document document;
 	private final List<Invoice> invoices;
     private String concerning;
     private Date date;
     private Date dueDate;
     private String ourReference;
 
-	public OdtInvoiceParameters(Database database, List<Invoice> invoices) {
+	public OdtInvoiceParameters(Document document, List<Invoice> invoices) {
 		super();
-		this.database = database;
+		this.document = document;
 		this.invoices = invoices;
 		this.date = new Date();
 	}
@@ -77,8 +77,8 @@ public class OdtInvoiceParameters {
 		this.ourReference = ourReference;
 	}
 
-	public Database getDatabase() {
-		return database;
+	public Document getDocument() {
+		return document;
 	}
 
 	public List<Invoice> getInvoices() {
