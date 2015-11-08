@@ -56,16 +56,15 @@ public class Start {
 
 	/**
 	 * Parses arguments: language must be set before creating main frame
-	 * @param args
+	 * @param args command line arguments
 	 */
 	private void parseArguments(String[] args) {
-		for (int i=0; i<args.length; i++)
-		{
-			if (args[i].startsWith("-lang=")) {
-				Locale locale = new Locale(args[i].substring(6));
+		for (String arg : args) {
+			if (arg.startsWith("-lang=")) {
+				Locale locale = new Locale(arg.substring(6));
 				initFactory(locale);
 			} else {
-				fileName = args[i];
+				fileName = arg;
 			}
 		}
 	}
