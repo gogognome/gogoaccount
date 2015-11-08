@@ -20,7 +20,7 @@
 
   <groupId>nl.gogognome.gogoaccount</groupId>
   <artifactId>gogoaccount</artifactId>
-  <version>2.3</version>
+  <version>2.4</version>
   <packaging>jar</packaging>
 
   <name>gogoaccount</name>
