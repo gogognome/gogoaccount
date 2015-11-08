@@ -1,12 +1,59 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartySearchCriteria;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.document.DocumentListener;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.businessobjects.PartySearchCriteria;
+import nl.gogognome.gogoaccount.database.Database;
+import nl.gogognome.gogoaccount.database.DatabaseListener;
+import nl.gogognome.gogoaccount.database.DatabaseModificationFailedException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -18,36 +65,17 @@ import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * This class implements a view for adding, removing, editing and (optionally) selecting parties.
+ *
+ * @author Sander Kooijmans
  */
 public class PartiesView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-    private final Logger logger = LoggerFactory.getLogger(PartiesView.class);
-
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
-
-    private Document document;
+    private Database database;
 
     private JTable table;
 	private PartiesTableModel partiesTableModel;
@@ -60,7 +88,7 @@ public class PartiesView extends View {
     private StringModel addressModel = new StringModel();
     private StringModel zipCodeModel = new StringModel();
     private StringModel cityModel = new StringModel();
-    private ListModel<String> typeListModel = new ListModel<>();
+    private ListModel<String> typeListModel = new ListModel<String>();
     private DateModel birthDateModel = new DateModel();
 
     private JTextArea taRemarks;
@@ -68,7 +96,7 @@ public class PartiesView extends View {
     private JButton btSearch;
     private JButton btSelect;
 
-    private DocumentListener documentListener;
+    private DatabaseListener databaseListener;
     private ListSelectionListener listSelectionListener;
     private FocusListener focusListener;
 
@@ -76,8 +104,13 @@ public class PartiesView extends View {
 
     private InputFieldsColumn ifc;
 
-    public PartiesView(Document document) {
-        this.document = document;
+    /**
+     * Constructor for the parties view. Parties can be edited. There is no select
+     * party button.
+     * @param database
+     */
+    public PartiesView(Database database) {
+        this.database = database;
     }
 
     public void setSelectioEnabled(boolean selectioEnabled) {
@@ -124,7 +157,7 @@ public class PartiesView extends View {
         add(createSearchCriteriaAndResultsPanel(), SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 1.0,
             GridBagConstraints.CENTER, GridBagConstraints.BOTH, 12, 12, 12, 12));
         add(buttonPanel, SwingUtils.createGBConstraints(1, 0, 1, 1, 0.0, 0.0,
-                GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 12, 12, 12));
+            GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 12, 12, 12));
 
         setDefaultButton(btSearch);
     }
@@ -188,29 +221,24 @@ public class PartiesView extends View {
         scrollPane.setPreferredSize(new Dimension(500, 100));
 
         detailPanel.add(widgetFactory.createLabel("partiesView.remarks", taRemarks),
-                SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
-                        GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 0, 0, 12));
+            SwingUtils.createGBConstraints(0, 0, 1, 1, 0.0, 0.0,
+                GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 12, 0, 0, 12));
         detailPanel.add(scrollPane, SwingUtils.createGBConstraints(1, 0, 1, 1, 1.0, 1.0,
-                GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, 12, 0, 12, 12));
+            GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, 12, 0, 12, 12));
 
 		return detailPanel;
 	}
 
     private void updateTypeListModel() {
-        List<String> items = new ArrayList<>();
-        try {
-            items.add("\u00a0");
-            items.addAll(partyService.findPartyTypes(document));
-        } catch (ServiceException e) {
-            logger.warn("Ignored exception", e);
-        } finally {
-            typeListModel.setItems(items);
-        }
+    	List<String> items = new ArrayList<String>();
+    	items.add("\u00a0");
+    	items.addAll(Arrays.asList(database.getPartyTypes()));
+    	typeListModel.setItems(items);
     }
 
     private void addListeners() {
-    	documentListener = new DocumentListenerImpl();
-    	document.addListener(documentListener);
+    	databaseListener = new DatabaseListenerImpl();
+    	database.addListener(databaseListener);
 
         listSelectionListener = new RemarksUpdateSelectionListener();
         table.getSelectionModel().addListSelectionListener(listSelectionListener);
@@ -235,7 +263,7 @@ public class PartiesView extends View {
     }
 
     private void removeListeners() {
-    	document.removeListener(documentListener);
+    	database.removeListener(databaseListener);
     	table.getSelectionModel().removeListSelectionListener(listSelectionListener);
     	removeListeners(ifc);
     }
@@ -250,104 +278,116 @@ public class PartiesView extends View {
         }
 	}
 
+    /**
+     * Searches for matching parties. The entered search criteria are used
+     * to find parties. The matching parties are shown in the table.
+     */
     private void onSearch() {
-        try {
-            PartySearchCriteria searchCriteria = new PartySearchCriteria();
+        PartySearchCriteria searchCriteria = new PartySearchCriteria();
 
-            if (!StringUtil.isNullOrEmpty(idModel.getString())) {
-                searchCriteria.setId(idModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(nameModel.getString())) {
-                searchCriteria.setName(nameModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(addressModel.getString())) {
-                searchCriteria.setAddress(addressModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(zipCodeModel.getString())) {
-                searchCriteria.setZipCode(zipCodeModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(cityModel.getString())) {
-                searchCriteria.setCity(cityModel.getString());
-            }
-            if (birthDateModel.getDate() != null) {
-                searchCriteria.setBirthDate(birthDateModel.getDate());
-            }
-            if (typeListModel.getSelectedIndex() > 0) {
-                searchCriteria.setType(typeListModel.getSelectedItem());
-            }
+        if (!StringUtil.isNullOrEmpty(idModel.getString())) {
+            searchCriteria.setId(idModel.getString());
+        }
+        if (!StringUtil.isNullOrEmpty(nameModel.getString())) {
+            searchCriteria.setName(nameModel.getString());
+        }
+        if (!StringUtil.isNullOrEmpty(addressModel.getString())) {
+            searchCriteria.setAddress(addressModel.getString());
+        }
+        if (!StringUtil.isNullOrEmpty(zipCodeModel.getString())) {
+            searchCriteria.setZipCode(zipCodeModel.getString());
+        }
+        if (!StringUtil.isNullOrEmpty(cityModel.getString())) {
+            searchCriteria.setCity(cityModel.getString());
+        }
+        if (birthDateModel.getDate() != null) {
+            searchCriteria.setBirthDate(birthDateModel.getDate());
+        }
+        if (typeListModel.getSelectedIndex() > 0) {
+            searchCriteria.setType(typeListModel.getSelectedItem());
+        }
 
-            partiesTableModel.replaceRows(partyService.findParties(document, searchCriteria));
-            SwingUtils.selectFirstRow(table);
-            table.requestFocusInWindow();
+        partiesTableModel.replaceRows(Arrays.asList(database.getParties(searchCriteria)));
+        SwingUtils.selectFirstRow(table);
+        table.requestFocusInWindow();
 
-            // Update the default button if the select button is present
-            if (btSelect != null) {
-                setDefaultButton(btSelect);
-            }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        // Update the default button if the select button is present
+        if (btSelect != null) {
+            setDefaultButton(btSelect);
         }
     }
 
+    /**
+     * This method is called when the "add party" button is pressed.
+     */
     private void onAddParty() {
-        try {
-        EditPartyView editPartyView = new EditPartyView(document, null);
+        EditPartyView editPartyView = new EditPartyView(database, null);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
 
         Party party = editPartyView.getEnteredParty();
         if (party != null) {
-            partyService.createParty(document, party);
+            try {
+                database.addParty(party);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showErrorMessage(this, "partiesView.partyAlreadyExists");
+            }
         }
         onSearch();
-        } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
     }
 
+    /**
+     * This method is called when the "edit party" button is pressed.
+     */
     private void onEditParty() {
-        try {
-            int row = SwingUtils.getSelectedRowConvertedToModel(table);
-            if (row == -1) {
-                return;
-            }
-
-            Party oldParty = partiesTableModel.getRow(row);
-            EditPartyView editPartyView = new EditPartyView(document, oldParty);
-            ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
-            dialog.showDialog();
-
-            Party party = editPartyView.getEnteredParty();
-            if (party != null) {
-                partyService.updateParty(document, party);
-            }
-            onSearch();
-
-            SwingUtils.selectRowWithModelIndex(table, row);
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        int row = SwingUtils.getSelectedRowConvertedToModel(table);
+        if (row == -1) {
+            return;
         }
+
+        Party oldParty = partiesTableModel.getRow(row);
+        EditPartyView editPartyView = new EditPartyView(database, oldParty);
+        ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
+        dialog.showDialog();
+
+        Party party = editPartyView.getEnteredParty();
+        if (party != null) {
+            try {
+                database.updateParty(oldParty, party);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showErrorMessage(this, e, "partiesView.partyAlreadyExists");
+            }
+        }
+        onSearch();
+
+        SwingUtils.selectRowWithModelIndex(table, row);
     }
 
+    /**
+     * This method is called when the "delete party" button is pressed.
+     */
     private void onDeleteParty() {
-        try {
-            int row = SwingUtils.getSelectedRowConvertedToModel(table);
-            if (row == -1) {
-                return;
-            }
-
-            Party party = partiesTableModel.getRow(row);
-            int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
-                    "partiesView.areYouSurePartyIsDeleted", party.getName());
-            if (choice == MessageDialog.YES_OPTION) {
-                partyService.deleteParty(document, party);
-            }
-            onSearch();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        int row = SwingUtils.getSelectedRowConvertedToModel(table);
+        if (row == -1) {
+            return;
         }
+
+        Party party = partiesTableModel.getRow(row);
+        int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
+            "partiesView.areYouSurePartyIsDeleted", party.getName());
+        if (choice == MessageDialog.YES_OPTION) {
+            try {
+                database.removeParty(party);
+            } catch (DatabaseModificationFailedException e) {
+                MessageDialog.showErrorMessage(this, e, "partiesView.partyCouldNotBeDeleted");
+            }
+        }
+        onSearch();
     }
 
+    /**
+     * This method is called when the "select party" button is pressed.
+     */
     private void onSelectParty() {
         int rows[] = SwingUtils.getSelectedRowsConvertedToModel(table);
         selectedParties = new Party[rows.length];
@@ -430,9 +470,9 @@ public class PartiesView extends View {
 		}
     }
 
-	private class DocumentListenerImpl implements DocumentListener {
+	private class DatabaseListenerImpl implements DatabaseListener {
 		@Override
-		public void documentChanged(Document document) {
+		public void databaseChanged(Database db) {
 			updateTypeListModel();
 		}
 	}

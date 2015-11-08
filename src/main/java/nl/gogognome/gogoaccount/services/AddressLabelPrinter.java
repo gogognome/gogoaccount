@@ -1,3 +1,19 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.gogoaccount.services;
 
 import java.awt.Color;
@@ -11,14 +27,13 @@ import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.util.List;
 
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSizeName;
 
-import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.lib.util.StringUtil;
 
 /**
@@ -32,13 +47,13 @@ import nl.gogognome.lib.util.StringUtil;
 public class AddressLabelPrinter implements Printable {
 
     /** The parties whose addresses are to be printed. */
-    private List<Party> parties;
+    private Party[] parties;
 
     /**
      * Constructor.
      * @param parties the parties whose addresses are to be printed
      */
-    public AddressLabelPrinter(List<Party> parties) {
+    public AddressLabelPrinter(Party[] parties) {
         this.parties = parties;
     }
 
@@ -54,7 +69,7 @@ public class AddressLabelPrinter implements Printable {
         PrinterJob printerJob = PrinterJob.getPrinterJob();
 
         Book book = new Book();
-        book.append(this, new PageFormat(), (parties.size() + getNrPartiesPerPage() - 1) / getNrPartiesPerPage());
+        book.append(this, new PageFormat(), (parties.length + getNrPartiesPerPage() - 1) / getNrPartiesPerPage());
         printerJob.setPageable(book);
         boolean doPrint = printerJob.printDialog(pras);
         if (doPrint) {
@@ -75,8 +90,8 @@ public class AddressLabelPrinter implements Printable {
         double paperHeight = paper.getHeight();
         // It seems that under Linux always the size of Letter is used instead of A4.
         // This is a workaround:
-//        paperWidth = (210.0 / 25.4) * 72.0;
-//        paperHeight = (297.0 / 25.4) * 72.0;
+        paperWidth = (210.0 / 25.4) * 72.0;
+        paperHeight = (297.0 / 25.4) * 72.0;
 
         Font font = new Font("Serif", Font.PLAIN, 10);
         g2d.setFont(font);
@@ -88,12 +103,12 @@ public class AddressLabelPrinter implements Printable {
         int fontHeight = fm.getHeight();
         int y = 0;
         int x = 0;
-        for (int i=partyIndex; i < parties.size() && i<partyIndex + getNrPartiesPerPage(); i++) {
+        for (int i=partyIndex; i < parties.length && i<partyIndex + getNrPartiesPerPage(); i++) {
             double labelX = labelWidth * x;
             double labelY = labelHeight* y;
 //            g2d.drawRect((int)labelX, (int)labelY, (int)labelWidth, (int)labelHeight);
 
-            Party party = parties.get(i);
+            Party party = parties[i];
             String name = StringUtil.nullToEmptyString(party.getName());
             String address = StringUtil.nullToEmptyString(party.getAddress());
             String zipAndCity = party.getZipCode();

@@ -22,7 +22,7 @@ import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 
-import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.lib.print.Label;
 import nl.gogognome.lib.util.StringUtil;
 

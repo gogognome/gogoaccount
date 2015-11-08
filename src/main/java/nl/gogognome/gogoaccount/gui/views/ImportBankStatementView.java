@@ -38,21 +38,16 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.businessobjects.Journal;
+import nl.gogognome.gogoaccount.businessobjects.JournalItem;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
-import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
+import nl.gogognome.gogoaccount.gui.dialogs.ItemsTableModel;
 import nl.gogognome.gogoaccount.services.ImportBankStatementService;
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
 import nl.gogognome.gogoaccount.services.importers.RabobankCSVImporter;
 import nl.gogognome.gogoaccount.services.importers.TransactionImporter;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -78,38 +73,38 @@ import org.slf4j.LoggerFactory;
  * @author Sander Kooijmans
  */
 public class ImportBankStatementView extends View implements ModelChangeListener,
-        ListSelectionListener, AddJournalForTransactionView.Plugin{
+		ListSelectionListener, AddJournalForTransactionView.Plugin{
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(ImportBankStatementView.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(ImportBankStatementView.class);
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+	private FileModel fileSelectionModel = new FileModel();
 
-    private FileModel fileSelectionModel = new FileModel();
-
-    private JournalEntryDetailsTableModel itemsTableModel;
+    private JTable itemsTable;
+    private ItemsTableModel itemsTableModel;
 
     private JTable transactionsJournalsTable;
     private TransactionsJournalsTableModel transactionJournalsTableModel;
 
-    private ListModel<TransactionImporter> importersModel = new ListModel<>();
+    private ListModel<TransactionImporter> importersModel = new ListModel<TransactionImporter>();
 
     private JButton importButton;
     private JButton addButton;
     private JButton editButton;
     private JButton deleteButton;
 
-    Document document;
+    Database database;
 
-    /**
-     * Creates the view.
-     * @param document the database
-     */
-    public ImportBankStatementView(Document document) {
-        super();
-        this.document = document;
+    private InputFieldsColumn ifc;
+
+	/**
+	 * Creates the view.
+	 * @param database the database
+	 */
+	public ImportBankStatementView(Database database) {
+		super();
+        this.database = database;
     }
 
     /**
@@ -117,59 +112,59 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      */
     @Override
     public void onInit() {
-        initModels();
-        addComponents();
+    	initModels();
+		addComponents();
         addListeners();
         disableEnableButtons();
         updateJournalItemTable();
-    }
+	}
 
-    private void initModels() {
-        List<TransactionImporter> importers = new ArrayList<>();
-        importers.add(new RabobankCSVImporter());
-        importersModel.setItems(importers);
-    }
+	private void initModels() {
+		List<TransactionImporter> importers = new ArrayList<TransactionImporter>();
+		importers.add(new RabobankCSVImporter());
+		importersModel.setItems(importers);
+	}
 
-    private void addComponents() {
-        InputFieldsColumn ifc = new InputFieldsColumn();
-        addCloseable(ifc);
-        ifc.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
-        ifc.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
-                new ImporterFormatter());
+	private void addComponents() {
+		ifc = new InputFieldsColumn();
+		addCloseable(ifc);
+		ifc.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
+		ifc.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
+				new ImporterFormatter());
 
-        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
-        importButton = buttonPanel.addButton("importBankStatementView.import", new ImportAction());
+		ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
+		importButton = buttonPanel.addButton("importBankStatementView.import", new ImportAction());
 
-        JPanel importPanel = new JPanel(new BorderLayout());
-        importPanel.add(ifc, BorderLayout.NORTH);
-        importPanel.add(buttonPanel, BorderLayout.SOUTH);
-        importPanel.setBorder(widgetFactory.createTitleBorderWithPadding("importBankStatementView.importSettings"));
+		JPanel importPanel = new JPanel(new BorderLayout());
+		importPanel.add(ifc, BorderLayout.NORTH);
+		importPanel.add(buttonPanel, BorderLayout.SOUTH);
+		importPanel.setBorder(widgetFactory.createTitleBorderWithPadding("importBankStatementView.importSettings"));
 
-        // Create table of journals
-        transactionJournalsTableModel = new TransactionsJournalsTableModel(
-                Collections.<Transaction>emptyList(), document);
-        transactionsJournalsTable = widgetFactory.createSortedTable(transactionJournalsTableModel);
+		// Create table of journals
+		transactionJournalsTableModel = new TransactionsJournalsTableModel(
+				Collections.<Transaction>emptyList(), database);
+		transactionsJournalsTable = widgetFactory.createSortedTable(transactionJournalsTableModel);
 
-        // Create table of items
-        itemsTableModel = new JournalEntryDetailsTableModel(document);
-        JTable itemsTable = widgetFactory.createTable(itemsTableModel);
-        itemsTable.setRowSelectionAllowed(false);
-        itemsTable.setColumnSelectionAllowed(false);
+		// Create table of items
+		itemsTableModel = new ItemsTableModel(database);
+		itemsTable = widgetFactory.createTable(itemsTableModel);
+		itemsTable.setRowSelectionAllowed(false);
+		itemsTable.setColumnSelectionAllowed(false);
 
-        // Create button panel
-        ButtonPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
+		// Create button panel
+		ButtonPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonsPanel.setOpaque(false);
 
-        editButton = buttonsPanel.addButton("ejd.editJournal", new EditAction());
-        addButton = buttonsPanel.addButton("ejd.addJournal", new AddAction());
-        deleteButton = buttonsPanel.addButton("ejd.deleteJournal", new DeleteAction());
+		editButton = buttonsPanel.addButton("ejd.editJournal", new EditAction());
+		addButton = buttonsPanel.addButton("ejd.addJournal", new AddAction());
+		deleteButton = buttonsPanel.addButton("ejd.deleteJournal", new DeleteAction());
 
-        // Add components to the view.
+		// Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
-        tablesPanel.add(widgetFactory.createScrollPane(transactionsJournalsTable,
-                "importBankStatementView.transactionsJournals"),
-                SwingUtils.createPanelGBConstraints(0, 1));
+		tablesPanel.add(widgetFactory.createScrollPane(transactionsJournalsTable,
+				"importBankStatementView.transactionsJournals"),
+				SwingUtils.createPanelGBConstraints(0, 1));
 
         JScrollPane scrollPane = new JScrollPane(itemsTable);
         tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 2));
@@ -177,22 +172,22 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(importPanel, BorderLayout.NORTH);
-        add(tablesPanel, BorderLayout.CENTER);
+		add(tablesPanel, BorderLayout.CENTER);
         add(buttonsPanel, BorderLayout.SOUTH);
-    }
+	}
 
-    private void addListeners() {
-        fileSelectionModel.addModelChangeListener(this);
-        importersModel.addModelChangeListener(this);
-        transactionsJournalsTable.getSelectionModel().addListSelectionListener(this);
+	private void addListeners() {
+		fileSelectionModel.addModelChangeListener(this);
+		importersModel.addModelChangeListener(this);
+		transactionsJournalsTable.getSelectionModel().addListSelectionListener(this);
         modelChanged(fileSelectionModel);
-    }
+	}
 
-    private void removeListeners() {
-        fileSelectionModel.removeModelChangeListener(this);
-        importersModel.removeModelChangeListener(this);
-        transactionsJournalsTable.getSelectionModel().removeListSelectionListener(this);
-    }
+	private void removeListeners() {
+		fileSelectionModel.removeModelChangeListener(this);
+		importersModel.removeModelChangeListener(this);
+		transactionsJournalsTable.getSelectionModel().removeListSelectionListener(this);
+	}
 
     @Override
     public String getTitle() {
@@ -201,7 +196,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     @Override
     public void onClose() {
-        removeListeners();
+    	removeListeners();
     }
 
     /**
@@ -209,224 +204,221 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      * specified journal.
      */
     private void updateJournalItemTable() {
-        try {
-            int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
-            List<JournalEntryDetail> journalEntryDetails;
-            if (row != -1) {
-                JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
-                journalEntryDetails = journalEntry != null ? ledgerService.findJournalEntryDetails(document, journalEntry) : Collections.emptyList();
-            } else {
-                journalEntryDetails = Collections.emptyList();
-            }
-            itemsTableModel.setJournalEntryDetails(journalEntryDetails);
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+    	int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
+    	JournalItem[] items;
+    	if (row != -1) {
+	    	Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
+	    	items = journal != null ? journal.getItems() : new JournalItem[0];
+    	} else {
+    		items = new JournalItem[0];
+    	}
+    	itemsTableModel.setJournalItems(items);
     }
 
-    private void handleImport() {
-        File file = fileSelectionModel.getFile();
-        Reader reader = null;
-        try {
-            reader = new FileReader(file);
-            TransactionImporter importer = importersModel.getSelectedItem();
-            List<ImportedTransaction> transactions = importer.importTransactions(reader);
-            fileSelectionModel.setEnabled(false, this);
-            importersModel.setEnabled(false, this);
-            if (!transactions.isEmpty()) {
-                importButton.setEnabled(false);
-                addTransactionsToTable(transactions);
-                SwingUtils.selectFirstRow(transactionsJournalsTable);
-            }
-        } catch (FileNotFoundException e) {
-            MessageDialog.showErrorMessage(this,
-                    "importBankStatementView.fileNotFound", file.getAbsoluteFile());
-        } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, e,
-                    "importBankStatementView.problemWhileImportingTransactions");
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    LOGGER.warn("Failed to close the file " + file.getAbsolutePath(), e);
-                }
-            }
-        }
-    }
+	private void handleImport() {
+		File file = fileSelectionModel.getFile();
+		Reader reader = null;
+		try {
+			reader = new FileReader(file);
+			TransactionImporter importer = importersModel.getSelectedItem();
+			List<ImportedTransaction> transactions = importer.importTransactions(reader);
+			fileSelectionModel.setEnabled(false, this);
+			importersModel.setEnabled(false, this);
+			if (!transactions.isEmpty()) {
+				importButton.setEnabled(false);
+				addTransactionsToTable(transactions);
+				SwingUtils.selectFirstRow(transactionsJournalsTable);
+			}
+		} catch (FileNotFoundException e) {
+			MessageDialog.showErrorMessage(this,
+					"importBankStatementView.fileNotFound", file.getAbsoluteFile());
+		} catch (Exception e) {
+			MessageDialog.showErrorMessage(this, e,
+					"importBankStatementView.problemWhileImportingTransactions");
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					LOGGER.warn("Failed to close the file " + file.getAbsolutePath(), e);
+				}
+			}
+		}
+	}
 
     private void addTransactionsToTable(List<ImportedTransaction> transactions) {
-        for (ImportedTransaction t : transactions) {
-            transactionJournalsTableModel.addRow(new Transaction(t, null));
-        }
-    }
+    	for (ImportedTransaction t : transactions) {
+    		transactionJournalsTableModel.addRow(new Transaction(t, null));
+    	}
+	}
 
+	/**
+     * This method lets the user edit the selected journal.
+     */
     private void editJournalForSelectedTransaction() {
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
-            JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
-            EditJournalController controller = new EditJournalController(this, document, journalEntry);
+            Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
+            EditJournalController controller = new EditJournalController(this, database, journal);
             controller.execute();
             if (controller.isJournalUpdated()) {
-                updateTransactionJournal(row, controller.getUpdatedJournalEntry());
+            	updateTransactionJournal(row, controller.getUpdatedJournal());
             }
         }
     }
 
+    /**
+     * This method lets the user add new journals.
+     */
     private void addJournalForSelectedTransaction() {
-        AddJournalForTransactionView view = new AddJournalForTransactionView(document, this);
+        AddJournalForTransactionView view = new AddJournalForTransactionView(database, this);
         ViewDialog dialog = new ViewDialog(this, view);
         dialog.showDialog();
     }
 
+    /**
+     * This method lets the user delete the selected journal.
+     */
     private void deleteJournalFromSelectedTransaction() {
-        try {
-            int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
-            if (row != -1) {
-                JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
-                DeleteJournalController controller = new DeleteJournalController(this, document, journalEntry);
-                controller.execute();
+        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+        if (row != -1) {
+            Journal journal = transactionJournalsTableModel.getRow(row).getJournal();
+        	DeleteJournalController controller = new DeleteJournalController(this, database, journal);
+        	controller.execute();
 
-                if (controller.isJournalDeleted()) {
-                    updateTransactionJournal(row, null);
-                }
-            }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        	if (controller.isJournalDeleted()) {
+        		updateTransactionJournal(row, null);
+        	}
         }
     }
 
-    private void updateTransactionJournal(int row, JournalEntry journalEntry) {
+	private void updateTransactionJournal(int row, Journal journal) {
         Transaction t = transactionJournalsTableModel.getRow(row);
-        t.setJournalEntry(journalEntry);
-        transactionJournalsTableModel.updateRow(row, t);
-        updateJournalItemTable();
-    }
+    	t.setJournal(journal);
+		transactionJournalsTableModel.updateRow(row, t);
+		updateJournalItemTable();
+	}
 
-    private void disableEnableButtons() {
-        int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
-        boolean rowSelected = row != -1;
-        boolean journalPresent = rowSelected && transactionJournalsTableModel.getRow(row).getJournalEntry() != null;
-        addButton.setEnabled(rowSelected);
-        editButton.setEnabled(journalPresent);
-        deleteButton.setEnabled(journalPresent);
-    }
+	private void disableEnableButtons() {
+		int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
+		boolean rowSelected = row != -1;
+		boolean journalPresent = rowSelected && transactionJournalsTableModel.getRow(row).getJournal() != null;
+		addButton.setEnabled(rowSelected);
+		editButton.setEnabled(journalPresent);
+		deleteButton.setEnabled(journalPresent);
+	}
 
-    @Override
-    public void modelChanged(AbstractModel model) {
-        importButton.setEnabled(canImportBeStarted());
-    }
+	@Override
+	public void modelChanged(AbstractModel model) {
+		importButton.setEnabled(canImportBeStarted());
+	}
 
-    private boolean canImportBeStarted() {
-        return fileSelectionModel.getFile() != null
-                && fileSelectionModel.getFile().isFile()
-                && importersModel.getSelectedIndex() != -1;
-    }
+	private boolean canImportBeStarted() {
+		return fileSelectionModel.getFile() != null
+				&& fileSelectionModel.getFile().isFile()
+				&& importersModel.getSelectedIndex() != -1;
+	}
 
-    @Override
-    public void valueChanged(ListSelectionEvent e) {
+	@Override
+	public void valueChanged(ListSelectionEvent e) {
         //Ignore extra messages.
         if (e.getValueIsAdjusting()) {
-            return;
+        	return;
         }
 
         updateJournalItemTable();
-        disableEnableButtons();
-    }
+		disableEnableButtons();
+	}
 
-    @Override
-    public void journalAdded(JournalEntry journalEntry) {
-        try {
-            int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
-            if (row != -1) {
-                updateTransactionJournal(row, journalEntry);
-                setLinkBetweenImportedTransactionAccountAndAccount(
-                        transactionJournalsTableModel.getRow(row).getImportedTransaction(), journalEntry);
-            } else {
-                MessageDialog.showErrorMessage(this, "ImportBankStatementView.JournalCreatedButNoTransactionSelected");
-            }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+	@Override
+	public void journalAdded(Journal journal) {
+        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+        if (row != -1) {
+        	updateTransactionJournal(row, journal);
+        	setLinkBetweenImportedTransactionAccountAndAccount(
+        			transactionJournalsTableModel.getRow(row).getImportedTransaction(), journal);
+        } else {
+        	MessageDialog.showErrorMessage(this, "ImportBankStatementView.JournalCreatedButNoTransactionSelected");
         }
-    }
+	}
 
-    private void setLinkBetweenImportedTransactionAccountAndAccount(ImportedTransaction transaction, JournalEntry journalEntry) throws ServiceException {
-        List<JournalEntryDetail> journalEntryDetails = ledgerService.findJournalEntryDetails(document, journalEntry);
-        ImportBankStatementService service = new ImportBankStatementService(document);
-        if (journalEntryDetails.size() == 2) {
-            for (JournalEntryDetail detail : journalEntryDetails) {
-                Account account = configurationService.getAccount(document, detail.getAccountId());
-                if (detail.isDebet()) {
-                    service.setImportedToAccount(transaction, account);
-                } else {
-                    service.setImportedFromAccount(transaction, account);
-                }
-            }
-        }
-    }
+	private void setLinkBetweenImportedTransactionAccountAndAccount(
+			ImportedTransaction transaction, Journal journal) {
+		JournalItem[] items = journal.getItems();
+		ImportBankStatementService service = new ImportBankStatementService(database);
+		if (items.length == 2) {
+			for (JournalItem item : items) {
+				if (item.isDebet()) {
+					service.setImportedToAccount(transaction, item.getAccount());
+				} else {
+					service.setImportedFromAccount(transaction, item.getAccount());
+				}
+			}
+		}
+	}
 
-    @Override
-    public ImportedTransaction getNextImportedTransaction() {
+	@Override
+	public ImportedTransaction getNextImportedTransaction() {
         ImportedTransaction importedTransaction = null;
 
         int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
         if (row != -1) {
-            while (row < transactionJournalsTableModel.getRowCount()) {
-                if (transactionJournalsTableModel.getRow(row).getJournalEntry() != null) {
-                    row++;
-                } else {
-                    break;
-                }
-            }
+        	while (row < transactionJournalsTableModel.getRowCount()) {
+	        	if (transactionJournalsTableModel.getRow(row).getJournal() != null) {
+	        		row++;
+	        	} else {
+	        		break;
+	        	}
+        	}
         }
 
-        if (row != -1 && row < transactionJournalsTableModel.getRowCount()) {
-            transactionsJournalsTable.getSelectionModel().setSelectionInterval(row, row);
-            importedTransaction = transactionJournalsTableModel.getRow(row).getImportedTransaction();
-        }
-        return importedTransaction;
-    }
+		if (row != -1 && row < transactionJournalsTableModel.getRowCount()) {
+			transactionsJournalsTable.getSelectionModel().setSelectionInterval(row, row);
+			importedTransaction = transactionJournalsTableModel.getRow(row).getImportedTransaction();
+		}
+		return importedTransaction;
+	}
 
-    private final class ImportAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            handleImport();
-        }
-    }
+	private final class ImportAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			handleImport();
+		}
+	}
 
-    private class AddAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            addJournalForSelectedTransaction();
-        }
-    }
+	private class AddAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			addJournalForSelectedTransaction();
+		}
+	}
 
-    private class EditAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            editJournalForSelectedTransaction();
-        }
-    }
+	private class EditAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			editJournalForSelectedTransaction();
+		}
+	}
 
-    private class DeleteAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            deleteJournalFromSelectedTransaction();
-        }
-    }
+	private class DeleteAction extends AbstractAction {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			deleteJournalFromSelectedTransaction();
+		}
+	}
 }
 
 class ImporterFormatter implements ObjectFormatter<TransactionImporter> {
 
-    @Override
-    public String format(TransactionImporter t) {
-        String id;
-        if (t instanceof RabobankCSVImporter) {
-            id = "importBankStatementView.rabobankCsv";
-        } else {
-            id = "unknown importer";
-        }
-        return Factory.getInstance(TextResource.class).getString(id);
-    }
+	@Override
+	public String format(TransactionImporter t) {
+		String id;
+		if (t instanceof RabobankCSVImporter) {
+			id = "importBankStatementView.rabobankCsv";
+		} else {
+			id = "unknown importer";
+		}
+		return Factory.getInstance(TextResource.class).getString(id);
+	}
 
 }

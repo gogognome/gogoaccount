@@ -21,14 +21,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
@@ -45,8 +41,6 @@ import nl.gogognome.lib.util.Factory;
 public class AccountOverviewTableModel extends AbstractListTableModel<AccountOverviewTableModel.LineInfo> {
 
     private static final long serialVersionUID = 1L;
-
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     private final static ColumnDefinition DATE =
         new ColumnDefinition("gen.date", Date.class, 75);
@@ -72,7 +66,6 @@ public class AccountOverviewTableModel extends AbstractListTableModel<AccountOve
         DATE, ID, DESCRIPTION, DEBET, CREDIT, INVOICE
     );
 
-    private Document document;
     private Report report;
     private Account account;
 
@@ -86,38 +79,44 @@ public class AccountOverviewTableModel extends AbstractListTableModel<AccountOve
         String invoice;
     }
 
+    /**
+     * Constructs a new <code>AccountOverviewComponent</code>.
+     * @param database the database
+     * @param account the account to be shown
+     * @param date the date
+     */
     public AccountOverviewTableModel() {
         super(COLUMN_DEFINITIONS, Collections.<LineInfo>emptyList());
+        initializeValues();
     }
 
-    public void setAccountAndDate(Document document, Report report, Account account) throws ServiceException {
+    public void setAccountAndDate(Report report, Account account) {
     	this.report = report;
         this.account = account;
-        this.document = document;
         clear();
         initializeValues();
     }
 
-    private void initializeValues() throws ServiceException {
-        if (document != null && account != null && report != null) {
+    private void initializeValues() {
+        if (account != null && report != null) {
         	for (LedgerLine line : report.getLedgerLinesForAccount(account)) {
 	            LineInfo lineInfo = new LineInfo();
 	            lineInfo.date = line.date;
 	            lineInfo.id = line.id;
 	            lineInfo.description = line.description;
 	            lineInfo.debet = line.debetAmount;
-	            lineInfo.credit = line.creditAmount;
-                lineInfo.invoice = createInvoiceText(line.invoice);
+	            lineInfo.credit = line.creditAmount;;
+	            lineInfo.invoice = createInvoiceText(line.invoice);
 	            addRow(lineInfo);
 	        }
         }
     }
 
-	private String createInvoiceText(Invoice invoice) throws ServiceException {
+	private String createInvoiceText(Invoice invoice) {
     	StringBuilder sb = new StringBuilder(100);
         if (invoice != null) {
             sb.append(invoice.getId());
-            sb.append(" (").append(partyService.getParty(document, invoice.getPayingPartyId()).getName()).append(")");
+            sb.append(" (").append(invoice.getPayingParty().getName()).append(")");
         }
 		return sb.toString();
 	}

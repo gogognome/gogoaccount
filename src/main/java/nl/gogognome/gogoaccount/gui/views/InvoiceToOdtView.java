@@ -24,7 +24,7 @@ import java.util.Date;
 import javax.swing.AbstractAction;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -46,7 +46,7 @@ import nl.gogognome.lib.util.DateUtil;
 public class InvoiceToOdtView extends View {
 
 	/** The database used to determine the invoices. */
-    private Document document;
+    private Database database;
 
     private FileModel templateFileModel = new FileModel();
 
@@ -62,11 +62,11 @@ public class InvoiceToOdtView extends View {
 
     /**
      * Constructor.
-     * @param document the database used by this view
+     * @param database the database used by this view
      */
-    public InvoiceToOdtView(Document document) {
+    public InvoiceToOdtView(Database database) {
         super();
-        this.document = document;
+        this.database = database;
     }
 
     /**
@@ -98,11 +98,11 @@ public class InvoiceToOdtView extends View {
         }
 
         // Let the user select the invoices that should be added to the ODT file.
-        InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, true, true);
+        InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(database, true, true);
         ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {
-        	OdtInvoiceParameters parameters = new OdtInvoiceParameters(document,
+        	OdtInvoiceParameters parameters = new OdtInvoiceParameters(database,
         			Arrays.asList(invoicesView.getSelectedInvoices()));
         	parameters.setConcerning(concerningModel.getString());
         	parameters.setDate(date);

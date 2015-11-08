@@ -17,15 +17,15 @@
 package nl.gogognome.gogoaccount.database;
 
 /**
- * This exception is thrown when document modification failed.
+ * This exception is thrown when database modification failed.
  */
-public class DocumentModificationFailedException extends Exception {
+public class DatabaseModificationFailedException extends Exception {
 
-    public DocumentModificationFailedException(String message) {
+    public DatabaseModificationFailedException(String message) {
         super(message);
     }
 
-    public DocumentModificationFailedException(String message, Throwable cause) {
+    public DatabaseModificationFailedException(String message, Throwable cause) {
         super(message, cause);
     }
 }

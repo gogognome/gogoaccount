@@ -1,14 +1,31 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.gogoaccount.reportgenerators;
 
 import java.io.File;
 import java.util.Map;
 
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 
 /**
  * Generates invoices as an ODT document based on a template file.
+ *
+ * @author Sander Kooijmans
  */
 public class OdtInvoiceGeneratorTask implements Task {
 
@@ -40,7 +57,7 @@ public class OdtInvoiceGeneratorTask implements Task {
 		return null;
 	}
 
-	private void createModel() throws ServiceException {
+	private void createModel() {
 		InvoicesToModelConverter converter = new InvoicesToModelConverter(parameters);
 		model = converter.getModel();
 	}

@@ -1,12 +1,29 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.document.Document;
+import java.util.Calendar;
+import java.util.Date;
+
+import javax.swing.JComponent;
+
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
@@ -14,10 +31,6 @@ import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.util.DateUtil;
-
-import javax.swing.*;
-import java.util.Calendar;
-import java.util.Date;
 
 
 /**
@@ -29,20 +42,20 @@ import java.util.Date;
 public class CloseBookkeepingView extends OkCancelView {
 	private static final long serialVersionUID = 1L;
 
-	private Document document;
+	private Database database;
 
     private DateModel dateModel = new DateModel();
     private StringModel descriptionModel = new StringModel();
-	private ListModel<Account> accountListModel = new ListModel<>();
+	private ListModel<Account> accountListModel = new ListModel<Account>();
 
     private boolean dataSuccessfullyEntered;
 
     /**
      * Constructor.
-     * @param document the database whose bookkeeping is to be closed
+     * @param database the database whose bookkeeping is to be closed
      */
-    public CloseBookkeepingView(Document document) {
-        this.document = document;
+    public CloseBookkeepingView(Database database) {
+        this.database = database;
     }
 
     @Override
@@ -56,13 +69,8 @@ public class CloseBookkeepingView extends OkCancelView {
 
     @Override
     public void onInit() {
-        try {
-            initModels();
-            addComponents();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            close();
-        }
+        initModels();
+        addComponents();
     }
 
     @Override
@@ -127,13 +135,12 @@ public class CloseBookkeepingView extends OkCancelView {
         return descriptionModel.getString();
     }
 
-    private void initModels() throws ServiceException {
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-        dateModel.setDate(DateUtil.addYears(bookkeeping.getStartOfPeriod(), 1), null);
-		accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
+    private void initModels() {
+        dateModel.setDate(DateUtil.addYears(database.getStartOfPeriod(), 1), null);
+		accountListModel.setItems(database.getAllAccounts());
 
-        String description = bookkeeping.getDescription();
-        int year = DateUtil.getField(bookkeeping.getStartOfPeriod(), Calendar.YEAR);
+        String description = database.getDescription();
+        int year = DateUtil.getField(database.getStartOfPeriod(), Calendar.YEAR);
         int nextYear = year+1;
         description = description.replace(Integer.toString(year), Integer.toString(nextYear));
         descriptionModel.setString(description, null);

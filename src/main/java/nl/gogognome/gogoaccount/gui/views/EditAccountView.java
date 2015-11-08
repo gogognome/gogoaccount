@@ -16,13 +16,13 @@
  */
 package nl.gogognome.gogoaccount.gui.views;
 
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.ASSET;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.EQUITY;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.EXPENSE;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.LIABILITY;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.REVENUE;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.ASSET;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.CREDITOR;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.DEBTOR;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.EQUITY;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.EXPENSE;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.LIABILITY;
+import static nl.gogognome.gogoaccount.businessobjects.AccountType.REVENUE;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -34,8 +34,8 @@ import javax.swing.JButton;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.AccountType;
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.AccountType;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;

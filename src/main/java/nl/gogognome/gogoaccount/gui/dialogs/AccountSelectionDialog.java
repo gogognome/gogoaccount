@@ -16,15 +16,18 @@
 */
 package nl.gogognome.gogoaccount.gui.dialogs;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
+import java.awt.Frame;
+
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.components.AccountSelectionBean;
 import nl.gogognome.lib.swing.OkCancelDialog;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 
 /**
  * This class implements an account selection dialog.
@@ -44,16 +47,16 @@ public class AccountSelectionDialog extends OkCancelDialog
     /**
      * Constructor.
      * @param frame the frame to which this dialog belongs.
-     * @param accounts accounts to select from.
+     * @param database the database
      * @param id the identifer of the description shown in this dialog.
      */
-    public AccountSelectionDialog(Frame frame, List<Account> accounts, String id)
+    public AccountSelectionDialog(Frame frame, Database database, String id)
     {
         super(frame, "as.selectAccount");
         JComponent component = new JPanel();
         component.add(new JLabel(Factory.getInstance(TextResource.class).getString(id)));
 
-        sbAccount = new AccountSelectionBean(accounts, null);
+        sbAccount = new AccountSelectionBean(database, null);
         component.add(sbAccount);
 
         componentInitialized(component);

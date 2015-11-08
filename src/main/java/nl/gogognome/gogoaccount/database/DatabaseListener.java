@@ -14,21 +14,20 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package nl.gogognome.gogoaccount.gui.components;
-
-import nl.gogognome.gogoaccount.businessobjects.Account;
-import nl.gogognome.lib.gui.beans.ObjectFormatter;
+package nl.gogognome.gogoaccount.database;
 
 /**
- * This class formats accounts in the format "<id> <name>".
+ * This interface specifies a listener to changes in the database.
  *
  * @author Sander Kooijmans
  */
-public class AccountFormatter implements ObjectFormatter<Account> {
+public interface DatabaseListener
+{
 
-	@Override
-	public String format(Account a) {
-		return a != null ? a.getId() + ' ' + a.getName() : "";
-	}
-
+	/**
+	 * This method is called when the database has changed.
+	 * @param db the new database. Note that <tt>db</tt> need not be the same database
+	 *        instance in subsequent calls!
+	 */
+	void databaseChanged( Database db );
 }

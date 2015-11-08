@@ -25,11 +25,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import nl.gogognome.gogoaccount.businessobjects.ReportType;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.RadioButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -52,7 +48,7 @@ public class GenerateReportView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-	private Document document;
+	private Database database;
 
 	private DateModel dateModel;
     private FileModel reportFileModel;
@@ -67,8 +63,8 @@ public class GenerateReportView extends OkCancelView {
 
     private ModelChangeListener odtSelectionListener;
 
-    public GenerateReportView(Document document) {
-    	this.document = document;
+    public GenerateReportView(Database database) {
+    	this.database = database;
     }
 
 	@Override
@@ -78,20 +74,14 @@ public class GenerateReportView extends OkCancelView {
 
 	@Override
 	public void onInit() {
-        try {
-            initModels();
-            addComponents();
-            addListeners();
-            updateTemplateSelectionModel();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            close();
-        }
+		initModels();
+		addComponents();
+		addListeners();
+		updateTemplateSelectionModel();
 	}
 
-	private void initModels() throws ServiceException {
-		Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-		dateModel = new DateModel(DateUtil.addYears(bookkeeping.getStartOfPeriod(), 1));
+	private void initModels() {
+		dateModel = new DateModel(DateUtil.addYears(database.getStartOfPeriod(), 1));
 
 		reportFileModel = new FileModel();
 		templateFileModel = new FileModel();

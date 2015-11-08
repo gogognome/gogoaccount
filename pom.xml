@@ -39,8 +39,8 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>1.6</source>
+          <target>1.6</target>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
         </configuration>
@@ -242,16 +242,6 @@
     	<groupId>com.google.guava</groupId>
     	<artifactId>guava</artifactId>
     	<version>15.0</version>
-    </dependency>
-    <dependency>
-      <groupId>nl.gogognome</groupId>
-      <artifactId>gogodataaccess</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>1.2.134</version>
     </dependency>
   </dependencies>
   

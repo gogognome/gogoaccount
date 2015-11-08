@@ -1,31 +1,45 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import nl.gogognome.gogoaccount.component.party.Party;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import nl.gogognome.gogoaccount.businessobjects.Account;
+import nl.gogognome.gogoaccount.businessobjects.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 
-import java.util.*;
-
 /**
  * Converts a Report to a model for ODT generation.
+ *
+ * @author Sander Kooijmans
  */
 public class ReportToModelConverter {
 
-	private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-	private final PartyService partyService = ObjectFactory.create(PartyService.class);
-
-	private final Document document;
+	private final Database database;
     private final Report report;
 
     private Map<String, Object> model;
@@ -33,16 +47,16 @@ public class ReportToModelConverter {
     private TextResource textResource = Factory.getInstance(TextResource.class);
     private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
-	public ReportToModelConverter(Document document, Report report) throws ServiceException {
+	public ReportToModelConverter(Database database, Report report) {
 		super();
-		this.document = document;
+		this.database = database;
 		this.report = report;
 
 		createModel();
 	}
 
-	private void createModel() throws ServiceException {
-		model = new HashMap<>();
+	private void createModel() {
+		model = new HashMap<String, Object>();
 
 		model.put("date", textResource.formatDate("gen.dateFormatFull", report.getEndDate()));
 		model.put("balance", createBalanceLines());
@@ -52,25 +66,24 @@ public class ReportToModelConverter {
 		model.put("accounts", createAccounts());
 	}
 
-	private Object createBalanceLines() throws ServiceException {
-		List<Map<String, Object>> lines = new ArrayList<>();
+	private Object createBalanceLines() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
 		addBalanceSheetLines(lines, report.getAssetsInclLossAccount(),
 				report.getLiabilitiesInclProfitAccount());
 		return lines;
 	}
 
-	private Object createOperationalResultLines() throws ServiceException {
-		List<Map<String, Object>> lines = new ArrayList<>();
+	private Object createOperationalResultLines() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
 		addBalanceSheetLines(lines, report.getExpenses(), report.getRevenues());
 		return lines;
 	}
 
 	private void addBalanceSheetLines(List<Map<String, Object>> lines,
-			List<Account> leftAccounts, List<Account> rightAccounts) throws ServiceException {
+			List<Account> leftAccounts, List<Account> rightAccounts) {
 
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-		Amount leftTotal = Amount.getZero(bookkeeping.getCurrency());
-		Amount rightTotal = Amount.getZero(bookkeeping.getCurrency());
+		Amount leftTotal = Amount.getZero(database.getCurrency());
+		Amount rightTotal = Amount.getZero(database.getCurrency());
 
 		Iterator<Account> leftIter = leftAccounts.iterator();
 		Iterator<Account> rightIter = rightAccounts.iterator();
@@ -117,7 +130,7 @@ public class ReportToModelConverter {
 
 	private Map<String, Object> createLine(String name1,
 			String amount1, String name2, String amount2) {
-		Map<String,Object> line = new HashMap<>();
+		Map<String,Object> line = new HashMap<String, Object>();
 		line.put("name1", name1);
 		line.put("amount1", amount1);
 		line.put("name2", name2);
@@ -125,10 +138,9 @@ public class ReportToModelConverter {
 		return line;
 	}
 
-	private Object createDebtors() throws ServiceException {
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-        List<Map<String, Object>> lines = new ArrayList<>();
-		Amount total = Amount.getZero(bookkeeping.getCurrency());
+	private Object createDebtors() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		Amount total = Amount.getZero(database.getCurrency());
 		for (Party p : report.getDebtors()) {
 			Amount amount = report.getBalanceForDebtor(p);
 			total = total.add(amount);
@@ -141,10 +153,9 @@ public class ReportToModelConverter {
 		return lines;
 	}
 
-	private Object createCreditors() throws ServiceException {
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-		List<Map<String, Object>> lines = new ArrayList<>();
-		Amount total = Amount.getZero(bookkeeping.getCurrency());
+	private Object createCreditors() {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
+		Amount total = Amount.getZero(database.getCurrency());
 		for (Party p : report.getCreditors()) {
 			Amount amount = report.getBalanceForCreditor(p);
 			total = total.add(amount);
@@ -163,38 +174,37 @@ public class ReportToModelConverter {
 	}
 
 	private Map<String, Object> createLine(String partyName, String amount) {
-		Map<String,Object> line = new HashMap<>();
+		Map<String,Object> line = new HashMap<String, Object>();
 		line.put("name", partyName);
 		line.put("amount", amount);
 		return line;
 	}
 
-	private Object createAccounts() throws ServiceException {
-		List<Map<String, Object>> accounts = new ArrayList<>();
-		ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-		for (Account account : configurationService.findAllAccounts(document)) {
+	private Object createAccounts() {
+		List<Map<String, Object>> accounts = new ArrayList<Map<String,Object>>();
+		for (Account account : database.getAllAccounts()) {
 			accounts.add(createAccount(account));
 		}
 		return accounts;
 	}
 
-	private Map<String, Object> createAccount(Account account) throws ServiceException {
-		Map<String,Object> map = new HashMap<>();
+	private Map<String, Object> createAccount(Account account) {
+		Map<String,Object> map = new HashMap<String, Object>();
 		map.put("title", account.getId() + ' ' + account.getName());
 		map.put("lines", createAccountLines(account));
 		return map;
 	}
 
-	private Object createAccountLines(Account account) throws ServiceException {
-		List<Map<String, Object>> lines = new ArrayList<>();
+	private Object createAccountLines(Account account) {
+		List<Map<String, Object>> lines = new ArrayList<Map<String,Object>>();
 		for (LedgerLine line: report.getLedgerLinesForAccount(account)) {
 			lines.add(createLine(line));
 		}
 		return lines;
 	}
 
-	private Map<String, Object> createLine(LedgerLine line) throws ServiceException {
-		Map<String,Object> map = new HashMap<>();
+	private Map<String, Object> createLine(LedgerLine line) {
+		Map<String,Object> map = new HashMap<String, Object>();
 		map.put("date", line.date != null ? textResource.formatDate("gen.dateFormat", line.date) : "");
 		map.put("id", line.id);
 		map.put("description", line.description);
@@ -203,7 +213,7 @@ public class ReportToModelConverter {
 		map.put("credit", line.creditAmount != null ?
 				amountFormat.formatAmountWithoutCurrency(line.creditAmount) : "");
 		map.put("invoice", line.invoice != null ?
-				line.invoice.getId() + " (" + partyService.getParty(document, line.invoice.getConcerningPartyId()).getName() + ')' : "");
+				line.invoice.getId() + " (" + line.invoice.getConcerningParty().getName() + ')' : "");
 		return map;
 	}
 

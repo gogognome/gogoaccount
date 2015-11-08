@@ -19,7 +19,10 @@ package nl.gogognome.gogoaccount.gui.views;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -28,17 +31,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.businessobjects.Invoice;
+import nl.gogognome.gogoaccount.businessobjects.Party;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.models.PartyModel;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -62,12 +59,7 @@ public class EditInvoiceView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
-
-    private Document document;
-    private Currency currency;
+	private Database database;
 
     private String titleId;
 
@@ -85,8 +77,6 @@ public class EditInvoiceView extends OkCancelView {
     private DescriptionAndAmountTableModel tableModel;
 
     private Invoice editedInvoice;
-    private List<String> editedDescriptions;
-    private List<Amount> editedAmounts;
 
     private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
 
@@ -94,13 +84,13 @@ public class EditInvoiceView extends OkCancelView {
      * Constructor. To edit an existing invoice, give <code>invoice</code> a non-<code>null</code> value.
      * To create a new journal, set <code>invoice</code> to <code>null</code>.
      *
-     * @param document the database to which the journal must be added
+     * @param database the database to which the journal must be added
      * @param titleId the id of the title
      * @param invoice the invoice used to initialize the elements of the view. Must be <code>null</code>
      *        to edit a new invoice
      */
-    public EditInvoiceView(Document document, String titleId, Invoice invoice) {
-        this.document = document;
+    public EditInvoiceView(Database database, String titleId, Invoice invoice) {
+        this.database = database;
         this.titleId = titleId;
         this.initialInvoice = invoice;
     }
@@ -117,32 +107,24 @@ public class EditInvoiceView extends OkCancelView {
 
     @Override
     public void onInit() {
-        try {
-            initModels();
-            addComponents();
-            addListeners();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            close();
-        }
+    	initModels();
+    	addComponents();
+        addListeners();
     }
 
-	private void initModels() throws ServiceException {
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-        currency = bookkeeping.getCurrency();
-
+	private void initModels() {
         if (initialInvoice != null) {
             idModel.setString(initialInvoice.getId());
             idModel.setEnabled(false, null);
             dateModel.setDate(initialInvoice.getIssueDate());
-            concerningPartyModel.setParty(partyService.getParty(document, initialInvoice.getConcerningPartyId()));
-            payingPartyModel.setParty(partyService.getParty(document, initialInvoice.getPayingPartyId()));
+            concerningPartyModel.setParty(initialInvoice.getConcerningParty());
+            payingPartyModel.setParty(initialInvoice.getPayingParty());
             amountModel.setString(amountFormat.formatAmountWithoutCurrency(
                 initialInvoice.getAmountToBePaid()));
         } else {
             dateModel.setDate(new Date());
-            idModel.setString(invoiceService.suggestNewInvoiceId(document,
-                    textResource.formatDate("editInvoiceView.dateFormatForNewId", dateModel.getDate())));
+            idModel.setString(database.suggestNewInvoiceId(
+                textResource.formatDate("editInvoiceView.dateFormatForNewId", dateModel.getDate())));
         }
 
 	}
@@ -160,9 +142,9 @@ public class EditInvoiceView extends OkCancelView {
         ifc.addField("editInvoiceView.id", idModel);
         ifc.addField("editInvoiceView.issueDate", dateModel);
         ifc.addVariableSizeField("editInvoiceView.concerningParty",
-        		new PartyBean(document, concerningPartyModel));
+        		new PartyBean(database, concerningPartyModel));
         ifc.addVariableSizeField("editInvoiceView.payingParty",
-        		new PartyBean(document, payingPartyModel));
+        		new PartyBean(database, payingPartyModel));
         ifc.addField("editInvoiceView.amount", amountModel);
 
     	return ifc;
@@ -170,35 +152,29 @@ public class EditInvoiceView extends OkCancelView {
 
     @Override
 	protected JComponent createCenterComponent() {
-        try {
-            // Create panel with descriptions and amounts table.
-            JPanel middlePanel = new JPanel(new BorderLayout());
-            // TODO: replace by InvoiceDetail
-            List<Tuple<String, Amount>> tuples = new ArrayList<>();
-            if (initialInvoice != null) {
-                List<String> descriptions = invoiceService.findDescriptions(document, initialInvoice);
-                List<Amount> amounts = invoiceService.findAmounts(document, initialInvoice);
-                for (int i = 0; i < descriptions.size(); i++) {
-                    tuples.add(new Tuple<>(descriptions.get(i), amounts.get(i)));
-                }
-            }
-            tableModel = new DescriptionAndAmountTableModel(tuples);
-            table = widgetFactory.createTable(tableModel);
-            JScrollPane scrollPane = widgetFactory.createScrollPane(table);
-            middlePanel.add(scrollPane, BorderLayout.CENTER);
-
-            ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
-            buttonPanel.addButton("editInvoiceView.addRow", new AddAction());
-            buttonPanel.addButton("editInvoiceView.editRow", new EditAction());
-            buttonPanel.addButton("editInvoiceView.deleteRow", new DeleteAction());
-
-            middlePanel.add(buttonPanel, BorderLayout.EAST);
-
-            return middlePanel;
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            throw new RuntimeException(e);
+        // Create panel with descriptions and amounts table.
+        JPanel middlePanel = new JPanel(new BorderLayout());
+        List<Tuple<String, Amount>> tuples = new ArrayList<Tuple<String,Amount>>();
+        if (initialInvoice != null) {
+        	String[] descriptions = initialInvoice.getDescriptions();
+        	Amount[] amounts = initialInvoice.getAmounts();
+        	for (int i=0; i<descriptions.length; i++) {
+        		tuples.add(new Tuple<String, Amount>(descriptions[i], amounts[i]));
+        	}
         }
+        tableModel = new DescriptionAndAmountTableModel(tuples);
+        table = widgetFactory.createTable(tableModel);
+        JScrollPane scrollPane =widgetFactory.createScrollPane(table);
+        middlePanel.add(scrollPane, BorderLayout.CENTER);
+
+        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
+        buttonPanel.addButton("editInvoiceView.addRow", new AddAction());
+        buttonPanel.addButton("editInvoiceView.editRow", new EditAction());
+        buttonPanel.addButton("editInvoiceView.deleteRow", new DeleteAction());
+
+        middlePanel.add(buttonPanel, BorderLayout.EAST);
+
+        return middlePanel;
     }
 
     /**
@@ -209,20 +185,12 @@ public class EditInvoiceView extends OkCancelView {
         return editedInvoice;
     }
 
-    public List<String> getEditedDescriptions() {
-        return editedDescriptions;
-    }
-
-    public List<Amount> getEditedAmounts() {
-        return editedAmounts;
-    }
-
     /**
      * This method is called when the user wants to add a new row.
      */
     private void onAddRow() {
         EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
-            "editInvoiceView.addRowTileId", currency);
+            "editInvoiceView.addRowTileId", database.getCurrency());
         ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
         dialog.showDialog();
         if (editDescriptionAndAmountView.getEditedDescription() != null) {
@@ -238,7 +206,7 @@ public class EditInvoiceView extends OkCancelView {
         int[] rows = table.getSelectedRows();
         if (rows.length == 0) {
             MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedToEdit");
-        } else if (rows.length > 1) {
+        } else if (rows.length == 0) {
             MessageDialog.showInfoMessage(this, "editInvoiceView.multipleRowsSelectedToEdit");
         } else {
         	Tuple<String, Amount> tuple = tableModel.getRow(rows[0]);
@@ -246,7 +214,7 @@ public class EditInvoiceView extends OkCancelView {
                 "editInvoiceView.editRowTileId",
                 tuple.getFirst(),
                 tuple.getSecond(),
-                currency);
+                database.getCurrency());
             ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
             dialog.showDialog();
             if (editDescriptionAndAmountView.getEditedDescription() != null) {
@@ -295,25 +263,24 @@ public class EditInvoiceView extends OkCancelView {
 
         Amount amount;
         try {
-             amount = amountFormat.parse(amountModel.getString(), currency);
+             amount = amountFormat.parse(amountModel.getString(), database.getCurrency());
         } catch (ParseException e) {
             MessageDialog.showWarningMessage(this, "gen.invalidAmount");
             return;
         }
 
         List<Tuple<String, Amount>> tuples = tableModel.getRows();
-        editedDescriptions = new ArrayList<>();
-        editedAmounts = new ArrayList<>();
-        for (Tuple<String, Amount> tuple : tuples) {
-        	editedDescriptions.add(tuple.getFirst());
-        	editedAmounts.add(tuple.getSecond() == null || tuple.getSecond().isZero() ? null : tuple.getSecond());
+        String[] descriptions = new String[tuples.size()];
+        Amount[] amounts = new Amount[tuples.size()];
+        for (int i=0; i<tuples.size(); i++) {
+        	descriptions[i] = tuples.get(i).getFirst();
+        	amounts[i] = tuples.get(i).getSecond();
+        	if (amounts[i] != null && amounts[i].isZero()) {
+        		amounts[i] = null;
+        	}
         }
 
-        editedInvoice = new Invoice(id);
-        editedInvoice.setPayingPartyId(payingParty != null ? payingParty.getId() : null);
-        editedInvoice.setConcerningPartyId(concerningParty != null ? concerningParty.getId() : null);
-        editedInvoice.setAmountToBePaid(amount);
-        editedInvoice.setIssueDate(issueDate);
+        editedInvoice = new Invoice(id, payingParty, concerningParty, amount, issueDate, descriptions, amounts);
         closeAction.actionPerformed(null);
     }
 
@@ -373,7 +340,7 @@ public class EditInvoiceView extends OkCancelView {
          * @param amount the amount of the row; can be <code>null</code>
          */
         public void addRow(String description, Amount amount) {
-            addRow(new Tuple<>(description, amount));
+            addRow(new Tuple<String, Amount>(description, amount));
         }
 
         /**
@@ -383,7 +350,7 @@ public class EditInvoiceView extends OkCancelView {
          * @param amount the new amount of the row; can be <code>null</code>
          */
         public void updateRow(int index, String description, Amount amount) {
-            updateRow(index, new Tuple<>(description, amount));
+            updateRow(index, new Tuple<String, Amount>(description, amount));
         }
 
         @Override

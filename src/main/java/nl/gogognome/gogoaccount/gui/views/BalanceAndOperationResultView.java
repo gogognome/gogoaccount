@@ -25,12 +25,10 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
-import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.database.Database;
 import nl.gogognome.gogoaccount.gui.components.BalanceComponent;
 import nl.gogognome.gogoaccount.gui.components.OperationalResultComponent;
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
@@ -46,11 +44,11 @@ public class BalanceAndOperationResultView extends View {
 
 	private final static Color BACKGROUND_COLOR = new Color(255, 255, 209);
 
-    private Document document;
+    private Database database;
     private DateModel dateModel;
 
-    public BalanceAndOperationResultView(Document document) {
-        this.document = document;
+    public BalanceAndOperationResultView(Database database) {
+        this.database = database;
     }
 
     @Override
@@ -60,13 +58,8 @@ public class BalanceAndOperationResultView extends View {
 
     @Override
 	public void onInit() {
-        try {
-            initModels();
-            addComponents();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            close();
-        }
+    	initModels();
+        addComponents();
     }
 
     @Override
@@ -78,7 +71,7 @@ public class BalanceAndOperationResultView extends View {
         dateModel.setDate(new Date(), null);
 	}
 
-	private void addComponents() throws ServiceException {
+	private void addComponents() {
 		setLayout(new BorderLayout());
         setBackground(BACKGROUND_COLOR);
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -97,17 +90,17 @@ public class BalanceAndOperationResultView extends View {
 		return row;
 	}
 
-    private JPanel createBalanceAndOperationalResultPanel() throws ServiceException {
+    private JPanel createBalanceAndOperationalResultPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
 
         panel.setBackground(BACKGROUND_COLOR);
-        BalanceComponent balanceComponent = new BalanceComponent(document, dateModel);
+        BalanceComponent balanceComponent = new BalanceComponent(database, dateModel);
         addCloseable(balanceComponent);
         balanceComponent.setBackground(BACKGROUND_COLOR);
         panel.add(balanceComponent, createConstraints(0, 0));
 
         OperationalResultComponent operationalResultComponent =
-            new OperationalResultComponent(document, dateModel);
+            new OperationalResultComponent(database, dateModel);
         addCloseable(operationalResultComponent);
         operationalResultComponent.setBackground(BACKGROUND_COLOR);
         panel.add(operationalResultComponent, createConstraints(0, 1));
