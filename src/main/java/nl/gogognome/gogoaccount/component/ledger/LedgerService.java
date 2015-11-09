@@ -68,10 +68,11 @@ public class LedgerService {
      * @param journalEntryDetails the journal entry details to be added
      * @param createPayments <code>true</code> if payments have to be added for invoices referred
      *        to by the journal entry; <code>false</code> if no payments are to be created.
+     * @return the created journal entry
      */
-    public void addJournal(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails, boolean createPayments)
+    public JournalEntry addJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails, boolean createPayments)
             throws ServiceException {
-        ServiceTransaction.withoutResult(() -> {
+        return ServiceTransaction.withResult(() -> {
             Amount totalDebet = null;
             Amount totalCredit = null;
             for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
@@ -93,12 +94,13 @@ public class LedgerService {
             if (createPayments) {
                 createPaymentsForItemsOfJournal(document, journalEntry, journalEntryDetails);
             }
-            long createdId = new JournalEntryDAO(document).create(journalEntry).getUniqueId();
+            JournalEntry createdJournalEntry = new JournalEntryDAO(document).create(journalEntry);
             for (JournalEntryDetail detail : journalEntryDetails) {
-                detail.setJournalEntryUniqueId(createdId);
+                detail.setJournalEntryUniqueId(createdJournalEntry.getUniqueId());
                 new JournalEntryDetailDAO(document).create(detail);
             }
             document.notifyChange();
+            return createdJournalEntry;
         });
     }
 
@@ -113,7 +115,6 @@ public class LedgerService {
         for (JournalEntryDetail detail : journalEntryDetails) {
             if (detail.getInvoiceId() != null) {
                 Payment payment = createPaymentForJournalEntryDetail(document, journalEntry, detail);
-                payment = invoiceService.createPayment(document, payment);
                 detail.setPaymentId(payment.getId());
             }
         }
@@ -135,7 +136,7 @@ public class LedgerService {
         payment.setAmount(amount);
         payment.setDate(date);
         payment.setInvoiceId(journalEntryDetail.getInvoiceId());
-        return payment;
+        return ObjectFactory.create(InvoiceService.class).createPayment(document, payment);
     }
 
     /**
@@ -147,7 +148,9 @@ public class LedgerService {
             // Update payments. Remove payments from old journal and add payments of the new journal.
             InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
-            for (JournalEntryDetail oldJournalEntryDetail : journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId())) {
+            List<JournalEntryDetail> oldJournalEntryDetails = journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId());
+            journalEntryDetailDAO.deleteByJournalEntry(journalEntry.getUniqueId());
+            for (JournalEntryDetail oldJournalEntryDetail : oldJournalEntryDetails) {
                 if (oldJournalEntryDetail.getPaymentId() != null) {
                     invoiceService.removePayment(document, oldJournalEntryDetail.getPaymentId());
                 }
@@ -155,13 +158,12 @@ public class LedgerService {
             for (JournalEntryDetail newJournalEntryDetail : journalEntryDetails) {
                 if (newJournalEntryDetail.getInvoiceId() != null) {
                     Payment payment = createPaymentForJournalEntryDetail(document, journalEntry, newJournalEntryDetail);
-                    invoiceService.createPayment(document, payment);
+                    newJournalEntryDetail.setPaymentId(payment.getId());
                 }
             }
 
             // Update journal entry and details in database
             new JournalEntryDAO(document).update(journalEntry);
-            journalEntryDetailDAO.deleteByJournalEntry(journalEntry.getUniqueId());
             for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
                 journalEntryDetail.setJournalEntryUniqueId(journalEntry.getUniqueId());
                 journalEntryDetailDAO.create(journalEntryDetail);

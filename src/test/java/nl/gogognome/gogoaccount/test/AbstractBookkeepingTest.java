@@ -89,8 +89,8 @@ public abstract class AbstractBookkeepingTest {
 
     private void addJournals() throws Exception {
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(createItem(20, "190", true));
-        journalEntryDetails.add(createItem(20, "300", false));
+        journalEntryDetails.add(buildJournalEntryDetail(20, "190", true));
+        journalEntryDetails.add(buildJournalEntryDetail(20, "300", false));
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("t1");
         journalEntry.setDescription("Payment");
@@ -107,16 +107,16 @@ public abstract class AbstractBookkeepingTest {
         invoice.setIssueDate(journalEntry.getDate());
         invoiceService.createInvoice(document, invoice);
         invoiceService.createDetails(document, invoice, descriptions, amounts);
-        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
+        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
 
         journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(createItem(10, "101", true, "inv1", "pay1"));
-        journalEntryDetails.add(createItem(10, "190", false));
+        journalEntryDetails.add(buildJournalEntryDetail(10, "101", true, "inv1", "pay1"));
+        journalEntryDetails.add(buildJournalEntryDetail(10, "190", false));
         journalEntry = new JournalEntry();
         journalEntry.setId("t2");
         journalEntry.setDescription("Payment");
         journalEntry.setDate(DateUtil.createDate(2011, 5, 10));
-        ledgerService.addJournal(document, journalEntry, journalEntryDetails, true);
+        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, true);
     }
 
     private List<Account> createAccounts() {
@@ -159,17 +159,17 @@ public abstract class AbstractBookkeepingTest {
 
     private void addStartBalance() throws Exception {
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(createItem(100, "100", true));
-        journalEntryDetails.add(createItem(300, "101", true));
-        journalEntryDetails.add(createItem(400, "200", false));
+        journalEntryDetails.add(buildJournalEntryDetail(100, "100", true));
+        journalEntryDetails.add(buildJournalEntryDetail(300, "101", true));
+        journalEntryDetails.add(buildJournalEntryDetail(400, "200", false));
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("start");
         journalEntry.setDescription("Start balance");
         journalEntry.setDate(DateUtil.addDays(bookkeeping.getStartOfPeriod(), -1));
-        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
+        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
     }
 
-    protected JournalEntryDetail createItem(int amountInt, String accountId, boolean debet) throws ServiceException {
+    protected JournalEntryDetail buildJournalEntryDetail(int amountInt, String accountId, boolean debet) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Amount amount = createAmount(amountInt);
             JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
@@ -180,7 +180,7 @@ public abstract class AbstractBookkeepingTest {
         });
     }
 
-    protected JournalEntryDetail createItem(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
+    protected JournalEntryDetail buildJournalEntryDetail(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Amount amount = createAmount(amountInt);
             JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
@@ -193,8 +193,12 @@ public abstract class AbstractBookkeepingTest {
         });
     }
 
-    protected Amount createAmount(int value) throws ParseException {
-        return amountFormat.parse(Integer.toString(value), bookkeeping.getCurrency());
+    protected Amount createAmount(int value) {
+        try {
+            return amountFormat.parse(Integer.toString(value), bookkeeping.getCurrency());
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     protected void checkAmount(int expectedAmountInt, Amount actualAmount) throws ParseException {

@@ -147,7 +147,6 @@ public class EditJournalItemView extends OkCancelView {
             enteredJournalEntryDetail.setAccountId(account.getId());
             enteredJournalEntryDetail.setDebet(debet);
             enteredJournalEntryDetail.setInvoiceId(invoice != null ? invoice.getId() : null);
-            enteredJournalEntryDetail.setPaymentId(invoice != null ? "TODO: Fix this" : null);
             requestClose();
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");

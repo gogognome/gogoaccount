@@ -186,7 +186,7 @@ public class XMLFileReader {
                     journalEntryDetails.add(journalEntryDetail);
                 }
 
-                ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
+                ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
             }
         }
     }
