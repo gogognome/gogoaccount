@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
@@ -37,7 +38,6 @@ public class XMLFileReader {
 
     private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
-    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
@@ -60,7 +60,7 @@ public class XMLFileReader {
         return ServiceTransaction.withResult(() -> {
             int highestPaymentId = 0;
 
-            document = bookkeepingService.createNewDatabase("New bookkeeping");
+            document = ObjectFactory.create(DocumentService.class).createNewDatabase("New bookkeeping");
             document.setFileName(file.getAbsolutePath());
 
             DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
@@ -186,7 +186,7 @@ public class XMLFileReader {
                     journalEntryDetails.add(journalEntryDetail);
                 }
 
-                ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
+                ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
             }
         }
     }

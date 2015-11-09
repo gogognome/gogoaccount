@@ -1,10 +1,12 @@
 package nl.gogognome.gogoaccount.services;
 
 import nl.gogognome.dataaccess.migrations.DatabaseMigratorDAO;
+import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
@@ -17,6 +19,7 @@ import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
+import org.h2.jdbcx.JdbcDataSource;
 
 import java.util.*;
 
@@ -38,7 +41,7 @@ public class BookkeepingService {
 
             LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
-            Document newDocument = createNewDatabase("New bookkeeping");
+            Document newDocument = ObjectFactory.create(DocumentService.class).createNewDatabase("New bookkeeping");
             newDocument.setFileName(null);
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
@@ -155,31 +158,6 @@ public class BookkeepingService {
 
             return rb.build();
         });
-    }
-
-    public Document createNewDatabase(String description) throws ServiceException {
-        return ServiceTransaction.withResult(() -> {
-            Document document = new Document();
-            new DatabaseMigratorDAO(document.getBookkeepingId()).applyMigrationsFromResource("/database/_migrations.txt");
-            ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-            bookkeeping.setDescription(description);
-            bookkeeping.setStartOfPeriod(getFirstDayOfYear(new Date()));
-            ObjectFactory.create(ConfigurationService.class).updateBookkeeping(document, bookkeeping);
-            return document;
-        });
-    }
-
-    private static Date getFirstDayOfYear(Date date) {
-        Calendar cal = GregorianCalendar.getInstance();
-        cal.setTime(date);
-        cal.set(Calendar.MONTH, Calendar.JANUARY);
-        cal.set(Calendar.DATE, 1);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTime();
     }
 
 }

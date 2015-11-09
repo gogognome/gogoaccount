@@ -32,6 +32,9 @@ import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 
+/**
+ * Tests the bookkeeping service.
+ */
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
@@ -188,14 +191,14 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     @Test(expected = ServiceException.class)
     public void testCloseBookkeepingWithUnsavedChangesFails() throws Exception {
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                buildJournalEntryDetail(20, "100", true),
-                buildJournalEntryDetail(20, "101", false));
+                createItem(20, "100", true),
+                createItem(20, "101", false));
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("ABC");
         journalEntry.setDescription("Test");
         journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
 
-        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
+        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
         bookkeepingService.closeBookkeeping(document, "new bookkeeping",
                 DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
     }
@@ -203,14 +206,14 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     @Test
     public void testCloseBookkeepingWithJournalsCopiedToNewBookkeeping() throws Exception {
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                buildJournalEntryDetail(20, "100", true),
-                buildJournalEntryDetail(20, "101", false));
+                createItem(20, "100", true),
+                createItem(20, "101", false));
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("ABC");
         journalEntry.setDescription("Test");
         journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
 
-        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
+        ledgerService.addJournal(document, journalEntry, journalEntryDetails, false);
         document.databaseConsistentWithFile();
         Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
                 DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));

@@ -15,7 +15,7 @@ import java.util.*;
 
 public class Document {
 
-    private Connection connectionToKeepInMemoryDatabaseAlive;
+    protected Connection connectionToKeepInMemoryDatabaseAlive;
 
     /** Indicates whether this database has unsaved changes. */
     private boolean changed;
@@ -35,11 +35,7 @@ public class Document {
 
     private final String bookkeepingId = UUID.randomUUID().toString();
 
-    public Document() throws SQLException {
-        JdbcDataSource dataSource = new JdbcDataSource();
-        dataSource.setURL("jdbc:h2:mem:bookkeeping-" + bookkeepingId);
-        CompositeDatasourceTransaction.registerDataSource(bookkeepingId, dataSource);
-        connectionToKeepInMemoryDatabaseAlive = dataSource.getConnection();
+    protected Document() {
     }
 
     public String getBookkeepingId() {

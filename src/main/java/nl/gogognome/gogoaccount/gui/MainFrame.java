@@ -3,6 +3,7 @@ package nl.gogognome.gogoaccount.gui;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
@@ -55,13 +56,14 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
     private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
+    private final DocumentService documentService = ObjectFactory.create(DocumentService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     public MainFrame() {
         super();
         try {
-            document = bookkeepingService.createNewDatabase("New bookkeeping");
+            document = documentService.createNewDatabase("New bookkeeping");
         } catch (ServiceException e) {
             throw new RuntimeException("Could not create initial database: " + e.getMessage(), e);
         }
@@ -93,7 +95,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
      */
     private String createTitle() {
         String result = textResource.getString("mf.title");
-        Bookkeeping bookkeeping = null;
+        Bookkeeping bookkeeping;
         String description;
         try {
             bookkeeping = configurationService.getBookkeeping(document);
@@ -255,17 +257,13 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             result = true;
         }
 
-        if (result) {
-
-        }
-
         return result;
     }
 
     private void handleNewEdition() {
         try {
             if (mayCurrentDatabaseBeDestroyed()) {
-                setDocument(bookkeepingService.createNewDatabase(textResource.getString("mf.newBookkeepingDescription")));
+                setDocument(documentService.createNewDatabase(textResource.getString("mf.newBookkeepingDescription")));
                 document.databaseConsistentWithFile();
                 handleConfigureBookkeeping();
             }
@@ -462,7 +460,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handlePrintAddressLabels() {
-        AddressLabelPrinter alp = null;
+        AddressLabelPrinter alp;
         try {
             alp = new AddressLabelPrinter(partyService.findAllParties(document));
         } catch (ServiceException e) {

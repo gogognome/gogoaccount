@@ -2,19 +2,16 @@ package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static junit.framework.Assert.*;
@@ -22,9 +19,7 @@ import static junit.framework.Assert.*;
 public class TestDatabase extends AbstractBookkeepingTest {
 
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     @Test
     public void testGetAllAccounts() throws Exception {
@@ -47,7 +42,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
     public void testHasAccounts() throws Exception {
         assertTrue(configurationService.hasAccounts(document));
 
-        assertFalse(configurationService.hasAccounts(bookkeepingService.createNewDatabase("New bookkeeping")));
+        assertFalse(configurationService.hasAccounts(ObjectFactory.create(DocumentService.class).createNewDatabase("New bookkeeping")));
     }
 
     @Test
