@@ -1,7 +1,5 @@
 package nl.gogognome.gogoaccount.services;
 
-import nl.gogognome.dataaccess.migrations.DatabaseMigratorDAO;
-import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
@@ -15,11 +13,9 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
-import org.h2.jdbcx.JdbcDataSource;
 
 import java.util.*;
 
@@ -41,7 +37,7 @@ public class BookkeepingService {
 
             LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
-            Document newDocument = ObjectFactory.create(DocumentService.class).createNewDatabase("New bookkeeping");
+            Document newDocument = ObjectFactory.create(DocumentService.class).createNewDocument("New bookkeeping");
             newDocument.setFileName(null);
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);

@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
@@ -13,7 +14,6 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
@@ -60,7 +60,13 @@ public class XMLFileReader {
         return ServiceTransaction.withResult(() -> {
             int highestPaymentId = 0;
 
-            document = ObjectFactory.create(DocumentService.class).createNewDatabase("New bookkeeping");
+            String path = file.getAbsolutePath();
+            int indexOfExtension = path.lastIndexOf('.');
+            if (indexOfExtension != -1) {
+                path = path.substring(0, indexOfExtension);
+            }
+            DocumentService documentService = ObjectFactory.create(DocumentService.class);
+            document = documentService.createNewDocument(path, "New bookkeeping", 0 /* only apply database creation script */);
             document.setFileName(file.getAbsolutePath());
 
             DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
@@ -92,6 +98,8 @@ public class XMLFileReader {
             parseAndAddJournals(highestPaymentId, rootElement);
 
             parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
+
+            documentService.applyDatabaseMigrations(document);
 
             return document;
         });

@@ -1,6 +1,8 @@
 package nl.gogognome.gogoaccount.component.document;
 
+import nl.gogognome.dataaccess.DataAccessException;
 import nl.gogognome.dataaccess.migrations.DatabaseMigratorDAO;
+import nl.gogognome.dataaccess.migrations.Migration;
 import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -9,30 +11,58 @@ import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import org.h2.jdbcx.JdbcDataSource;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.*;
+
+import static java.util.stream.Collectors.*;
 
 public class DocumentService {
 
-    public Document createNewDatabase(String description) throws ServiceException {
+    public Document createNewDocument(String description) throws ServiceException {
+        String jdbcUrl = "jdbc:h2:mem:bookkeeping-" + UUID.randomUUID();
+        return createDocument(jdbcUrl, description, Long.MAX_VALUE);
+    }
+
+    public Document createNewDocument(String fileName, String description) throws ServiceException {
+        String jdbcUrl = "jdbc:h2:file:" + fileName;
+        return createDocument(jdbcUrl, description, Long.MAX_VALUE);
+    }
+
+    public Document createNewDocument(String fileName, String description, long maxMigrationNr) throws ServiceException {
+        String jdbcUrl = "jdbc:h2:file:" + fileName;
+        return createDocument(jdbcUrl, description, maxMigrationNr);
+    }
+
+    private Document createDocument(String jdbcUrl, String description, long maxMigrationNr) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Document document = new Document();
 
-            JdbcDataSource dataSource = new JdbcDataSource();
-            dataSource.setURL("jdbc:h2:mem:bookkeeping-" + document.getBookkeepingId());
-            CompositeDatasourceTransaction.registerDataSource(document.getBookkeepingId(), dataSource);
-            document.connectionToKeepInMemoryDatabaseAlive = dataSource.getConnection();
-
-            new DatabaseMigratorDAO(document.getBookkeepingId()).applyMigrationsFromResource("/database/_migrations.txt");
+            registerDataSource(document, jdbcUrl);
+            applyDatabaseMigrations(document, maxMigrationNr);
 
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             bookkeeping.setDescription(description);
             bookkeeping.setStartOfPeriod(getFirstDayOfYear(new Date()));
             ObjectFactory.create(ConfigurationService.class).updateBookkeeping(document, bookkeeping);
+
             return document;
         });
+    }
+
+    private void registerDataSource(Document document, String jdbcUrl) throws SQLException {
+        JdbcDataSource dataSource = new JdbcDataSource();
+        dataSource.setURL(jdbcUrl);
+        CompositeDatasourceTransaction.registerDataSource(document.getBookkeepingId(), dataSource);
+        document.connectionToKeepInMemoryDatabaseAlive = dataSource.getConnection();
+    }
+
+    private void applyDatabaseMigrations(Document document, long maxMigrationNr) throws IOException, DataAccessException, SQLException {
+        DatabaseMigratorDAO databaseMigratorDAO = new DatabaseMigratorDAO(document.getBookkeepingId());
+        List<Migration> migrations = databaseMigratorDAO.loadMigrationsFromResource("/database/_migrations.txt");
+        List<Migration> migrationsToBeApplied = migrations.stream().filter(m -> m.getId() <= maxMigrationNr).collect(toList());
+        databaseMigratorDAO.applyMigrations(migrationsToBeApplied);
     }
 
     private static Date getFirstDayOfYear(Date date) {
@@ -47,4 +77,7 @@ public class DocumentService {
         return cal.getTime();
     }
 
+    public void applyDatabaseMigrations(Document document) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> applyDatabaseMigrations(document, Long.MAX_VALUE));
+    }
 }

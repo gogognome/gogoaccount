@@ -63,7 +63,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     public MainFrame() {
         super();
         try {
-            document = documentService.createNewDatabase("New bookkeeping");
+            document = documentService.createNewDocument("New bookkeeping");
         } catch (ServiceException e) {
             throw new RuntimeException("Could not create initial database: " + e.getMessage(), e);
         }
@@ -263,7 +263,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void handleNewEdition() {
         try {
             if (mayCurrentDatabaseBeDestroyed()) {
-                setDocument(documentService.createNewDatabase(textResource.getString("mf.newBookkeepingDescription")));
+                setDocument(documentService.createNewDocument(textResource.getString("mf.newBookkeepingDescription")));
                 document.databaseConsistentWithFile();
                 handleConfigureBookkeeping();
             }
