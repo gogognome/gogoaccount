@@ -19,13 +19,24 @@ import static java.util.stream.Collectors.*;
 
 public class DocumentService {
 
-    public Document createNewDocument(String description) throws ServiceException {
-        String jdbcUrl = "jdbc:h2:mem:bookkeeping-" + UUID.randomUUID();
-        return createDocument(jdbcUrl, description, Long.MAX_VALUE);
+    public Document openDocument(String fileName) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            String fileNameWithouExtension = fileName;
+            if (fileName.endsWith(".h2.db")) {
+                fileNameWithouExtension = fileName.substring(0, fileName.length() - 6);
+            }
+            String jdbcUrl = "jdbc:h2:file:" + fileNameWithouExtension;
+            Document document = new Document();
+
+            registerDataSource(document, jdbcUrl);
+            applyDatabaseMigrations(document, Long.MAX_VALUE);
+
+            return document;
+        });
     }
 
-    public Document createNewDocument(String fileName, String description) throws ServiceException {
-        String jdbcUrl = "jdbc:h2:file:" + fileName;
+    public Document createNewDocument(String description) throws ServiceException {
+        String jdbcUrl = "jdbc:h2:mem:bookkeeping-" + UUID.randomUUID();
         return createDocument(jdbcUrl, description, Long.MAX_VALUE);
     }
 

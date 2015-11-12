@@ -21,6 +21,7 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -125,10 +126,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
         // the file menu
         JMenuItem miNewEdition = widgetFactory.createMenuItem("mi.newBookkeeping", e -> handleNewEdition());
-        JMenuItem miOpenEdition = widgetFactory.createMenuItem("mi.openBookkeeping", this);
+        JMenuItem miOpenEdition = widgetFactory.createMenuItem("mi.openBookkeeping", e -> handleOpenBookkeeping());
         JMenuItem miConfigureBookkeeping = widgetFactory.createMenuItem("mi.configureBookkeeping", this);
-        JMenuItem miSaveEdition = widgetFactory.createMenuItem("mi.saveBookkeeping", this);
-        JMenuItem miSaveEditionAs = widgetFactory.createMenuItem("mi.saveBookkeepingAs", this);
         JMenuItem miCloseBookkeeping = widgetFactory.createMenuItem("mi.closeBookkeeping", this);
         JMenuItem miImportBankStatement = widgetFactory.createMenuItem("mi.importBankStatement", this);
         JMenuItem miExit = widgetFactory.createMenuItem("mi.exit", this);
@@ -154,8 +153,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
         fileMenu.add(miNewEdition);
         fileMenu.add(miOpenEdition);
-        fileMenu.add(miSaveEdition);
-        fileMenu.add(miSaveEditionAs);
         fileMenu.add(miCloseBookkeeping);
         fileMenu.addSeparator();
         fileMenu.add(miConfigureBookkeeping);
@@ -196,10 +193,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     public void actionPerformed(ActionEvent e)
     {
         String command = e.getActionCommand();
-        if ("mi.openBookkeeping".equals(command)) { handleOpenBookkeeping(); }
         if ("mi.configureBookkeeping".equals(command)) { handleConfigureBookkeeping(); }
-        if ("mi.saveBookkeeping".equals(command)) { handleSaveBookkeeping(); }
-        if ("mi.saveBookkeepingAs".equals(command)) { handleSaveBookeepingAs(); }
         if ("mi.closeBookkeeping".equals(command)) { handleCloseBookkeeping(); }
         if ("mi.importBankStatement".equals(command)) { handleImportBankStatement(); }
         if ("mi.exit".equals(command)) { handleExit(); }
@@ -216,57 +210,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.about".equals(command)) { handleAbout(); }
     }
 
-    /**
-     * Checks whether the database may be destroyed.
-     *
-     * <p>If the database has been
-     * changed since the last load or save, then the user is asked whether these
-     * changes must be saved. If the user wants these changes to be saved, then
-     * changes are saved before this method returns.
-     *
-     * <p>If the user does not wants to save the changes, then this method simply
-     * returns.
-     *
-     * @return <tt>true</tt> if the database may be destroyed; <tt>false</tt> otherwise.
-     */
-    private boolean mayCurrentDatabaseBeDestroyed()
-    {
-        boolean result;
-        if (document.hasUnsavedChanges())
-        {
-            int choice = MessageDialog.showYesNoCancelQuestion(this, "gen.titleWarning",
-                "mf.saveChangesBeforeExit");
-            switch (choice)	{
-                case MessageDialog.YES_OPTION:
-                    handleSaveBookkeeping();
-                    result = true;
-                    break;
-                case MessageDialog.NO_OPTION: // continue without saving
-                    result = true;
-                    break;
-                case MessageDialog.CLOSED_OPTION:
-                case MessageDialog.CANCEL_OPTION:
-                    result = false;
-                    break;
-                default:
-                    throw new IllegalStateException("Unknown button pressed. Index: " + choice);
-            }
-        }
-        else
-        { // database has not been changed since last save/load
-            result = true;
-        }
-
-        return result;
-    }
-
     private void handleNewEdition() {
         try {
-            if (mayCurrentDatabaseBeDestroyed()) {
-                setDocument(documentService.createNewDocument(textResource.getString("mf.newBookkeepingDescription")));
-                document.databaseConsistentWithFile();
-                handleConfigureBookkeeping();
-            }
+            setDocument(documentService.createNewDocument(textResource.getString("mf.newBookkeepingDescription")));
+            document.databaseConsistentWithFile();
+            handleConfigureBookkeeping();
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, "gen.problemOccurred", e);
         }
@@ -274,20 +222,28 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private void handleOpenBookkeeping()
     {
-        if (mayCurrentDatabaseBeDestroyed())
-        {
-            JFileChooser fc = new JFileChooser();
-            if (document.getFileName() != null) {
-                fc.setCurrentDirectory(new File(document.getFileName()));
-            }
-            fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
-            int choice = fc.showDialog(this, textResource.getString("mf.titleOpenBookkeeping"));
-            if (choice == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
-                loadFile(file.getAbsolutePath());
-            }
-            requestFocus();
+        JFileChooser fc = new JFileChooser();
+        if (document.getFileName() != null) {
+            fc.setCurrentDirectory(new File(document.getFileName()));
         }
+        fc.setFileFilter(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                String filename = f.getName().toLowerCase();
+                return filename.endsWith(".xml") || filename.endsWith(".h2.db");
+            }
+
+            @Override
+            public String getDescription() {
+                return textResource.getString("mf.fileSelection.description");
+            }
+        });
+        int choice = fc.showDialog(this, textResource.getString("mf.titleOpenBookkeeping"));
+        if (choice == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+            loadFile(file);
+        }
+        requestFocus();
     }
 
     /** Handles the configure bookkeeping event. */
@@ -295,43 +251,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         openView(ConfigureBookkeepingView.class);
     }
 
-    /** Handles the save bookkeeping event. */
-    private void handleSaveBookkeeping()
-    {
-        String fileName = document.getFileName();
-        if (fileName != null)
-        {
-            saveBookkeeping(fileName);
-        }
-        else
-        {
-            handleSaveBookeepingAs();
-        }
-    }
-
-    private void handleSaveBookeepingAs() {
-        JFileChooser fc = new JFileChooser();
-        if (document.getFileName() != null) {
-            fc.setCurrentDirectory(new File(document.getFileName()));
-        }
-        fc.setFileFilter(new FileNameExtensionFilter("XML file", "xml"));
-        int choice = fc.showDialog(this, textResource.getString("mf.titleSaveAs"));
-        if (choice == JFileChooser.APPROVE_OPTION) {
-            saveBookkeeping(fc.getSelectedFile().getAbsolutePath());
-        }
-        requestFocus();
-    }
-
     /** Handles closing the bookkeeping. */
     private void handleCloseBookkeeping() {
-        if (document.hasUnsavedChanges()) {
-            handleSaveBookkeeping();
-        }
-        if (document.hasUnsavedChanges()) {
-            // The user did not want to save the changes. Do not close the bookkeeping.
-            return;
-        }
-
         CloseBookkeepingView cbv = new CloseBookkeepingView(document);
         new ViewDialog(this, cbv).showDialog();
         Date date = cbv.getDate();
@@ -351,14 +272,20 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         openView(ImportBankStatementView.class);
     }
 
-    /**
-     * Loads a bookkeeping from an XML file.
-     * @param fileName the name of the file.
-     */
-    public void loadFile(String fileName) {
+    public void loadFile(File file) {
         Document newDocument;
         try {
-            newDocument = new XMLFileReader(new File(fileName)).createDatabaseFromFile();
+            if (file.getName().toLowerCase().endsWith(".xml")) {
+                newDocument = new XMLFileReader(file).createDatabaseFromFile();
+                if (MessageDialog.YES_OPTION == MessageDialog.showYesNoQuestion(this, "mf.xmlChangedToDatabase.title", "mf.xmlChangedToDatabase")) {
+                    if (!file.delete()) {
+                        MessageDialog.showErrorMessage(this, "mf.failedToDeleteFile", file.getAbsoluteFile());
+                    }
+                }
+            } else {
+                String filename = file.getAbsolutePath();
+                newDocument = documentService.openDocument(filename);
+            }
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
@@ -386,26 +313,10 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         handleViewBalanceAndOperationalResult();
     }
 
-    /**
-     * Saves the current bookkeeping to an XML file.
-     * @param fileName the name of the file.
-     */
-    private void saveBookkeeping(String fileName) {
-        try {
-            new XMLFileWriter(document, new File(fileName)).writeDatabaseToFile();
-            document.setFileName(fileName);
-            document.databaseConsistentWithFile();
-        } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, e, "mf.saveException");
-        }
-    }
-
     /** Handles the exit event. */
     private void handleExit() {
-        if (mayCurrentDatabaseBeDestroyed()) {
-            document.removeListener(this);
-            dispose();
-        }
+        document.removeListener(this);
+        dispose();
     }
 
     private void handleViewBalanceAndOperationalResult() {
