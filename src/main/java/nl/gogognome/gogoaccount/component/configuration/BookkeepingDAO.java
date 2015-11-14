@@ -26,6 +26,13 @@ class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
         bookkeeping.setDescription(result.getString("description"));
         bookkeeping.setCurrency(Currency.getInstance(result.getString("currency")));
         bookkeeping.setStartOfPeriod(result.getDate("start_of_period"));
+        bookkeeping.setOrganizationName(result.getString("organization_name"));
+        bookkeeping.setOrganizationAddress(result.getString("organization_address"));
+        bookkeeping.setOrganizationZipCode(result.getString("organization_zip_code"));
+        bookkeeping.setOrganizationCity(result.getString("organization_city"));
+        bookkeeping.setIban(result.getString("iban"));
+        bookkeeping.setBic(result.getString("bic"));
+        bookkeeping.setAutomaticCollectionContractNumber(result.getString("automatic_collection_contract_number"));
         return bookkeeping;
     }
 
@@ -35,6 +42,13 @@ class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
                 .add("id", SINGLETON_ID)
                 .add("description", bookkeeping.getDescription())
                 .add("currency", bookkeeping.getCurrency().getCurrencyCode())
-                .add("start_of_period", bookkeeping.getStartOfPeriod());
+                .add("start_of_period", bookkeeping.getStartOfPeriod())
+                .add("organization_name", bookkeeping.getOrganizationName())
+                .add("organization_address", bookkeeping.getOrganizationAddress())
+                .add("organization_zip_code", bookkeeping.getOrganizationZipCode())
+                .add("organization_city", bookkeeping.getOrganizationCity())
+                .add("iban", bookkeeping.getIban())
+                .add("bic", bookkeeping.getBic())
+                .add("automatic_collection_contract_number", bookkeeping.getAutomaticCollectionContractNumber());
     }
 }

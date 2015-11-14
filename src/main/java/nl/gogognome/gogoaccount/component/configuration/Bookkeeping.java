@@ -7,9 +7,17 @@ import java.util.GregorianCalendar;
 
 public class Bookkeeping {
 
-    private String description = "";
+    private String description;
     private Date startOfPeriod;
     private Currency currency = Currency.getInstance("EUR");
+
+    private String organizationName;
+    private String organizationAddress;
+    private String organizationZipCode;
+    private String organizationCity;
+    private String iban;
+    private String bic;
+    private String automaticCollectionContractNumber;
 
     public String getDescription() {
         return description;
@@ -17,6 +25,46 @@ public class Bookkeeping {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Currency currency) {
+        this.currency = currency;
+    }
+
+    public String getOrganizationAddress() {
+        return organizationAddress;
+    }
+
+    public void setOrganizationAddress(String organizationAddress) {
+        this.organizationAddress = organizationAddress;
+    }
+
+    public String getOrganizationCity() {
+        return organizationCity;
+    }
+
+    public void setOrganizationCity(String organizationCity) {
+        this.organizationCity = organizationCity;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+
+    public String getOrganizationZipCode() {
+        return organizationZipCode;
+    }
+
+    public void setOrganizationZipCode(String organizationZipCode) {
+        this.organizationZipCode = organizationZipCode;
     }
 
     public Date getStartOfPeriod() {
@@ -27,11 +75,27 @@ public class Bookkeeping {
         this.startOfPeriod = startOfPeriod;
     }
 
-    public Currency getCurrency() {
-        return currency;
+    public String getAutomaticCollectionContractNumber() {
+        return automaticCollectionContractNumber;
     }
 
-    public void setCurrency(Currency currency) {
-        this.currency = currency;
+    public void setAutomaticCollectionContractNumber(String automaticCollectionContractNumber) {
+        this.automaticCollectionContractNumber = automaticCollectionContractNumber;
+    }
+
+    public String getIban() {
+        return iban;
+    }
+
+    public void setIban(String iban) {
+        this.iban = iban;
+    }
+
+    public String getBic() {
+        return bic;
+    }
+
+    public void setBic(String bic) {
+        this.bic = bic;
     }
 }

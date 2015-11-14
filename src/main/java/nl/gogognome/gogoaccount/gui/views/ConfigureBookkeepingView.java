@@ -48,6 +48,13 @@ public class ConfigureBookkeepingView extends View {
     private final StringModel descriptionModel = new StringModel();
     private final ListModel<Currency> currencyModel = new ListModel<>();
     private final DateModel startDateModel = new DateModel();
+    private final StringModel organiztionNameModel = new StringModel();
+    private final StringModel organiztionAddressModel = new StringModel();
+    private final StringModel organiztionZipCodeModel = new StringModel();
+    private final StringModel organiztionCityModel = new StringModel();
+    private final StringModel ibanModel = new StringModel();
+    private final StringModel bicModel = new StringModel();
+    private final StringModel automaticCollectionContractNumberModel = new StringModel();
 
     private AccountTableModel tableModel;
     private JTable table;
@@ -90,6 +97,14 @@ public class ConfigureBookkeepingView extends View {
 
         currencyModel.setItems(CurrencyUtil.getAllCurrencies());
         currencyModel.setSelectedItem(bookkeeping.getCurrency(), null);
+
+        organiztionNameModel.setString(bookkeeping.getOrganizationName());
+        organiztionAddressModel.setString(bookkeeping.getOrganizationAddress());
+        organiztionCityModel.setString(bookkeeping.getOrganizationZipCode());
+        organiztionZipCodeModel.setString(bookkeeping.getOrganizationCity());
+        ibanModel.setString(bookkeeping.getIban());
+        bicModel.setString(bookkeeping.getBic());
+        automaticCollectionContractNumberModel.setString(bookkeeping.getAutomaticCollectionContractNumber());
     }
 
     private void addListeners() {
@@ -97,6 +112,13 @@ public class ConfigureBookkeepingView extends View {
         startDateModel.addModelChangeListener(modelChangeListener);
         descriptionModel.addModelChangeListener(modelChangeListener);
         currencyModel.addModelChangeListener(modelChangeListener);
+        organiztionNameModel.addModelChangeListener(modelChangeListener);
+        organiztionAddressModel.addModelChangeListener(modelChangeListener);
+        organiztionZipCodeModel.addModelChangeListener(modelChangeListener);
+        organiztionCityModel.addModelChangeListener(modelChangeListener);
+        ibanModel.addModelChangeListener(modelChangeListener);
+        bicModel.addModelChangeListener(modelChangeListener);
+        automaticCollectionContractNumberModel.addModelChangeListener(modelChangeListener);
     }
 
     private void addComponents() throws ServiceException {
@@ -109,8 +131,14 @@ public class ConfigureBookkeepingView extends View {
 
         ifc.addField("ConfigureBookkeepingView.description", descriptionModel);
         ifc.addField("ConfigureBookkeepingView.startDate", startDateModel);
-        ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel,
-                new CurrencyFormatter());
+        ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel, new CurrencyFormatter());
+        ifc.addField("ConfigureBookkeepingView.organizationName", organiztionNameModel);
+        ifc.addField("ConfigureBookkeepingView.organizationAddress", organiztionAddressModel);
+        ifc.addField("ConfigureBookkeepingView.organizationZipCode", organiztionZipCodeModel);
+        ifc.addField("ConfigureBookkeepingView.organizationCity", organiztionCityModel);
+        ifc.addField("ConfigureBookkeepingView.iban", ibanModel);
+        ifc.addField("ConfigureBookkeepingView.bic", bicModel);
+        ifc.addField("ConfigureBookkeepingView.automaticCollectionContractNumber", automaticCollectionContractNumberModel);
 
         // Create panel with accounts table
         JPanel accountsAndButtonsPanel = new JPanel(new BorderLayout());
@@ -162,8 +190,16 @@ public class ConfigureBookkeepingView extends View {
                     bookkeeping.setCurrency(currency);
                 }
             } catch (Exception e) {
-                // Probably an invalid currency was entered
+                throw new ServiceException("Invalid currency entered");
             }
+            bookkeeping.setOrganizationName(organiztionNameModel.getString());
+            bookkeeping.setOrganizationAddress(organiztionAddressModel.getString());
+            bookkeeping.setOrganizationZipCode(organiztionZipCodeModel.getString());
+            bookkeeping.setOrganizationCity(organiztionCityModel.getString());
+            bookkeeping.setIban(ibanModel.getString());
+            bookkeeping.setBic(bicModel.getString());
+            bookkeeping.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
+
             configurationService.updateBookkeeping(document, bookkeeping);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
