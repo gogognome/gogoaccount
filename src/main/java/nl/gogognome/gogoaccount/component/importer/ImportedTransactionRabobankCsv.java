@@ -14,10 +14,11 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package nl.gogognome.gogoaccount.services.importers;
+package nl.gogognome.gogoaccount.component.importer;
 
 import java.util.Date;
 
+import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;

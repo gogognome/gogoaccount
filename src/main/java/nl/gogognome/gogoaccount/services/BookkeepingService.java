@@ -30,11 +30,6 @@ public class BookkeepingService {
 
     public Document closeBookkeeping(Document document, String description, Date date, Account equity) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            if (document.hasUnsavedChanges()) {
-                throw new ServiceException("The bookkeeping contains unsaved changes. " +
-                        "First save the changes before closing the bookkeeping.");
-            }
-
             LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
             Document newDocument = ObjectFactory.create(DocumentService.class).createNewDocument("New bookkeeping");

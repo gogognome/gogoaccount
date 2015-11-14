@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package nl.gogognome.gogoaccount.services.importers;
+package nl.gogognome.gogoaccount.component.importer;
 
 import java.io.IOException;
 import java.io.Reader;

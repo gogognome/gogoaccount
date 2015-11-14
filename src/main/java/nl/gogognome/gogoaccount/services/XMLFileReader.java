@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
+import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
@@ -39,6 +40,7 @@ public class XMLFileReader {
     private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
 
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
@@ -345,7 +347,7 @@ public class XMLFileReader {
         return s == null || !s.isEmpty() ? s : null;
     }
 
-    private void parseAndAddImportedAccounts(NodeList nodes) {
+    private void parseAndAddImportedAccounts(NodeList nodes) throws ServiceException {
         if (StringUtil.isNullOrEmpty(fileVersion)) {
             return;
         }
@@ -357,7 +359,7 @@ public class XMLFileReader {
                 Element element = (Element) mappingNodes.item(j);
                 String importedAccount = element.getAttribute("importedaccount");
                 String accountId = element.getAttribute("account");
-                document.setImportedAccount(importedAccount, accountId);
+                importBankStatementService.setAccountForImportedAccount(document, importedAccount, null, accountId);
             }
         }
     }

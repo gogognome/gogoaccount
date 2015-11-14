@@ -47,11 +47,11 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
-import nl.gogognome.gogoaccount.services.ImportBankStatementService;
+import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
-import nl.gogognome.gogoaccount.services.importers.RabobankCSVImporter;
-import nl.gogognome.gogoaccount.services.importers.TransactionImporter;
+import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
+import nl.gogognome.gogoaccount.component.importer.RabobankCSVImporter;
+import nl.gogognome.gogoaccount.component.importer.TransactionImporter;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
@@ -86,6 +86,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
 
     private FileModel fileSelectionModel = new FileModel();
 
@@ -352,14 +353,13 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     private void setLinkBetweenImportedTransactionAccountAndAccount(ImportedTransaction transaction, JournalEntry journalEntry) throws ServiceException {
         List<JournalEntryDetail> journalEntryDetails = ledgerService.findJournalEntryDetails(document, journalEntry);
-        ImportBankStatementService service = new ImportBankStatementService(document);
         if (journalEntryDetails.size() == 2) {
             for (JournalEntryDetail detail : journalEntryDetails) {
                 Account account = configurationService.getAccount(document, detail.getAccountId());
                 if (detail.isDebet()) {
-                    service.setImportedToAccount(transaction, account);
+                    importBankStatementService.setImportedToAccount(document, transaction, account);
                 } else {
-                    service.setImportedFromAccount(transaction, account);
+                    importBankStatementService.setImportedFromAccount(document, transaction, account);
                 }
             }
         }

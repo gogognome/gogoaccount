@@ -185,21 +185,6 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         checkTotalsOfReport(report);
     }
 
-    @Test(expected = ServiceException.class)
-    public void testCloseBookkeepingWithUnsavedChangesFails() throws Exception {
-        List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                buildJournalEntryDetail(20, "100", true),
-                buildJournalEntryDetail(20, "101", false));
-        JournalEntry journalEntry = new JournalEntry();
-        journalEntry.setId("ABC");
-        journalEntry.setDescription("Test");
-        journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
-
-        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
-        bookkeepingService.closeBookkeeping(document, "new bookkeeping",
-                DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
-    }
-
     @Test
     public void testCloseBookkeepingWithJournalsCopiedToNewBookkeeping() throws Exception {
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -211,7 +196,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
 
         ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
-        document.databaseConsistentWithFile();
+        document.notifyChange();
         Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
                 DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
 

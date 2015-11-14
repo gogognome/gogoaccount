@@ -17,7 +17,7 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
+import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
 
 /**
  * This class represents a row in the table with an imported transaction and the journal

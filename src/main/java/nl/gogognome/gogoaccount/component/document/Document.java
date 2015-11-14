@@ -1,32 +1,23 @@
 package nl.gogognome.gogoaccount.component.document;
 
-import nl.gogognome.dataaccess.transaction.CompositeDatasourceTransaction;
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import org.h2.jdbcx.JdbcDataSource;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.UUID;
 
 public class Document {
 
     protected Connection connectionToKeepInMemoryDatabaseAlive;
 
-    /** Indicates whether this database has unsaved changes. */
-    private boolean changed;
-
     /** The name of the file from which the database was loaded. */
     private String fileName;
 
     private Locale locale = Locale.US;
-
-    /** Maps accounts from imported transactions to accounts of gogo account. */
-    private final Map<String, String> importedTransactionAccountToAccountMap = new HashMap<>();
 
     /**
      * Contains the <tt>DatabaseListeners</tt>.
@@ -72,26 +63,7 @@ public class Document {
      * at the proper moment only if this database is the current database.
      */
     public void notifyChange() {
-        changed = true;
         notifyListeners();
-    }
-
-    /**
-     * This method is called to indicate that the database is consistent with the
-     * file it was last loaded from or saved to.
-     */
-    public void databaseConsistentWithFile() {
-        changed = false;
-        // This is the only place where an update takes without calling notifyChange().
-        // The reason for this, is that notifyChange() will mark the database as
-        // changed, while this method is called to indicate that the database has
-        // not been changed since the last load or save action.
-        notifyListeners();
-    }
-
-    public boolean hasUnsavedChanges()
-    {
-        return changed;
     }
 
     public Locale getLocale() {
@@ -111,35 +83,6 @@ public class Document {
     {
         this.fileName = fileName;
         notifyChange();
-    }
-
-    /**
-     * Sets a link between an account of an imported transaction and an account
-     * of gogo account.
-     * @param importedAccount the account of an imported transaction
-     * @param accountId the id of the account in gogo account
-     */
-    public void setImportedAccount(String importedAccount, String accountId) {
-        importedTransactionAccountToAccountMap.put(importedAccount, accountId);
-        notifyChange();
-    }
-
-    /**
-     * Gets the account that corresponds to an account of an imported transaction.
-     * @param importedAccount the account of an imported transaction
-     * @return the account or null if no corresponding account is found
-     */
-    public Account getAccountForImportedAccount(String importedAccount) throws ServiceException {
-        String accountId = importedTransactionAccountToAccountMap.get(importedAccount);
-        if (accountId != null) {
-            return new ConfigurationService().getAccount(this, accountId);
-        } else {
-            return null;
-        }
-    }
-
-    public Map<String, String> getImportedTransactionAccountToAccountMap() {
-        return importedTransactionAccountToAccountMap;
     }
 
     public String toString(Amount amount) {

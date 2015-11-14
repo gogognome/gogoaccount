@@ -107,10 +107,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if (description != null) {
             result += " - " + description;
         }
-        if (document.hasUnsavedChanges())
-        {
-            result += "*";
-        }
 
         return result;
     }
@@ -213,7 +209,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void handleNewEdition() {
         try {
             setDocument(documentService.createNewDocument(textResource.getString("mf.newBookkeepingDescription")));
-            document.databaseConsistentWithFile();
+            document.notifyChange();
             handleConfigureBookkeeping();
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, "gen.problemOccurred", e);
@@ -290,7 +286,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
         }
-        newDocument.databaseConsistentWithFile();
+        newDocument.notifyChange();
         setDocument(newDocument);
     }
 

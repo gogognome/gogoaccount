@@ -6,9 +6,10 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
-import nl.gogognome.gogoaccount.services.ImportBankStatementService;
+import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.importers.ImportedTransaction;
+import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
@@ -27,6 +28,8 @@ public class AddJournalForTransactionView extends EditJournalView {
         ImportedTransaction getNextImportedTransaction();
         void journalAdded(JournalEntry journalEntry);
     }
+
+    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
 
     private Plugin plugin;
 
@@ -96,9 +99,8 @@ public class AddJournalForTransactionView extends EditJournalView {
     private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
         dateModel.setDate(t.getDate());
         descriptionModel.setString(t.getDescription());
-        ImportBankStatementService service = new ImportBankStatementService(document);
-        Account debetAccount = service.getFromAccount(t);
-        Account creditAccount = service.getToAccount(t);
+        Account debetAccount = importBankStatementService.getFromAccount(document, t);
+        Account creditAccount = importBankStatementService.getToAccount(document, t);
         if (debetAccount != null && creditAccount != null) {
             itemsTableModel.addRow(createDefaultItemToBeAdded());
             itemsTableModel.addRow(createDefaultItemToBeAdded());
@@ -127,7 +129,7 @@ public class AddJournalForTransactionView extends EditJournalView {
     protected JournalEntryDetail createDefaultItemToBeAdded() throws ServiceException {
         switch (itemsTableModel.getRowCount()) {
         case 0: { // first item
-            Account account = new ImportBankStatementService(document).getToAccount(importedTransaction);
+            Account account = importBankStatementService.getToAccount(document, importedTransaction);
             if (account == null) {
                 account = getDefaultAccount();
             }
@@ -140,7 +142,7 @@ public class AddJournalForTransactionView extends EditJournalView {
         }
 
         case 1: { // second item
-            Account account = new ImportBankStatementService(document).getFromAccount(importedTransaction);
+            Account account = importBankStatementService.getFromAccount(document, importedTransaction);
             if (account == null) {
                 account = getDefaultAccount();
             }

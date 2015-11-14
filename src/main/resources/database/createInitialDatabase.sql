@@ -81,4 +81,11 @@ CREATE TABLE journal_entry_detail (
   CONSTRAINT fk_detail_payment_id FOREIGN KEY (payment_id) REFERENCES payment(id)
 );
 
+CREATE TABLE import_account (
+  import_account VARCHAR2(100),
+  account_id VARCHAR2(100),
+  PRIMARY KEY (import_account),
+  CONSTRAINT fk_importaccount_account_id FOREIGN KEY (account_id) REFERENCES account(id)
+);
+
 INSERT INTO bookkeeping (id, description, start_of_period, currency) values (1, 'New bookkeeping', current_date(), 'EUR');

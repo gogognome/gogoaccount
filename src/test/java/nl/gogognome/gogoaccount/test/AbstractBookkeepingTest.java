@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
+import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
@@ -40,21 +41,19 @@ public abstract class AbstractBookkeepingTest {
     private final BookkeepingService bookkeepingService = new BookkeepingService();
     private final ConfigurationService configurationService = new ConfigurationService();
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     protected Document document;
     protected Bookkeeping bookkeeping;
-
     protected AmountFormat amountFormat;
-
     protected Amount zero;
 
     @Before
     public void initBookkeeping() throws Exception {
         initFactory();
 
-        BookkeepingService bookkeepingService = new BookkeepingService();
         document = ObjectFactory.create(DocumentService.class).createNewDocument("New bookkeeping");
         bookkeeping = configurationService.getBookkeeping(document);
         bookkeeping.setCurrency(Currency.getInstance("EUR"));
@@ -73,7 +72,7 @@ public abstract class AbstractBookkeepingTest {
         addStartBalance();
         addJournals();
 
-        document.databaseConsistentWithFile();
+        document.notifyChange();
 
         zero = Amount.getZero(bookkeeping.getCurrency());
     }
@@ -260,10 +259,12 @@ public abstract class AbstractBookkeepingTest {
         assertEquals(expectedBookkeeping.getCurrency(), actualBookkeeping.getCurrency());
         assertEqualDayOfYear(expectedBookkeeping.getStartOfPeriod(), actualBookkeeping.getStartOfPeriod());
 
-        assertEquals(expected.getImportedTransactionAccountToAccountMap().keySet().toString(),
-                actual.getImportedTransactionAccountToAccountMap().keySet().toString());
-        assertEquals(expected.getImportedTransactionAccountToAccountMap().values().toString(),
-                actual.getImportedTransactionAccountToAccountMap().values().toString());
+        Map<String, String> expectedImportedAccountsMap = importBankStatementService.getImportedTransactionAccountToAccountMap(expected);
+        Map<String, String> actualImportedAccountsMap = importBankStatementService.getImportedTransactionAccountToAccountMap(expected);
+        assertEquals(expectedImportedAccountsMap.keySet().toString(),
+                actualImportedAccountsMap.keySet().toString());
+        assertEquals(expectedImportedAccountsMap.values().toString(),
+                actualImportedAccountsMap.values().toString());
         assertEquals(invoiceService.findAllInvoices(expected).size(), invoiceService.findAllInvoices(actual).size());
         for (Invoice invoice : invoiceService.findAllInvoices(expected)) {
             assertEqualInvoice(invoice, invoiceService.getInvoice(actual, invoice.getId()));
