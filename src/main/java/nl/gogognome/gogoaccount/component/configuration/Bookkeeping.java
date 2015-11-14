@@ -15,9 +15,6 @@ public class Bookkeeping {
     private String organizationAddress;
     private String organizationZipCode;
     private String organizationCity;
-    private String iban;
-    private String bic;
-    private String automaticCollectionContractNumber;
 
     public String getDescription() {
         return description;
@@ -75,27 +72,4 @@ public class Bookkeeping {
         this.startOfPeriod = startOfPeriod;
     }
 
-    public String getAutomaticCollectionContractNumber() {
-        return automaticCollectionContractNumber;
-    }
-
-    public void setAutomaticCollectionContractNumber(String automaticCollectionContractNumber) {
-        this.automaticCollectionContractNumber = automaticCollectionContractNumber;
-    }
-
-    public String getIban() {
-        return iban;
-    }
-
-    public void setIban(String iban) {
-        this.iban = iban;
-    }
-
-    public String getBic() {
-        return bic;
-    }
-
-    public void setBic(String bic) {
-        this.bic = bic;
-    }
 }

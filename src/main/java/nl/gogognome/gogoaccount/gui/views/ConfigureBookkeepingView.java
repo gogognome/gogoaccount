@@ -1,5 +1,7 @@
 package nl.gogognome.gogoaccount.gui.views;
 
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -28,20 +30,12 @@ import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
 
-/**
- * In this view the user can configure the following aspects of the bookkeeping:
- * <ul>
- *   <li>description
- *   <li>start date
- *   <li>currency
- *   <li>accounts
- * </ul>
- */
 public class ConfigureBookkeepingView extends View {
 
     private static final long serialVersionUID = 1L;
 
     private final Document document;
+    private final AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
@@ -102,9 +96,11 @@ public class ConfigureBookkeepingView extends View {
         organiztionAddressModel.setString(bookkeeping.getOrganizationAddress());
         organiztionCityModel.setString(bookkeeping.getOrganizationZipCode());
         organiztionZipCodeModel.setString(bookkeeping.getOrganizationCity());
-        ibanModel.setString(bookkeeping.getIban());
-        bicModel.setString(bookkeeping.getBic());
-        automaticCollectionContractNumberModel.setString(bookkeeping.getAutomaticCollectionContractNumber());
+
+        AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
+        ibanModel.setString(settings.getIban());
+        bicModel.setString(settings.getBic());
+        automaticCollectionContractNumberModel.setString(settings.getAutomaticCollectionContractNumber());
     }
 
     private void addListeners() {
@@ -196,11 +192,13 @@ public class ConfigureBookkeepingView extends View {
             bookkeeping.setOrganizationAddress(organiztionAddressModel.getString());
             bookkeeping.setOrganizationZipCode(organiztionZipCodeModel.getString());
             bookkeeping.setOrganizationCity(organiztionCityModel.getString());
-            bookkeeping.setIban(ibanModel.getString());
-            bookkeeping.setBic(bicModel.getString());
-            bookkeeping.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
-
             configurationService.updateBookkeeping(document, bookkeeping);
+
+            AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
+            settings.setIban(ibanModel.getString());
+            settings.setBic(bicModel.getString());
+            settings.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
+            automaticCollectionService.setSettings(document, settings);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
