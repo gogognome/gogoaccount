@@ -8,3 +8,14 @@ CREATE TABLE automatic_collection_settings (
   value VARCHAR2(1000),
   PRIMARY KEY (key)
 );
+
+CREATE TABLE party_automatic_collection_settings (
+  party_id VARCHAR2(100),
+  name VARCHAR2(1000),
+  address VARCHAR2(1000),
+  zip_code VARCHAR2(1000),
+  city VARCHAR2(1000),
+  iban VARCHAR2(100),
+  PRIMARY KEY(party_id),
+  CONSTRAINT fk_party_id_party FOREIGN KEY (party_id) REFERENCES party(id) ON DELETE CASCADE
+);
