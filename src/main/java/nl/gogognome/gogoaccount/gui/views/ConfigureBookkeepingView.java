@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.importer.ParseException;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -49,6 +50,7 @@ public class ConfigureBookkeepingView extends View {
     private final StringModel ibanModel = new StringModel();
     private final StringModel bicModel = new StringModel();
     private final StringModel automaticCollectionContractNumberModel = new StringModel();
+    private final StringModel sequenceNumberModel = new StringModel();
 
     private AccountTableModel tableModel;
     private JTable table;
@@ -101,6 +103,7 @@ public class ConfigureBookkeepingView extends View {
         ibanModel.setString(settings.getIban());
         bicModel.setString(settings.getBic());
         automaticCollectionContractNumberModel.setString(settings.getAutomaticCollectionContractNumber());
+        sequenceNumberModel.setString(Long.toString(settings.getSequenceNumber()));
     }
 
     private void addListeners() {
@@ -115,6 +118,7 @@ public class ConfigureBookkeepingView extends View {
         ibanModel.addModelChangeListener(modelChangeListener);
         bicModel.addModelChangeListener(modelChangeListener);
         automaticCollectionContractNumberModel.addModelChangeListener(modelChangeListener);
+        sequenceNumberModel.addModelChangeListener(modelChangeListener);
     }
 
     private void addComponents() throws ServiceException {
@@ -135,6 +139,7 @@ public class ConfigureBookkeepingView extends View {
         ifc.addField("ConfigureBookkeepingView.iban", ibanModel);
         ifc.addField("ConfigureBookkeepingView.bic", bicModel);
         ifc.addField("ConfigureBookkeepingView.automaticCollectionContractNumber", automaticCollectionContractNumberModel);
+        ifc.addField("ConfigureBookkeepingView.sequenceNumber", sequenceNumberModel);
 
         // Create panel with accounts table
         JPanel accountsAndButtonsPanel = new JPanel(new BorderLayout());
@@ -198,6 +203,12 @@ public class ConfigureBookkeepingView extends View {
             settings.setIban(ibanModel.getString());
             settings.setBic(bicModel.getString());
             settings.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
+            try {
+                settings.setSequenceNumber(Long.parseLong(sequenceNumberModel.getString()));
+            } catch (Exception e) {
+                settings.setSequenceNumber(0);
+                // probably incorrect syntax
+            }
             automaticCollectionService.setSettings(document, settings);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");

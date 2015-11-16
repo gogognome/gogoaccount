@@ -5,6 +5,7 @@ public class AutomaticCollectionSettings {
     private String iban;
     private String bic;
     private String automaticCollectionContractNumber;
+    private long sequenceNumber;
 
     public String getAutomaticCollectionContractNumber() {
         return automaticCollectionContractNumber;
@@ -30,4 +31,11 @@ public class AutomaticCollectionSettings {
         this.bic = bic;
     }
 
+    public long getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(long sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
 }

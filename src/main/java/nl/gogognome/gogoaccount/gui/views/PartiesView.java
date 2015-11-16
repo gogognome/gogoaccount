@@ -1,7 +1,5 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
-import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartySearchCriteria;
 import nl.gogognome.gogoaccount.component.party.PartyService;
@@ -48,7 +46,6 @@ public class PartiesView extends View {
     private final Logger logger = LoggerFactory.getLogger(PartiesView.class);
 
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
-    private final AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
 
     private Document document;
 
@@ -294,15 +291,13 @@ public class PartiesView extends View {
 
     private void onAddParty() {
         try {
-        EditPartyView editPartyView = new EditPartyView(document, null, null);
+        EditPartyView editPartyView = new EditPartyView(document, null);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
 
         Party party = editPartyView.getEnteredParty();
         if (party != null) {
             partyService.createParty(document, party);
-            automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
-
         }
         onSearch();
         } catch (ServiceException e) {
@@ -318,15 +313,13 @@ public class PartiesView extends View {
             }
 
             Party oldParty = partiesTableModel.getRow(row);
-            PartyAutomaticCollectionSettings oldSettings = automaticCollectionService.findSettings(document, oldParty);
-            EditPartyView editPartyView = new EditPartyView(document, oldParty, oldSettings);
+            EditPartyView editPartyView = new EditPartyView(document, oldParty);
             ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
             dialog.showDialog();
 
             Party party = editPartyView.getEnteredParty();
             if (party != null) {
                 partyService.updateParty(document, party);
-                automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
             }
             onSearch();
 
