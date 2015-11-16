@@ -37,20 +37,20 @@ public class DocumentService {
 
     public Document createNewDocument(String description) throws ServiceException {
         String jdbcUrl = "jdbc:h2:mem:bookkeeping-" + UUID.randomUUID();
-        return createDocument(jdbcUrl, description, Long.MAX_VALUE);
+        return createDocument(jdbcUrl, description);
     }
 
-    public Document createNewDocument(String fileName, String description, long maxMigrationNr) throws ServiceException {
+    public Document createNewDocument(String fileName, String description) throws ServiceException {
         String jdbcUrl = "jdbc:h2:file:" + fileName;
-        return createDocument(jdbcUrl, description, maxMigrationNr);
+        return createDocument(jdbcUrl, description);
     }
 
-    private Document createDocument(String jdbcUrl, String description, long maxMigrationNr) throws ServiceException {
+    private Document createDocument(String jdbcUrl, String description) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Document document = new Document();
 
             registerDataSource(document, jdbcUrl);
-            applyDatabaseMigrations(document, maxMigrationNr);
+            applyDatabaseMigrations(document);
 
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);

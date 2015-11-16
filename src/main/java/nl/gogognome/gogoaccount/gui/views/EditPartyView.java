@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.gui.views;
 
+import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -39,24 +40,28 @@ public class EditPartyView extends OkCancelView {
     private final StringModel addressModel = new StringModel();
     private final StringModel zipCodeModel = new StringModel();
     private final StringModel cityModel = new StringModel();
+    private final StringModel automaticCollectionNameModel = new StringModel();
+    private final StringModel automaticCollectionAddressModel = new StringModel();
+    private final StringModel automaticCollectionZipCodeModel = new StringModel();
+    private final StringModel automaticCollectionCityModel = new StringModel();
+    private final StringModel automaticCollectionIbanModel = new StringModel();
     private final ListModel<String> typeListModel = new ListModel<>();
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
     private final JTextArea taRemarks = new JTextArea(5, 30);
 
     private final Party initialParty;
+    private final PartyAutomaticCollectionSettings initialAutomaticCollectionSettings;
     private Party resultParty;
+    private PartyAutomaticCollectionSettings resulAutomaticCollectionSettings;
 
     private ModelChangeListener idUpdateListener;
 
-    /**
-     * Constructor.
-     * @param party the party used to initialize the view
-     */
-    protected EditPartyView(Document document, Party party) {
+    protected EditPartyView(Document document, Party party, PartyAutomaticCollectionSettings automaticCollectionSettings) {
         super();
         this.document = document;
         this.initialParty = party;
+        this.initialAutomaticCollectionSettings = automaticCollectionSettings;
     }
 
     @Override
@@ -91,6 +96,14 @@ public class EditPartyView extends OkCancelView {
         } else {
             idModel.setString(suggestNewId());
         }
+
+        if (initialAutomaticCollectionSettings != null) {
+            automaticCollectionNameModel.setString(initialAutomaticCollectionSettings.getName());
+            automaticCollectionAddressModel.setString(initialAutomaticCollectionSettings.getAddress());
+            automaticCollectionZipCodeModel.setString(initialAutomaticCollectionSettings.getZipCode());
+            automaticCollectionCityModel.setString(initialAutomaticCollectionSettings.getZipCode());
+            automaticCollectionIbanModel.setString(initialAutomaticCollectionSettings.getIban());
+        }
 	}
 
     @Override
@@ -115,6 +128,12 @@ public class EditPartyView extends OkCancelView {
 
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
 
+        ifc.addField("editPartyView.autoCollectionName", automaticCollectionNameModel);
+        ifc.addField("editPartyView.autoCollectionAddress", automaticCollectionAddressModel);
+        ifc.addField("editPartyView.autoCollectionZipCode", automaticCollectionZipCodeModel);
+        ifc.addField("editPartyView.autoCollectionCity", automaticCollectionCityModel);
+        ifc.addField("editPartyView.autoCollectionIban", automaticCollectionIbanModel);
+
         return ifc;
     }
 
@@ -133,6 +152,14 @@ public class EditPartyView extends OkCancelView {
         resultParty.setBirthDate(birthDateModel.getDate());
         resultParty.setType(typeListModel.getSelectedItem());
         resultParty.setRemarks(taRemarks.getText());
+
+        resulAutomaticCollectionSettings = new PartyAutomaticCollectionSettings(resultParty.getId());
+        resulAutomaticCollectionSettings.setName(automaticCollectionNameModel.getString());
+        resulAutomaticCollectionSettings.setAddress(automaticCollectionAddressModel.getString());
+        resulAutomaticCollectionSettings.setZipCode(automaticCollectionZipCodeModel.getString());
+        resulAutomaticCollectionSettings.setCity(automaticCollectionCityModel.getString());
+        resulAutomaticCollectionSettings.setIban(automaticCollectionIbanModel.getString());
+
         requestClose();
     }
 
@@ -142,6 +169,14 @@ public class EditPartyView extends OkCancelView {
      */
     public Party getEnteredParty() {
         return resultParty;
+    }
+
+    /**
+     * Gets the settings for automatic collection for a party as entered by the user.
+     * @return the automatic settings or <code>null</code> if the user canceled this dialog
+     */
+    public PartyAutomaticCollectionSettings getEnteredAutomaticCollectionSettings() {
+        return resulAutomaticCollectionSettings;
     }
 
     /**

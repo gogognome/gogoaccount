@@ -68,7 +68,7 @@ public class XMLFileReader {
                 path = path.substring(0, indexOfExtension);
             }
             DocumentService documentService = ObjectFactory.create(DocumentService.class);
-            document = documentService.createNewDocument(path, "New bookkeeping", 0 /* only apply database creation script */);
+            document = documentService.createNewDocument(path, "New bookkeeping");
             document.setFileName(file.getAbsolutePath());
 
             DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
@@ -100,8 +100,6 @@ public class XMLFileReader {
             parseAndAddJournals(highestPaymentId, rootElement);
 
             parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
-
-            documentService.applyDatabaseMigrations(document);
 
             return document;
         });
