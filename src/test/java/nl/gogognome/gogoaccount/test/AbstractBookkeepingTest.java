@@ -57,6 +57,7 @@ public abstract class AbstractBookkeepingTest {
         document = ObjectFactory.create(DocumentService.class).createNewDocument("New bookkeeping");
         bookkeeping = configurationService.getBookkeeping(document);
         bookkeeping.setCurrency(Currency.getInstance("EUR"));
+        bookkeeping.setOrganizationName("My Club");
         bookkeeping.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
         configurationService.updateBookkeeping(document, bookkeeping);
 

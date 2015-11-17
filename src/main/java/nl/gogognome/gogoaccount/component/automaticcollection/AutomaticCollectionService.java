@@ -7,6 +7,7 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 
 import java.io.File;
+import java.util.Date;
 import java.util.List;
 
 public class AutomaticCollectionService {
@@ -35,10 +36,11 @@ public class AutomaticCollectionService {
         });
     }
 
-    public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices) throws ServiceException {
+    public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate)
+            throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             AutomaticCollectionSettings settings = getSettings(document);
-            new SepaFileGenerator().generate(document, settings, invoices, fileToCreate);
+            new SepaFileGenerator().generate(document, settings, invoices, fileToCreate, collectionDate);
 
             settings.setSequenceNumber(settings.getSequenceNumber() + 1);
             setSettings(document, settings);
