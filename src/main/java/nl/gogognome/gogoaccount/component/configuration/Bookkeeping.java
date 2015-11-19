@@ -15,6 +15,7 @@ public class Bookkeeping {
     private String organizationAddress;
     private String organizationZipCode;
     private String organizationCity;
+    private String organizationCountry;
 
     public String getDescription() {
         return description;
@@ -64,6 +65,14 @@ public class Bookkeeping {
         this.organizationZipCode = organizationZipCode;
     }
 
+    public String getOrganizationCountry() {
+        return organizationCountry;
+    }
+
+    public void setOrganizationCountry(String organizationCountry) {
+        this.organizationCountry = organizationCountry;
+    }
+
     public Date getStartOfPeriod() {
         return startOfPeriod;
     }
@@ -71,5 +80,4 @@ public class Bookkeeping {
     public void setStartOfPeriod(Date startOfPeriod) {
         this.startOfPeriod = startOfPeriod;
     }
-
 }

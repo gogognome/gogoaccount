@@ -6,7 +6,6 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.importer.ParseException;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -47,6 +46,7 @@ public class ConfigureBookkeepingView extends View {
     private final StringModel organiztionAddressModel = new StringModel();
     private final StringModel organiztionZipCodeModel = new StringModel();
     private final StringModel organiztionCityModel = new StringModel();
+    private final StringModel organiztionCountryModel = new StringModel();
     private final StringModel ibanModel = new StringModel();
     private final StringModel bicModel = new StringModel();
     private final StringModel automaticCollectionContractNumberModel = new StringModel();
@@ -98,6 +98,7 @@ public class ConfigureBookkeepingView extends View {
         organiztionAddressModel.setString(bookkeeping.getOrganizationAddress());
         organiztionCityModel.setString(bookkeeping.getOrganizationZipCode());
         organiztionZipCodeModel.setString(bookkeeping.getOrganizationCity());
+        organiztionCountryModel.setString(bookkeeping.getOrganizationCountry());
 
         AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
         ibanModel.setString(settings.getIban());
@@ -115,6 +116,7 @@ public class ConfigureBookkeepingView extends View {
         organiztionAddressModel.addModelChangeListener(modelChangeListener);
         organiztionZipCodeModel.addModelChangeListener(modelChangeListener);
         organiztionCityModel.addModelChangeListener(modelChangeListener);
+        organiztionCountryModel.addModelChangeListener(modelChangeListener);
         ibanModel.addModelChangeListener(modelChangeListener);
         bicModel.addModelChangeListener(modelChangeListener);
         automaticCollectionContractNumberModel.addModelChangeListener(modelChangeListener);
@@ -136,6 +138,7 @@ public class ConfigureBookkeepingView extends View {
         ifc.addField("ConfigureBookkeepingView.organizationAddress", organiztionAddressModel);
         ifc.addField("ConfigureBookkeepingView.organizationZipCode", organiztionZipCodeModel);
         ifc.addField("ConfigureBookkeepingView.organizationCity", organiztionCityModel);
+        ifc.addField("ConfigureBookkeepingView.organizationCountry", organiztionCountryModel);
         ifc.addField("ConfigureBookkeepingView.iban", ibanModel);
         ifc.addField("ConfigureBookkeepingView.bic", bicModel);
         ifc.addField("ConfigureBookkeepingView.automaticCollectionContractNumber", automaticCollectionContractNumberModel);
@@ -197,6 +200,7 @@ public class ConfigureBookkeepingView extends View {
             bookkeeping.setOrganizationAddress(organiztionAddressModel.getString());
             bookkeeping.setOrganizationZipCode(organiztionZipCodeModel.getString());
             bookkeeping.setOrganizationCity(organiztionCityModel.getString());
+            bookkeeping.setOrganizationCountry(organiztionCountryModel.getString());
             configurationService.updateBookkeeping(document, bookkeeping);
 
             AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);

@@ -30,6 +30,7 @@ class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
         bookkeeping.setOrganizationAddress(result.getString("organization_address"));
         bookkeeping.setOrganizationZipCode(result.getString("organization_zip_code"));
         bookkeeping.setOrganizationCity(result.getString("organization_city"));
+        bookkeeping.setOrganizationCountry(result.getString("organization_country"));
         return bookkeeping;
     }
 
@@ -43,6 +44,7 @@ class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
                 .add("organization_name", bookkeeping.getOrganizationName())
                 .add("organization_address", bookkeeping.getOrganizationAddress())
                 .add("organization_zip_code", bookkeeping.getOrganizationZipCode())
-                .add("organization_city", bookkeeping.getOrganizationCity());
+                .add("organization_city", bookkeeping.getOrganizationCity())
+                .add("organization_country", bookkeeping.getOrganizationCountry());
     }
 }

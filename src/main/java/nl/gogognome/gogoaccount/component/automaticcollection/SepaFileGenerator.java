@@ -7,6 +7,7 @@ import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.lib.util.StringUtil;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -72,7 +73,17 @@ class SepaFileGenerator {
         Element creditor = addElement(doc, paymentInformationIdentification, "Cdtr");
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         addElement(doc, creditor, "Nm", bookkeeping.getOrganizationName());
+
         Element postalAddress = addElement(doc, creditor, "PstlAdr");
+        addElement(doc, postalAddress, "Ctry", bookkeeping.getOrganizationCountry());
+        if (!StringUtil.isNullOrEmpty(bookkeeping.getOrganizationAddress())) {
+            addElement(doc, postalAddress, "AdrLine", bookkeeping.getOrganizationAddress());
+        }
+        String zipCodeAndCity = (StringUtil.nullToEmptyString(bookkeeping.getOrganizationZipCode()) + ' '
+                + StringUtil.nullToEmptyString(bookkeeping.getOrganizationCity())).trim();
+        if (!StringUtil.isNullOrEmpty(zipCodeAndCity)) {
+            addElement(doc, postalAddress, "AdrLine", zipCodeAndCity);
+        }
 
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");

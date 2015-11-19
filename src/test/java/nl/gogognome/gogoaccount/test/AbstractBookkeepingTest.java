@@ -58,6 +58,10 @@ public abstract class AbstractBookkeepingTest {
         bookkeeping = configurationService.getBookkeeping(document);
         bookkeeping.setCurrency(Currency.getInstance("EUR"));
         bookkeeping.setOrganizationName("My Club");
+        bookkeeping.setOrganizationAddress("Sesamstraat 134");
+        bookkeeping.setOrganizationZipCode("1234 AB");
+        bookkeeping.setOrganizationCity("Hilversum");
+        bookkeeping.setOrganizationCountry("NL");
         bookkeeping.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
         configurationService.updateBookkeeping(document, bookkeeping);
 
