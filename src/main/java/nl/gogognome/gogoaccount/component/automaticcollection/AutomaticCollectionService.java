@@ -3,12 +3,17 @@ package nl.gogognome.gogoaccount.component.automaticcollection;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
+import nl.gogognome.gogoaccount.util.ObjectFactory;
 
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 public class AutomaticCollectionService {
 
@@ -40,7 +45,12 @@ public class AutomaticCollectionService {
             throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             AutomaticCollectionSettings settings = getSettings(document);
-            new SepaFileGenerator().generate(document, settings, invoices, fileToCreate, collectionDate);
+            PartyService partyService = ObjectFactory.create(PartyService.class);
+            List<String> partyIds = invoices.stream().map(i -> i.getConcerningPartyId()).collect(toList());
+            new SepaFileGenerator().generate(document, settings, invoices, fileToCreate, collectionDate,
+                    partyService.getIdToParty(document, partyIds),
+                    new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds),
+                    "Contribution My Club 2015");
 
             settings.setSequenceNumber(settings.getSequenceNumber() + 1);
             setSettings(document, settings);

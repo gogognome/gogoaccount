@@ -16,7 +16,9 @@ CREATE TABLE party_automatic_collection_settings (
   address VARCHAR2(1000),
   zip_code VARCHAR2(1000),
   city VARCHAR2(1000),
+  country VARCHAR2(2),
   iban VARCHAR2(100),
+  mandate_date DATE,
   PRIMARY KEY(party_id),
   CONSTRAINT fk_party_id_party FOREIGN KEY (party_id) REFERENCES party(id) ON DELETE CASCADE
 );

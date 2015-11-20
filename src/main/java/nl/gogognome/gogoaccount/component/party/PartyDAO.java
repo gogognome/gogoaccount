@@ -7,6 +7,7 @@ import nl.gogognome.gogoaccount.component.document.Document;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 class PartyDAO extends AbstractDomainClassDAO<Party> {
 
@@ -19,6 +20,10 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
      */
     public List<String> findPartyTypes() throws SQLException {
         return execute("SELECT DISTINCT type FROM " + tableName + " WHERE type IS NOT NULL ORDER BY type").toList(r -> r.getString(1));
+    }
+
+    public Map<String, Party> getIdToParty(List<String> partyIds) throws SQLException {
+        return execute("SELECT * FROM " + tableName + " WHERE id IN (?)", partyIds).toHashMap(r -> r.getString("id"), r -> getObjectFromResultSet(r));
     }
 
     @Override

@@ -1,6 +1,9 @@
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
@@ -38,6 +41,7 @@ import static junit.framework.Assert.*;
  */
 public abstract class AbstractBookkeepingTest {
 
+    private final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService();
     private final BookkeepingService bookkeepingService = new BookkeepingService();
     private final ConfigurationService configurationService = new ConfigurationService();
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
@@ -65,10 +69,19 @@ public abstract class AbstractBookkeepingTest {
         bookkeeping.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
         configurationService.updateBookkeeping(document, bookkeeping);
 
+        AutomaticCollectionSettings settings = new AutomaticCollectionSettings();
+        settings.setIban("NL37RABO1234567890");
+        settings.setSequenceNumber(100L);
+        settings.setAutomaticCollectionContractNumber("CONTR12345");
+        settings.setBic("BIC1234");
+        automaticCollectionService.setSettings(document, settings);
+
         PartyService partyService = new PartyService();
         for (Party party : createParties()) {
             partyService.createParty(document, party);
         }
+
+        createPartyAutomaticCollectionSettingsForParty1101();
 
         for (Account account : createAccounts()) {
             configurationService.createAccount(document, account);
@@ -80,6 +93,18 @@ public abstract class AbstractBookkeepingTest {
         document.notifyChange();
 
         zero = Amount.getZero(bookkeeping.getCurrency());
+    }
+
+    private void createPartyAutomaticCollectionSettingsForParty1101() throws ServiceException {
+        PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = new PartyAutomaticCollectionSettings("1101");
+        partyAutomaticCollectionSettings.setIban("NL52ABNA5691659");
+        partyAutomaticCollectionSettings.setName("P. Puk");
+        partyAutomaticCollectionSettings.setAddress("Sesamstraat 137");
+        partyAutomaticCollectionSettings.setZipCode("1234 AC");
+        partyAutomaticCollectionSettings.setCity("Hilvserum");
+        partyAutomaticCollectionSettings.setCountry("NL");
+        partyAutomaticCollectionSettings.setMandateDate(DateUtil.createDate(2015, 3, 17));
+        automaticCollectionService.setAutomaticCollectionSettings(document, partyAutomaticCollectionSettings);
     }
 
     private void initFactory() {

@@ -5,6 +5,7 @@ import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.gogoaccount.component.document.Document;
 
 import java.sql.SQLException;
+import java.util.Map;
 
 class AutomaticCollectionSettingsDAO extends AbstractDAO {
 

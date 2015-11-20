@@ -10,6 +10,7 @@ public class PartyAutomaticCollectionSettings {
     private String address;
     private String zipCode;
     private String city;
+    private String country;
     private String iban;
     private Date mandateDate;
 
@@ -51,6 +52,14 @@ public class PartyAutomaticCollectionSettings {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
     }
 
     public String getIban() {

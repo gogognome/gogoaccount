@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
@@ -21,16 +22,17 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Currency;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 class SepaFileGenerator {
 
+    private final AmountFormat amountFormat = new AmountFormat(Locale.US);
+    private final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     public void generate(Document document, AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
-                         Date collectionDate)
+                         Date collectionDate, Map<String, Party> idToParty,
+                         Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings, String description)
             throws Exception {
         ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
 
@@ -44,11 +46,9 @@ class SepaFileGenerator {
 
         Element groupHeader = addElement(doc, cstmrDrctDbtInitn, "GrpHdr");
         addElement(doc, groupHeader, "MsgId", settings.getSequenceNumber());
-        DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         addElement(doc, groupHeader, "CreDtTm", dateTimeFormat.format(new Date()));
         addElement(doc, groupHeader, "NbOfTxs", Integer.toString(invoices.size()));
         Amount totalAmount = invoices.stream().map(i -> i.getAmountToBePaid()).reduce(Amount.getZero(Currency.getInstance("EUR")), (a, b) -> a.add(b));
-        AmountFormat amountFormat = new AmountFormat(Locale.US);
         String formattedAmount = amountFormat.formatAmountWithoutCurrency(totalAmount);
         addElement(doc, groupHeader, "CtrlSum", formattedAmount);
 
@@ -67,7 +67,6 @@ class SepaFileGenerator {
 
         addElement(doc, paymentTypeInformation, "SeqTp", "FRST");
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         addElement(doc, paymentInformationIdentification, "ReqdColltnDt", dateFormat.format(collectionDate));
 
         Element creditor = addElement(doc, paymentInformationIdentification, "Cdtr");
@@ -85,6 +84,25 @@ class SepaFileGenerator {
             addElement(doc, postalAddress, "AdrLine", zipCodeAndCity);
         }
 
+        Element creditorAccount = addElement(doc, paymentInformationIdentification, "CdtrAcct");
+        Element id = addElement(doc, creditorAccount, "Id");
+        addElement(doc, id, "IBAN", settings.getIban());
+        addElement(doc, creditorAccount, "Ccy", bookkeeping.getCurrency().getCurrencyCode());
+
+        addElement(doc, paymentInformationIdentification, "CdtrAgt/FinInstnId/BIC", settings.getBic());
+
+        addElement(doc, paymentInformationIdentification, "ChrgBr", "SLEV");
+
+        for (Invoice invoice : invoices) {
+            Party party = idToParty.get(invoice.getConcerningPartyId());
+            PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = idToPartyAutomaticCollectionSettings.get(invoice.getConcerningPartyId());
+            if (partyAutomaticCollectionSettings == null) {
+                throw new IllegalArgumentException("Party " + party.toString() + " has no automatic collection settings. " +
+                        "Those settings are required to generate a SEPA file");
+            }
+            addInvoiceElements(doc, paymentInformationIdentification, invoice, party, partyAutomaticCollectionSettings, settings, description);
+        }
+
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
@@ -94,16 +112,78 @@ class SepaFileGenerator {
         }
     }
 
+    private void addInvoiceElements(org.w3c.dom.Document doc, Element parent, Invoice invoice, Party party,
+                                    PartyAutomaticCollectionSettings partyAutomaticCollectionSettings, AutomaticCollectionSettings settings,
+                                    String description) {
+        Element ddTransactionInformation = addElement(doc, parent, "DrctDbtTxInf");
+        addElement(doc, ddTransactionInformation, "PmtId/EndToEndId", toAlphaNumerical(invoice.getId(), 35));
+
+        Element instructedAmount = addElement(doc, ddTransactionInformation, "InstdAmt", amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid()));
+        instructedAmount.setAttribute("Ccy", invoice.getAmountToBePaid().getCurrency().getCurrencyCode());
+
+        Element directDebitTransaction = addElement(doc, ddTransactionInformation, "DrctDbtTx");
+        Element mandateRelatedInformation = addElement(doc, directDebitTransaction, "MndtRltdInf");
+        addElement(doc, mandateRelatedInformation, "MndtId", toAlphaNumerical(party.getId(), 35));
+        addElement(doc, mandateRelatedInformation, "DtOfSgntr", dateFormat.format(partyAutomaticCollectionSettings.getMandateDate()));
+        addElement(doc, mandateRelatedInformation, "AmdmntInd", "false");
+
+        Element other = addElement(doc, directDebitTransaction, "CdtrSchmeId/Id/PrvtId/Othr");
+        addElement(doc, other, "Id", toAlphaNumerical(settings.getAutomaticCollectionContractNumber(), 35));
+        addElement(doc, other, "SchmeNm/Prtry", "SEPA");
+
+        addElement(doc, directDebitTransaction, "DbtrAgt/FinInstnId/Othr/Id", "NOTPROVIDED");
+
+        Element debtor = addElement(doc, directDebitTransaction, "Dbtr");
+        addElement(doc, debtor, "Nm", partyAutomaticCollectionSettings.getName());
+        Element postalAddress = addElement(doc, debtor, "PstlAdr");
+        addElement(doc, postalAddress, "Ctry", partyAutomaticCollectionSettings.getCountry());
+        if (!StringUtil.isNullOrEmpty(partyAutomaticCollectionSettings.getAddress())) {
+            addElement(doc, postalAddress, "AdrLine", partyAutomaticCollectionSettings.getAddress());
+        }
+        String zipCodeAndCity = (StringUtil.nullToEmptyString(party.getZipCode()) + ' '
+                + StringUtil.nullToEmptyString(partyAutomaticCollectionSettings.getCity())).trim();
+        if (!StringUtil.isNullOrEmpty(zipCodeAndCity)) {
+            addElement(doc, postalAddress, "AdrLine", zipCodeAndCity);
+        }
+
+        addElement(doc, ddTransactionInformation, "DbtrAcct/Id/IBAN", partyAutomaticCollectionSettings.getIban());
+        addElement(doc, ddTransactionInformation, "Purp/Cd", "OTHR");
+        addElement(doc, ddTransactionInformation, "RmtInf/Ustrd", description);
+    }
+
     private Element addElement(org.w3c.dom.Document doc, Element element, String childElementName) {
-        Element child = doc.createElement(childElementName);
-        element.appendChild(child);
+        return addElement(doc, element, childElementName, null);
+    }
+
+    private Element addElement(org.w3c.dom.Document doc, Element element, String childElementName, Object textContent) {
+        String[] childElementNames = childElementName.split("/");
+        Element child = null;
+        for (String name : childElementNames) {
+            child = doc.createElement(name);
+            element.appendChild(child);
+            element = child;
+        }
+        if (child == null) {
+            throw new IllegalArgumentException("Child element name must not be empty");
+        }
+
+        if (textContent != null) {
+            child.setTextContent(textContent.toString());
+        }
         return child;
     }
 
-    private void addElement(org.w3c.dom.Document doc, Element element, String childElementName, Object textContent) {
-        Element child = doc.createElement(childElementName);
-        element.appendChild(child);
-        child.setTextContent(textContent.toString());
+    private String toAlphaNumerical(String text, int maxLength) {
+        StringBuilder sb = new StringBuilder(maxLength);
+        for (char c : text.toCharArray()) {
+            if ("abcdefghijklmnopqrstuvwxyz0123456789 ABCDEFGHIJKLMNOPQRSTUVWXYZ/-?:().,'+".indexOf(c) != -1) {
+                sb.append(c);
+            }
+            if (sb.length() == maxLength) {
+                break;
+            }
+        }
+        return sb.toString();
     }
 
 }

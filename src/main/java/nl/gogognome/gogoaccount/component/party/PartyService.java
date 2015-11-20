@@ -5,6 +5,7 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 
 import java.util.List;
+import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
 
@@ -56,6 +57,10 @@ public class PartyService {
 
     public boolean existsParty(Document document, String partyId) throws ServiceException {
         return ServiceTransaction.withResult(() -> new PartyDAO(document).exists(partyId));
+    }
+
+    public Map<String, Party> getIdToParty(Document document, List<String> partyIds) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new PartyDAO(document).getIdToParty(partyIds));
     }
 }
 
