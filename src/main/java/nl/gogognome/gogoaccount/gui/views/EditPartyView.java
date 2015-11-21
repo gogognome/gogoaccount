@@ -44,7 +44,9 @@ public class EditPartyView extends OkCancelView {
     private final StringModel automaticCollectionAddressModel = new StringModel();
     private final StringModel automaticCollectionZipCodeModel = new StringModel();
     private final StringModel automaticCollectionCityModel = new StringModel();
+    private final StringModel automaticCollectionCountryModel = new StringModel();
     private final StringModel automaticCollectionIbanModel = new StringModel();
+    private final DateModel automaticCollectionMandateDateModel = new DateModel();
     private final ListModel<String> typeListModel = new ListModel<>();
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
@@ -101,8 +103,10 @@ public class EditPartyView extends OkCancelView {
             automaticCollectionNameModel.setString(initialAutomaticCollectionSettings.getName());
             automaticCollectionAddressModel.setString(initialAutomaticCollectionSettings.getAddress());
             automaticCollectionZipCodeModel.setString(initialAutomaticCollectionSettings.getZipCode());
-            automaticCollectionCityModel.setString(initialAutomaticCollectionSettings.getZipCode());
+            automaticCollectionCityModel.setString(initialAutomaticCollectionSettings.getCity());
+            automaticCollectionCountryModel.setString(initialAutomaticCollectionSettings.getCountry());
             automaticCollectionIbanModel.setString(initialAutomaticCollectionSettings.getIban());
+            automaticCollectionMandateDateModel.setDate(initialAutomaticCollectionSettings.getMandateDate());
         }
 	}
 
@@ -132,7 +136,9 @@ public class EditPartyView extends OkCancelView {
         ifc.addField("editPartyView.autoCollectionAddress", automaticCollectionAddressModel);
         ifc.addField("editPartyView.autoCollectionZipCode", automaticCollectionZipCodeModel);
         ifc.addField("editPartyView.autoCollectionCity", automaticCollectionCityModel);
+        ifc.addField("editPartyView.autoCollectionCountry", automaticCollectionCountryModel);
         ifc.addField("editPartyView.autoCollectionIban", automaticCollectionIbanModel);
+        ifc.addField("editPartyView.autoCollectionMandateDate", automaticCollectionMandateDateModel);
 
         return ifc;
     }
@@ -158,7 +164,9 @@ public class EditPartyView extends OkCancelView {
         resulAutomaticCollectionSettings.setAddress(automaticCollectionAddressModel.getString());
         resulAutomaticCollectionSettings.setZipCode(automaticCollectionZipCodeModel.getString());
         resulAutomaticCollectionSettings.setCity(automaticCollectionCityModel.getString());
+        resulAutomaticCollectionSettings.setCountry(automaticCollectionCountryModel.getString());
         resulAutomaticCollectionSettings.setIban(automaticCollectionIbanModel.getString());
+        resulAutomaticCollectionSettings.setMandateDate(automaticCollectionMandateDateModel.getDate());
 
         requestClose();
     }

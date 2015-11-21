@@ -35,6 +35,7 @@ class SepaFileGenerator {
                          Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings, String description)
             throws Exception {
         ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
 
         DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
@@ -51,6 +52,7 @@ class SepaFileGenerator {
         Amount totalAmount = invoices.stream().map(i -> i.getAmountToBePaid()).reduce(Amount.getZero(Currency.getInstance("EUR")), (a, b) -> a.add(b));
         String formattedAmount = amountFormat.formatAmountWithoutCurrency(totalAmount);
         addElement(doc, groupHeader, "CtrlSum", formattedAmount);
+        addElement(doc, groupHeader, "InitgPty/Nm", bookkeeping.getOrganizationName());
 
         Element paymentInformationIdentification = addElement(doc, cstmrDrctDbtInitn, "PmtInf");
         addElement(doc, paymentInformationIdentification, "PmtInfId", settings.getSequenceNumber());
@@ -70,7 +72,6 @@ class SepaFileGenerator {
         addElement(doc, paymentInformationIdentification, "ReqdColltnDt", dateFormat.format(collectionDate));
 
         Element creditor = addElement(doc, paymentInformationIdentification, "Cdtr");
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         addElement(doc, creditor, "Nm", bookkeeping.getOrganizationName());
 
         Element postalAddress = addElement(doc, creditor, "PstlAdr");
@@ -124,6 +125,10 @@ class SepaFileGenerator {
         Element directDebitTransaction = addElement(doc, ddTransactionInformation, "DrctDbtTx");
         Element mandateRelatedInformation = addElement(doc, directDebitTransaction, "MndtRltdInf");
         addElement(doc, mandateRelatedInformation, "MndtId", toAlphaNumerical(party.getId(), 35));
+        if (partyAutomaticCollectionSettings.getMandateDate() == null) {
+            throw new IllegalArgumentException("Party " + party.toString() + " has no mandate date specified, " +
+                    "which is required to generate a SEPA file");
+        }
         addElement(doc, mandateRelatedInformation, "DtOfSgntr", dateFormat.format(partyAutomaticCollectionSettings.getMandateDate()));
         addElement(doc, mandateRelatedInformation, "AmdmntInd", "false");
 
@@ -131,9 +136,9 @@ class SepaFileGenerator {
         addElement(doc, other, "Id", toAlphaNumerical(settings.getAutomaticCollectionContractNumber(), 35));
         addElement(doc, other, "SchmeNm/Prtry", "SEPA");
 
-        addElement(doc, directDebitTransaction, "DbtrAgt/FinInstnId/Othr/Id", "NOTPROVIDED");
+        addElement(doc, ddTransactionInformation, "DbtrAgt/FinInstnId/Othr/Id", "NOTPROVIDED");
 
-        Element debtor = addElement(doc, directDebitTransaction, "Dbtr");
+        Element debtor = addElement(doc, ddTransactionInformation, "Dbtr");
         addElement(doc, debtor, "Nm", partyAutomaticCollectionSettings.getName());
         Element postalAddress = addElement(doc, debtor, "PstlAdr");
         addElement(doc, postalAddress, "Ctry", partyAutomaticCollectionSettings.getCountry());

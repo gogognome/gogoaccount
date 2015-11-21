@@ -3,13 +3,16 @@ package nl.gogognome.gogoaccount.gui;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.document.DocumentService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.document.DocumentService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
 import nl.gogognome.gogoaccount.gui.views.*;
-import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.gogoaccount.services.AddressLabelPrinter;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -22,7 +25,6 @@ import nl.gogognome.lib.util.Factory;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -140,8 +142,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miViewPartyOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", this);
 
         // the reporting menu
-        JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", this);
-        JMenuItem miGenerateReport = widgetFactory.createMenuItem("mi.generateReport", this);
+        JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", e -> handleGenerateInvoices());
+        JMenuItem miGenerateReport = widgetFactory.createMenuItem("mi.generateReport", e -> handleGenerateReport());
+        JMenuItem miGenerateAutoCollectionFile = widgetFactory.createMenuItem("mi.generateAutoCollectionFile", e -> handleGenerateAutomaticCollectionFile());
 //		JMenuItem miPrintAddressLabels = wf.createMenuItem("mi.printAddressLabels", this);
 
         // the help menu
@@ -167,6 +170,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
         reportingMenu.add(miGenerateInvoices);
         reportingMenu.add(miGenerateReport);
+        reportingMenu.add(miGenerateAutoCollectionFile);
         // TODO: Improve printing of address labels before enabling this menu item
 //		reportingMenu.add(miPrintAddressLabels);
 
@@ -200,8 +204,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.editJournals".equals(command)) { run(this, () -> handleEditJournals()); }
         if ("mi.addInvoices".equals(command)) { run(this, () -> handleAddInvoices()); }
         if ("mi.editParties".equals(command)) { handleEditParties(); }
-        if ("mi.generateInvoices".equals(command)) { run(this, () -> handleGenerateInvoices()); }
-        if ("mi.generateReport".equals(command)) { run(this, () -> handleGenerateReport()); }
         if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
         if ("mi.about".equals(command)) { handleAbout(); }
     }
@@ -226,7 +228,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             @Override
             public boolean accept(File f) {
                 String filename = f.getName().toLowerCase();
-                return filename.endsWith(".xml") || filename.endsWith(".h2.db");
+                return f.isDirectory() || filename.endsWith(".xml") || filename.endsWith(".h2.db");
             }
 
             @Override
@@ -309,7 +311,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         handleViewBalanceAndOperationalResult();
     }
 
-    /** Handles the exit event. */
     private void handleExit() {
         document.removeListener(this);
         dispose();
@@ -332,38 +333,27 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleAddJournal() throws ServiceException {
-        if (!configurationService.hasAccounts(document)) {
-            MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
-        } else {
+        ensureAccountsPresent(() -> {
             EditJournalView view = new EditJournalView(document, "ajd.title", null, null);
             ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();
-        }
+        });
     }
 
     private void handleEditJournals() throws ServiceException {
-        if (!configurationService.hasAccounts(document)) {
-            MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
-        } else {
-            openView(EditJournalsView.class);
-        }
+        ensureAccountsPresent(() -> openView(EditJournalsView.class));
     }
 
-    private void handleGenerateInvoices() throws ServiceException {
-        if (!configurationService.hasAccounts(document)) {
-            MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
-        } else {
-            openView(InvoiceToOdtView.class);
-        }
+    private void handleGenerateInvoices() {
+        ensureAccountsPresent(() -> openView(InvoiceToOdtView.class));
     }
 
-    private void handleGenerateReport() throws ServiceException {
-        if (!configurationService.hasAccounts(document)) {
-            MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
-        } else {
-            GenerateReportController controller = new GenerateReportController(document, this);
-            controller.execute();
-        }
+    private void handleGenerateReport() {
+        ensureAccountsPresent(() -> new GenerateReportController(document, this).execute());
+    }
+
+    private void handleGenerateAutomaticCollectionFile() {
+        ensureAccountsPresent(() -> openView(GenerateAutomaticCollectionFileView.class));
     }
 
     private void handlePrintAddressLabels() {
@@ -383,17 +373,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleAddInvoices() throws ServiceException {
-        if (!configurationService.hasAccounts(document)) {
-            MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
-        } else {
-            openView(InvoiceGeneratorView.class);
-        }
+        ensureAccountsPresent(() -> openView(InvoiceGeneratorView.class));
     }
 
-    /** Shows the about dialog. */
     private void handleAbout() {
-        AboutView aboutView = new AboutView();
-        new ViewDialog(this, aboutView).showDialog();
+        new ViewDialog(this, new AboutView()).showDialog();
     }
 
     private void openView(Class<? extends View> viewClass) {
@@ -435,6 +419,16 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             view.removeViewListener(this);
             openViews.remove(view.getClass());
         }
+    }
+
+    private void ensureAccountsPresent(HandleException.RunnableWithException runnable) {
+        HandleException.for_(this, () -> {
+            if (!configurationService.hasAccounts(document)) {
+                MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
+            } else {
+                runnable.run();
+            }
+        });
     }
 
 }

@@ -8,7 +8,13 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 import java.io.File;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,8 +47,8 @@ public class AutomaticCollectionService {
         });
     }
 
-    public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate)
-            throws ServiceException {
+    public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate,
+                                                  String description) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             AutomaticCollectionSettings settings = getSettings(document);
             PartyService partyService = ObjectFactory.create(PartyService.class);
@@ -50,10 +56,24 @@ public class AutomaticCollectionService {
             new SepaFileGenerator().generate(document, settings, invoices, fileToCreate, collectionDate,
                     partyService.getIdToParty(document, partyIds),
                     new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds),
-                    "Contribution My Club 2015");
+                    description);
 
             settings.setSequenceNumber(settings.getSequenceNumber() + 1);
             setSettings(document, settings);
         });
+    }
+
+    public void validateSepaAutomaticCollectionFile(File sepaFile) throws ServiceException {
+        try {
+            SchemaFactory factory =
+                    SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            try (InputStream xsdStream = getClass().getResourceAsStream("/sepa/pain.008.001.02.xsd")) {
+                Schema schema = factory.newSchema(new StreamSource(xsdStream));
+                Validator validator = schema.newValidator();
+                validator.validate(new StreamSource(sepaFile));
+            }
+        } catch (Exception e) {
+            throw new ServiceException("SEPA file " + sepaFile.getAbsolutePath() + " is not valid: " + e.getMessage());
+        }
     }
 }

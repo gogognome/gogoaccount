@@ -21,6 +21,7 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.CurrencyUtil;
 import nl.gogognome.lib.util.Factory;
+import nl.gogognome.lib.util.StringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -208,8 +209,11 @@ public class ConfigureBookkeepingView extends View {
             settings.setBic(bicModel.getString());
             settings.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
             try {
-                settings.setSequenceNumber(Long.parseLong(sequenceNumberModel.getString()));
+                if (!StringUtil.isNullOrEmpty(sequenceNumberModel.getString())) {
+                    settings.setSequenceNumber(Long.parseLong(sequenceNumberModel.getString()));
+                }
             } catch (Exception e) {
+                MessageDialog.showErrorMessage(this, "gen.invalidNumber", textResource.getString("ConfigureBookkeepingView.sequenceNumber"));
                 settings.setSequenceNumber(0);
                 // probably incorrect syntax
             }

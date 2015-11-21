@@ -73,7 +73,7 @@ public abstract class AbstractBookkeepingTest {
         settings.setIban("NL37RABO1234567890");
         settings.setSequenceNumber(100L);
         settings.setAutomaticCollectionContractNumber("CONTR12345");
-        settings.setBic("BIC1234");
+        settings.setBic("RABONL2U");
         automaticCollectionService.setSettings(document, settings);
 
         PartyService partyService = new PartyService();

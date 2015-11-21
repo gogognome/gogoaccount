@@ -3,8 +3,10 @@ package nl.gogognome.gogoaccount.component.automaticcollection;
 import nl.gogognome.dataaccess.dao.AbstractDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.lib.util.StringUtil;
 
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.Map;
 
 class AutomaticCollectionSettingsDAO extends AbstractDAO {
@@ -17,6 +19,10 @@ class AutomaticCollectionSettingsDAO extends AbstractDAO {
         AutomaticCollectionSettings settings = new AutomaticCollectionSettings();
         settings.setIban(findValue("iban"));
         settings.setBic(findValue("bic"));
+        String sequenceNumber = findValue("sequenceNumber");
+        if (!StringUtil.isNullOrEmpty(sequenceNumber)) {
+            settings.setSequenceNumber(Long.parseLong(sequenceNumber));
+        }
         settings.setAutomaticCollectionContractNumber(findValue("automaticCollectionContractNumber"));
         return settings;
     }
@@ -24,6 +30,7 @@ class AutomaticCollectionSettingsDAO extends AbstractDAO {
     public void setSettings(AutomaticCollectionSettings settings) throws SQLException {
         setValue("iban", settings.getIban());
         setValue("bic", settings.getBic());
+        setValue("sequenceNumber", Long.toString(settings.getSequenceNumber()));
         setValue("automaticCollectionContractNumber", settings.getAutomaticCollectionContractNumber());
     }
 

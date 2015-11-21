@@ -100,7 +100,7 @@ public class InvoiceBean extends JPanel {
         ViewDialog dialog = new ViewDialog(parent, invoicesView);
         dialog.showDialog();
         if (invoicesView.getSelectedInvoices() != null) {
-            setSelectedInvoice(invoicesView.getSelectedInvoices()[0]);
+            setSelectedInvoice(invoicesView.getSelectedInvoices().get(0));
         }
     }
 

@@ -1,9 +1,9 @@
 package nl.gogognome.gogoaccount.gui.views;
 
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.ActionWrapper;
@@ -18,13 +18,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.*;
 
 /**
  * This class implements a view for selecting and editing invoices.
  *
  * TODO: implement editing invoices
- *
- * @author Sander Kooijmans
  */
 public class InvoiceEditAndSelectionView extends View {
 
@@ -47,7 +46,7 @@ public class InvoiceEditAndSelectionView extends View {
     private boolean multiSelectionEnabled;
 
     /** The invoices selected by the user or <code>null</code> if no invoice has been selected. */
-    private Invoice[] selectedInvoices;
+    private java.util.List<Invoice> selectedInvoices;
 
     private JTextField tfId;
     private JTextField tfName;
@@ -191,9 +190,6 @@ public class InvoiceEditAndSelectionView extends View {
         return result;
     }
 
-    /**
-     * @see nl.gogognome.lib.swing.views.View#onClose()
-     */
     @Override
     public void onClose() {
         tfId.removeFocusListener(focusListener);
@@ -231,9 +227,9 @@ public class InvoiceEditAndSelectionView extends View {
      */
     private void onSelectInvoice() {
         int rows[] = SwingUtils.getSelectedRowsConvertedToModel(table);
-        selectedInvoices = new Invoice[rows.length];
-        for (int i = 0; i < rows.length; i++) {
-            selectedInvoices[i] = invoicesTableModel.getRow(rows[i]);
+        selectedInvoices = new ArrayList<>();
+        for (int row : rows) {
+            selectedInvoices.add(invoicesTableModel.getRow(row));
         }
         closeAction.actionPerformed(null);
     }
@@ -242,7 +238,7 @@ public class InvoiceEditAndSelectionView extends View {
      * Gets the invoices that were selected by the user.
      * @return the invoices or <code>null</code> if no invoice has been selected
      */
-    public Invoice[] getSelectedInvoices() {
+    public java.util.List<Invoice> getSelectedInvoices() {
         return selectedInvoices;
     }
 
