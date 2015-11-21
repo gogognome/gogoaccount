@@ -1,8 +1,13 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -30,6 +35,10 @@ public class GenerateAutomaticCollectionFileView extends View {
 
     private FileModel sepaFileModel = new FileModel();
     private DateModel collectionDateModel = new DateModel(new Date());
+    private StringModel journalEntryIdModel = new StringModel();
+    private StringModel journalEntryDescriptionModel = new StringModel();
+    private nl.gogognome.lib.swing.models.ListModel<Account> bankAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
+    private nl.gogognome.lib.swing.models.ListModel<Account> debtorAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
 
     public GenerateAutomaticCollectionFileView(Document document) {
         this.document = document;
@@ -46,23 +55,38 @@ public class GenerateAutomaticCollectionFileView extends View {
 
     @Override
     public void onInit() {
-        InputFieldsColumn vep = new InputFieldsColumn();
-        addCloseable(vep);
+        try {
+            List<Account> accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
+            bankAccountListModel.setItems(accounts);
+            debtorAccountListModel.setItems(accounts);
+            debtorAccountListModel.setSelectedItem(accounts.stream().filter(a -> a.getType() == AccountType.DEBTOR).findFirst().orElse(null), null);
 
-        vep.addField("generateAutomaticCollectionFileView.sepaFileName", sepaFileModel);
-        vep.addField("generateAutomaticCollectionFileView.collectionDate", collectionDateModel);
-        collectionDateModel.setDate(DateUtil.addDays(new Date(), 1), null);
+            InputFieldsColumn vep = new InputFieldsColumn();
+            addCloseable(vep);
 
-        // Create button panel
-        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
-        buttonPanel.addButton("generateAutomaticCollectionFileView.generate", new GenerateAction());
+            vep.addField("generateAutomaticCollectionFileView.sepaFileName", sepaFileModel);
+            vep.addField("generateAutomaticCollectionFileView.collectionDate", collectionDateModel);
+            vep.addField("generateAutomaticCollectionFileView.journalEntryId", journalEntryIdModel);
+            vep.addField("generateAutomaticCollectionFileView.journalEntryDescription", journalEntryDescriptionModel);
+            vep.addComboBoxField("generateAutomaticCollectionFileView.bankAccount", bankAccountListModel, new AccountFormatter());
+            vep.addComboBoxField("generateAutomaticCollectionFileView.debtorAccount", debtorAccountListModel, new AccountFormatter());
+            collectionDateModel.setDate(DateUtil.addDays(new Date(), 1), null);
 
-        // Add panels to view
-        setLayout(new BorderLayout());
-        add(vep, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
+            // Create button panel
+            ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
+            buttonPanel.addButton("generateAutomaticCollectionFileView.generate", new GenerateAction());
 
-        setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("generateAutomaticCollectionFileView.title"));
+            // Add panels to view
+            setLayout(new BorderLayout());
+            add(widgetFactory.createLabel("generateAutomaticCollectionFileView.helpText.html"), BorderLayout.NORTH);
+            add(vep, BorderLayout.CENTER);
+            add(buttonPanel, BorderLayout.SOUTH);
+
+            setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("generateAutomaticCollectionFileView.title"));
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+            requestClose();
+        }
     }
 
     private void generateFile() {
@@ -78,13 +102,24 @@ public class GenerateAutomaticCollectionFileView extends View {
                 return;
             }
 
+            if (bankAccountListModel.getSelectedItem() == null) {
+                MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noBankAccountSelected");
+                return;
+            }
+
+            if (debtorAccountListModel.getSelectedItem() == null) {
+                MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noDebtorAccountSelected");
+                return;
+            }
+
             // Let the user select the invoices that should be added to the SEPA file.
             InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, true, true);
             ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {
                 SepaFileGeneratorTask task = new SepaFileGeneratorTask(document, sepaFileModel.getFile(),
-                        collectionDateModel.getDate(), invoicesView.getSelectedInvoices());
+                        collectionDateModel.getDate(), invoicesView.getSelectedInvoices(), journalEntryDescriptionModel.getString(),
+                        journalEntryIdModel.getString(), bankAccountListModel.getSelectedItem(), debtorAccountListModel.getSelectedItem());
 
                 TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
                         textResource.getString("generateAutomaticCollectionFileView.progressDialogTitle"));
@@ -106,24 +141,38 @@ public class GenerateAutomaticCollectionFileView extends View {
         private final File sepaFile;
         private final Date collectionDate;
         private final java.util.List<Invoice> invoices;
+        private final String journalEntryDescription;
+        private final String journalEntryId;
+        private final Account bankAccount;
+        private final Account debtorAccount;
 
-        public SepaFileGeneratorTask(Document document, File sepaFile, Date collectionDate, List<Invoice> invoices) {
+        public SepaFileGeneratorTask(Document document, File sepaFile, Date collectionDate, List<Invoice> invoices,
+                                     String journalEntryDescription, String journalEntryId, Account bankAccount, Account debtorAccount) {
             this.document = document;
             this.sepaFile = sepaFile;
             this.collectionDate = collectionDate;
             this.invoices = invoices;
+            this.journalEntryDescription = journalEntryDescription;
+            this.journalEntryId = journalEntryId;
+            this.bankAccount = bankAccount;
+            this.debtorAccount = debtorAccount;
         }
 
         @Override
         public Object execute(TaskProgressListener progressListener) throws Exception {
-            progressListener.onProgressUpdate(50);
+            progressListener.onProgressUpdate(40);
 
             AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
             automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate);
 
-            progressListener.onProgressUpdate(80);
+            progressListener.onProgressUpdate(70);
 
             automaticCollectionService.validateSepaAutomaticCollectionFile(sepaFile);
+
+            progressListener.onProgressUpdate(90);
+
+            automaticCollectionService.createJournalEntryForAutomaticCollection(document, collectionDate, journalEntryId,
+                    journalEntryDescription, invoices, bankAccount, debtorAccount);
 
             progressListener.onProgressUpdate(100);
 

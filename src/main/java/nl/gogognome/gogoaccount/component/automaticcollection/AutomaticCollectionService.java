@@ -1,13 +1,18 @@
 package nl.gogognome.gogoaccount.component.automaticcollection;
 
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 
+import javax.print.Doc;
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -15,11 +20,11 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 public class AutomaticCollectionService {
 
@@ -74,5 +79,31 @@ public class AutomaticCollectionService {
         } catch (Exception e) {
             throw new ServiceException("SEPA file " + sepaFile.getAbsolutePath() + " is not valid: " + e.getMessage());
         }
+    }
+
+    public void createJournalEntryForAutomaticCollection(Document document, Date collectionDate, String journalEntryId,
+                                                         String journalEntryDescription, List<Invoice> invoices,
+                                                         Account bankAccount, Account debtorAccount) throws ServiceException {
+        JournalEntry journalEntry = new JournalEntry();
+        journalEntry.setDate(collectionDate);
+        journalEntry.setId(journalEntryId);
+        journalEntry.setDescription(journalEntryDescription);
+
+        List<JournalEntryDetail> details = new ArrayList<>();
+        for (Invoice invoice : invoices) {
+            JournalEntryDetail detail = new JournalEntryDetail();
+            detail.setAccountId(bankAccount.getId());
+            detail.setAmount(invoice.getAmountToBePaid());
+            detail.setDebet(true);
+            detail.setInvoiceId(invoice.getId());
+            details.add(detail);
+
+            detail = new JournalEntryDetail();
+            detail.setAccountId(debtorAccount.getId());
+            detail.setAmount(invoice.getAmountToBePaid());
+            detail.setDebet(false);
+            details.add(detail);
+        }
+        ObjectFactory.create(LedgerService.class).createJournalEntry(document, journalEntry, details);
     }
 }
