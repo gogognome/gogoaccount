@@ -4,7 +4,9 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
@@ -32,7 +34,7 @@ class SepaFileGenerator {
 
     public void generate(Document document, AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
                          Date collectionDate, Map<String, Party> idToParty,
-                         Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings, String description)
+                         Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings)
             throws Exception {
         ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
@@ -101,7 +103,8 @@ class SepaFileGenerator {
                 throw new IllegalArgumentException("Party " + party.toString() + " has no automatic collection settings. " +
                         "Those settings are required to generate a SEPA file");
             }
-            addInvoiceElements(doc, paymentInformationIdentification, invoice, party, partyAutomaticCollectionSettings, settings, description);
+            addInvoiceElements(doc, paymentInformationIdentification, invoice, party, partyAutomaticCollectionSettings, settings,
+                    getInvoiceDescription(document, invoice));
         }
 
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -111,6 +114,10 @@ class SepaFileGenerator {
             StreamResult streamResult = new StreamResult(outputStream);
             transformer.transform(new DOMSource(doc), streamResult);
         }
+    }
+
+    private String getInvoiceDescription(Document document, Invoice invoice) throws ServiceException {
+        return ObjectFactory.create(InvoiceService.class).findDescriptions(document, invoice).get(0);
     }
 
     private void addInvoiceElements(org.w3c.dom.Document doc, Element parent, Invoice invoice, Party party,
@@ -153,7 +160,7 @@ class SepaFileGenerator {
 
         addElement(doc, ddTransactionInformation, "DbtrAcct/Id/IBAN", partyAutomaticCollectionSettings.getIban());
         addElement(doc, ddTransactionInformation, "Purp/Cd", "OTHR");
-        addElement(doc, ddTransactionInformation, "RmtInf/Ustrd", description);
+        addElement(doc, ddTransactionInformation, "RmtInf/Ustrd", toAlphaNumerical(description, 140));
     }
 
     private Element addElement(org.w3c.dom.Document doc, Element element, String childElementName) {

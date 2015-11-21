@@ -32,7 +32,7 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
         try {
             List<Invoice> invoices = invoiceService.findAllInvoices(document);
             automaticCollectionService.createSepaAutomaticCollectionFile(document, file, invoices,
-                    DateUtil.createDate(2015, 11, 24), "Contribution My Club 2015");
+                    DateUtil.createDate(2015, 11, 24));
 
             automaticCollectionService.validateSepaAutomaticCollectionFile(file);
         } finally {

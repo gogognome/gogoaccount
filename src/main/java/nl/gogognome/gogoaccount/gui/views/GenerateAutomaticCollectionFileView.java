@@ -30,7 +30,6 @@ public class GenerateAutomaticCollectionFileView extends View {
 
     private FileModel sepaFileModel = new FileModel();
     private DateModel collectionDateModel = new DateModel(new Date());
-    private StringModel concerningModel = new StringModel();
 
     public GenerateAutomaticCollectionFileView(Document document) {
         this.document = document;
@@ -52,7 +51,6 @@ public class GenerateAutomaticCollectionFileView extends View {
 
         vep.addField("generateAutomaticCollectionFileView.sepaFileName", sepaFileModel);
         vep.addField("generateAutomaticCollectionFileView.collectionDate", collectionDateModel);
-        vep.addField("generateAutomaticCollectionFileView.concerning", concerningModel);
         collectionDateModel.setDate(DateUtil.addDays(new Date(), 1), null);
 
         // Create button panel
@@ -86,7 +84,7 @@ public class GenerateAutomaticCollectionFileView extends View {
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {
                 SepaFileGeneratorTask task = new SepaFileGeneratorTask(document, sepaFileModel.getFile(),
-                        collectionDateModel.getDate(), concerningModel.getString(), invoicesView.getSelectedInvoices());
+                        collectionDateModel.getDate(), invoicesView.getSelectedInvoices());
 
                 TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
                         textResource.getString("generateAutomaticCollectionFileView.progressDialogTitle"));
@@ -107,14 +105,12 @@ public class GenerateAutomaticCollectionFileView extends View {
         private final Document document;
         private final File sepaFile;
         private final Date collectionDate;
-        private final String description;
         private final java.util.List<Invoice> invoices;
 
-        public SepaFileGeneratorTask(Document document, File sepaFile, Date collectionDate, String description, List<Invoice> invoices) {
+        public SepaFileGeneratorTask(Document document, File sepaFile, Date collectionDate, List<Invoice> invoices) {
             this.document = document;
             this.sepaFile = sepaFile;
             this.collectionDate = collectionDate;
-            this.description = description;
             this.invoices = invoices;
         }
 
@@ -123,7 +119,7 @@ public class GenerateAutomaticCollectionFileView extends View {
             progressListener.onProgressUpdate(50);
 
             AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
-            automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate, description);
+            automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate);
 
             progressListener.onProgressUpdate(80);
 

@@ -6,8 +6,6 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.lib.util.StringUtil;
 
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.util.Map;
 
 class AutomaticCollectionSettingsDAO extends AbstractDAO {
 

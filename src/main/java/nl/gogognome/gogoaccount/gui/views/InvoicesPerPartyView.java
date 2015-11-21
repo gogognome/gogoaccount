@@ -47,9 +47,6 @@ import nl.gogognome.lib.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * This view shows all invoices per party or all invoices for a single party.
- */
 public class InvoicesPerPartyView extends View {
 
 	private static final long serialVersionUID = 1L;

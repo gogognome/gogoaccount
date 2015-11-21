@@ -47,16 +47,15 @@ public class AutomaticCollectionService {
         });
     }
 
-    public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate,
-                                                  String description) throws ServiceException {
+    public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate)
+            throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             AutomaticCollectionSettings settings = getSettings(document);
             PartyService partyService = ObjectFactory.create(PartyService.class);
             List<String> partyIds = invoices.stream().map(i -> i.getConcerningPartyId()).collect(toList());
             new SepaFileGenerator().generate(document, settings, invoices, fileToCreate, collectionDate,
                     partyService.getIdToParty(document, partyIds),
-                    new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds),
-                    description);
+                    new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds));
 
             settings.setSequenceNumber(settings.getSequenceNumber() + 1);
             setSettings(document, settings);
