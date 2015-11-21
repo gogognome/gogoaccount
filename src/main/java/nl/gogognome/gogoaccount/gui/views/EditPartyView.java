@@ -1,9 +1,10 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.components.PartyTypeBean;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -107,6 +109,13 @@ public class EditPartyView extends OkCancelView {
             automaticCollectionCountryModel.setString(initialAutomaticCollectionSettings.getCountry());
             automaticCollectionIbanModel.setString(initialAutomaticCollectionSettings.getIban());
             automaticCollectionMandateDateModel.setDate(initialAutomaticCollectionSettings.getMandateDate());
+        } else if (initialParty != null) {
+            automaticCollectionNameModel.setString(initialParty.getName());
+            automaticCollectionAddressModel.setString(initialParty.getAddress());
+            automaticCollectionZipCodeModel.setString(initialParty.getZipCode());
+            automaticCollectionCityModel.setString(initialParty.getCity());
+            automaticCollectionCountryModel.setString(ObjectFactory.create(ConfigurationService.class).getBookkeeping(document).getOrganizationCountry());
+            automaticCollectionMandateDateModel.setDate(new Date());
         }
 	}
 
