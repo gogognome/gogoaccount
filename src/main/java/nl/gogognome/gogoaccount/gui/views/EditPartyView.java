@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -52,7 +52,7 @@ public class EditPartyView extends OkCancelView {
     private final ListModel<String> typeListModel = new ListModel<>();
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
-    private final JTextArea taRemarks = new JTextArea(5, 30);
+    private final JTextArea taRemarks = new JTextArea(5, 40);
 
     private final Party initialParty;
     private final PartyAutomaticCollectionSettings initialAutomaticCollectionSettings;
@@ -109,19 +109,14 @@ public class EditPartyView extends OkCancelView {
             automaticCollectionCountryModel.setString(initialAutomaticCollectionSettings.getCountry());
             automaticCollectionIbanModel.setString(initialAutomaticCollectionSettings.getIban());
             automaticCollectionMandateDateModel.setDate(initialAutomaticCollectionSettings.getMandateDate());
-        } else if (initialParty != null) {
-            automaticCollectionNameModel.setString(initialParty.getName());
-            automaticCollectionAddressModel.setString(initialParty.getAddress());
-            automaticCollectionZipCodeModel.setString(initialParty.getZipCode());
-            automaticCollectionCityModel.setString(initialParty.getCity());
-            automaticCollectionCountryModel.setString(ObjectFactory.create(ConfigurationService.class).getBookkeeping(document).getOrganizationCountry());
-            automaticCollectionMandateDateModel.setDate(new Date());
         }
 	}
 
     @Override
     protected JComponent createCenterComponent() {
+        JPanel panel = new JPanel(new BorderLayout());
         InputFieldsColumn ifc = new InputFieldsColumn();
+        ifc.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.generalInformation"));
         addCloseable(ifc);
 
         ifc.addField("editPartyView.id", idModel);
@@ -140,16 +135,27 @@ public class EditPartyView extends OkCancelView {
         ifc.addVariableSizeField("editPartyView.type", typesBean);
 
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
+        panel.add(ifc, BorderLayout.NORTH);
 
-        ifc.addField("editPartyView.autoCollectionName", automaticCollectionNameModel);
-        ifc.addField("editPartyView.autoCollectionAddress", automaticCollectionAddressModel);
-        ifc.addField("editPartyView.autoCollectionZipCode", automaticCollectionZipCodeModel);
-        ifc.addField("editPartyView.autoCollectionCity", automaticCollectionCityModel);
-        ifc.addField("editPartyView.autoCollectionCountry", automaticCollectionCountryModel);
-        ifc.addField("editPartyView.autoCollectionIban", automaticCollectionIbanModel);
-        ifc.addField("editPartyView.autoCollectionMandateDate", automaticCollectionMandateDateModel);
+        try {
+            if (ObjectFactory.create(ConfigurationService.class).getBookkeeping(document).isEnableAutomaticCollection()) {
+                InputFieldsColumn automaticCollectionFields = new InputFieldsColumn();
+                automaticCollectionFields.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.automaticCollectionInformation"));
+                automaticCollectionFields.addField("editPartyView.autoCollectionName", automaticCollectionNameModel);
+                automaticCollectionFields.addField("editPartyView.autoCollectionAddress", automaticCollectionAddressModel);
+                automaticCollectionFields.addField("editPartyView.autoCollectionZipCode", automaticCollectionZipCodeModel);
+                automaticCollectionFields.addField("editPartyView.autoCollectionCity", automaticCollectionCityModel);
+                automaticCollectionFields.addField("editPartyView.autoCollectionCountry", automaticCollectionCountryModel);
+                automaticCollectionFields.addField("editPartyView.autoCollectionIban", automaticCollectionIbanModel);
+                automaticCollectionFields.addField("editPartyView.autoCollectionMandateDate", automaticCollectionMandateDateModel);
 
-        return ifc;
+                panel.add(automaticCollectionFields, BorderLayout.SOUTH);
+            }
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+        }
+
+        return panel;
     }
 
     private void addListeners() {
