@@ -3,6 +3,7 @@ ALTER TABLE bookkeeping ADD organization_address VARCHAR2(1000);
 ALTER TABLE bookkeeping ADD organization_zip_code VARCHAR2(1000);
 ALTER TABLE bookkeeping ADD organization_city VARCHAR2(1000);
 ALTER TABLE bookkeeping ADD organization_country VARCHAR2(2);
+ALTER TABLE bookkeeping ADD enable_automatic_collection BOOLEAN;
 
 CREATE TABLE automatic_collection_settings (
   key VARCHAR2(100),
