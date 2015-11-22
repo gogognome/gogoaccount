@@ -353,7 +353,13 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleGenerateAutomaticCollectionFile() {
-        ensureAccountsPresent(() -> openView(GenerateAutomaticCollectionFileView.class));
+        HandleException.for_(this, () -> {
+            if (!configurationService.getBookkeeping(document).isEnableAutomaticCollection()) {
+                MessageDialog.showInfoMessage(this, "generateAutomaticCollectionFileView.automaticCollectionIsDisabled");
+            } else {
+                ensureAccountsPresent(() -> openView(GenerateAutomaticCollectionFileView.class));
+            }
+        });
     }
 
     private void handlePrintAddressLabels() {
