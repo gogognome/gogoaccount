@@ -16,6 +16,7 @@ public class Bookkeeping {
     private String organizationZipCode;
     private String organizationCity;
     private String organizationCountry;
+    private boolean enableAutomaticCollection;
 
     public String getDescription() {
         return description;
@@ -79,5 +80,13 @@ public class Bookkeeping {
 
     public void setStartOfPeriod(Date startOfPeriod) {
         this.startOfPeriod = startOfPeriod;
+    }
+
+    public boolean isEnableAutomaticCollection() {
+        return enableAutomaticCollection;
+    }
+
+    public void setEnableAutomaticCollection(boolean enableAutomaticCollection) {
+        this.enableAutomaticCollection = enableAutomaticCollection;
     }
 }

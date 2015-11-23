@@ -25,10 +25,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * This view allows the user to edit a journal item.
- */
-public class EditJournalItemView extends OkCancelView {
+public class EditJournalEntryDetailView extends OkCancelView {
 
     private static final long serialVersionUID = 1L;
 
@@ -52,7 +49,7 @@ public class EditJournalItemView extends OkCancelView {
      * @param document the database
      * @param item the item used to fill in the initial values of the fields.
      */
-    public EditJournalItemView(Document document, JournalEntryDetail item) {
+    public EditJournalEntryDetailView(Document document, JournalEntryDetail item) {
         this.document = document;
         this.itemToBeEdited = item;
     }
