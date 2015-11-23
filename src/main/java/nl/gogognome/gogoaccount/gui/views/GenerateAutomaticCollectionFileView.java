@@ -160,22 +160,9 @@ public class GenerateAutomaticCollectionFileView extends View {
 
         @Override
         public Object execute(TaskProgressListener progressListener) throws Exception {
-            progressListener.onProgressUpdate(40);
-
             AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
-            automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate);
-
-            progressListener.onProgressUpdate(70);
-
+            automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate, progressListener);
             automaticCollectionService.validateSepaAutomaticCollectionFile(sepaFile);
-
-            progressListener.onProgressUpdate(90);
-
-            automaticCollectionService.createJournalEntryForAutomaticCollection(document, collectionDate, journalEntryId,
-                    journalEntryDescription, invoices, bankAccount, debtorAccount);
-
-            progressListener.onProgressUpdate(100);
-
             return null;
         }
     }
