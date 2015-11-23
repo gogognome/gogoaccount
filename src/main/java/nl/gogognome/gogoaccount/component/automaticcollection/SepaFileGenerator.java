@@ -100,7 +100,7 @@ class SepaFileGenerator {
             Party party = idToParty.get(invoice.getConcerningPartyId());
             PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = idToPartyAutomaticCollectionSettings.get(invoice.getConcerningPartyId());
             if (partyAutomaticCollectionSettings == null) {
-                throw new IllegalArgumentException("Party " + party.toString() + " has no automatic collection settings. " +
+                throw new ServiceException("Party " + party.toString() + " has no automatic collection settings. " +
                         "Those settings are required to generate a SEPA file");
             }
             addInvoiceElements(doc, paymentInformationIdentification, invoice, party, partyAutomaticCollectionSettings, settings,
@@ -122,11 +122,15 @@ class SepaFileGenerator {
 
     private void addInvoiceElements(org.w3c.dom.Document doc, Element parent, Invoice invoice, Party party,
                                     PartyAutomaticCollectionSettings partyAutomaticCollectionSettings, AutomaticCollectionSettings settings,
-                                    String description) {
+                                    String description) throws ServiceException {
         Element ddTransactionInformation = addElement(doc, parent, "DrctDbtTxInf");
         addElement(doc, ddTransactionInformation, "PmtId/EndToEndId", toAlphaNumerical(invoice.getId(), 35));
 
-        Element instructedAmount = addElement(doc, ddTransactionInformation, "InstdAmt", amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid()));
+        if (!invoice.getAmountToBePaid().isPositive()) {
+            throw new ServiceException("Amount to be paid must be positive.");
+        }
+        Element instructedAmount = addElement(doc, ddTransactionInformation, "InstdAmt",
+                amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid()));
         instructedAmount.setAttribute("Ccy", invoice.getAmountToBePaid().getCurrency().getCurrencyCode());
 
         Element directDebitTransaction = addElement(doc, ddTransactionInformation, "DrctDbtTx");

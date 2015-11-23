@@ -1,10 +1,9 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.components.PartyTypeBean;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -20,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +50,7 @@ public class EditPartyView extends OkCancelView {
     private final ListModel<String> typeListModel = new ListModel<>();
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
-    private final JTextArea taRemarks = new JTextArea(5, 40);
+    private final JTextArea taRemarks = new JTextArea(5, 30);
 
     private final Party initialParty;
     private final PartyAutomaticCollectionSettings initialAutomaticCollectionSettings;
@@ -114,9 +112,7 @@ public class EditPartyView extends OkCancelView {
 
     @Override
     protected JComponent createCenterComponent() {
-        JPanel panel = new JPanel(new BorderLayout());
         InputFieldsColumn ifc = new InputFieldsColumn();
-        ifc.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.generalInformation"));
         addCloseable(ifc);
 
         ifc.addField("editPartyView.id", idModel);
@@ -135,27 +131,16 @@ public class EditPartyView extends OkCancelView {
         ifc.addVariableSizeField("editPartyView.type", typesBean);
 
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
-        panel.add(ifc, BorderLayout.NORTH);
 
-        try {
-            if (ObjectFactory.create(ConfigurationService.class).getBookkeeping(document).isEnableAutomaticCollection()) {
-                InputFieldsColumn automaticCollectionFields = new InputFieldsColumn();
-                automaticCollectionFields.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.automaticCollectionInformation"));
-                automaticCollectionFields.addField("editPartyView.autoCollectionName", automaticCollectionNameModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionAddress", automaticCollectionAddressModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionZipCode", automaticCollectionZipCodeModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionCity", automaticCollectionCityModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionCountry", automaticCollectionCountryModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionIban", automaticCollectionIbanModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionMandateDate", automaticCollectionMandateDateModel);
+        ifc.addField("editPartyView.autoCollectionName", automaticCollectionNameModel);
+        ifc.addField("editPartyView.autoCollectionAddress", automaticCollectionAddressModel);
+        ifc.addField("editPartyView.autoCollectionZipCode", automaticCollectionZipCodeModel);
+        ifc.addField("editPartyView.autoCollectionCity", automaticCollectionCityModel);
+        ifc.addField("editPartyView.autoCollectionCountry", automaticCollectionCountryModel);
+        ifc.addField("editPartyView.autoCollectionIban", automaticCollectionIbanModel);
+        ifc.addField("editPartyView.autoCollectionMandateDate", automaticCollectionMandateDateModel);
 
-                panel.add(automaticCollectionFields, BorderLayout.SOUTH);
-            }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
-        }
-
-        return panel;
+        return ifc;
     }
 
     private void addListeners() {

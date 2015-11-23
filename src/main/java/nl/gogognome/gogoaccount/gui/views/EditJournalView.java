@@ -289,7 +289,7 @@ public class EditJournalView extends View {
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() throws ServiceException {
     	JournalEntryDetail defaultItem = createDefaultItemToBeAdded();
-    	EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, defaultItem);
+    	EditJournalItemView view = new EditJournalItemView(document, defaultItem);
     	ViewDialog dialog = new ViewDialog(this, view);
     	dialog.showDialog();
 
@@ -314,7 +314,7 @@ public class EditJournalView extends View {
         int row = itemsTable.getSelectedRow();
         JournalEntryDetail item = itemsTableModel.getRow(row);
         if (item != null) {
-        	EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, item);
+        	EditJournalItemView view = new EditJournalItemView(document, item);
         	ViewDialog dialog = new ViewDialog(this, view);
         	dialog.showDialog();
 

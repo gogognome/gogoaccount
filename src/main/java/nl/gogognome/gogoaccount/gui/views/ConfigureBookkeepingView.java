@@ -12,8 +12,10 @@ import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.*;
-import nl.gogognome.lib.swing.models.*;
+import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
+import nl.gogognome.lib.swing.models.ModelChangeListener;
+import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
@@ -46,7 +48,6 @@ public class ConfigureBookkeepingView extends View {
     private final StringModel organiztionZipCodeModel = new StringModel();
     private final StringModel organiztionCityModel = new StringModel();
     private final StringModel organiztionCountryModel = new StringModel();
-    private final BooleanModel enableAutomaticCollectionModel = new BooleanModel();
     private final StringModel ibanModel = new StringModel();
     private final StringModel bicModel = new StringModel();
     private final StringModel automaticCollectionContractNumberModel = new StringModel();
@@ -59,9 +60,6 @@ public class ConfigureBookkeepingView extends View {
 
     private JButton editAccountButton;
     private JButton deleteAccountButton;
-
-    private JPanel settingsPanel = new JPanel(new BorderLayout());
-    private InputFieldsColumn automaticCollectionInputFields;
 
     /**
      * Constructor.
@@ -102,7 +100,6 @@ public class ConfigureBookkeepingView extends View {
         organiztionCityModel.setString(bookkeeping.getOrganizationZipCode());
         organiztionZipCodeModel.setString(bookkeeping.getOrganizationCity());
         organiztionCountryModel.setString(bookkeeping.getOrganizationCountry());
-        enableAutomaticCollectionModel.setBoolean(bookkeeping.isEnableAutomaticCollection());
 
         AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
         ibanModel.setString(settings.getIban());
@@ -121,32 +118,19 @@ public class ConfigureBookkeepingView extends View {
         organiztionZipCodeModel.addModelChangeListener(modelChangeListener);
         organiztionCityModel.addModelChangeListener(modelChangeListener);
         organiztionCountryModel.addModelChangeListener(modelChangeListener);
-        enableAutomaticCollectionModel.addModelChangeListener(modelChangeListener);
         ibanModel.addModelChangeListener(modelChangeListener);
         bicModel.addModelChangeListener(modelChangeListener);
         automaticCollectionContractNumberModel.addModelChangeListener(modelChangeListener);
         sequenceNumberModel.addModelChangeListener(modelChangeListener);
-
-        enableAutomaticCollectionModel.addModelChangeListener(m -> updateVisibilityOfAutomaticCollectionInputFields());
-    }
-
-    private void updateVisibilityOfAutomaticCollectionInputFields() {
-        if (enableAutomaticCollectionModel.getBoolean()) {
-            settingsPanel.add(automaticCollectionInputFields, BorderLayout.SOUTH);
-        } else {
-            settingsPanel.remove(automaticCollectionInputFields);
-        }
-        validate();
     }
 
     private void addComponents() throws ServiceException {
         setLayout(new BorderLayout());
 
         InputFieldsColumn ifc = new InputFieldsColumn();
-        automaticCollectionInputFields = new InputFieldsColumn();
         addCloseable(ifc);
-        addCloseable(automaticCollectionInputFields);
-        ifc.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.generalSettings"));
+        ifc.setBorder(widgetFactory.createTitleBorderWithPadding(
+                "ConfigureBookkeepingView.generalSettings"));
 
         ifc.addField("ConfigureBookkeepingView.description", descriptionModel);
         ifc.addField("ConfigureBookkeepingView.startDate", startDateModel);
@@ -156,13 +140,10 @@ public class ConfigureBookkeepingView extends View {
         ifc.addField("ConfigureBookkeepingView.organizationZipCode", organiztionZipCodeModel);
         ifc.addField("ConfigureBookkeepingView.organizationCity", organiztionCityModel);
         ifc.addField("ConfigureBookkeepingView.organizationCountry", organiztionCountryModel);
-        ifc.addField("ConfigureBookkeepingView.enableAutomaticCollection", enableAutomaticCollectionModel);
-
-        automaticCollectionInputFields.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.automaticCollectionSettings"));
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.iban", ibanModel);
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.bic", bicModel);
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.automaticCollectionContractNumber", automaticCollectionContractNumberModel);
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.sequenceNumber", sequenceNumberModel);
+        ifc.addField("ConfigureBookkeepingView.iban", ibanModel);
+        ifc.addField("ConfigureBookkeepingView.bic", bicModel);
+        ifc.addField("ConfigureBookkeepingView.automaticCollectionContractNumber", automaticCollectionContractNumberModel);
+        ifc.addField("ConfigureBookkeepingView.sequenceNumber", sequenceNumberModel);
 
         // Create panel with accounts table
         JPanel accountsAndButtonsPanel = new JPanel(new BorderLayout());
@@ -185,10 +166,7 @@ public class ConfigureBookkeepingView extends View {
         accountsAndButtonsPanel.add(buttonPanel, BorderLayout.EAST);
 
         // Add panels to view
-        settingsPanel.add(ifc, BorderLayout.NORTH);
-        updateVisibilityOfAutomaticCollectionInputFields();
-
-        add(settingsPanel, BorderLayout.NORTH);
+        add(ifc, BorderLayout.NORTH);
         add(accountsAndButtonsPanel, BorderLayout.CENTER);
     }
 
@@ -224,25 +202,22 @@ public class ConfigureBookkeepingView extends View {
             bookkeeping.setOrganizationZipCode(organiztionZipCodeModel.getString());
             bookkeeping.setOrganizationCity(organiztionCityModel.getString());
             bookkeeping.setOrganizationCountry(organiztionCountryModel.getString());
-            bookkeeping.setEnableAutomaticCollection(enableAutomaticCollectionModel.getBoolean());
             configurationService.updateBookkeeping(document, bookkeeping);
 
-            if (enableAutomaticCollectionModel.getBoolean()) {
-                AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
-                settings.setIban(ibanModel.getString());
-                settings.setBic(bicModel.getString());
-                settings.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
-                try {
-                    if (!StringUtil.isNullOrEmpty(sequenceNumberModel.getString())) {
-                        settings.setSequenceNumber(Long.parseLong(sequenceNumberModel.getString()));
-                    }
-                } catch (Exception e) {
-                    MessageDialog.showErrorMessage(this, "gen.invalidNumber", textResource.getString("ConfigureBookkeepingView.sequenceNumber"));
-                    settings.setSequenceNumber(0);
-                    // probably incorrect syntax
+            AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
+            settings.setIban(ibanModel.getString());
+            settings.setBic(bicModel.getString());
+            settings.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
+            try {
+                if (!StringUtil.isNullOrEmpty(sequenceNumberModel.getString())) {
+                    settings.setSequenceNumber(Long.parseLong(sequenceNumberModel.getString()));
                 }
-                automaticCollectionService.setSettings(document, settings);
+            } catch (Exception e) {
+                MessageDialog.showErrorMessage(this, "gen.invalidNumber", textResource.getString("ConfigureBookkeepingView.sequenceNumber"));
+                settings.setSequenceNumber(0);
+                // probably incorrect syntax
             }
+            automaticCollectionService.setSettings(document, settings);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
