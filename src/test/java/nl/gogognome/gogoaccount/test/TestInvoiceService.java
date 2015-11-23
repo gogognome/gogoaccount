@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.test;
 
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceLineDefinition;
@@ -14,6 +15,7 @@ import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -30,10 +32,10 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount amount = createAmount(20);
-        List<InvoiceLineDefinition> lines = Arrays.asList(
-            new InvoiceLineDefinition(amount, null, configurationService.getAccount(document, "190"), true),
-            new InvoiceLineDefinition(null, amount, configurationService.getAccount(document, "400"), false));
-        invoiceService.createInvoiceAndJournalForParties(document, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
+        List<InvoiceLineDefinition> lines = Collections.singletonList(
+                new InvoiceLineDefinition(amount, configurationService.getAccount(document, "400")));
+        Account debtor = configurationService.getAccount(document, "190");
+        invoiceService.createInvoiceAndJournalForParties(document, debtor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
 
         for (Party party : parties) {
             Invoice invoice = invoiceService.getInvoice(document, "inv-" + party.getId());
@@ -47,10 +49,10 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount a = createAmount(20);
-        List<InvoiceLineDefinition> lines = Arrays.asList(
-            new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
-            new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
-        invoiceService.createInvoiceAndJournalForParties(document, "auto", parties, issueDate, "Invoice for {name}", lines);
+        List<InvoiceLineDefinition> lines = Collections.singletonList(
+                new InvoiceLineDefinition(a, configurationService.getAccount(document, "400")));
+        Account debtor = configurationService.getAccount(document, "190");
+        invoiceService.createInvoiceAndJournalForParties(document, debtor, "auto", parties, issueDate, "Invoice for {name}", lines);
 
         for (Party p : parties) {
             InvoiceSearchCriteria searchCriteria = new InvoiceSearchCriteria();
@@ -69,50 +71,49 @@ public class TestInvoiceService extends AbstractBookkeepingTest {
     public void cannotCreateInvoicesWithoutAmountToBePaidSelected() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        Amount a = createAmount(20);
-        List<InvoiceLineDefinition> lines = Arrays.asList(
-            new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), false),
-            new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
+        List<InvoiceLineDefinition> lines = Collections.singletonList(
+                new InvoiceLineDefinition(null, configurationService.getAccount(document, "400")));
 
-        invoiceService.createInvoiceAndJournalForParties(document, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
+        Account debtor = configurationService.getAccount(document, "190");
+        invoiceService.createInvoiceAndJournalForParties(document, debtor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
     }
 
     @Test(expected = ServiceException.class)
-    public void cannotCreateInvoicesWithMultipleAmountToBePaidSelected() throws Exception {
+    public void cannotCreateInvoicesWithoutAmountOnSingleLine() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount a = createAmount(20);
         List<InvoiceLineDefinition> lines = Arrays.asList(
-            new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
-            new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), true));
+            new InvoiceLineDefinition(null, configurationService.getAccount(document, "400")),
+            new InvoiceLineDefinition(a, configurationService.getAccount(document, "400")));
 
-        invoiceService.createInvoiceAndJournalForParties(document, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
+        Account debtor = configurationService.getAccount(document, "190");
+        invoiceService.createInvoiceAndJournalForParties(document, debtor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
     }
 
     @Test(expected = ServiceException.class)
-    public void cannotCreateInvoicesWithoutDebetOrCreditAmountOnSingleLine() throws Exception {
+    public void cannotCreateInvoicesWithoutDebtorOrCreditor() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount a = createAmount(20);
         List<InvoiceLineDefinition> lines = Arrays.asList(
-            new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
-            new InvoiceLineDefinition(null, null, configurationService.getAccount(document, "190"), false),
-            new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
+                new InvoiceLineDefinition(null, configurationService.getAccount(document, "400")),
+                new InvoiceLineDefinition(a, configurationService.getAccount(document, "400")));
 
-        invoiceService.createInvoiceAndJournalForParties(document, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
+        invoiceService.createInvoiceAndJournalForParties(document, null, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
     }
 
     @Test(expected = ServiceException.class)
-    public void cannotCreateInvoicesWithDebetAndCreditAmountOnSingleLine() throws Exception {
+    public void cannotCreateInvoicesWithoutDebtorOrCreditor2() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount a = createAmount(20);
         List<InvoiceLineDefinition> lines = Arrays.asList(
-            new InvoiceLineDefinition(a, null, configurationService.getAccount(document, "190"), true),
-            new InvoiceLineDefinition(a, a, configurationService.getAccount(document, "190"), false),
-            new InvoiceLineDefinition(null, a, configurationService.getAccount(document, "400"), false));
+                new InvoiceLineDefinition(null, configurationService.getAccount(document, "400")),
+                new InvoiceLineDefinition(a, configurationService.getAccount(document, "400")));
 
-        invoiceService.createInvoiceAndJournalForParties(document, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
+        Account nonDebtorAndNonCreditor = configurationService.getAccount(document, "400");
+        invoiceService.createInvoiceAndJournalForParties(document, nonDebtorAndNonCreditor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines);
     }
 
     @Test

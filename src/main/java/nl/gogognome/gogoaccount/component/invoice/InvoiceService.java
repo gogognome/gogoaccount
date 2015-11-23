@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
+import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
 
 /**
  * This class offers methods for handling invoices.
@@ -41,6 +42,7 @@ public class InvoiceService {
     /**
      * Creates invoices and journals for a number of parties.
      * @param document the database to which the invoices are to be added.
+     * @param debtorOrCreditorAccount a debtor account for a sales invoice, a creditor account for a purchase invoice
      * @param id the id of the invoices
      * @param parties the parties
      * @param issueDate the date of issue of the invoices
@@ -49,7 +51,7 @@ public class InvoiceService {
      * @throws ServiceException if a problem occurs while creating invoices for one or more of the parties
      */
     // TODO: move creation of journals to ledger component
-    public void createInvoiceAndJournalForParties(Document document, String id, List<Party> parties,
+    public void createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, String id, List<Party> parties,
             Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             validateInvoice(issueDate, invoiceLineDefinitions);
@@ -76,29 +78,17 @@ public class InvoiceService {
                     amounts.add(null);
                 }
 
-                Amount amountToBePaid = null;
+                Amount totalAmount = null;
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-                    Amount amount = line.getDebet();
-                    boolean debet = amount != null;
-                    if (line.isAmountToBePaid()) {
-                        amountToBePaid = amount;
-                    }
+                    Amount amount = line.getAmount();
                     if (amount == null) {
-                        amount = line.getCredit();
-                        if (line.isAmountToBePaid()) {
-                            amountToBePaid = amount.negate();
-                        }
+                        throw new ServiceException("Amount must be filled in for all lines.");
                     }
+                    totalAmount = totalAmount == null ? amount : totalAmount.add(amount);
 
-                    assert amount != null; // has been checked before
-
-                    if (!line.isAmountToBePaid()) {
-                        descriptions.add(line.getAccount().getName());
-                        amounts.add(debet ? amount.negate() : amount);
-                    }
+                    descriptions.add(line.getAccount().getName());
+                    amounts.add(debtorOrCreditorAccount.getType() == DEBTOR ? amount : amount.negate());
                 }
-
-                assert amountToBePaid != null; // has been checked before
 
                 if (invoiceDAO.exists(specificId)) {
                     specificId = suggestNewInvoiceId(document, specificId);
@@ -106,26 +96,27 @@ public class InvoiceService {
                 Invoice invoice = new Invoice(specificId);
                 invoice.setConcerningPartyId(party.getId());
                 invoice.setPayingPartyId(party.getId());
-                invoice.setAmountToBePaid(amountToBePaid);
+                invoice.setAmountToBePaid(totalAmount);
                 invoice.setIssueDate(issueDate);
 
                 // Create the journal.
                 List<JournalEntryDetail> journalEntryDetails = new ArrayList<JournalEntryDetail>();
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-                    Account account = line.getAccount();
-                    assert account != null; // has been checked before
-                    Amount amount = line.getDebet();
-                    boolean debet = amount != null;
-                    if (amount == null) {
-                        amount = line.getCredit();
-                    }
-
-                    assert amount != null; // has been checked before
                     JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-                    journalEntryDetail.setAmount(amount);
-                    journalEntryDetail.setAccountId(account.getId());
-                    journalEntryDetail.setDebet(debet);
+                    journalEntryDetail.setAmount(line.getAmount());
+                    journalEntryDetail.setAccountId(line.getAccount().getId());
+                    journalEntryDetail.setDebet(debtorOrCreditorAccount.getType() != DEBTOR);
                     journalEntryDetails.add(journalEntryDetail);
+                }
+
+                JournalEntryDetail totalJournalEntryDetail = new JournalEntryDetail();
+                totalJournalEntryDetail.setAmount(totalAmount);
+                totalJournalEntryDetail.setAccountId(debtorOrCreditorAccount.getId());
+                totalJournalEntryDetail.setDebet(debtorOrCreditorAccount.getType() == DEBTOR);
+                if (debtorOrCreditorAccount.getType() == DEBTOR) {
+                    journalEntryDetails.add(0, totalJournalEntryDetail);
+                } else {
+                    journalEntryDetails.add(totalJournalEntryDetail);
                 }
 
                 JournalEntry journalEntry;
@@ -175,30 +166,18 @@ public class InvoiceService {
             throw new ServiceException("No date has been specified!");
         }
 
-        boolean amountToBePaidSelected = false;
         TextResource tr = Factory.getInstance(TextResource.class);
+        if (invoiceLineDefinitions.isEmpty()) {
+            throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));
+        }
         for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-            if (!amountToBePaidSelected) {
-                amountToBePaidSelected = line.isAmountToBePaid();
-            } else {
-                if (line.isAmountToBePaid()) {
-                    throw new ServiceException(tr.getString("InvoiceService.moreThanOneAmountToBePaid"));
-                }
-            }
-            if (line.getDebet() == null && line.getCredit() == null) {
+            if (line.getAmount() == null) {
                 throw new ServiceException(tr.getString("InvoiceService.lineWithoutAmount"));
-            }
-            if (line.getDebet() != null && line.getCredit() != null) {
-                throw new ServiceException(tr.getString("InvoiceService.lineWithTwoAmounts"));
             }
 
             if (line.getAccount() == null) {
                 throw new ServiceException(tr.getString("InvoiceService.lineWithoutAccount"));
             }
-        }
-
-        if (!amountToBePaidSelected) {
-            throw new ServiceException(tr.getString("InvoiceService.noAmountToBePaied"));
         }
     }
 
