@@ -96,11 +96,11 @@ public class InvoiceService {
                 Invoice invoice = new Invoice(specificId);
                 invoice.setConcerningPartyId(party.getId());
                 invoice.setPayingPartyId(party.getId());
-                invoice.setAmountToBePaid(totalAmount);
+                invoice.setAmountToBePaid(debtorOrCreditorAccount.getType() == DEBTOR ? totalAmount : totalAmount.negate());
                 invoice.setIssueDate(issueDate);
 
                 // Create the journal.
-                List<JournalEntryDetail> journalEntryDetails = new ArrayList<JournalEntryDetail>();
+                List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                     JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
                     journalEntryDetail.setAmount(line.getAmount());
