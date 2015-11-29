@@ -98,7 +98,7 @@ public class RabobankCSVImporter implements TransactionImporter {
 	}
 
 	private Date parseDate(String[] values) throws ParseException {
-		String dateString = values[7];
+		String dateString = values[2];
 		try {
 			return DateUtil.parseDateYYYYMMDD(dateString);
 		} catch (java.text.ParseException e) {
