@@ -159,7 +159,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     private Account getDefaultAccount() {
         try {
-            return Factory.getInstance(ConfigurationService.class).findAllAccounts(document).get(0);
+            return ObjectFactory.create(ConfigurationService.class).findAllAccounts(document).get(0);
         } catch (ServiceException e) {
             return null;
         }
