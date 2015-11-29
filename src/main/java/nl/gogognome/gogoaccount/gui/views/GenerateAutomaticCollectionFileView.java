@@ -163,7 +163,20 @@ public class GenerateAutomaticCollectionFileView extends View {
             AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
             automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate, progressListener);
             automaticCollectionService.validateSepaAutomaticCollectionFile(sepaFile);
+            File csvFile = new File(sepaFile.getParent(), createCsvFileName());
+            automaticCollectionService.createCsvForAutomaticCollectionFile(document, csvFile, invoices);
             return null;
+        }
+
+        private String createCsvFileName() {
+            String csvFileName = sepaFile.getName();
+            int index = csvFileName.lastIndexOf('.');
+            if (index != -1) {
+                csvFileName = csvFileName.substring(0, index) + ".csv";
+            } else {
+                csvFileName += ".csv";
+            }
+            return csvFileName;
         }
     }
 

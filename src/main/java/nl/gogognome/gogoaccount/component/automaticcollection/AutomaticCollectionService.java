@@ -1,8 +1,10 @@
 package nl.gogognome.gogoaccount.component.automaticcollection;
 
+import au.com.bytecode.opencsv.CSVWriter;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
@@ -12,6 +14,7 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.TaskProgressListener;
+import nl.gogognome.lib.text.AmountFormat;
 
 import javax.print.Doc;
 import javax.xml.XMLConstants;
@@ -20,11 +23,11 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -148,5 +151,32 @@ public class AutomaticCollectionService {
             details.add(detail);
         }
         ObjectFactory.create(LedgerService.class).createJournalEntry(document, journalEntry, details);
+    }
+
+    public void createCsvForAutomaticCollectionFile(Document document, File csvFile, List<Invoice> invoices) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> {
+            AmountFormat amountFormat = new AmountFormat(new Locale("nl", "NL"));
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+            PartyAutomaticCollectionSettingsDAO partyAutomaticCollectionSettingsDAO = new PartyAutomaticCollectionSettingsDAO(document);
+            try (CSVWriter csvWriter = new CSVWriter(new FileWriter(csvFile), ';')) {
+                for (Invoice invoice : invoices) {
+                    String[] line = new String[11];
+                    line[0] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid());
+                    line[1] = invoice.getConcerningPartyId();
+                    PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = partyAutomaticCollectionSettingsDAO.get(invoice.getConcerningPartyId());
+                    line[2] = dateFormat.format(partyAutomaticCollectionSettings.getMandateDate());
+                    line[3] = "";
+                    line[4] = partyAutomaticCollectionSettings.getIban();
+                    line[5] = partyAutomaticCollectionSettings.getName();
+                    line[6] = partyAutomaticCollectionSettings.getCountry();
+                    line[7] = partyAutomaticCollectionSettings.getAddress();
+                    line[8] = (partyAutomaticCollectionSettings.getZipCode() + ' ' + partyAutomaticCollectionSettings.getCity()).trim();
+                    line[9] = "OTHR";
+                    line[10] = invoiceService.findDescriptions(document, invoice).get(0);
+                    csvWriter.writeNext(line);
+                }
+            }
+        });
     }
 }
