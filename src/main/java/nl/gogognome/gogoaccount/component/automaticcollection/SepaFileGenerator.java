@@ -31,6 +31,7 @@ class SepaFileGenerator {
     private final AmountFormat amountFormat = new AmountFormat(Locale.US);
     private final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private final IbanValidator ibanValidator = new IbanValidator();
 
     public void generate(Document document, AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
                          Date collectionDate, Map<String, Party> idToParty,
@@ -162,7 +163,9 @@ class SepaFileGenerator {
             addElement(doc, postalAddress, "AdrLine", zipCodeAndCity);
         }
 
-        addElement(doc, ddTransactionInformation, "DbtrAcct/Id/IBAN", partyAutomaticCollectionSettings.getIban());
+        String iban = partyAutomaticCollectionSettings.getIban();
+        ibanValidator.validate(iban);
+        addElement(doc, ddTransactionInformation, "DbtrAcct/Id/IBAN", iban);
         addElement(doc, ddTransactionInformation, "Purp/Cd", "OTHR");
         addElement(doc, ddTransactionInformation, "RmtInf/Ustrd", toAlphaNumerical(description, 140));
     }

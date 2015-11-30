@@ -29,7 +29,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		ImportedTransaction it = transactions.get(0);
 
 		assertEquals(createAmount(450), it.getAmount());
-		assertEqualDayOfYear(DateUtil.createDate(2003, 1, 10), it.getDate());
+		assertEqualDayOfYear(DateUtil.createDate(2003, 1, 11), it.getDate());
 		assertEquals("0170059286", it.getToAccount());
 		assertNull(it.getToName());
 		assertEquals("P0063925", it.getFromAccount());

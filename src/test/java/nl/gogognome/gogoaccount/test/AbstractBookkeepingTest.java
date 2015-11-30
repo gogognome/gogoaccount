@@ -97,7 +97,7 @@ public abstract class AbstractBookkeepingTest {
 
     private void createPartyAutomaticCollectionSettingsForParty1101() throws ServiceException {
         PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = new PartyAutomaticCollectionSettings("1101");
-        partyAutomaticCollectionSettings.setIban("NL52ABNA5691659");
+        partyAutomaticCollectionSettings.setIban("NL52ABNA0123456789");
         partyAutomaticCollectionSettings.setName("P. Puk");
         partyAutomaticCollectionSettings.setAddress("Sesamstraat 137");
         partyAutomaticCollectionSettings.setZipCode("1234 AC");
@@ -152,10 +152,10 @@ public abstract class AbstractBookkeepingTest {
         return Arrays.asList(
                 new Account("100", "Kas", AccountType.ASSET),
                 new Account("101", "Betaalrekening", AccountType.ASSET),
-                new Account("190", "Debiteuren", AccountType.ASSET),
+                new Account("190", "Debiteuren", AccountType.DEBTOR),
 
                 new Account("200", "Eigen vermogen", AccountType.LIABILITY),
-                new Account("290", "Crediteuren", AccountType.LIABILITY),
+                new Account("290", "Crediteuren", AccountType.CREDITOR),
 
                 new Account("400", "Zaalhuur", AccountType.EXPENSE),
                 new Account("490", "Onvoorzien", AccountType.EXPENSE),
