@@ -163,6 +163,8 @@ public class GenerateAutomaticCollectionFileView extends View {
             AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
             automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate, progressListener);
             automaticCollectionService.validateSepaAutomaticCollectionFile(sepaFile);
+            automaticCollectionService.createJournalEntryForAutomaticCollection(document, collectionDate, journalEntryId,
+                    journalEntryDescription, invoices, bankAccount, debtorAccount);
             File csvFile = new File(sepaFile.getParent(), createCsvFileName());
             automaticCollectionService.createCsvForAutomaticCollectionFile(document, csvFile, invoices);
             return null;
