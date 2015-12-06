@@ -88,7 +88,7 @@ public abstract class TextFormat {
             throw new IllegalArgumentException(
                     "The number of values differs from the number of columns");
         }
-        StringBuffer sb = new StringBuffer(100);
+        StringBuilder sb = new StringBuilder(100);
         sb.append(getStartOfRow());
         for (int i=0; i<values.length; i++) {
             switch(tableColumns.charAt(i)) {
@@ -158,7 +158,7 @@ public abstract class TextFormat {
     }
 
     public String formatAmount(Amount amount) {
-        return Factory.getInstance(AmountFormat.class).formatAmount(amount);
+        return Factory.getInstance(AmountFormat.class).formatAmount(amount.toBigInteger());
     }
 
 }

@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 import java.util.Arrays;
@@ -39,8 +23,6 @@ import nl.gogognome.lib.util.Factory;
 /**
  * This class implements a model for a <code>JTable</code> that shows an overview
  * of an account at a specific date.
- *
- * @author Sander Kooijmans
  */
 public class AccountOverviewTableModel extends AbstractListTableModel<AccountOverviewTableModel.LineInfo> {
 
@@ -136,11 +118,11 @@ public class AccountOverviewTableModel extends AbstractListTableModel<AccountOve
         	return lineInfo.description;
         } else if (DEBET.equals(col)) {
         	if (lineInfo.debet != null) {
-        		return Factory.getInstance(AmountFormat.class).formatAmount(lineInfo.debet);
+        		return Factory.getInstance(AmountFormat.class).formatAmount(lineInfo.debet.toBigInteger());
         	}
         } else if (CREDIT.equals(col)) {
         	if (lineInfo.credit != null) {
-        		return Factory.getInstance(AmountFormat.class).formatAmount(lineInfo.credit);
+        		return Factory.getInstance(AmountFormat.class).formatAmount(lineInfo.credit.toBigInteger());
         	}
         } else if (INVOICE.equals(col)) {
         	return lineInfo.invoice;

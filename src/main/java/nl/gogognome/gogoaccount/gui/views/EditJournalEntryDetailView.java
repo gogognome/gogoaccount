@@ -18,12 +18,12 @@ import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.util.Factory;
 
 import javax.swing.*;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 public class EditJournalEntryDetailView extends OkCancelView {
 
@@ -42,7 +42,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     private JournalEntryDetail enteredJournalEntryDetail;
 
-    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
+    private AmountFormat amountFormat;
 
     /**
      * Constructor.
@@ -63,8 +63,16 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     @Override
     public void onInit() {
-        initModels();
-        addComponents();
+        try {
+            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            amountFormat = new AmountFormat(Locale.getDefault(), bookkeeping.getCurrency());
+
+            initModels();
+            addComponents();
+        } catch (Exception e) {
+            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+            requestClose();
+        }
     }
 
     private void initModels() {
@@ -89,7 +97,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     private void initModelsForItemToBeEdited() throws ServiceException {
         accountListModel.setSelectedItem(configurationService.getAccount(document, itemToBeEdited.getAccountId()), null);
-        amountModel.setString(amountFormat.formatAmountWithoutCurrency(itemToBeEdited.getAmount()));
+        amountModel.setString(amountFormat.formatAmountWithoutCurrency(itemToBeEdited.getAmount().toBigInteger()));
         sideListModel.setSelectedIndex(itemToBeEdited.isDebet() ? 0 : 1, null);
 
         Invoice invoice = itemToBeEdited.getInvoiceId() != null ? invoiceService.getInvoice(document, itemToBeEdited.getInvoiceId()) : null;
@@ -123,10 +131,9 @@ public class EditJournalEntryDetailView extends OkCancelView {
     @Override
     protected void onOk() {
         try {
-            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
             Amount amount;
             try {
-                amount = amountFormat.parse(amountModel.getString(), bookkeeping.getCurrency());
+                amount = new Amount(amountFormat.parse(amountModel.getString()));
             } catch (ParseException e) {
                 amount = null;
             }
@@ -145,7 +152,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
             enteredJournalEntryDetail.setDebet(debet);
             enteredJournalEntryDetail.setInvoiceId(invoice != null ? invoice.getId() : null);
             requestClose();
-        } catch (ServiceException e) {
+        } catch (Exception e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
     }

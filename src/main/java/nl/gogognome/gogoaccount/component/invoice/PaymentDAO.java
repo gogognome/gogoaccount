@@ -4,19 +4,15 @@ import nl.gogognome.dataaccess.dao.AbstractDomainClassDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.gogoaccount.util.AmountInDatabase;
 
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.List;
 
 class PaymentDAO extends AbstractDomainClassDAO<Payment> {
 
-    private final Document document;
-
     public PaymentDAO(Document document) {
         super("payment", "domain_class_sequence", document.getBookkeepingId());
-        this.document = document;
     }
 
     public List<Payment> findForInvoice(String invoiceId) throws SQLException {
@@ -29,12 +25,7 @@ class PaymentDAO extends AbstractDomainClassDAO<Payment> {
         payment.setInvoiceId(result.getString("invoice_id"));
         payment.setDescription(result.getString("description"));
         payment.setDate(result.getDate("date"));
-        try {
-            AmountFormat amountFormat = new AmountFormat(document.getLocale());
-            payment.setAmount(amountFormat.parse(result.getString("amount")));
-        } catch (ParseException e) {
-            throw new SQLException("Could not parse amount " + result.getString("amount"));
-        }
+        payment.setAmount(AmountInDatabase.parse(result.getString("amount")));
         return payment;
     }
 
@@ -49,7 +40,7 @@ class PaymentDAO extends AbstractDomainClassDAO<Payment> {
                 .add("invoice_id", payment.getInvoiceId())
                 .add("description", payment.getDescription())
                 .add("date", payment.getDate())
-                .add("amount", new AmountFormat(document.getLocale()).formatAmount(payment.getAmount()));
+                .add("amount", AmountInDatabase.format(payment.getAmount()));
     }
 
     @Override

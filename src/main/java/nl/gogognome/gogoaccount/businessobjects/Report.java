@@ -45,7 +45,6 @@ public class Report {
     }
 
     private final Date endDate;
-    private final Currency currency;
 
     private List<Account> assets;
     private List<Account> liabilities;
@@ -69,10 +68,9 @@ public class Report {
 
     private TextResource textResource = Factory.getInstance(TextResource.class);
 
-    public Report(Date endDate, Currency currency) {
+    public Report(Date endDate) {
         super();
         this.endDate = endDate;
-        this.currency = currency;
     }
 
     public Date getEndDate() {
@@ -142,7 +140,7 @@ public class Report {
     public Amount getAmount(Account account) {
         Amount a = accountToAmount.get(account);
         if (a == null) {
-            a = Amount.getZero(currency);
+            a = new Amount("0");
         }
         return a;
     }
@@ -189,7 +187,7 @@ public class Report {
     }
 
     void determineResultOfOperations() {
-        resultOfOperations = Amount.getZero(currency);
+        resultOfOperations = new Amount("0");
         for (Account a : assets) {
             resultOfOperations = resultOfOperations.add(getAmount(a));
         }
@@ -211,7 +209,7 @@ public class Report {
     public Amount getRemaingAmountForInvoice(Invoice invoice) {
         Amount amount = invoiceToRemainingAmount.get(invoice);
         if (amount == null) {
-            amount = Amount.getZero(currency);
+            amount = new Amount("0");
         }
         return amount;
     }
@@ -223,7 +221,7 @@ public class Report {
     public Amount getBalanceForDebtor(Party debtor) {
         Amount amount = debtorToRemainingAmount.get(debtor);
         if (amount == null) {
-            amount = Amount.getZero(currency);
+            amount = new Amount("0");
         }
         return amount;
     }
@@ -235,7 +233,7 @@ public class Report {
     public Amount getBalanceForCreditor(Party creditor) {
         Amount amount = creditorToRemainingAmount.get(creditor);
         if (amount == null) {
-            amount = Amount.getZero(currency);
+            amount = new Amount("0");
         }
         return amount;
     }
@@ -257,7 +255,7 @@ public class Report {
     }
 
     private void sortParties(List<Party> parties) {
-        Collections.<Party>sort(parties);
+        Collections.sort(parties);
     }
 
     public Amount getResultOfOperations() {
@@ -281,7 +279,7 @@ public class Report {
     }
 
     public Amount getTotalOfAccounts(List<Account> accounts) {
-        Amount total = Amount.getZero(currency);
+        Amount total = new Amount("0");
         for (Account a : accounts) {
             total = total.add(getAmount(a));
         }
@@ -293,7 +291,7 @@ public class Report {
      * @return the total amount.
      */
     public Amount getTotalDebtors() {
-        Amount total = Amount.getZero(currency);
+        Amount total = new Amount("0");
         for (Amount a : debtorToRemainingAmount.values()) {
             total = total.add(a);
         }
@@ -305,7 +303,7 @@ public class Report {
      * @return the total amount.
      */
     public Amount getTotalCreditors() {
-        Amount total = Amount.getZero(currency);
+        Amount total = new Amount("0");
         for (Amount a : creditorToRemainingAmount.values()) {
             total = total.add(a);
         }

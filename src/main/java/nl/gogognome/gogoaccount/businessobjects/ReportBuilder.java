@@ -49,7 +49,7 @@ public class ReportBuilder {
         this.document = document;
         idToAccount = configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
         bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-        this.report = new Report(date, bookkeeping.getCurrency());
+        this.report = new Report(date);
     }
 
     public Report build() throws ServiceException {
@@ -188,7 +188,7 @@ public class ReportBuilder {
 
     private Amount nullToZero(Amount amount) {
         if (amount == null) {
-            amount = Amount.getZero(bookkeeping.getCurrency());
+            amount = new Amount("0");
         }
         return amount;
     }

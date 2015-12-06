@@ -16,20 +16,8 @@
 */
 package nl.gogognome.gogoaccount.gui.components;
 
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.border.EmptyBorder;
-
-import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
@@ -46,6 +34,13 @@ import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class implements a graphical component that shows a balance.
@@ -77,9 +72,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         this.document = document;
         this.dateModel = dateModel;
 
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-        balanceSheet = new BalanceSheet(textResource.getString("gen.assets"),
-        		textResource.getString("gen.liabilities"), bookkeeping.getCurrency());
+        balanceSheet = new BalanceSheet(textResource.getString("gen.assets"), textResource.getString("gen.liabilities"));
         balanceSheet.setOpaque(false);
         balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
         setViewportView(balanceSheet);
@@ -125,7 +118,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
             balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalDebtors")),
                     SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
                             GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalDebtors())),
+            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalDebtors().toBigInteger())),
                     SwingUtils.createGBConstraints(2, row, 2, 1, 0.0, 0.0,
                             GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
             row++;
@@ -133,7 +126,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
             balanceSheet.add(new JLabel(textResource.getString("balanceComponent.totalCreditors")),
                     SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 0.0,
                             GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalCreditors())),
+            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalCreditors().toBigInteger())),
                     SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 0.0,
                             GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
             row++;

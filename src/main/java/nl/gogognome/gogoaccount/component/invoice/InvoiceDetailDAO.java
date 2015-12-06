@@ -4,6 +4,7 @@ import nl.gogognome.dataaccess.dao.AbstractDomainClassDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.util.AmountInDatabase;
 import nl.gogognome.lib.text.Amount;
 
 import java.sql.SQLException;
@@ -11,11 +12,8 @@ import java.util.List;
 
 class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
 
-    private final Document document;
-
     public InvoiceDetailDAO(Document document) {
         super("invoice_detail", "domain_class_sequence", document.getBookkeepingId());
-        this.document = document;
     }
 
     public void createDetails(String invoiceId, List<String> descriptions, List<Amount> amounts) throws SQLException {
@@ -46,7 +44,7 @@ class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
         InvoiceDetail invoiceDetail = new InvoiceDetail(result.getLong("id"));
         invoiceDetail.setInvoiceId(result.getString("invoice_id"));
         invoiceDetail.setDescription(result.getString("description"));
-        invoiceDetail.setAmount(document.toAmount(result.getString("amount")));
+        invoiceDetail.setAmount(AmountInDatabase.parse(result.getString("amount")));
         return invoiceDetail;
     }
 
@@ -56,6 +54,6 @@ class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
                 .add("id", invoiceDetail.getId())
                 .add("invoice_id", invoiceDetail.getInvoiceId())
                 .add("description", invoiceDetail.getDescription())
-                .add("amount", document.toString(invoiceDetail.getAmount()));
+                .add("amount", AmountInDatabase.format(invoiceDetail.getAmount()));
     }
 }

@@ -10,13 +10,11 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class LedgerService {
 
@@ -84,11 +82,7 @@ public class LedgerService {
             }
 
             if (!Amount.areEqual(totalDebet, totalCredit)) {
-                AmountFormat af = new AmountFormat(Locale.getDefault());
-                throw new IllegalArgumentException(
-                        "The sum of debet and credit amounts differ for journal " + journalEntry.getId()
-                                + "! debet: " + af.formatAmount(totalDebet) +
-                                "; credit: " + af.formatAmount(totalCredit));
+                throw new IllegalArgumentException("The sum of debet and credit amounts differ for journal " + journalEntry.getId() + "!");
             }
 
             if (createPayments) {
@@ -111,7 +105,6 @@ public class LedgerService {
      */
     private void createPaymentsForItemsOfJournal(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails)
             throws ServiceException {
-        InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
         for (JournalEntryDetail detail : journalEntryDetails) {
             if (detail.getInvoiceId() != null) {
                 Payment payment = createPaymentForJournalEntryDetail(document, journalEntry, detail);
@@ -216,8 +209,7 @@ public class LedgerService {
     public static Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             List<JournalEntry> journalEntries = new JournalEntryDAO(document).findAll();
-            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-            Amount result = Amount.getZero(bookkeeping.getCurrency());
+            Amount result = new Amount("0");
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
             for (JournalEntry journalEntry : journalEntries) {
                 if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {

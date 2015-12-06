@@ -16,13 +16,12 @@
 */
 package nl.gogognome.gogoaccount.component.importer;
 
-import java.util.Date;
-
-import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
+
+import java.util.Date;
 
 /**
  * This class represents a transaction that has been imported.
@@ -63,7 +62,7 @@ public class ImportedTransactionRabobankCsv implements ImportedTransaction {
 	@Override
 	public String toString() {
 		AmountFormat af =  Factory.getInstance(AmountFormat.class);
-		return af.formatAmount(amount) + ' ' + fromAccount + " (" + fromName + ") -> " +
+		return af.formatAmount(amount.toBigInteger()) + ' ' + fromAccount + " (" + fromName + ") -> " +
 			toAccount + " (" + toName + ") at " + DateUtil.formatDateYYYYMMDD(date) +
 			" (" + description + ")";
 	}

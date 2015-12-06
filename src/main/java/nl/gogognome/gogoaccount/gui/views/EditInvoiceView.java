@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 import java.awt.BorderLayout;
@@ -295,7 +279,7 @@ public class EditInvoiceView extends OkCancelView {
 
         Amount amount;
         try {
-             amount = amountFormat.parse(amountModel.getString(), currency);
+             amount = new Amount(amountFormat.parse(amountModel.getString()));
         } catch (ParseException e) {
             MessageDialog.showWarningMessage(this, "gen.invalidAmount");
             return;
@@ -310,8 +294,8 @@ public class EditInvoiceView extends OkCancelView {
         }
 
         editedInvoice = new Invoice(id);
-        editedInvoice.setPayingPartyId(payingParty != null ? payingParty.getId() : null);
-        editedInvoice.setConcerningPartyId(concerningParty != null ? concerningParty.getId() : null);
+        editedInvoice.setPayingPartyId(payingParty.getId());
+        editedInvoice.setConcerningPartyId(concerningParty.getId());
         editedInvoice.setAmountToBePaid(amount);
         editedInvoice.setIssueDate(issueDate);
         closeAction.actionPerformed(null);
@@ -397,8 +381,7 @@ public class EditInvoiceView extends OkCancelView {
             } else if (AMOUNTS == colDef) {
                 Amount a = tuple.getSecond();
                 if (a != null && !a.isZero()) {
-                    result = Factory.getInstance(AmountFormat.class)
-                    	.formatAmountWithoutCurrency(a);
+                    result = Factory.getInstance(AmountFormat.class).formatAmountWithoutCurrency(a.toBigInteger());
                 }
             }
 

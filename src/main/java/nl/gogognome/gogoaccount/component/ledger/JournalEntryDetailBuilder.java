@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.component.ledger;
 
+import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 
@@ -26,12 +27,13 @@ public class JournalEntryDetailBuilder {
         return detail;
     }
 
-    public JournalEntryDetailBuilder amount(String amount) {
-        try {
-            detail.setAmount(Factory.getInstance(AmountFormat.class).parse(amount));
-        } catch (ParseException e) {
-            throw new IllegalArgumentException("Could not parse amount " + amount, e);
-        }
+    public JournalEntryDetailBuilder amount(Amount amount) {
+        detail.setAmount(amount);
+        return this;
+    }
+
+    public JournalEntryDetailBuilder amount(String amountInInteger) {
+        detail.setAmount(new Amount(amountInInteger).multiply(100));
         return this;
     }
 

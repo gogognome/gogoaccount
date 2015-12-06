@@ -64,7 +64,7 @@ class InvoicesTableModel extends AbstractListTableModel<Invoice> {
                 result = partyService.getParty(document, invoice.getPayingPartyId()).getName();
             } else if (SALDO == colDef) {
                 result = Factory.getInstance(AmountFormat.class).formatAmount(
-                        invoiceService.getRemainingAmountToBePaid(document, invoice.getId(), new Date()));
+                        invoiceService.getRemainingAmountToBePaid(document, invoice.getId(), new Date()).toBigInteger());
             } else if (DATE == colDef) {
                 result = invoice.getIssueDate();
             }

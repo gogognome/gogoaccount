@@ -1,13 +1,12 @@
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
@@ -22,7 +21,6 @@ import java.util.*;
  */
 public class ReportToModelConverter {
 
-	private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
 	private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
 	private final Document document;
@@ -68,9 +66,8 @@ public class ReportToModelConverter {
 	private void addBalanceSheetLines(List<Map<String, Object>> lines,
 			List<Account> leftAccounts, List<Account> rightAccounts) throws ServiceException {
 
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-		Amount leftTotal = Amount.getZero(bookkeeping.getCurrency());
-		Amount rightTotal = Amount.getZero(bookkeeping.getCurrency());
+		Amount leftTotal = new Amount("0");
+		Amount rightTotal = new Amount("0");
 
 		Iterator<Account> leftIter = leftAccounts.iterator();
 		Iterator<Account> rightIter = rightAccounts.iterator();
@@ -91,8 +88,8 @@ public class ReportToModelConverter {
 
 		lines.add(createLine("", "", "", ""));
 		String total = textResource.getString("gen.total");
-		lines.add(createLine(total, amountFormat.formatAmountWithoutCurrency(leftTotal),
-				total, amountFormat.formatAmountWithoutCurrency(rightTotal)));
+		lines.add(createLine(total, amountFormat.formatAmountWithoutCurrency(leftTotal.toBigInteger()),
+				total, amountFormat.formatAmountWithoutCurrency(rightTotal.toBigInteger())));
 	}
 
 	private String formatAmount(Account account) {
@@ -110,7 +107,7 @@ public class ReportToModelConverter {
 	private String getAmount(Amount amount) {
 		StringBuilder sb = new StringBuilder();
 		if (amount != null) {
-			sb.append(amountFormat.formatAmountWithoutCurrency(amount));
+			sb.append(amountFormat.formatAmountWithoutCurrency(amount.toBigInteger()));
 		}
 		return sb.toString();
 	}
@@ -126,9 +123,8 @@ public class ReportToModelConverter {
 	}
 
 	private Object createDebtors() throws ServiceException {
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         List<Map<String, Object>> lines = new ArrayList<>();
-		Amount total = Amount.getZero(bookkeeping.getCurrency());
+		Amount total = new Amount("0");
 		for (Party p : report.getDebtors()) {
 			Amount amount = report.getBalanceForDebtor(p);
 			total = total.add(amount);
@@ -137,14 +133,13 @@ public class ReportToModelConverter {
 
 		lines.add(createLine("", ""));
 		lines.add(createLine(textResource.getString("gen.total"),
-			amountFormat.formatAmountWithoutCurrency(total)));
+			amountFormat.formatAmountWithoutCurrency(total.toBigInteger())));
 		return lines;
 	}
 
 	private Object createCreditors() throws ServiceException {
-        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
 		List<Map<String, Object>> lines = new ArrayList<>();
-		Amount total = Amount.getZero(bookkeeping.getCurrency());
+		Amount total = new Amount("0");
 		for (Party p : report.getCreditors()) {
 			Amount amount = report.getBalanceForCreditor(p);
 			total = total.add(amount);
@@ -153,13 +148,13 @@ public class ReportToModelConverter {
 
 		lines.add(createLine("", ""));
 		lines.add(createLine(textResource.getString("gen.total"),
-			amountFormat.formatAmountWithoutCurrency(total)));
+			amountFormat.formatAmountWithoutCurrency(total.toBigInteger())));
 		return lines;
 	}
 
 	private Map<String, Object> createLine(Party party, Amount amount) {
 		return createLine(party.getId() + ' ' + party.getName(),
-				amountFormat.formatAmountWithoutCurrency(amount));
+				amountFormat.formatAmountWithoutCurrency(amount.toBigInteger()));
 	}
 
 	private Map<String, Object> createLine(String partyName, String amount) {
@@ -199,9 +194,9 @@ public class ReportToModelConverter {
 		map.put("id", line.id);
 		map.put("description", line.description);
 		map.put("debet", line.debetAmount != null ?
-				amountFormat.formatAmountWithoutCurrency(line.debetAmount) : "");
+				amountFormat.formatAmountWithoutCurrency(line.debetAmount.toBigInteger()) : "");
 		map.put("credit", line.creditAmount != null ?
-				amountFormat.formatAmountWithoutCurrency(line.creditAmount) : "");
+				amountFormat.formatAmountWithoutCurrency(line.creditAmount.toBigInteger()) : "");
 		map.put("invoice", line.invoice != null ?
 				line.invoice.getId() + " (" + partyService.getParty(document, line.invoice.getConcerningPartyId()).getName() + ')' : "");
 		return map;

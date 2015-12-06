@@ -111,7 +111,7 @@ public class AddJournalForTransactionView extends EditJournalView {
         date.setText(textResource.formatDate("gen.dateFormat", t.getDate()));
         fromAccount.setText(formatAccountAndName(t.getFromAccount(), t.getFromName()));
         toAccount.setText(formatAccountAndName(t.getToAccount(), t.getToName()));
-        amount.setText(Factory.getInstance(AmountFormat.class).formatAmount(t.getAmount()));
+        amount.setText(Factory.getInstance(AmountFormat.class).formatAmount(t.getAmount().toBigInteger()));
         description.setText(t.getDescription());
     }
 

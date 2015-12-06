@@ -1,17 +1,7 @@
 package nl.gogognome.gogoaccount.gui.components;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.JScrollPane;
-import javax.swing.border.EmptyBorder;
-
-import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
@@ -27,10 +17,15 @@ import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 /**
  * This class implements a graphical component that shows an operational result.
- *
- * @author Sander Kooijmans
  */
 public class OperationalResultComponent extends JScrollPane implements Closeable {
 
@@ -57,10 +52,8 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
         this.document = document;
         this.dateModel = dateModel;
 
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
         TextResource textResource = Factory.getInstance(TextResource.class);
-        balanceSheet = new BalanceSheet(textResource.getString("gen.expenses"),
-        		textResource.getString("gen.revenues"), bookkeeping.getCurrency());
+        balanceSheet = new BalanceSheet(textResource.getString("gen.expenses"), textResource.getString("gen.revenues"));
         balanceSheet.setOpaque(false);
         balanceSheet.setBorder(new EmptyBorder(10, 10, 10, 10));
         setViewportView(balanceSheet);

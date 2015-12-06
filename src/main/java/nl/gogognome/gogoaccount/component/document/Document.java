@@ -84,21 +84,4 @@ public class Document {
         this.fileName = fileName;
         notifyChange();
     }
-
-    public String toString(Amount amount) {
-        return amount != null ? new AmountFormat(getLocale()).formatAmount(amount): null;
-    }
-
-    public Amount toAmount(String string) throws SQLException {
-        if (string == null) {
-            return null;
-        }
-        try {
-            AmountFormat amountFormat = new AmountFormat(getLocale());
-            return amountFormat.parse(string);
-        } catch (ParseException e) {
-            throw new SQLException("Could not parse amount " + string);
-        }
-    }
-
 }

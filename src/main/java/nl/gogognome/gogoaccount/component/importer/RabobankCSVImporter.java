@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.component.importer;
 
 import java.io.IOException;
@@ -34,14 +18,10 @@ import au.com.bytecode.opencsv.CSVReader;
  * This class reads a comma separated values file that was created by the Rabobank.
  * A list of {@link ImportedTransactionRabobankCsv}s is created that represents the contents
  * of the CSV file.
- *
- * @author Sander Kooijmans
  */
 public class RabobankCSVImporter implements TransactionImporter {
 
-	private List<ImportedTransaction> transactions = new ArrayList<ImportedTransaction>();
-
-	private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
+	private List<ImportedTransaction> transactions = new ArrayList<>();
 
 	public RabobankCSVImporter() {
 	}
@@ -111,7 +91,7 @@ public class RabobankCSVImporter implements TransactionImporter {
 		String amountString = values[4];
 
 		try {
-			return AMOUNT_FORMAT.parse(amountString, currency);
+			return new Amount(new AmountFormat(Locale.US, currency).parse(amountString, currency));
 		} catch (java.text.ParseException e) {
 			throw new ParseException("\"" + amountString + "\" is not a valid amount.", e);
 		}

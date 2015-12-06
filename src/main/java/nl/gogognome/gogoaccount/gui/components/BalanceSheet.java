@@ -56,7 +56,6 @@ public class BalanceSheet extends JPanel {
 	private List<Row> leftRows;
 	private List<Row> rightRows;
 
-	private Currency currency;
 	private Amount totalLeft;
 	private Amount totalRight;
 
@@ -72,11 +71,10 @@ public class BalanceSheet extends JPanel {
     private Border leftBorder = new CompoundBorder(new LineBorder(LineBorder.LB_LEFT, 1),
         new EmptyBorder(0, 5, 0, 0));
 
-	public BalanceSheet(String leftTitle, String rightTitle, Currency currency) {
+	public BalanceSheet(String leftTitle, String rightTitle) {
 		super();
 		this.leftTitle = leftTitle;
 		this.rightTitle = rightTitle;
-		this.currency = currency;
 		this.leftRows = Collections.emptyList();
 		this.rightRows = Collections.emptyList();
 
@@ -105,8 +103,8 @@ public class BalanceSheet extends JPanel {
 	private void addComponents() {
         row = 0;
 
-        totalLeft = Amount.getZero(currency);
-        totalRight = Amount.getZero(currency);
+        totalLeft = new Amount("0");
+        totalRight = new Amount("0");
 
         addHeader();
 
@@ -157,7 +155,7 @@ public class BalanceSheet extends JPanel {
         for (Row r : leftRows) {
             add(new JLabel(r.description), createRowConstraints(0, row));
 
-            JLabel label = new JLabel(af.formatAmount(r.amount), SwingConstants.RIGHT);
+            JLabel label = new JLabel(af.formatAmount(r.amount.toBigInteger()), SwingConstants.RIGHT);
             label.setBorder(rightBorder);
             add(label, createRowConstraints(1, row));
 
@@ -179,7 +177,7 @@ public class BalanceSheet extends JPanel {
             label.setBorder(leftBorder);
             add(label, createRowConstraints(2, row2));
 
-            label = new JLabel(af.formatAmount(r.amount), SwingConstants.RIGHT);
+            label = new JLabel(af.formatAmount(r.amount.toBigInteger()), SwingConstants.RIGHT);
             add(label, createRowConstraints(3, row2));
 
             totalRight = totalRight.add(r.amount);
@@ -223,7 +221,7 @@ public class BalanceSheet extends JPanel {
         JLabel label = new JLabel(tr.getString("gen.total"));
         add(label, createRowConstraints(col++, row));
 
-        label = new JLabel(af.formatAmount(totalLeft), SwingConstants.RIGHT);
+        label = new JLabel(af.formatAmount(totalLeft.toBigInteger()), SwingConstants.RIGHT);
         label.setBorder(rightBorder);
         add(label, createRowConstraints(col++, row));
 
@@ -231,7 +229,7 @@ public class BalanceSheet extends JPanel {
         label.setBorder(leftBorder);
         add(label, createRowConstraints(col++, row));
 
-        label = new JLabel(af.formatAmount(totalRight), SwingConstants.RIGHT);
+        label = new JLabel(af.formatAmount(totalRight.toBigInteger()), SwingConstants.RIGHT);
         add(label, createRowConstraints(col++, row));
         row++;
 	}
