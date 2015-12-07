@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.gui;
 
 import java.io.File;
+import java.util.Currency;
 import java.util.Locale;
 
 import javax.swing.JFrame;
@@ -62,6 +63,7 @@ public class Start {
         Factory.bindSingleton(WidgetFactory.class, new WidgetFactory(tr));
         Factory.bindSingleton(BeanFactory.class, new BeanFactory());
         Factory.bindSingleton(Locale.class, locale);
+        Factory.bindSingleton(AmountFormat.class, new AmountFormat(locale, Currency.getInstance("EUR")));
     }
 
     /**
