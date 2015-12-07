@@ -2,6 +2,7 @@ package nl.gogognome.gogoaccount.component.automaticcollection;
 
 import au.com.bytecode.opencsv.CSVWriter;
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
@@ -155,14 +156,15 @@ public class AutomaticCollectionService {
 
     public void createCsvForAutomaticCollectionFile(Document document, File csvFile, List<Invoice> invoices) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
-            AmountFormat amountFormat = new AmountFormat(new Locale("nl", "NL"));
+            Currency currency = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document).getCurrency();
+            AmountFormat amountFormat = new AmountFormat(new Locale("nl", "NL"), currency);
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
             PartyAutomaticCollectionSettingsDAO partyAutomaticCollectionSettingsDAO = new PartyAutomaticCollectionSettingsDAO(document);
             try (CSVWriter csvWriter = new CSVWriter(new FileWriter(csvFile), ';')) {
                 for (Invoice invoice : invoices) {
                     String[] line = new String[11];
-                    line[0] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid());
+                    line[0] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid().toBigInteger());
                     line[1] = invoice.getConcerningPartyId();
                     PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = partyAutomaticCollectionSettingsDAO.get(invoice.getConcerningPartyId());
                     line[2] = dateFormat.format(partyAutomaticCollectionSettings.getMandateDate());

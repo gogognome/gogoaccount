@@ -91,7 +91,7 @@ public class RabobankCSVImporter implements TransactionImporter {
 		String amountString = values[4];
 
 		try {
-			return new Amount(new AmountFormat(Locale.US, currency).parse(amountString, currency));
+			return new Amount(new AmountFormat(Locale.US, currency).parse(amountString));
 		} catch (java.text.ParseException e) {
 			throw new ParseException("\"" + amountString + "\" is not a valid amount.", e);
 		}

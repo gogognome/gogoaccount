@@ -20,6 +20,7 @@ import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.swing.views.ViewListener;
 import nl.gogognome.lib.swing.views.ViewTabbedPane;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 
@@ -34,9 +35,7 @@ import java.awt.print.PrinterException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static nl.gogognome.gogoaccount.gui.ActionRunner.run;
 
@@ -284,6 +283,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 String filename = file.getAbsolutePath();
                 newDocument = documentService.openDocument(filename);
             }
+
+            Currency currency = configurationService.getBookkeeping(document).getCurrency();
+            Factory.bindSingleton(AmountFormat.class, new AmountFormat(Factory.getInstance(Locale.class), currency));
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;

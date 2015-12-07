@@ -16,14 +16,13 @@
 */
 package nl.gogognome.gogoaccount.tools;
 
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.WidgetFactory;
-import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
@@ -116,7 +115,6 @@ public class BirthdayCalendarOfParties {
 
 		Factory.bindSingleton(TextResource.class, tr);
 		Factory.bindSingleton(WidgetFactory.class, new WidgetFactory(tr));
-		Factory.bindSingleton(AmountFormat.class, new AmountFormat(tr.getLocale()));
 	}
 
     private static void printUsage() {

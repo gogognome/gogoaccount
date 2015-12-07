@@ -80,7 +80,7 @@ public class InvoicesToModelConverter {
 
 		Amount totalAmount = invoiceService.getRemainingAmountToBePaid(
 				parameters.getDocument(), invoice.getId(), parameters.getDate());
-		putNullable(map, "totalAmount", amountFormat.formatAmount(totalAmount));
+		putNullable(map, "totalAmount", amountFormat.formatAmount(totalAmount.toBigInteger()));
 
 		map.put("lines", createLinesForInvoice(invoice));
 
@@ -109,7 +109,7 @@ public class InvoicesToModelConverter {
 
 		putNullable(map, "date", textResource.formatDate("gen.dateFormat", date));
 		putNullable(map, "description", description);
-		putNullable(map, "amount", amountFormat.formatAmount(amount));
+		putNullable(map, "amount", amountFormat.formatAmount(amount.toBigInteger()));
 
 		return map;
 	}

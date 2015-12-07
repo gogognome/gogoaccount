@@ -60,8 +60,8 @@ public class Start {
 
         Factory.bindSingleton(TextResource.class, tr);
         Factory.bindSingleton(WidgetFactory.class, new WidgetFactory(tr));
-        Factory.bindSingleton(AmountFormat.class, new AmountFormat(tr.getLocale()));
         Factory.bindSingleton(BeanFactory.class, new BeanFactory());
+        Factory.bindSingleton(Locale.class, locale);
     }
 
     /**

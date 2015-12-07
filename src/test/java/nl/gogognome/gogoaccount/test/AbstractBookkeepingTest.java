@@ -92,7 +92,7 @@ public abstract class AbstractBookkeepingTest {
 
         document.notifyChange();
 
-        zero = Amount.getZero(bookkeeping.getCurrency());
+        zero = new Amount("0");
     }
 
     private void createPartyAutomaticCollectionSettingsForParty1101() throws ServiceException {
@@ -112,7 +112,7 @@ public abstract class AbstractBookkeepingTest {
         tr.loadResourceBundle("stringresources");
         Factory.bindSingleton(TextResource.class, tr);
 
-        amountFormat = new AmountFormat(tr.getLocale());
+        amountFormat = new AmountFormat(tr.getLocale(), Currency.getInstance("EUR"));
         Factory.bindSingleton(AmountFormat.class, amountFormat);
     }
 
@@ -224,7 +224,7 @@ public abstract class AbstractBookkeepingTest {
 
     protected Amount createAmount(int value) {
         try {
-            return amountFormat.parse(Integer.toString(value), bookkeeping.getCurrency());
+            return new Amount(amountFormat.parse(Integer.toString(value)));
         } catch (ParseException e) {
             throw new IllegalArgumentException(e);
         }
@@ -232,8 +232,8 @@ public abstract class AbstractBookkeepingTest {
 
     protected void checkAmount(int expectedAmountInt, Amount actualAmount) throws ParseException {
         Amount expectedAmount = createAmount(expectedAmountInt);
-        assertEquals(amountFormat.formatAmount(expectedAmount),
-                amountFormat.formatAmount(actualAmount));
+        assertEquals(amountFormat.formatAmount(expectedAmount.toBigInteger()),
+                amountFormat.formatAmount(actualAmount.toBigInteger()));
     }
 
     protected JournalEntry findJournalEntry(String id) throws ServiceException {

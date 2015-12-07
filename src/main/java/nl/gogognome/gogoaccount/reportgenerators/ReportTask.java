@@ -1,10 +1,12 @@
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
+import nl.gogognome.gogoaccount.businessobjects.ReportType;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
@@ -12,7 +14,6 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -30,7 +31,8 @@ import java.io.PrintWriter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * This class generates reports in a text-format.
@@ -187,9 +189,9 @@ public class ReportTask implements Task {
         String total = textResource.getString("gen.total").toUpperCase();
 
         values[0] = total;
-        values[1] = amountFormat.formatAmountWithoutCurrency(report.getTotalAssets());
+        values[1] = amountFormat.formatAmountWithoutCurrency(report.getTotalAssets().toBigInteger());
         values[3] = total;
-        values[4] = amountFormat.formatAmountWithoutCurrency(report.getTotalLiabilities());
+        values[4] = amountFormat.formatAmountWithoutCurrency(report.getTotalLiabilities().toBigInteger());
         result.append(textFormat.getRow(values));
 
         result.append(textFormat.getEndOfTable());
@@ -202,7 +204,7 @@ public class ReportTask implements Task {
 	}
 
 	private String formatAmount(Account account) {
-    	return amountFormat.formatAmountWithoutCurrency(report.getAmount(account));
+    	return amountFormat.formatAmountWithoutCurrency(report.getAmount(account).toBigInteger());
 	}
 
 	private void printOperationalResult() {
@@ -260,9 +262,9 @@ public class ReportTask implements Task {
         String total = textResource.getString("gen.total").toUpperCase();
 
        values[0] = total;
-       values[1] = amountFormat.formatAmountWithoutCurrency(report.getTotalExpenses());
+       values[1] = amountFormat.formatAmountWithoutCurrency(report.getTotalExpenses().toBigInteger());
        values[3] = total;
-       values[4] = amountFormat.formatAmountWithoutCurrency(report.getTotalRevenues());
+       values[4] = amountFormat.formatAmountWithoutCurrency(report.getTotalRevenues().toBigInteger());
        result.append(textFormat.getRow(values));
 
        result.append(textFormat.getEndOfTable());
@@ -285,7 +287,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noDebtors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(bookkeeping.getCurrency());
+            Amount total = new Amount("0");
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -294,7 +296,7 @@ public class ReportTask implements Task {
             for (Party debtor : debtors) {
                 values[0] = formatParty(debtor);
                 Amount amount = report.getBalanceForDebtor(debtor);
-                values[1] = amountFormat.formatAmountWithoutCurrency(amount);
+                values[1] = amountFormat.formatAmountWithoutCurrency(amount.toBigInteger());
                 total = total.add(amount);
                 result.append(textFormat.getRow(values));
             }
@@ -324,7 +326,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noCreditors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = Amount.getZero(bookkeeping.getCurrency());
+            Amount total = new Amount("0");
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -333,7 +335,7 @@ public class ReportTask implements Task {
             for (Party creditor : creditors) {
                 values[0] = formatParty(creditor);
                 Amount amount = report.getBalanceForCreditor(creditor);
-                values[1] = amountFormat.formatAmountWithoutCurrency(amount);
+                values[1] = amountFormat.formatAmountWithoutCurrency(amount.toBigInteger());
                 total = total.add(amount);
                 result.append(textFormat.getRow(values));
             }
@@ -392,7 +394,7 @@ public class ReportTask implements Task {
 
             result.append(textFormat.getHorizontalSeparator());
 
-            Map<String, Account> idToAccount = configurationService.findAllAccounts(document).stream().collect(Collectors.toMap(a -> a.getId(), a -> a));
+            Map<String, Account> idToAccount = configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
 
             for (int i=startIndex; i<endIndex; i++) {
                 values[0] = textResource.formatDate("gen.dateFormat", journalEntries.get(i).getDate());
@@ -402,7 +404,7 @@ public class ReportTask implements Task {
                 String idOfCreatedInvoice = journalEntries.get(i).getIdOfCreatedInvoice();
                 if (idOfCreatedInvoice != null) {
                     Invoice invoice = invoiceService.getInvoice(document, idOfCreatedInvoice);
-                    values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid())
+                    values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid().toBigInteger())
                         + " " + invoice.getId() + " (" + partyService.getParty(document, invoice.getConcerningPartyId()).getName() + ')';
                 } else {
                     values[8] = "";
@@ -416,7 +418,7 @@ public class ReportTask implements Task {
                     values[4] = "";
                     values[6] = "";
                     values[item.isDebet() ? 4 : 6] =
-                            amountFormat.formatAmountWithoutCurrency(item.getAmount());
+                            amountFormat.formatAmountWithoutCurrency(item.getAmount().toBigInteger());
                     if (item.getInvoiceId() != null) {
                         Invoice invoice = invoiceService.getInvoice(document, item.getInvoiceId());
                         values[8] = invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")";
@@ -464,8 +466,8 @@ public class ReportTask implements Task {
             for (LedgerLine line : report.getLedgerLinesForAccount(account)) {
                 values[0] = textResource.formatDate("gen.dateFormat", line.date);
                 values[2] = line.description;
-                values[4] = amountFormat.formatAmountWithoutCurrency(line.debetAmount);
-                values[6] = amountFormat.formatAmountWithoutCurrency(line.creditAmount);
+                values[4] = amountFormat.formatAmountWithoutCurrency(line.debetAmount.toBigInteger());
+                values[6] = amountFormat.formatAmountWithoutCurrency(line.creditAmount.toBigInteger());
                 values[8] = "";
 
                 Invoice invoice = line.invoice;

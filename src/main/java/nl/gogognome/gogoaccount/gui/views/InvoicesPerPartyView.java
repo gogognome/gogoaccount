@@ -1,36 +1,15 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.DefaultFocusTraversalPolicy;
-import java.awt.KeyboardFocusManager;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.*;
-
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
-
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.gui.controllers.EditInvoiceController;
 import nl.gogognome.gogoaccount.models.PartyModel;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
@@ -47,6 +26,15 @@ import nl.gogognome.lib.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
 public class InvoicesPerPartyView extends View {
 
 	private static final long serialVersionUID = 1L;
@@ -57,7 +45,6 @@ public class InvoicesPerPartyView extends View {
 
 	private Document document;
 	private DocumentListener documentListener;
-    private Currency currency;
 
 	private JScrollPane invoicesScrollPane;
 	private JPanel invoicesPanel;
@@ -84,9 +71,6 @@ public class InvoicesPerPartyView extends View {
 	@Override
 	public void onInit() {
         try {
-            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-            currency = bookkeeping.getCurrency();
-
             initModels();
             addComponents();
             addListeners();
@@ -249,7 +233,7 @@ public class InvoicesPerPartyView extends View {
             		InvoicePanel ip = new InvoicePanel(invoice,
                             invoiceService.findDescriptions(document, invoice),
                             invoiceService.findAmounts(document, invoice),
-                            payments, partyService.getParty(document, invoice.getPayingPartyId()), date, currency);
+                            payments, partyService.getParty(document, invoice.getPayingPartyId()), date);
             		invoicesPanel.add(ip, SwingUtils.createPanelGBConstraints(0, row));
             		row++;
             	}

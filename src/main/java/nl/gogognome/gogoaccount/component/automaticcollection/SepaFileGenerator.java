@@ -28,10 +28,12 @@ import java.util.*;
 
 class SepaFileGenerator {
 
-    private final AmountFormat amountFormat = new AmountFormat(Locale.US);
     private final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final IbanValidator ibanValidator = new IbanValidator();
+
+    private AmountFormat amountFormat;
+    private Currency currency;
 
     public void generate(Document document, AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
                          Date collectionDate, Map<String, Party> idToParty,
@@ -39,6 +41,8 @@ class SepaFileGenerator {
             throws Exception {
         ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+        currency = bookkeeping.getCurrency();
+        amountFormat = new AmountFormat(Locale.US, bookkeeping.getCurrency());
 
         DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
@@ -52,8 +56,8 @@ class SepaFileGenerator {
         addElement(doc, groupHeader, "MsgId", settings.getSequenceNumber());
         addElement(doc, groupHeader, "CreDtTm", dateTimeFormat.format(new Date()));
         addElement(doc, groupHeader, "NbOfTxs", Integer.toString(invoices.size()));
-        Amount totalAmount = invoices.stream().map(i -> i.getAmountToBePaid()).reduce(Amount.getZero(Currency.getInstance("EUR")), (a, b) -> a.add(b));
-        String formattedAmount = amountFormat.formatAmountWithoutCurrency(totalAmount);
+        Amount totalAmount = invoices.stream().map(i -> i.getAmountToBePaid()).reduce(new Amount("0"), (a, b) -> a.add(b));
+        String formattedAmount = amountFormat.formatAmountWithoutCurrency(totalAmount.toBigInteger());
         addElement(doc, groupHeader, "CtrlSum", formattedAmount);
         addElement(doc, groupHeader, "InitgPty/Nm", bookkeeping.getOrganizationName());
 
@@ -131,8 +135,8 @@ class SepaFileGenerator {
             throw new ServiceException("Amount to be paid must be positive.");
         }
         Element instructedAmount = addElement(doc, ddTransactionInformation, "InstdAmt",
-                amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid()));
-        instructedAmount.setAttribute("Ccy", invoice.getAmountToBePaid().getCurrency().getCurrencyCode());
+                amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid().toBigInteger()));
+        instructedAmount.setAttribute("Ccy", currency.getCurrencyCode());
 
         Element directDebitTransaction = addElement(doc, ddTransactionInformation, "DrctDbtTx");
         Element mandateRelatedInformation = addElement(doc, directDebitTransaction, "MndtRltdInf");

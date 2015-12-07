@@ -49,8 +49,8 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
         JournalEntry journalEntry = ledgerService.findJournalEntry(document, "t2");
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                JournalEntryDetailBuilder.debet().amount("EUR 15").account("100").invoiceId(invoice.getId()).build(),
-                JournalEntryDetailBuilder.credit().amount("EUR 15").account("101").build());
+                JournalEntryDetailBuilder.debet().amount("15").account("100").invoiceId(invoice.getId()).build(),
+                JournalEntryDetailBuilder.credit().amount("15").account("101").build());
         ledgerService.updateJournal(document, journalEntry, journalEntryDetails);
 
         List<Payment> payments = invoiceService.findPayments(document, invoice);
@@ -70,8 +70,8 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
         JournalEntry journalEntry = ledgerService.findJournalEntry(document, "t2");
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                JournalEntryDetailBuilder.debet().amount("EUR 15").account("100").build(),
-                JournalEntryDetailBuilder.credit().amount("EUR 15").account("101").build());
+                JournalEntryDetailBuilder.debet().amount("15").account("100").build(),
+                JournalEntryDetailBuilder.credit().amount("15").account("101").build());
         ledgerService.updateJournal(document, journalEntry, journalEntryDetails);
 
         List<Payment> payments = invoiceService.findPayments(document, invoice);

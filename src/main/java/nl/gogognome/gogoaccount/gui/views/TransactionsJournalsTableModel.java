@@ -72,7 +72,7 @@ class TransactionsJournalsTableModel extends AbstractListTableModel<Transaction>
             return getRow(rowIndex).getImportedTransaction().getToAccount();
         } else if (AMOUNT.equals(colDef)) {
         	AmountFormat af = Factory.getInstance(AmountFormat.class);
-            return af.formatAmount(getRow(rowIndex).getImportedTransaction().getAmount());
+            return af.formatAmount(getRow(rowIndex).getImportedTransaction().getAmount().toBigInteger());
         } else if (DESCRIPTION1.equals(colDef)) {
             return getRow(rowIndex).getImportedTransaction().getDescription();
         } else if (ID.equals(colDef)) {

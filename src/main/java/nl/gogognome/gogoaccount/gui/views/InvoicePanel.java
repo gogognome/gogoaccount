@@ -1,28 +1,8 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.util.Currency;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -31,6 +11,12 @@ import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class implements a component that displays an invoice.
@@ -67,7 +53,7 @@ class InvoicePanel extends JPanel implements Closeable {
     private FocusListener focusListener;
 
     public InvoicePanel(Invoice invoice, List<String> descriptons, List<Amount> amounts, List<Payment> payments,
-                        Party payingParty, Date date, Currency currency) {
+                        Party payingParty, Date date) {
         super(new BorderLayout());
         this.invoice = invoice;
         this.descriptions = descriptons;
@@ -75,8 +61,8 @@ class InvoicePanel extends JPanel implements Closeable {
         this.payments = payments;
         this.payingParty = payingParty;
         this.date = date;
-        this.totalDebet = Amount.getZero(currency);
-        this.totalCredit = Amount.getZero(currency);
+        this.totalDebet = new Amount("0");
+        this.totalCredit = new Amount("0");
 
         linesPanel = new JPanel(new GridBagLayout());
         linesPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -117,10 +103,10 @@ class InvoicePanel extends JPanel implements Closeable {
         String amountText;
         if (!invoice.getAmountToBePaid().isNegative()) {
             amountText = textResource.getString("InvoicesSinglePartyView.debetInvoice",
-                amountFormat.formatAmount(invoice.getAmountToBePaid()));
+                amountFormat.formatAmount(invoice.getAmountToBePaid().toBigInteger()));
         } else {
             amountText = textResource.getString("InvoicesSinglePartyView.creditInvoice",
-                amountFormat.formatAmount(invoice.getAmountToBePaid().negate()));
+                amountFormat.formatAmount(invoice.getAmountToBePaid().negate().toBigInteger()));
         }
         titlePanel.add(new JLabel(amountText), SwingUtils.createLabelGBConstraints(2, 0));
         return titlePanel;
@@ -165,10 +151,10 @@ class InvoicePanel extends JPanel implements Closeable {
 
                 addToLinePanel(col++, new JLabel(descriptions.get(i)));
 
-                String debet = amounts.get(i).isPositive() ? amountFormat.formatAmount(amounts.get(i)) : "";
+                String debet = amounts.get(i).isPositive() ? amountFormat.formatAmount(amounts.get(i).toBigInteger()) : "";
                 addToLinePanel(col++, new JLabel(debet));
 
-                String credit = amounts.get(i).isNegative() ? amountFormat.formatAmount(amounts.get(i).negate()) : "";
+                String credit = amounts.get(i).isNegative() ? amountFormat.formatAmount(amounts.get(i).negate().toBigInteger()) : "";
                 addToLinePanel(col++, new JLabel(credit));
 
                 row++;
@@ -192,10 +178,10 @@ class InvoicePanel extends JPanel implements Closeable {
                 addToLinePanel(col++, new JLabel(payment.getDescription()));
                 Amount amount = payment.getAmount();
 
-                String debet = amount.isNegative() ? amountFormat.formatAmount(amount.negate()) : "";
+                String debet = amount.isNegative() ? amountFormat.formatAmount(amount.negate().toBigInteger()) : "";
                 addToLinePanel(col++, new JLabel(debet));
 
-                String credit = amount.isPositive() ? amountFormat.formatAmount(amount) : "";
+                String credit = amount.isPositive() ? amountFormat.formatAmount(amount.toBigInteger()) : "";
                 addToLinePanel(col++, new JLabel(credit));
 
                 row++;
@@ -212,8 +198,8 @@ class InvoicePanel extends JPanel implements Closeable {
     private void addFooter() {
         int col = 1;
         addToLinePanel(col++, widgetFactory.createLabel("gen.total"));
-        addToLinePanel(col++, new JLabel(amountFormat.formatAmount(totalDebet)));
-        addToLinePanel(col++, new JLabel(amountFormat.formatAmount(totalCredit)));
+        addToLinePanel(col++, new JLabel(amountFormat.formatAmount(totalDebet.toBigInteger())));
+        addToLinePanel(col++, new JLabel(amountFormat.formatAmount(totalCredit.toBigInteger())));
         row++;
     }
 

@@ -122,7 +122,7 @@ public class EditInvoiceView extends OkCancelView {
             concerningPartyModel.setParty(partyService.getParty(document, initialInvoice.getConcerningPartyId()));
             payingPartyModel.setParty(partyService.getParty(document, initialInvoice.getPayingPartyId()));
             amountModel.setString(amountFormat.formatAmountWithoutCurrency(
-                initialInvoice.getAmountToBePaid()));
+                initialInvoice.getAmountToBePaid().toBigInteger()));
         } else {
             dateModel.setDate(new Date());
             idModel.setString(invoiceService.suggestNewInvoiceId(document,

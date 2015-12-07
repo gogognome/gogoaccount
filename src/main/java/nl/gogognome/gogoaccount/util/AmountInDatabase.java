@@ -19,10 +19,13 @@ public class AmountInDatabase {
         Currency currency;
         if (value.startsWith("-/- ")) {
             oldStyle = !Character.isDigit(value.charAt(4));
-            currency = parseCurrency(value, 4);
+            currency = oldStyle ? parseCurrency(value, 4) : null;
+        } else if (value.startsWith("-")) {
+            oldStyle = false;
+            currency = null;
         } else {
             oldStyle = !Character.isDigit(value.charAt(0));
-            currency = parseCurrency(value, 0);
+            currency = oldStyle ? parseCurrency(value, 0) : null;
         }
         if (oldStyle) {
             try {
@@ -35,7 +38,7 @@ public class AmountInDatabase {
         }
     }
 
-    private static Currency parseCurrency(String value, int startIndex) {
+    private static Currency parseCurrency(String value, int startIndex) throws SQLException {
         StringBuilder sb = new StringBuilder();
         for (int i=startIndex; i<value.length(); i++) {
             if (Character.isWhitespace(value.charAt(i))) {
@@ -43,7 +46,11 @@ public class AmountInDatabase {
             }
             sb.append(value.charAt(i));
         }
-        return Currency.getInstance(sb.toString());
+        try {
+            return Currency.getInstance(sb.toString());
+        } catch (IllegalArgumentException e) {
+            throw new SQLException("Illegal currency code '" + sb.toString() + "' found in amount " + value);
+        }
     }
 
     public static String format(Amount amount) {

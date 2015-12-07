@@ -37,8 +37,6 @@ public class XMLFileReader {
 
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
 
-    private final static AmountFormat AMOUNT_FORMAT = new AmountFormat(Locale.US);
-
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
@@ -86,6 +84,8 @@ public class XMLFileReader {
             bookkeeping.setStartOfPeriod(DATE_FORMAT.parse(rootElement.getAttribute("startdate")));
             configurationService.updateBookkeeping(document, bookkeeping);
 
+            AmountFormat amountFormat = new AmountFormat(Locale.US, bookkeeping.getCurrency());
+
             // parse accounts
             if (fileVersion == null || fileVersion.equals("1.0")) {
                 parseAccountsBeforeVersion2_2(rootElement);
@@ -95,9 +95,9 @@ public class XMLFileReader {
 
             parseAndAddParties(rootElement.getElementsByTagName("parties"));
 
-            parseAndAddInvoices(rootElement.getElementsByTagName("invoices"));
+            parseAndAddInvoices(rootElement.getElementsByTagName("invoices"), amountFormat);
 
-            parseAndAddJournals(highestPaymentId, rootElement);
+            parseAndAddJournals(highestPaymentId, rootElement, amountFormat);
 
             parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
 
@@ -144,7 +144,7 @@ public class XMLFileReader {
         }
     }
 
-    private void parseAndAddJournals(int highestPaymentId, Element rootElement)
+    private void parseAndAddJournals(int highestPaymentId, Element rootElement, AmountFormat amountFormat)
             throws ParseException, DocumentModificationFailedException, ServiceException {
         NodeList journalsNodes = rootElement.getElementsByTagName("journals");
         for (int i=0; i<journalsNodes.getLength(); i++) {
@@ -169,7 +169,7 @@ public class XMLFileReader {
                     Element itemElem = (Element)itemNodes.item(k);
                     String accountId = itemElem.getAttribute("id");
                     String amountString = itemElem.getAttribute("amount");
-                    Amount amount = AMOUNT_FORMAT.parse(amountString);
+                    Amount amount = new Amount(amountFormat.parse(amountString));
                     String side = itemElem.getAttribute("side");
                     String invoiceId = itemElem.getAttribute("invoice");
                     if (invoiceId.length() == 0) {
@@ -247,12 +247,7 @@ public class XMLFileReader {
         }
     }
 
-    /**
-     * Parses invoices and adds them to the database
-     * @param nodes a node list containing invoices.
-     * @throws XMLParseException if a syntax error is found in the nodes
-     */
-    private void parseAndAddInvoices(NodeList nodes) throws XMLParseException, ServiceException {
+    private void parseAndAddInvoices(NodeList nodes, AmountFormat amountFormat) throws XMLParseException, ServiceException {
         for (int i=0; i<nodes.getLength(); i++) {
             Element elem = (Element)nodes.item(i);
             NodeList invoiceNodes = elem.getElementsByTagName("invoice");
@@ -261,7 +256,7 @@ public class XMLFileReader {
                 String id = invoiceElem.getAttribute("id");
                 Amount amountToBePaid;
                 try {
-                    amountToBePaid = AMOUNT_FORMAT.parse(invoiceElem.getAttribute("amountToBePaid"));
+                    amountToBePaid = new Amount(amountFormat.parse(invoiceElem.getAttribute("amountToBePaid")));
                 } catch (ParseException e) {
                     throw new XMLParseException("Invalid amount: " + invoiceElem.getAttribute("amountToBePaid"));
                 }
@@ -286,7 +281,7 @@ public class XMLFileReader {
                     String amountString = lineElem.getAttribute("amount");
                     if (amountString != null && amountString.length() > 0) {
                         try {
-                            amounts.add(AMOUNT_FORMAT.parse(amountString));
+                            amounts.add(new Amount(amountFormat.parse(amountString)));
                         } catch (ParseException e) {
                             throw new XMLParseException("Invalid amount: " + amountString);
                         }
@@ -321,7 +316,7 @@ public class XMLFileReader {
                         throw new XMLParseException("Invalid date: " + paymentElem.getAttribute("date"));
                     }
                     try {
-                        payment.setAmount(AMOUNT_FORMAT.parse(paymentElem.getAttribute("amount")));
+                        payment.setAmount(new Amount(amountFormat.parse(paymentElem.getAttribute("amount"))));
                     } catch (ParseException e) {
                         throw new XMLParseException("Invalid amount: " + paymentElem.getAttribute("amount"));
                     }
