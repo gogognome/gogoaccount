@@ -21,7 +21,6 @@ import nl.gogognome.lib.util.Factory;
 public class Start {
 
     private String fileName;
-    private MainFrame mainFrame;
 
     /**
      * Starts the application.
@@ -48,10 +47,12 @@ public class Start {
                 file = new File(fileName + ".h2.db");
             }
             if (file.exists()) {
-                this.mainFrame.loadFile(file);
+                mainFrame.loadFile(file);
             } else {
                 MessageDialog.showErrorMessage(mainFrame, "mf.fileDoesNotExist", fileName);
             }
+        } else {
+            mainFrame.handleNewEdition();
         }
     }
 
@@ -82,7 +83,7 @@ public class Start {
     }
 
     private MainFrame initFrame() {
-        mainFrame = new MainFrame();
+        MainFrame mainFrame = new MainFrame();
         mainFrame.setVisible(true);
         SwingUtils.center(mainFrame);
         mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);

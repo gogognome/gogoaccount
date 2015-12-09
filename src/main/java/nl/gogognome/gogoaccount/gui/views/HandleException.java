@@ -7,14 +7,18 @@ import java.awt.*;
 public class HandleException {
 
     public static void for_(Component parentComponent, RunnableWithException runnable) {
+        for_(parentComponent, "gen.internalError", runnable);
+    }
+
+    public static void for_(Component parentComponent, String messageId, RunnableWithException runnable) {
         try {
             runnable.run();
         } catch (Exception e) {
-            MessageDialog.showErrorMessage(parentComponent, "gen.internalError", e);
+            MessageDialog.showErrorMessage(parentComponent, e, messageId);
         }
     }
 
-    public static interface RunnableWithException {
+    public interface RunnableWithException {
         void run() throws Exception;
     }
 }

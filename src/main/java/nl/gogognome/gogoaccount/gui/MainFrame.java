@@ -64,12 +64,12 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     public MainFrame() {
         super();
-        try {
-            document = documentService.createNewDocument("New bookkeeping");
-        } catch (ServiceException e) {
-            throw new RuntimeException("Could not create initial database: " + e.getMessage(), e);
-        }
-        document.addListener(this);
+//        try {
+//            document = documentService.createNewDocument(textResource.getString("mf.testBookkeepingDescription"));
+//        } catch (ServiceException e) {
+//            throw new RuntimeException("Could not create initial database: " + e.getMessage(), e);
+//        }
+//        document.addListener(this);
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -207,20 +207,50 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.about".equals(command)) { handleAbout(); }
     }
 
-    private void handleNewEdition() {
-        try {
-            setDocument(documentService.createNewDocument(textResource.getString("mf.newBookkeepingDescription")));
-            document.notifyChange();
-            handleConfigureBookkeeping();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, "gen.problemOccurred", e);
-        }
+    public void handleNewEdition() {
+        HandleException.for_(this, "mf.failedToCreateNewBookkeeping", () -> {
+            JFileChooser fc = new JFileChooser();
+            fc.setFileFilter(new FileFilter() {
+                @Override
+                public boolean accept(File f) {
+                    String filename = f.getName().toLowerCase();
+                    return f.isDirectory() || filename.endsWith(".h2.db");
+                }
+
+                @Override
+                public String getDescription() {
+                    return textResource.getString("mf.fileSelection.description");
+                }
+            });
+
+            int choice = fc.showDialog(this, textResource.getString("mf.titleNewBookkeeping"));
+            Document newDocument = null;
+            boolean existingBookkeeping = false;
+            if (choice == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                if (file.exists()) {
+                    newDocument = doLoadFile(file);
+                    existingBookkeeping = true;
+                } else {
+                    if (file.getName().endsWith(".h2.db")) {
+                        file = new File(file.getParentFile(), file.getName().substring(0, file.getName().length() - 6));
+                    }
+                    newDocument = documentService.createNewDocument(file.getAbsolutePath(), textResource.getString("mf.newBookkeepingDescription"));
+                }
+                if (newDocument != null) {
+                    setDocument(newDocument);
+                    if (!existingBookkeeping) {
+                        handleConfigureBookkeeping();
+                    }
+                }
+            }
+        });
     }
 
     private void handleOpenBookkeeping()
     {
         JFileChooser fc = new JFileChooser();
-        if (document.getFileName() != null) {
+        if (document != null && document.getFileName() != null) {
             fc.setCurrentDirectory(new File(document.getFileName()));
         }
         fc.setFileFilter(new FileFilter() {
@@ -245,47 +275,42 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     /** Handles the configure bookkeeping event. */
     private void handleConfigureBookkeeping() {
-        openView(ConfigureBookkeepingView.class);
+        HandleException.for_(this, () -> {
+            if (document == null ) {
+                MessageDialog.showInfoMessage(this, "mf.noBookkeepingPresent");
+            } else {
+                openView(ConfigureBookkeepingView.class);
+            }
+        });
     }
 
     /** Handles closing the bookkeeping. */
     private void handleCloseBookkeeping() {
-        CloseBookkeepingView cbv = new CloseBookkeepingView(document);
-        new ViewDialog(this, cbv).showDialog();
-        Date date = cbv.getDate();
-        Account accountToAddResultTo = cbv.getAccountToAddResultTo();
-        String description = cbv.getDescription();
-        if (date != null && accountToAddResultTo != null) {
-            try {
-                Document newDocument = bookkeepingService.closeBookkeeping(document, description, date, accountToAddResultTo);
-                setDocument(newDocument);
-            } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");
+        ensureAccountsPresent(() -> {
+            CloseBookkeepingView cbv = new CloseBookkeepingView(document);
+            new ViewDialog(this, cbv).showDialog();
+            Date date = cbv.getDate();
+            Account accountToAddResultTo = cbv.getAccountToAddResultTo();
+            String description = cbv.getDescription();
+            if (date != null && accountToAddResultTo != null) {
+                try {
+                    Document newDocument = bookkeepingService.closeBookkeeping(document, description, date, accountToAddResultTo);
+                    setDocument(newDocument);
+                } catch (ServiceException e) {
+                    MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");
+                }
             }
-        }
+        });
     }
 
     private void handleImportBankStatement() {
-        openView(ImportBankStatementView.class);
+        ensureAccountsPresent(() -> openView(ImportBankStatementView.class));
     }
 
     public void loadFile(File file) {
         Document newDocument;
         try {
-            if (file.getName().toLowerCase().endsWith(".xml")) {
-                newDocument = new XMLFileReader(file).createDatabaseFromFile();
-                if (MessageDialog.YES_OPTION == MessageDialog.showYesNoQuestion(this, "mf.xmlChangedToDatabase.title", "mf.xmlChangedToDatabase")) {
-                    if (!file.delete()) {
-                        MessageDialog.showErrorMessage(this, "mf.failedToDeleteFile", file.getAbsoluteFile());
-                    }
-                }
-            } else {
-                String filename = file.getAbsolutePath();
-                newDocument = documentService.openDocument(filename);
-            }
-
-            Currency currency = configurationService.getBookkeeping(document).getCurrency();
-            Factory.bindSingleton(AmountFormat.class, new AmountFormat(Factory.getInstance(Locale.class), currency));
+            newDocument = doLoadFile(file);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
@@ -294,19 +319,43 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         setDocument(newDocument);
     }
 
+    private Document doLoadFile(File file) throws ServiceException {
+        Document newDocument;
+        if (file.getName().toLowerCase().endsWith(".xml")) {
+            newDocument = new XMLFileReader(file).createDatabaseFromFile();
+            if (MessageDialog.YES_OPTION == MessageDialog.showYesNoQuestion(this, "mf.xmlChangedToDatabase.title", "mf.xmlChangedToDatabase")) {
+                if (!file.delete()) {
+                    MessageDialog.showErrorMessage(this, "mf.failedToDeleteFile", file.getAbsoluteFile());
+                }
+            }
+        } else {
+            String filename = file.getAbsolutePath();
+            newDocument = documentService.openDocument(filename);
+        }
+
+        Currency currency = configurationService.getBookkeeping(newDocument).getCurrency();
+        Factory.bindSingleton(AmountFormat.class, new AmountFormat(Factory.getInstance(Locale.class), currency));
+        return newDocument;
+    }
+
     /**
      * Replaces the old database by the new database.
      * @param newDocument the new database
      */
     private void setDocument(Document newDocument) {
-        document.removeListener(this);
-
-        document = newDocument;
-        document.addListener(this);
         viewTabbedPane.closeAllViews();
 
         for (View view : openViews.values()) {
             view.requestClose();
+        }
+
+        if (document != null) {
+            document.removeListener(this);
+        }
+
+        document = newDocument;
+        if (document != null) {
+            document.addListener(this);
         }
 
         documentChanged(document);
@@ -314,24 +363,26 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleExit() {
-        document.removeListener(this);
+        if (document != null) {
+            document.removeListener(this);
+        }
         dispose();
     }
 
     private void handleViewBalanceAndOperationalResult() {
-        openView(BalanceAndOperationResultView.class);
+        ensureAccountsPresent(() -> openView(BalanceAndOperationResultView.class));
     }
 
     private void handleEditParties() {
-        openView(PartiesView.class);
+        ensureAccountsPresent(() -> openView(PartiesView.class));
     }
 
     private void handleViewAccountMutations() {
-        openView(AccountMutationsView.class);
+        ensureAccountsPresent(() -> openView(AccountMutationsView.class));
     }
 
     private void handleViewPartyOverview() {
-        openView(InvoicesPerPartyView.class);
+        ensureAccountsPresent(() -> openView(InvoicesPerPartyView.class));
     }
 
     private void handleAddJournal() throws ServiceException {
@@ -355,7 +406,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleGenerateAutomaticCollectionFile() {
-        HandleException.for_(this, () -> {
+        ensureAccountsPresent(() -> {
             if (!configurationService.getBookkeeping(document).isEnableAutomaticCollection()) {
                 MessageDialog.showInfoMessage(this, "generateAutomaticCollectionFileView.automaticCollectionIsDisabled");
             } else {
@@ -431,7 +482,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private void ensureAccountsPresent(HandleException.RunnableWithException runnable) {
         HandleException.for_(this, () -> {
-            if (!configurationService.hasAccounts(document)) {
+            if (document == null) {
+                MessageDialog.showInfoMessage(this, "mf.noBookkeepingPresent");
+            } else if (configurationService.hasAccounts(document)) {
                 MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
             } else {
                 runnable.run();
