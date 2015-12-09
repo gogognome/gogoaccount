@@ -206,7 +206,7 @@ public class LedgerService {
      * @param date the date
      * @return the balance of this account at the specified date
      */
-    public static Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
+    public Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             List<JournalEntry> journalEntries = new JournalEntryDAO(document).findAll();
             Amount result = new Amount("0");
