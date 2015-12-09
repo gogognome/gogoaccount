@@ -32,6 +32,8 @@ public class BookkeepingService {
         return ServiceTransaction.withResult(() -> {
             LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
+            // TODO: the next line creates an in-memory database. Instead it should get the file name of the new bookkeeping in advance
+            if (1 == 1) throw new ServiceException("// TODO: the next line creates an in-memory database. Instead it should get the file name of the new bookkeeping in advance");
             Document newDocument = ObjectFactory.create(DocumentService.class).createNewDocument("New bookkeeping");
             newDocument.setFileName(null);
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
