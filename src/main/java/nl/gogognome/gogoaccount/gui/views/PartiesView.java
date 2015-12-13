@@ -282,7 +282,7 @@ public class PartiesView extends View {
                 searchCriteria.setTag(tagListModel.getSelectedItem());
             }
 
-            partiesTableModel.replaceRows(partyService.findParties(document, searchCriteria));
+            partiesTableModel.replaceRows(partyService.findParties(document, searchCriteria), partyService.findPartyIdToTags(document));
             SwingUtils.selectFirstRow(table);
             table.requestFocusInWindow();
 
