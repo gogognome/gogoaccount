@@ -1,9 +1,9 @@
 package nl.gogognome.gogoaccount.component.party;
 
-import java.util.Date;
-
-import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.util.DateUtil;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class represents search criteria for parties.
@@ -16,7 +16,7 @@ public class PartySearchCriteria {
     private String zipCode;
     private String city;
     private Date birthDate;
-    private String type;
+    private String tag;
 
     public String getAddress() {
         return address;
@@ -54,20 +54,22 @@ public class PartySearchCriteria {
     public void setBirthDate(Date birthDate) {
         this.birthDate = birthDate;
     }
-    public String getType() {
-        return type;
+    public String getTag() {
+        return tag;
     }
-    public void setType(String type) {
-        this.type = type;
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
     /**
      * Checks whether the specified <code>Party</code> matches these criteria.
      * @param party the party
+     * @param tags the tags of the party
      * @return <code>true</code> if the party matches the criteria,
      *          <code>false</code> otherwise
      */
-    public boolean matches(Party party) {
+    public boolean matches(Party party, List<String> tags) {
         boolean matches = true;
         if (id != null) {
             matches = matches && matches(id, party.getId());
@@ -91,8 +93,8 @@ public class PartySearchCriteria {
                 matches = false;
             }
         }
-        if (type != null) {
-            matches = matches && type.equals(party.getType());
+        if (tag != null) {
+            matches = matches && tags != null && tags.contains(tag);
         }
         return matches;
     }

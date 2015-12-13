@@ -11,9 +11,10 @@ import static java.util.stream.Collectors.toList;
 
 public class PartyService {
 
-    public Party createParty(Document document, Party party) throws ServiceException {
+    public Party createParty(Document document, Party party, List<String> tags) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             Party createdParty = new PartyDAO(document).create(party);
+            new TagDAO(document).saveTags(createdParty.getId(), tags);
             document.notifyChange();
             return createdParty;
         });
@@ -37,22 +38,30 @@ public class PartyService {
         });
     }
 
-    /**
-     * @param document the document
-     * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
-     */
-    public List<String> findPartyTypes(Document document) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new PartyDAO(document).findPartyTypes());
+    public List<String> findPartyTags(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new TagDAO(document).findAllTags());
     }
 
     public List<Party> findAllParties(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> new PartyDAO(document).findAll().stream().sorted().collect(toList()));
     }
 
+    public List<String> getTagsForParty(Document document, Party party) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new TagDAO(document).findTagsForParty(party.getId()));
+    }
+
+    public Map<String, List<String>> findPartyIdToTags(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new TagDAO(document).findPartyIdToTags());
+    }
+
     public List<Party> findParties(Document document, PartySearchCriteria searchCriteria) throws ServiceException {
-        // TODO: use criteria to build a query
-        return ServiceTransaction.withResult(() ->
-                new PartyDAO(document).findAll().stream().filter(party -> searchCriteria.matches(party)).sorted().collect(toList()));
+        return ServiceTransaction.withResult(() -> {
+            Map<String, List<String>> partyIdToTags = new TagDAO(document).findPartyIdToTags();
+            return new PartyDAO(document).findAll().stream()
+                    .filter(party -> searchCriteria.matches(party, partyIdToTags.get(party.getId())))
+                    .sorted()
+                    .collect(toList());
+        });
     }
 
     public boolean existsParty(Document document, String partyId) throws ServiceException {

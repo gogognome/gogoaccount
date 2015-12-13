@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.gui.views;
 
+import com.google.common.base.Strings;
 import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -37,6 +38,8 @@ public class EditPartyView extends OkCancelView {
 
     private final Document document;
 
+    private List<String> tags;
+
     private final StringModel idModel = new StringModel();
     private final StringModel nameModel = new StringModel();
     private final StringModel addressModel = new StringModel();
@@ -49,22 +52,26 @@ public class EditPartyView extends OkCancelView {
     private final StringModel automaticCollectionCountryModel = new StringModel();
     private final StringModel automaticCollectionIbanModel = new StringModel();
     private final DateModel automaticCollectionMandateDateModel = new DateModel();
-    private final ListModel<String> typeListModel = new ListModel<>();
+    private final List<ListModel<String>> tagListModels = new ArrayList<>();
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
     private final JTextArea taRemarks = new JTextArea(5, 40);
 
     private final Party initialParty;
+    private final List<String> initialTags;
     private final PartyAutomaticCollectionSettings initialAutomaticCollectionSettings;
     private Party resultParty;
+    private List<String> resultTags;
     private PartyAutomaticCollectionSettings resulAutomaticCollectionSettings;
 
     private ModelChangeListener idUpdateListener;
 
-    protected EditPartyView(Document document, Party party, PartyAutomaticCollectionSettings automaticCollectionSettings) {
+    protected EditPartyView(Document document, Party party, List<String> initialTags,
+                            PartyAutomaticCollectionSettings automaticCollectionSettings) {
         super();
         this.document = document;
         this.initialParty = party;
+        this.initialTags = initialTags;
         this.initialAutomaticCollectionSettings = automaticCollectionSettings;
     }
 
@@ -82,10 +89,9 @@ public class EditPartyView extends OkCancelView {
     }
 
     private void initModels() throws ServiceException {
-    	List<String> items = new ArrayList<>();
-    	items.add("");
-    	items.addAll(partyService.findPartyTypes(document));
-    	typeListModel.setItems(items);
+        tags = new ArrayList<>();
+        tags.add("");
+    	tags.addAll(partyService.findPartyTags(document));
 
     	if (initialParty != null) {
             idModel.setString(initialParty.getId());
@@ -94,9 +100,14 @@ public class EditPartyView extends OkCancelView {
             addressModel.setString(initialParty.getAddress());
             zipCodeModel.setString(initialParty.getZipCode());
             cityModel.setString(initialParty.getCity());
-            typeListModel.setSelectedItem(initialParty.getType(), null);
             taRemarks.setText(initialParty.getRemarks());
             birthDateModel.setDate(initialParty.getBirthDate(), null);
+
+            for (String tag : initialTags) {
+                ListModel<String> tagListModel = new ListModel<>(tags);
+                tagListModel.setSelectedItem(tag, null);
+                tagListModels.add(tagListModel);
+            }
         } else {
             idModel.setString(suggestNewId());
         }
@@ -131,8 +142,10 @@ public class EditPartyView extends OkCancelView {
         ifc.addField("editPartyView.zipCode", zipCodeModel);
         ifc.addField("editPartyView.city", cityModel);
         ifc.addField("editPartyView.birthDate", birthDateModel);
-        PartyTypeBean typesBean = new PartyTypeBean(typeListModel);
-        ifc.addVariableSizeField("editPartyView.type", typesBean);
+        for (ListModel<String> tagListModel : tagListModels) {
+            PartyTypeBean typesBean = new PartyTypeBean(tagListModel);
+            ifc.addVariableSizeField("editPartyView.tag", typesBean);
+        }
 
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
         panel.add(ifc, BorderLayout.NORTH);
@@ -171,8 +184,15 @@ public class EditPartyView extends OkCancelView {
         resultParty.setZipCode(zipCodeModel.getString());
         resultParty.setCity(cityModel.getString());
         resultParty.setBirthDate(birthDateModel.getDate());
-        resultParty.setType(typeListModel.getSelectedItem());
         resultParty.setRemarks(taRemarks.getText());
+
+        resultTags = new ArrayList<>();
+        for (ListModel<String> tagListModel : tagListModels) {
+            String tag = tagListModel.getSelectedItem();
+            if (Strings.isNullOrEmpty(tag)) {
+                resultTags.add(tag);
+            }
+        }
 
         resulAutomaticCollectionSettings = new PartyAutomaticCollectionSettings(resultParty.getId());
         resulAutomaticCollectionSettings.setName(automaticCollectionNameModel.getString());
@@ -192,6 +212,14 @@ public class EditPartyView extends OkCancelView {
      */
     public Party getEnteredParty() {
         return resultParty;
+    }
+
+    /**
+     * Gets the tags for the party that was entered by the user.
+     * @return the tags or <code>null</code> if the user canceled this dialog
+     */
+    public List<String> getEnteredTags() {
+        return resultTags;
     }
 
     /**

@@ -75,7 +75,7 @@ public class BirthdayCalendarOfParties {
             Document document = new XMLFileReader(new File(xmlFileName)).createDatabaseFromFile();
             List<Party> parties = ObjectFactory.create(PartyService.class).findAllParties(document);
             for (Party party : parties) {
-                if (party.getBirthDate() != null && !"oud-lid".equals(party.getType())) {
+                if (party.getBirthDate() != null) {
                     partiesWithBirthdate.add(party);
                 }
             }

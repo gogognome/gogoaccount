@@ -46,8 +46,9 @@ public class BookkeepingService {
 
             // Copy the parties
             PartyService partyService = ObjectFactory.create(PartyService.class);
+            Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
             for (Party party : partyService.findAllParties(document)) {
-                partyService.createParty(newDocument, party);
+                partyService.createParty(newDocument, party, partyIdToTags.get(party.getId()));
             }
 
             // Copy the accounts

@@ -63,7 +63,7 @@ public class PartiesView extends View {
     private StringModel addressModel = new StringModel();
     private StringModel zipCodeModel = new StringModel();
     private StringModel cityModel = new StringModel();
-    private ListModel<String> typeListModel = new ListModel<>();
+    private ListModel<String> tagListModel = new ListModel<>();
     private DateModel birthDateModel = new DateModel();
 
     private JTextArea taRemarks;
@@ -151,7 +151,7 @@ public class PartiesView extends View {
         ifc.addField("partiesView.zipCode", zipCodeModel);
         ifc.addField("partiesView.city", cityModel);
         ifc.addField("partiesView.birthDate", birthDateModel);
-        ifc.addComboBoxField("partiesView.type", typeListModel, null);
+        ifc.addComboBoxField("partiesView.type", tagListModel, null);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = widgetFactory.createAction("partiesView.btnSearch");
@@ -203,11 +203,11 @@ public class PartiesView extends View {
         List<String> items = new ArrayList<>();
         try {
             items.add("\u00a0");
-            items.addAll(partyService.findPartyTypes(document));
+            items.addAll(partyService.findPartyTags(document));
         } catch (ServiceException e) {
             logger.warn("Ignored exception", e);
         } finally {
-            typeListModel.setItems(items);
+            tagListModel.setItems(items);
         }
     }
 
@@ -275,8 +275,8 @@ public class PartiesView extends View {
             if (birthDateModel.getDate() != null) {
                 searchCriteria.setBirthDate(birthDateModel.getDate());
             }
-            if (typeListModel.getSelectedIndex() > 0) {
-                searchCriteria.setType(typeListModel.getSelectedItem());
+            if (tagListModel.getSelectedIndex() > 0) {
+                searchCriteria.setTag(tagListModel.getSelectedItem());
             }
 
             partiesTableModel.replaceRows(partyService.findParties(document, searchCriteria));
@@ -294,13 +294,14 @@ public class PartiesView extends View {
 
     private void onAddParty() {
         try {
-        EditPartyView editPartyView = new EditPartyView(document, null, null);
+        EditPartyView editPartyView = new EditPartyView(document, null, null, null);
         ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
         dialog.showDialog();
 
         Party party = editPartyView.getEnteredParty();
-        if (party != null) {
-            partyService.createParty(document, party);
+        List<String> tags = editPartyView.getEnteredTags();
+        if (party != null && tags != null) {
+            partyService.createParty(document, party, tags);
             automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
 
         }
@@ -318,8 +319,9 @@ public class PartiesView extends View {
             }
 
             Party oldParty = partiesTableModel.getRow(row);
+            List<String> oldTags = partyService.getTagsForParty(document, oldParty);
             PartyAutomaticCollectionSettings oldSettings = automaticCollectionService.findSettings(document, oldParty);
-            EditPartyView editPartyView = new EditPartyView(document, oldParty, oldSettings);
+            EditPartyView editPartyView = new EditPartyView(document, oldParty, oldTags, oldSettings);
             ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
             dialog.showDialog();
 

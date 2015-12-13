@@ -231,7 +231,6 @@ public class XMLFileReader {
                 party.setAddress(emptyToNull(partyElem.getAttribute("address")));
                 party.setZipCode(emptyToNull(partyElem.getAttribute("zip")));
                 party.setCity(emptyToNull(partyElem.getAttribute("city")));
-                party.setType(emptyToNull(partyElem.getAttribute("type")));
                 party.setRemarks(emptyToNull(partyElem.getAttribute("remarks")));
 
                 String birthDateString = partyElem.getAttribute("birthdate");
@@ -242,7 +241,14 @@ public class XMLFileReader {
                         throw new XMLParseException("Invalid birth date: \"" + birthDateString + "\"");
                     }
                 }
-                partyService.createParty(document, party);
+
+                List<String> tags = new ArrayList<>();
+                String tag = emptyToNull(partyElem.getAttribute("type"));
+                if (tag != null) {
+                    tags.add(tag);
+                }
+
+                partyService.createParty(document, party, tags);
             }
         }
     }

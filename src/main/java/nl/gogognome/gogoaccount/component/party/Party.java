@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.component.party;
 
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -25,8 +26,7 @@ public class Party implements Comparable<Party> {
     /** The birth date of this party. */
     private Date birthDate;
 
-    /** THe type of this party. */
-    private String type;
+    private List<String> tags;
 
     /** Contains remarks about this party. */
     private String remarks;
@@ -77,14 +77,6 @@ public class Party implements Comparable<Party> {
 
     public void setBirthDate(Date birthDate) {
         this.birthDate = birthDate;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public String getRemarks() {

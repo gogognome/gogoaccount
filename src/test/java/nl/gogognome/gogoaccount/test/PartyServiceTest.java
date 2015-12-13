@@ -1,6 +1,5 @@
 package nl.gogognome.gogoaccount.test;
 
-import nl.gogognome.dataaccess.dao.NoRecordFoundException;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartySearchCriteria;
 import nl.gogognome.gogoaccount.component.party.PartyService;
@@ -91,7 +90,7 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
         party.setType(null);
         partyService.createParty(document, party);
 
-        assertEquals("[Type 1, Type 2]", partyService.findPartyTypes(document).toString());
+        assertEquals("[Type 1, Type 2]", partyService.findPartyTags(document).toString());
     }
 
     private Party createParty() throws ServiceException {

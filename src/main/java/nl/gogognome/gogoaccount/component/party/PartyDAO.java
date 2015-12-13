@@ -15,13 +15,6 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
         super("party", null, document.getBookkeepingId());
     }
 
-    /**
-     * @return the types of the parties. Each type occurs exactly ones. The types are sorted lexicographically.
-     */
-    public List<String> findPartyTypes() throws SQLException {
-        return execute("SELECT DISTINCT type FROM " + tableName + " WHERE type IS NOT NULL ORDER BY type").toList(r -> r.getString(1));
-    }
-
     public Map<String, Party> getIdToParty(List<String> partyIds) throws SQLException {
         return execute("SELECT * FROM " + tableName + " WHERE id IN (?)", partyIds).toHashMap(r -> r.getString("id"), r -> getObjectFromResultSet(r));
     }
@@ -34,7 +27,6 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
         party.setCity(result.getString("city"));
         party.setZipCode(result.getString("zip_code"));
         party.setBirthDate(result.getDate("birth_date"));
-        party.setType(result.getString("type"));
         party.setRemarks(result.getString("remarks"));
         return party;
     }
@@ -48,7 +40,6 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
                 .add("city", party.getCity())
                 .add("zip_code", party.getZipCode())
                 .add("birth_date", party.getBirthDate())
-                .add("type", party.getType())
                 .add("remarks", party.getRemarks());
     }
 }
