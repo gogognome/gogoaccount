@@ -64,12 +64,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     public MainFrame() {
         super();
-//        try {
-//            document = documentService.createNewDocument(textResource.getString("mf.testBookkeepingDescription"));
-//        } catch (ServiceException e) {
-//            throw new RuntimeException("Could not create initial database: " + e.getMessage(), e);
-//        }
-//        document.addListener(this);
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -209,42 +203,47 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     public void handleNewEdition() {
         HandleException.for_(this, "mf.failedToCreateNewBookkeeping", () -> {
-            JFileChooser fc = new JFileChooser();
-            fc.setFileFilter(new FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    String filename = f.getName().toLowerCase();
-                    return f.isDirectory() || filename.endsWith(".h2.db");
-                }
-
-                @Override
-                public String getDescription() {
-                    return textResource.getString("mf.fileSelection.description");
-                }
-            });
-
-            int choice = fc.showDialog(this, textResource.getString("mf.titleNewBookkeeping"));
-            Document newDocument = null;
+            File file = askUserForFileOfNewBookkeeping();
+            if (file == null) {
+                return;
+            }
             boolean existingBookkeeping = false;
-            if (choice == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
-                if (file.exists()) {
-                    newDocument = doLoadFile(file);
-                    existingBookkeeping = true;
-                } else {
-                    if (file.getName().endsWith(".h2.db")) {
-                        file = new File(file.getParentFile(), file.getName().substring(0, file.getName().length() - 6));
-                    }
-                    newDocument = documentService.createNewDocument(file.getAbsolutePath(), textResource.getString("mf.newBookkeepingDescription"));
+            Document newDocument = null;
+            if (file.exists()) {
+                newDocument = doLoadFile(file);
+                existingBookkeeping = true;
+            } else {
+                if (file.getName().endsWith(".h2.db")) {
+                    file = new File(file.getParentFile(), file.getName().substring(0, file.getName().length() - 6));
                 }
-                if (newDocument != null) {
-                    setDocument(newDocument);
-                    if (!existingBookkeeping) {
-                        handleConfigureBookkeeping();
-                    }
+                newDocument = documentService.createNewDocument(file, textResource.getString("mf.newBookkeepingDescription"));
+            }
+            if (newDocument != null) {
+                setDocument(newDocument);
+                if (!existingBookkeeping) {
+                    handleConfigureBookkeeping();
                 }
             }
         });
+    }
+
+    private File askUserForFileOfNewBookkeeping() {
+        JFileChooser fc = new JFileChooser();
+        fc.setFileFilter(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                String filename = f.getName().toLowerCase();
+                return f.isDirectory() || filename.endsWith(".h2.db");
+            }
+
+            @Override
+            public String getDescription() {
+                return textResource.getString("mf.fileSelection.description");
+            }
+        });
+
+        int choice = fc.showDialog(this, textResource.getString("mf.titleNewBookkeeping"));
+        return choice == JFileChooser.APPROVE_OPTION ? fc.getSelectedFile() : null;
     }
 
     private void handleOpenBookkeeping()
@@ -294,7 +293,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             String description = cbv.getDescription();
             if (date != null && accountToAddResultTo != null) {
                 try {
-                    Document newDocument = bookkeepingService.closeBookkeeping(document, description, date, accountToAddResultTo);
+                    File file = askUserForFileOfNewBookkeeping();
+                    if (file == null) {
+                        return;
+                    }
+                    Document newDocument = bookkeepingService.closeBookkeeping(document, file, description, date, accountToAddResultTo);
                     setDocument(newDocument);
                 } catch (ServiceException e) {
                     MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");

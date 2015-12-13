@@ -2,11 +2,11 @@ package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
 import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartySearchCriteria;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -35,8 +35,11 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 /**
  * This class implements a view for adding, removing, editing and (optionally) selecting parties.
@@ -169,7 +172,7 @@ public class PartiesView extends View {
         resultPanel.setBorder(new CompoundBorder(new TitledBorder(textResource.getString("partiesView.foundParties")),
             new EmptyBorder(5, 12, 5, 12)));
 
-        partiesTableModel = new PartiesTableModel(Collections.<Party>emptyList());
+        partiesTableModel = new PartiesTableModel(emptyList(), emptyMap());
         table = widgetFactory.createSortedTable(partiesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
@@ -319,7 +322,7 @@ public class PartiesView extends View {
             }
 
             Party oldParty = partiesTableModel.getRow(row);
-            List<String> oldTags = partyService.getTagsForParty(document, oldParty);
+            List<String> oldTags = partyService.findTagsForParty(document, oldParty);
             PartyAutomaticCollectionSettings oldSettings = automaticCollectionService.findSettings(document, oldParty);
             EditPartyView editPartyView = new EditPartyView(document, oldParty, oldTags, oldSettings);
             ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
@@ -327,7 +330,7 @@ public class PartiesView extends View {
 
             Party party = editPartyView.getEnteredParty();
             if (party != null) {
-                partyService.updateParty(document, party);
+                partyService.updateParty(document, party, Arrays.asList("updated"));
                 automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
             }
             onSearch();

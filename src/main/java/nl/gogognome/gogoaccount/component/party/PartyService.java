@@ -24,9 +24,10 @@ public class PartyService {
         return ServiceTransaction.withResult(() -> new PartyDAO(document).get(id));
     }
 
-    public void updateParty(Document document, Party party) throws ServiceException {
+    public void updateParty(Document document, Party party, List<String> tags) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             new PartyDAO(document).update(party);
+            new TagDAO(document).saveTags(party.getId(), tags);
             document.notifyChange();
         });
     }
@@ -46,7 +47,7 @@ public class PartyService {
         return ServiceTransaction.withResult(() -> new PartyDAO(document).findAll().stream().sorted().collect(toList()));
     }
 
-    public List<String> getTagsForParty(Document document, Party party) throws ServiceException {
+    public List<String> findTagsForParty(Document document, Party party) throws ServiceException {
         return ServiceTransaction.withResult(() -> new TagDAO(document).findTagsForParty(party.getId()));
     }
 

@@ -7,6 +7,7 @@ import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -148,59 +149,69 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testCloseBookkeeping() throws Exception {
-        Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
-                DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
-        Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Document newDocument = bookkeepingService.closeBookkeeping(document, newBookkeepingFile, "new bookkeeping",
+                    DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
+            Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
 
-        assertEquals("new bookkeeping", newBookkeeping.getDescription());
-        assertEquals(configurationService.findAllAccounts(document).toString(), configurationService.findAllAccounts(newDocument).toString());
-        assertEquals(0, DateUtil.compareDayOfYear(DateUtil.createDate(2012, 1, 1),
-                newBookkeeping.getStartOfPeriod()));
+            assertEquals("new bookkeeping", newBookkeeping.getDescription());
+            assertEquals(configurationService.findAllAccounts(document).toString(), configurationService.findAllAccounts(newDocument).toString());
+            assertEquals(0, DateUtil.compareDayOfYear(DateUtil.createDate(2012, 1, 1),
+                    newBookkeeping.getStartOfPeriod()));
 
-        Report report = bookkeepingService.createReport(newDocument,
-                DateUtil.createDate(2011, 12, 31));
+            Report report = bookkeepingService.createReport(newDocument,
+                    DateUtil.createDate(2011, 12, 31));
 
-        assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
-                "200 Eigen vermogen, 290 Crediteuren, " +
-                "400 Zaalhuur, 490 Onvoorzien, " +
-                "300 Contributie, 390 Onvoorzien]",
-            report.getAllAccounts().toString());
+            assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
+                            "200 Eigen vermogen, 290 Crediteuren, " +
+                            "400 Zaalhuur, 490 Onvoorzien, " +
+                            "300 Contributie, 390 Onvoorzien]",
+                    report.getAllAccounts().toString());
 
-        assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
-            report.getAssetsInclLossAccount().toString());
+            assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
+                    report.getAssetsInclLossAccount().toString());
 
-        assertEquals("[200 Eigen vermogen, 290 Crediteuren]",
-                report.getLiabilitiesInclProfitAccount().toString());
+            assertEquals("[200 Eigen vermogen, 290 Crediteuren]",
+                    report.getLiabilitiesInclProfitAccount().toString());
 
-        assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
-        assertEquals("[]", report.getCreditors().toString());
+            assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
+            assertEquals("[]", report.getCreditors().toString());
 
-        Party party = partyService.getParty(document, "1101");
-        checkAmount(10, report.getBalanceForDebtor(party));
-        checkAmount(0, report.getBalanceForCreditor(party));
+            Party party = partyService.getParty(document, "1101");
+            checkAmount(10, report.getBalanceForDebtor(party));
+            checkAmount(0, report.getBalanceForCreditor(party));
 
-        checkAmount(420, report.getAmount(configurationService.getAccount(document, "200")));
-        checkAmount(0, report.getAmount(configurationService.getAccount(document, "300")));
+            checkAmount(420, report.getAmount(configurationService.getAccount(document, "200")));
+            checkAmount(0, report.getAmount(configurationService.getAccount(document, "300")));
 
-        checkTotalsOfReport(report);
+            checkTotalsOfReport(report);
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
     }
 
     @Test
     public void testCloseBookkeepingWithJournalsCopiedToNewBookkeeping() throws Exception {
-        List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                buildJournalEntryDetail(20, "100", true),
-                buildJournalEntryDetail(20, "101", false));
-        JournalEntry journalEntry = new JournalEntry();
-        journalEntry.setId("ABC");
-        journalEntry.setDescription("Test");
-        journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
+                    buildJournalEntryDetail(20, "100", true),
+                    buildJournalEntryDetail(20, "101", false));
+            JournalEntry journalEntry = new JournalEntry();
+            journalEntry.setId("ABC");
+            journalEntry.setDescription("Test");
+            journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
 
-        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
-        document.notifyChange();
-        Document newDocument = bookkeepingService.closeBookkeeping(document, "new bookkeeping",
-                DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
+            ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
+            document.notifyChange();
+            Document newDocument = bookkeepingService.closeBookkeeping(document, newBookkeepingFile, "new bookkeeping",
+                    DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
 
-        assertEquals("[20111231 start start balance, 20120110 ABC Test]", ledgerService.findJournalEntries(newDocument).toString());
+            assertEquals("[20111231 start start balance, 20120110 ABC Test]", ledgerService.findJournalEntries(newDocument).toString());
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
     }
 
     @Test

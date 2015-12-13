@@ -7,6 +7,11 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
@@ -21,31 +26,31 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
         party.setAddress("Willemstraat 5");
         party.setZipCode("6122 CC");
         party.setCity("Heerenveen");
-        party.setType("excellent");
         party.setBirthDate(DateUtil.createDate(1976, 4, 23));
         party.setRemarks("This is an excellent person!");
 
         assertFalse(partyService.existsParty(document, party.getId()));
-        partyService.createParty(document, party);
+        partyService.createParty(document, party, Arrays.asList("excellent", "party"));
         assertEqualParty(party, partyService.getParty(document, party.getId()));
     }
 
     @Test(expected = ServiceException.class)
     public void testAddingExistentPartyFails() throws Exception {
         Party party = createParty();
-        partyService.createParty(document, party);
+        partyService.createParty(document, party, Arrays.asList("already", "exists"));
     }
 
     @Test
     public void updateExistingParty() throws Exception {
         Party party = createParty();
 
-        party.setType("failure");
         party.setBirthDate(null);
-        partyService.updateParty(document, party);
+        List<String> newTags = singletonList("updated");
+        partyService.updateParty(document, party, newTags);
 
         Party updatedParty = partyService.getParty(document, party.getId());
         assertEqualParty(party, updatedParty);
+        assertEquals(newTags, partyService.findTagsForParty(document, party));
     }
 
     @Test(expected = ServiceException.class)
@@ -54,7 +59,7 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
         party.setName("Hendrik Erikszoon");
         assertFalse(partyService.existsParty(document, party.getId()));
 
-        partyService.updateParty(document, party);
+        partyService.updateParty(document, party, singletonList("updated"));
     }
 
     @Test
@@ -74,21 +79,18 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void testPartyTypes() throws Exception {
+    public void testPartyTags() throws Exception {
         Party party = new Party("1115");
         party.setName("Hendrik Erikszoon");
-        party.setType("Type 1");
-        partyService.createParty(document, party);
+        partyService.createParty(document, party, singletonList("Type 2"));
 
         party = new Party("1116");
         party.setName("Hendrika Eriksdochter");
-        party.setType("Type 2");
-        partyService.createParty(document, party);
+        partyService.createParty(document, party, singletonList("Type 1"));
 
         party = new Party("1117");
         party.setName("Jan Jansen");
-        party.setType(null);
-        partyService.createParty(document, party);
+        partyService.createParty(document, party, emptyList());
 
         assertEquals("[Type 1, Type 2]", partyService.findPartyTags(document).toString());
     }
@@ -96,7 +98,7 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
     private Party createParty() throws ServiceException {
         Party party = new Party("12345");
         party.setName("Hendrik Erikszoon");
-        return partyService.createParty(document, party);
+        return partyService.createParty(document, party, emptyList());
     }
 
     @Test

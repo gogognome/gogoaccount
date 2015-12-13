@@ -11,6 +11,7 @@ import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import org.h2.jdbcx.JdbcDataSource;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
@@ -35,13 +36,13 @@ public class DocumentService {
         });
     }
 
-    public Document createNewDocument(String description) throws ServiceException {
+    public Document createNewDocumentInMemory(String description) throws ServiceException {
         String jdbcUrl = "jdbc:h2:mem:bookkeeping-" + UUID.randomUUID();
         return createDocument(jdbcUrl, description);
     }
 
-    public Document createNewDocument(String fileName, String description) throws ServiceException {
-        String jdbcUrl = "jdbc:h2:file:" + fileName;
+    public Document createNewDocument(File file, String description) throws ServiceException {
+        String jdbcUrl = "jdbc:h2:file:" + file.getAbsolutePath();
         return createDocument(jdbcUrl, description);
     }
 

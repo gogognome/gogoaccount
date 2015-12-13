@@ -66,7 +66,7 @@ public class XMLFileReader {
                 path = path.substring(0, indexOfExtension);
             }
             DocumentService documentService = ObjectFactory.create(DocumentService.class);
-            document = documentService.createNewDocument(path, "New bookkeeping");
+            document = documentService.createNewDocument(new File(path), "New bookkeeping");
             document.setFileName(file.getAbsolutePath());
 
             DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();

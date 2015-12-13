@@ -17,6 +17,7 @@ import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
+import java.io.File;
 import java.util.*;
 
 
@@ -28,13 +29,11 @@ public class BookkeepingService {
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 
-    public Document closeBookkeeping(Document document, String description, Date date, Account equity) throws ServiceException {
+    public Document closeBookkeeping(Document document, File newBookkeepingFile, String description, Date date, Account equity) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
-            // TODO: the next line creates an in-memory database. Instead it should get the file name of the new bookkeeping in advance
-            if (1 == 1) throw new ServiceException("// TODO: the next line creates an in-memory database. Instead it should get the file name of the new bookkeeping in advance");
-            Document newDocument = ObjectFactory.create(DocumentService.class).createNewDocument("New bookkeeping");
+            Document newDocument = ObjectFactory.create(DocumentService.class).createNewDocument(newBookkeepingFile, "New bookkeeping");
             newDocument.setFileName(null);
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);

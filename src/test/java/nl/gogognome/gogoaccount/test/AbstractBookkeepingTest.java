@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.*;
 
+import static java.util.Collections.emptyList;
 import static junit.framework.Assert.*;
 
 /**
@@ -58,7 +59,7 @@ public abstract class AbstractBookkeepingTest {
     public void initBookkeeping() throws Exception {
         initFactory();
 
-        document = ObjectFactory.create(DocumentService.class).createNewDocument("New bookkeeping");
+        document = ObjectFactory.create(DocumentService.class).createNewDocumentInMemory("New bookkeeping");
         bookkeeping = configurationService.getBookkeeping(document);
         bookkeeping.setCurrency(Currency.getInstance("EUR"));
         bookkeeping.setOrganizationName("My Club");
@@ -78,7 +79,7 @@ public abstract class AbstractBookkeepingTest {
 
         PartyService partyService = new PartyService();
         for (Party party : createParties()) {
-            partyService.createParty(document, party);
+            partyService.createParty(document, party, emptyList());
         }
 
         createPartyAutomaticCollectionSettingsForParty1101();
