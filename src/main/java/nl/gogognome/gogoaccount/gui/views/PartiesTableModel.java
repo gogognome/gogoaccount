@@ -36,7 +36,7 @@ public class PartiesTableModel extends AbstractListTableModel<Party> {
             .add(new DayOfYearComparator()).build();
 
     private final static ColumnDefinition TAGS =
-        new ColumnDefinition("gen.type", String.class, 100);
+        new ColumnDefinition("gen.tags", String.class, 100);
 
     private final static ColumnDefinition REMARKS =
         new ColumnDefinition("gen.remarks", String.class, 100);
