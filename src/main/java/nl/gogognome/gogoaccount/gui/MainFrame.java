@@ -487,7 +487,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         HandleException.for_(this, () -> {
             if (document == null) {
                 MessageDialog.showInfoMessage(this, "mf.noBookkeepingPresent");
-            } else if (configurationService.hasAccounts(document)) {
+            } else if (!configurationService.hasAccounts(document)) {
                 MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
             } else {
                 runnable.run();
