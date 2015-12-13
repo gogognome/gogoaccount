@@ -6,7 +6,7 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.gui.components.PartyTypeBean;
+import nl.gogognome.gogoaccount.gui.components.PartyTagBean;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -142,9 +143,21 @@ public class EditPartyView extends OkCancelView {
         ifc.addField("editPartyView.zipCode", zipCodeModel);
         ifc.addField("editPartyView.city", cityModel);
         ifc.addField("editPartyView.birthDate", birthDateModel);
+        int index = 0;
         for (ListModel<String> tagListModel : tagListModels) {
-            PartyTypeBean typesBean = new PartyTypeBean(tagListModel);
-            ifc.addVariableSizeField("editPartyView.tag", typesBean);
+            PartyTagBean typesBean = new PartyTagBean(tagListModel);
+
+            final int finalIndex = index;
+            JButton deleteButton = widgetFactory.createIconButton("editPartyView.deleteTag", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println("Deleting " + finalIndex);
+                }
+            }, 20);
+            typesBean.add(deleteButton);
+            index++;
+
+            ifc.addVariableSizeField("editPartyView.tags", typesBean);
         }
 
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
