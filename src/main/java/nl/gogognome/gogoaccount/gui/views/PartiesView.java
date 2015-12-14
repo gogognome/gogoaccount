@@ -154,7 +154,7 @@ public class PartiesView extends View {
         ifc.addField("partiesView.zipCode", zipCodeModel);
         ifc.addField("partiesView.city", cityModel);
         ifc.addField("partiesView.birthDate", birthDateModel);
-        ifc.addComboBoxField("partiesView.type", tagListModel, null);
+        ifc.addComboBoxField("partiesView.tag", tagListModel, null);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = widgetFactory.createAction("partiesView.btnSearch");
@@ -329,8 +329,9 @@ public class PartiesView extends View {
             dialog.showDialog();
 
             Party party = editPartyView.getEnteredParty();
-            if (party != null) {
-                partyService.updateParty(document, party, Arrays.asList("updated"));
+            List<String> tags = editPartyView.getEnteredTags();
+            if (party != null && tags != null) {
+                partyService.updateParty(document, party, tags);
                 automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
             }
             onSearch();

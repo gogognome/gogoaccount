@@ -57,6 +57,7 @@ public class EditPartyView extends OkCancelView {
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
     private final JTextArea taRemarks = new JTextArea(5, 40);
+    private JPanel tagsPanel = new JPanel(new GridBagLayout());
 
     private final Party initialParty;
     private final List<String> initialTags;
@@ -111,6 +112,7 @@ public class EditPartyView extends OkCancelView {
             }
         } else {
             idModel.setString(suggestNewId());
+            tagListModels.add(new ListModel<>(tags)); // add one empty tag input field to start with
         }
 
         if (initialAutomaticCollectionSettings != null) {
@@ -143,22 +145,8 @@ public class EditPartyView extends OkCancelView {
         ifc.addField("editPartyView.zipCode", zipCodeModel);
         ifc.addField("editPartyView.city", cityModel);
         ifc.addField("editPartyView.birthDate", birthDateModel);
-        int index = 0;
-        for (ListModel<String> tagListModel : tagListModels) {
-            PartyTagBean typesBean = new PartyTagBean(tagListModel);
-
-            final int finalIndex = index;
-            JButton deleteButton = widgetFactory.createIconButton("editPartyView.deleteTag", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    System.out.println("Deleting " + finalIndex);
-                }
-            }, 20);
-            typesBean.add(deleteButton);
-            index++;
-
-            ifc.addVariableSizeField("editPartyView.tags", typesBean);
-        }
+        ifc.addVariableSizeField("editPartyView.tags", tagsPanel);
+        initTagsPanel();
 
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
         panel.add(ifc, BorderLayout.NORTH);
@@ -184,6 +172,37 @@ public class EditPartyView extends OkCancelView {
         return panel;
     }
 
+    private void initTagsPanel() {
+        tagsPanel.removeAll();
+        int index = 0;
+        for (ListModel<String> tagListModel : tagListModels) {
+            PartyTagBean typesBean = new PartyTagBean(tagListModel);
+
+            final int finalIndex = index;
+            JButton deleteButton = widgetFactory.createIconButton("editPartyView.deleteTag", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    tagListModels.remove(finalIndex);
+                    initTagsPanel();
+                    validate();
+                }
+            }, 20);
+            typesBean.add(deleteButton);
+            tagsPanel.add(typesBean, SwingUtils.createTextFieldGBConstraints(0, index));
+            index++;
+        }
+
+        JButton addButton = widgetFactory.createIconButton("editPartyView.addTag", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tagListModels.add(new ListModel<>(tags));
+                initTagsPanel();
+                validate();
+            }
+        }, 20);
+        tagsPanel.add(addButton, SwingUtils.createGBConstraints(0, index, 1, 1, 0, 0, GridBagConstraints.EAST, 0, 0, 0, 0, 0));
+    }
+
     private void addListeners() {
         idUpdateListener = model -> updateIdMessage();
         idModel.addModelChangeListener(idUpdateListener);
@@ -202,7 +221,7 @@ public class EditPartyView extends OkCancelView {
         resultTags = new ArrayList<>();
         for (ListModel<String> tagListModel : tagListModels) {
             String tag = tagListModel.getSelectedItem();
-            if (Strings.isNullOrEmpty(tag)) {
+            if (!Strings.isNullOrEmpty(tag)) {
                 resultTags.add(tag);
             }
         }
