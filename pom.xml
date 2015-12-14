@@ -7,7 +7,7 @@
   <version>2.4</version>
   <packaging>jar</packaging>
 
-  <name>gogoaccount</name>
+  <name>Gogo Account</name>
   <url>http://www.gogognome.nl/en</url>
   <description>Gogo account is a simple bookkeeping application intended for
      small clubs or for personal use.</description>
@@ -125,11 +125,17 @@
       <scope>test</scope>
     </dependency>  
     <dependency>
-      <groupId>nl.gogognome.gogolib</groupId>
-      <artifactId>gogolib</artifactId>
-      <version>2.1</version>
+      <groupId>nl.gogognome</groupId>
+      <artifactId>gogoswing</artifactId>
+      <version>1.0</version>
       <scope>compile</scope>
     </dependency>  
+    <dependency>
+      <groupId>nl.gogognome</groupId>
+      <artifactId>gogolib</artifactId>
+      <version>3.0</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
