@@ -222,13 +222,13 @@ public class EditInvoiceView extends OkCancelView {
      */
     private void onEditRow() {
         HandleException.for_(this, () -> {
-            int[] rows = table.getSelectedRows();
-            if (rows.length == 0) {
+            int[] indices = table.getSelectedRows();
+            if (indices.length == 0) {
                 MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedToEdit");
-            } else if (rows.length > 1) {
+            } else if (indices.length > 1) {
                 MessageDialog.showInfoMessage(this, "editInvoiceView.multipleRowsSelectedToEdit");
             } else {
-                Tuple<String, Amount> tuple = tableModel.getRow(rows[0]);
+                Tuple<String, Amount> tuple = tableModel.getRow(indices[0]);
                 EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
                         "editInvoiceView.editRowTileId",
                         tuple.getFirst(),
@@ -237,7 +237,7 @@ public class EditInvoiceView extends OkCancelView {
                 ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
                 dialog.showDialog();
                 if (editDescriptionAndAmountView.getEditedDescription() != null) {
-                    tableModel.updateRow(rows[0], editDescriptionAndAmountView.getEditedDescription(),
+                    tableModel.updateRow(indices[0], editDescriptionAndAmountView.getEditedDescription(),
                             editDescriptionAndAmountView.getEditedAmount());
                 }
             }
@@ -248,11 +248,11 @@ public class EditInvoiceView extends OkCancelView {
      * This method is called when the user wants to delete an existing row.
      */
     private void onDeleteRow() {
-        int[] rows = table.getSelectedRows();
-        if (rows.length == 0) {
+        int[] indices = table.getSelectedRows();
+        if (indices.length == 0) {
             MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedForDeletion");
         } else {
-            tableModel.removeRows(rows);
+            tableModel.removeRows(indices);
         }
     }
 
