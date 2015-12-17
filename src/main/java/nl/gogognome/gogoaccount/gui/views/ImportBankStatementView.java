@@ -279,9 +279,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     }
 
     private void addJournalForSelectedTransaction() {
-        AddJournalForTransactionView view = new AddJournalForTransactionView(document, this);
-        ViewDialog dialog = new ViewDialog(this, view);
-        dialog.showDialog();
+        HandleException.for_(this, () -> {
+            AddJournalForTransactionView view = new AddJournalForTransactionView(document, this);
+            ViewDialog dialog = new ViewDialog(this, view);
+            dialog.showDialog();
+        });
     }
 
     private void deleteJournalFromSelectedTransaction() {

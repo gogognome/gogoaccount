@@ -315,58 +315,60 @@ public class InvoiceGeneratorView extends View {
      * states "yes" the invoices will be added to the bookkeeping.
      */
     private void onAddInvoicesToBookkeeping() {
-        // Validate the input.
-        Date date = invoiceGenerationDateModel.getDate();
-        if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
-            return;
-        }
-
-        List<InvoiceLineDefinition> invoiceLines = new ArrayList<>(templateLines.size());
-        for (TemplateLine line : templateLines) {
-            invoiceLines.add(new InvoiceLineDefinition(line.tfAmount.getAmount(), line.accountListModel.getSelectedItem()));
-        }
-
-        for (InvoiceLineDefinition line : invoiceLines) {
-            if (line.getAmount() == null) {
-                MessageDialog.showMessage(this, "gen.titleError",
-                        "invoiceGeneratorView.emptyAmountsFound");
+        HandleException.for_(this, () -> {
+            // Validate the input.
+            Date date = invoiceGenerationDateModel.getDate();
+            if (date == null) {
+                MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
                 return;
             }
 
-            if (line.getAccount() == null) {
-                MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.emptyAccountFound");
+            List<InvoiceLineDefinition> invoiceLines = new ArrayList<>(templateLines.size());
+            for (TemplateLine line : templateLines) {
+                invoiceLines.add(new InvoiceLineDefinition(line.tfAmount.getAmount(), line.accountListModel.getSelectedItem()));
+            }
+
+            for (InvoiceLineDefinition line : invoiceLines) {
+                if (line.getAmount() == null) {
+                    MessageDialog.showMessage(this, "gen.titleError",
+                            "invoiceGeneratorView.emptyAmountsFound");
+                    return;
+                }
+
+                if (line.getAccount() == null) {
+                    MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.emptyAccountFound");
+                    return;
+                }
+            }
+
+            // Let the user select the parties.
+            PartiesView partiesView = new PartiesView(document);
+            partiesView.setSelectioEnabled(true);
+            partiesView.setMultiSelectionEnabled(true);
+            ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
+            dialog.showDialog();
+            Party[] parties = partiesView.getSelectedParties();
+            if (parties == null) {
+                // No parties have been selected. Abort this method.
                 return;
             }
-        }
 
-        // Let the user select the parties.
-        PartiesView partiesView = new PartiesView(document);
-        partiesView.setSelectioEnabled(true);
-        partiesView.setMultiSelectionEnabled(true);
-        ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
-        dialog.showDialog();
-        Party[] parties = partiesView.getSelectedParties();
-        if (parties == null) {
-            // No parties have been selected. Abort this method.
-            return;
-        }
+            // Ask the user whether he/she is sure to generate the invoices.
+            int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "invoiceGeneratorView.areYouSure");
+            if (choice != MessageDialog.YES_OPTION) {
+                // The user canceled the operation.
+                return;
+            }
 
-        // Ask the user whether he/she is sure to generate the invoices.
-        int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "invoiceGeneratorView.areYouSure");
-        if (choice != MessageDialog.YES_OPTION) {
-            // The user canceled the operation.
-            return;
-        }
-
-        try {
-            Account account = rbSalesInvoice.isSelected() ? debtorAccountModel.getSelectedItem() : creditorAccountModel.getSelectedItem();
-            invoiceService.createInvoiceAndJournalForParties(document, account, tfId.getText(), Arrays.asList(parties), date, tfDescription.getText(), invoiceLines);
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.titleError");
-            return;
-        }
-        MessageDialog.showMessage(this, "gen.titleMessage", "invoiceGeneratorView.messageSuccess");
+            try {
+                Account account = rbSalesInvoice.isSelected() ? debtorAccountModel.getSelectedItem() : creditorAccountModel.getSelectedItem();
+                invoiceService.createInvoiceAndJournalForParties(document, account, tfId.getText(), Arrays.asList(parties), date, tfDescription.getText(), invoiceLines);
+            } catch (ServiceException e) {
+                MessageDialog.showErrorMessage(this, e, "gen.titleError");
+                return;
+            }
+            MessageDialog.showMessage(this, "gen.titleMessage", "invoiceGeneratorView.messageSuccess");
+        });
     }
 
     private void onInvoiceTypeChanged() {

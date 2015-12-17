@@ -285,41 +285,45 @@ public class ConfigureBookkeepingView extends View {
     }
 
     private void onAddAccount() {
-        EditAccountView eav = new EditAccountView(null);
-        ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
-        dialog.showDialog();
-        Account account = eav.getEditedAccount();
-        if (account != null) {
-            try {
-                configurationService.createAccount(document, account);
-                AccountDefinition definition = new AccountDefinition();
-                definition.account = account;
-                tableModel.addRow(definition);
-            } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.addAccountException");
-            }
-        }
-    }
-
-    private void onEditAccount() {
-        int[] rows = SwingUtils.getSelectedRowsConvertedToModel(table);
-        if (rows.length == 1) {
-            AccountDefinition definition = tableModel.getRow(rows[0]);
-            EditAccountView eav = new EditAccountView(definition.account);
-
+        HandleException.for_(this, () -> {
+            EditAccountView eav = new EditAccountView(null);
             ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
             dialog.showDialog();
             Account account = eav.getEditedAccount();
             if (account != null) {
                 try {
-                    configurationService.updateAccount(document, account);
+                    configurationService.createAccount(document, account);
+                    AccountDefinition definition = new AccountDefinition();
                     definition.account = account;
-                    tableModel.updateRow(rows[0], definition);
+                    tableModel.addRow(definition);
                 } catch (ServiceException e) {
-                    MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.updateAccountException");
+                    MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.addAccountException");
                 }
             }
-        }
+        });
+    }
+
+    private void onEditAccount() {
+        HandleException.for_(this, () -> {
+            int[] rows = SwingUtils.getSelectedRowsConvertedToModel(table);
+            if (rows.length == 1) {
+                AccountDefinition definition = tableModel.getRow(rows[0]);
+                EditAccountView eav = new EditAccountView(definition.account);
+
+                ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
+                dialog.showDialog();
+                Account account = eav.getEditedAccount();
+                if (account != null) {
+                    try {
+                        configurationService.updateAccount(document, account);
+                        definition.account = account;
+                        tableModel.updateRow(rows[0], definition);
+                    } catch (ServiceException e) {
+                        MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.updateAccountException");
+                    }
+                }
+            }
+        });
     }
 
     private List<AccountDefinition> getAccountDefinitions(Document document) throws ServiceException {

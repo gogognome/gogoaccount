@@ -288,15 +288,17 @@ public class EditJournalView extends View {
 
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() throws ServiceException {
-    	JournalEntryDetail defaultItem = createDefaultItemToBeAdded();
-    	EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, defaultItem);
-    	ViewDialog dialog = new ViewDialog(this, view);
-    	dialog.showDialog();
+        HandleException.for_(this, () -> {
+            JournalEntryDetail defaultItem = createDefaultItemToBeAdded();
+            EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, defaultItem);
+            ViewDialog dialog = new ViewDialog(this, view);
+            dialog.showDialog();
 
-        JournalEntryDetail item = view.getEnteredJournalEntryDetail();
-        if (item != null) {
-            itemsTableModel.addRow(item);
-        }
+            JournalEntryDetail item = view.getEnteredJournalEntryDetail();
+            if (item != null) {
+                itemsTableModel.addRow(item);
+            }
+        });
     }
 
     /**
@@ -311,18 +313,20 @@ public class EditJournalView extends View {
 
 	/** Handles the edit button. Lets the user edit a journal item. */
     private void handleEditButtonPressed() {
-        int row = itemsTable.getSelectedRow();
-        JournalEntryDetail item = itemsTableModel.getRow(row);
-        if (item != null) {
-        	EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, item);
-        	ViewDialog dialog = new ViewDialog(this, view);
-        	dialog.showDialog();
+        HandleException.for_(this, () -> {
+            int row = itemsTable.getSelectedRow();
+            JournalEntryDetail item = itemsTableModel.getRow(row);
+            if (item != null) {
+                EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, item);
+                ViewDialog dialog = new ViewDialog(this, view);
+                dialog.showDialog();
 
-	        item = view.getEnteredJournalEntryDetail();
-	        if (item != null) {
-	            itemsTableModel.updateRow(row, item);
-	        }
-        }
+                item = view.getEnteredJournalEntryDetail();
+                if (item != null) {
+                    itemsTableModel.updateRow(row, item);
+                }
+            }
+        });
     }
 
     /** Handles the delete button. Deletes a journal item. */

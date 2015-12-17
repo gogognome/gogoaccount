@@ -1,8 +1,8 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
@@ -151,10 +151,12 @@ public class EditJournalsView extends View {
     private void addJournal() {
     	DocumentListener documentListener = new DocumentListenerImpl();
     	try {
-    		document.addListener(documentListener);
-	        EditJournalView view = new EditJournalView(document, "ajd.title", null, null);
-	        ViewDialog dialog = new ViewDialog(this, view);
-	        dialog.showDialog();
+            HandleException.for_(this, () -> {
+                document.addListener(documentListener);
+                EditJournalView view = new EditJournalView(document, "ajd.title", null, null);
+                ViewDialog dialog = new ViewDialog(this, view);
+                dialog.showDialog();
+            });
 	    } finally {
     		document.removeListener(documentListener);
 	    }

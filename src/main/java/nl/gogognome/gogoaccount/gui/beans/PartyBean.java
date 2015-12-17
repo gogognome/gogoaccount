@@ -28,6 +28,7 @@ import javax.swing.JTextField;
 
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.lib.gui.Closeable;
@@ -89,10 +90,6 @@ public class PartyBean extends JPanel implements Closeable {
     	model.removeModelChangeListener(listener);
     }
 
-    /**
-     * Selects a party
-     * @param party the party
-     */
     private void updateParty() {
     	Party party = model.getParty();
         if (party != null) {
@@ -107,15 +104,16 @@ public class PartyBean extends JPanel implements Closeable {
      */
     public void selectParty() {
         Container parent = SwingUtils.getTopLevelContainer(this);
-
-        PartiesView partiesView = new PartiesView(document);
-        partiesView.setSelectioEnabled(true);
-        ViewDialog dialog = new ViewDialog(parent, partiesView);
-        dialog.showDialog();
-        Party[] parties = partiesView.getSelectedParties();
-        if (parties != null && parties.length == 1) {
-        	model.setParty(parties[0]);
-        }
+        HandleException.for_(parent, () -> {
+            PartiesView partiesView = new PartiesView(document);
+            partiesView.setSelectioEnabled(true);
+            ViewDialog dialog = new ViewDialog(parent, partiesView);
+            dialog.showDialog();
+            Party[] parties = partiesView.getSelectedParties();
+            if (parties != null && parties.length == 1) {
+                model.setParty(parties[0]);
+            }
+        });
 
     }
 

@@ -439,26 +439,28 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleAbout() {
-        new ViewDialog(this, new AboutView()).showDialog();
+        HandleException.for_(this, () -> new ViewDialog(this, new AboutView()).showDialog());
     }
 
     private void openView(Class<? extends View> viewClass) {
-        View view = openViews.get(viewClass);
-        if (view == null) {
-            try {
-                view = createView(viewClass);
-            } catch (Exception e) {
-                MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
-                return;
-            }
-            view.addViewListener(new ViewCloseListener());
-            viewTabbedPane.openView(view);
-            viewTabbedPane.selectView(view);
+        HandleException.for_(this, () -> {
+            View view = openViews.get(viewClass);
+            if (view == null) {
+                try {
+                    view = createView(viewClass);
+                } catch (Exception e) {
+                    MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
+                    return;
+                }
+                view.addViewListener(new ViewCloseListener());
+                viewTabbedPane.openView(view);
+                viewTabbedPane.selectView(view);
 
-            openViews.put(viewClass, view);
-        } else {
-            viewTabbedPane.selectView(view);
-        }
+                openViews.put(viewClass, view);
+            } else {
+                viewTabbedPane.selectView(view);
+            }
+        });
     }
 
     private View createView(Class<? extends View> viewClass) throws Exception {

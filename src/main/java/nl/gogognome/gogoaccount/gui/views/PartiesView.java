@@ -35,7 +35,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -296,26 +295,24 @@ public class PartiesView extends View {
     }
 
     private void onAddParty() {
-        try {
-        EditPartyView editPartyView = new EditPartyView(document, null, null, null);
-        ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
-        dialog.showDialog();
+        HandleException.for_(this, () -> {
+            EditPartyView editPartyView = new EditPartyView(document, null, null, null);
+            ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
+            dialog.showDialog();
 
-        Party party = editPartyView.getEnteredParty();
-        List<String> tags = editPartyView.getEnteredTags();
-        if (party != null && tags != null) {
-            partyService.createParty(document, party, tags);
-            automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
+            Party party = editPartyView.getEnteredParty();
+            List<String> tags = editPartyView.getEnteredTags();
+            if (party != null && tags != null) {
+                partyService.createParty(document, party, tags);
+                automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
 
-        }
-        onSearch();
-        } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+            }
+            onSearch();
+        });
     }
 
     private void onEditParty() {
-        try {
+        HandleException.for_(this, () -> {
             int row = SwingUtils.getSelectedRowConvertedToModel(table);
             if (row == -1) {
                 return;
@@ -337,9 +334,7 @@ public class PartiesView extends View {
             onSearch();
 
             SwingUtils.selectRowWithModelIndex(table, row);
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private void onDeleteParty() {

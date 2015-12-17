@@ -1,19 +1,9 @@
 package nl.gogognome.gogoaccount.gui.beans;
 
-import java.awt.Container;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.gui.views.InvoiceEditAndSelectionView;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -23,6 +13,10 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
 
 /**
  * This class implements a widget for selecting an <code>Invoice</code>.
@@ -95,13 +89,16 @@ public class InvoiceBean extends JPanel {
         while(!(parent instanceof Window)) {
             parent = parent.getParent();
         }
+        Container finalParent = parent;
 
-        InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, true);
-        ViewDialog dialog = new ViewDialog(parent, invoicesView);
-        dialog.showDialog();
-        if (invoicesView.getSelectedInvoices() != null) {
-            setSelectedInvoice(invoicesView.getSelectedInvoices().get(0));
-        }
+        HandleException.for_(parent, () -> {
+            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, true);
+            ViewDialog dialog = new ViewDialog(finalParent, invoicesView);
+            dialog.showDialog();
+            if (invoicesView.getSelectedInvoices() != null) {
+                setSelectedInvoice(invoicesView.getSelectedInvoices().get(0));
+            }
+        });
     }
 
 	private final class SelectAction extends AbstractAction {

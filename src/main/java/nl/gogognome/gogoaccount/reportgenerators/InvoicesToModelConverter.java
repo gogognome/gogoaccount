@@ -1,14 +1,9 @@
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -19,11 +14,14 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.util.StringUtil;
 
+import java.util.*;
+
 /**
  * Converts invoices to a model for ODT generation.
  */
 public class InvoicesToModelConverter {
 
+    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
 	private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
@@ -32,11 +30,12 @@ public class InvoicesToModelConverter {
     private Map<String, Object> model;
 
     private TextResource textResource = Factory.getInstance(TextResource.class);
-    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
+    private AmountFormat amountFormat;
 
 	public InvoicesToModelConverter(OdtInvoiceParameters parameters) throws ServiceException {
-		super();
 		this.parameters = parameters;
+        Currency currency = configurationService.getBookkeeping(parameters.getDocument()).getCurrency();
+        this.amountFormat = new AmountFormat(Factory.getInstance(Locale.class), currency);
 
 		createModel();
 	}
@@ -109,7 +108,7 @@ public class InvoicesToModelConverter {
 
 		putNullable(map, "date", textResource.formatDate("gen.dateFormat", date));
 		putNullable(map, "description", description);
-		putNullable(map, "amount", amountFormat.formatAmount(amount.toBigInteger()));
+		putNullable(map, "amount", amount != null ? amountFormat.formatAmount(amount.toBigInteger()) : null);
 
 		return map;
 	}

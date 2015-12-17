@@ -205,39 +205,43 @@ public class EditInvoiceView extends OkCancelView {
      * This method is called when the user wants to add a new row.
      */
     private void onAddRow() {
-        EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
-            "editInvoiceView.addRowTileId", currency);
-        ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
-        dialog.showDialog();
-        if (editDescriptionAndAmountView.getEditedDescription() != null) {
-            tableModel.addRow(editDescriptionAndAmountView.getEditedDescription(),
-                editDescriptionAndAmountView.getEditedAmount());
-        }
+        HandleException.for_(this, () -> {
+            EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
+                    "editInvoiceView.addRowTileId", currency);
+            ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
+            dialog.showDialog();
+            if (editDescriptionAndAmountView.getEditedDescription() != null) {
+                tableModel.addRow(editDescriptionAndAmountView.getEditedDescription(),
+                        editDescriptionAndAmountView.getEditedAmount());
+            }
+        });
     }
 
     /**
      * This method is called when the user wants to edit an existing row.
      */
     private void onEditRow() {
-        int[] rows = table.getSelectedRows();
-        if (rows.length == 0) {
-            MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedToEdit");
-        } else if (rows.length > 1) {
-            MessageDialog.showInfoMessage(this, "editInvoiceView.multipleRowsSelectedToEdit");
-        } else {
-        	Tuple<String, Amount> tuple = tableModel.getRow(rows[0]);
-            EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
-                "editInvoiceView.editRowTileId",
-                tuple.getFirst(),
-                tuple.getSecond(),
-                currency);
-            ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
-            dialog.showDialog();
-            if (editDescriptionAndAmountView.getEditedDescription() != null) {
-                tableModel.updateRow(rows[0], editDescriptionAndAmountView.getEditedDescription(),
-                    editDescriptionAndAmountView.getEditedAmount());
+        HandleException.for_(this, () -> {
+            int[] rows = table.getSelectedRows();
+            if (rows.length == 0) {
+                MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedToEdit");
+            } else if (rows.length > 1) {
+                MessageDialog.showInfoMessage(this, "editInvoiceView.multipleRowsSelectedToEdit");
+            } else {
+                Tuple<String, Amount> tuple = tableModel.getRow(rows[0]);
+                EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
+                        "editInvoiceView.editRowTileId",
+                        tuple.getFirst(),
+                        tuple.getSecond(),
+                        currency);
+                ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
+                dialog.showDialog();
+                if (editDescriptionAndAmountView.getEditedDescription() != null) {
+                    tableModel.updateRow(rows[0], editDescriptionAndAmountView.getEditedDescription(),
+                            editDescriptionAndAmountView.getEditedAmount());
+                }
             }
-        }
+        });
     }
 
     /**

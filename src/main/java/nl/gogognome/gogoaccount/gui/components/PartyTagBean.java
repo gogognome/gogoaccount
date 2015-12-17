@@ -8,6 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
+import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -26,84 +27,86 @@ import nl.gogognome.lib.util.StringUtil;
  */
 public class PartyTagBean extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private ListModel<String> types;
+    private ListModel<String> types;
 
-	public PartyTagBean(ListModel<String> types) {
-		this.types = types;
-		initBean();
-	}
+    public PartyTagBean(ListModel<String> types) {
+        this.types = types;
+        initBean();
+    }
 
-	private void initBean() {
+    private void initBean() {
         setLayout(new GridBagLayout());
         BeanFactory beanFactory = Factory.getInstance(BeanFactory.class);
         ComboBoxBean<String> comboboxBean = beanFactory.createComboBoxBean(types);
 
         add(comboboxBean, SwingUtils.createTextFieldGBConstraints(0, 0));
-    	WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
-    	JButton button = wf.createIconButton("gen.btnNew", new NewPartyTypeAction(), 21);
-    	add(button);
-	}
+        WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
+        JButton button = wf.createIconButton("gen.btnNew", new NewPartyTypeAction(), 21);
+        add(button);
+    }
 
-	private void showNewPartyTypeDialog() {
-		NewPartyView view = new NewPartyView();
-		ViewDialog dialog = new ViewDialog(this, view);
-		dialog.showDialog();
+    private void showNewPartyTypeDialog() {
+        HandleException.for_(this, () -> {
+            NewPartyView view = new NewPartyView();
+            ViewDialog dialog = new ViewDialog(this, view);
+            dialog.showDialog();
 
-		String newParty = view.getEnteredType();
-		if (newParty != null) {
-			types.addItem(newParty, null);
-			types.setSelectedItem(newParty, null);
-		}
-	}
+            String newParty = view.getEnteredType();
+            if (newParty != null) {
+                types.addItem(newParty, null);
+                types.setSelectedItem(newParty, null);
+            }
+        });
+    }
 
-	private final class NewPartyTypeAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			showNewPartyTypeDialog();
-		}
-	}
+    private final class NewPartyTypeAction extends AbstractAction {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            showNewPartyTypeDialog();
+        }
+    }
 
-	private class NewPartyView extends OkCancelView {
+    private class NewPartyView extends OkCancelView {
 
-		private StringModel newPartyTypeModel = new StringModel();
+        private StringModel newPartyTypeModel = new StringModel();
 
-		private String enteredType;
+        private String enteredType;
 
-		@Override
-		public String getTitle() {
-			return null;
-		}
+        @Override
+        public String getTitle() {
+            return null;
+        }
 
-		@Override
-		public void onClose() {
-		}
+        @Override
+        public void onClose() {
+        }
 
-		@Override
-		public void onInit() {
-			addComponents();
-		}
+        @Override
+        public void onInit() {
+            addComponents();
+        }
 
-		@Override
-		protected JComponent createCenterComponent() {
-			InputFieldsColumn ifc = new InputFieldsColumn();
-			addCloseable(ifc);
-			ifc.addField("PartyTypeBean.newPartyType", newPartyTypeModel, 20);
-			return ifc;
-		}
+        @Override
+        protected JComponent createCenterComponent() {
+            InputFieldsColumn ifc = new InputFieldsColumn();
+            addCloseable(ifc);
+            ifc.addField("PartyTypeBean.newPartyType", newPartyTypeModel, 20);
+            return ifc;
+        }
 
-		@Override
-		protected void onOk() {
-			String newParty = newPartyTypeModel.getString();
-			if (!StringUtil.isNullOrEmpty(newParty)) {
-				enteredType = newParty;
-				requestClose();
-			}
-		}
+        @Override
+        protected void onOk() {
+            String newParty = newPartyTypeModel.getString();
+            if (!StringUtil.isNullOrEmpty(newParty)) {
+                enteredType = newParty;
+                requestClose();
+            }
+        }
 
-		public String getEnteredType() {
-			return enteredType;
-		}
-	}
+        public String getEnteredType() {
+            return enteredType;
+        }
+    }
 }
