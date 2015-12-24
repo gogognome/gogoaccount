@@ -1,11 +1,5 @@
 package nl.gogognome.gogoaccount.gui;
 
-import java.io.File;
-import java.util.Currency;
-import java.util.Locale;
-
-import javax.swing.JFrame;
-
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -14,6 +8,11 @@ import nl.gogognome.lib.swing.plaf.DefaultLookAndFeel;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+
+import javax.swing.*;
+import java.io.File;
+import java.util.Currency;
+import java.util.Locale;
 
 /**
  * Starts gogo account with the graphical user interface.
@@ -57,6 +56,7 @@ public class Start {
     }
 
     public void initFactory(Locale locale) {
+        Locale.setDefault(locale);
         TextResource tr = new TextResource(locale);
         tr.loadResourceBundle("stringresources");
 
