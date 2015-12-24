@@ -315,15 +315,17 @@ public class EditJournalView extends View {
     private void handleEditButtonPressed() {
         HandleException.for_(this, () -> {
             int row = itemsTable.getSelectedRow();
-            JournalEntryDetail item = itemsTableModel.getRow(row);
-            if (item != null) {
-                EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, item);
-                ViewDialog dialog = new ViewDialog(this, view);
-                dialog.showDialog();
-
-                item = view.getEnteredJournalEntryDetail();
+            if (row != -1) {
+                JournalEntryDetail item = itemsTableModel.getRow(row);
                 if (item != null) {
-                    itemsTableModel.updateRow(row, item);
+                    EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, item);
+                    ViewDialog dialog = new ViewDialog(this, view);
+                    dialog.showDialog();
+
+                    item = view.getEnteredJournalEntryDetail();
+                    if (item != null) {
+                        itemsTableModel.updateRow(row, item);
+                    }
                 }
             }
         });
