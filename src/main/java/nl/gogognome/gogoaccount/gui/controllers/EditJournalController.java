@@ -43,15 +43,17 @@ public class EditJournalController {
 
     public void execute() {
         HandleException.for_(owner, () -> {
-			EditJournalView view = new EditJournalView(document, "ajd.title", journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
+			EditJournalView view = new EditJournalView(document, "ejd.editJournalTitle", journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
 			ViewDialog dialog = new ViewDialog(owner, view);
 			dialog.showDialog();
 
 			updatedJournalEntry = view.getEditedJournalEntry();
-			if (journalEntry.createsInvoice()) {
-				updateInvoiceCreatedByJournal();
-			}
-			ledgerService.updateJournal(document, updatedJournalEntry, view.getEditedJournalEntryDetails());
+            if (updatedJournalEntry != null) {
+                if (journalEntry.createsInvoice()) {
+                    updateInvoiceCreatedByJournal();
+                }
+                ledgerService.updateJournal(document, updatedJournalEntry, view.getEditedJournalEntryDetails());
+            }
 		});
     }
 
