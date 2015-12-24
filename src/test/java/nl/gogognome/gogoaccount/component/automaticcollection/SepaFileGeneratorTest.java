@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import static org.junit.Assert.*;
@@ -124,7 +125,7 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void createJournalEntryForSepaFile() throws ServiceException {
+    public void whenJournalEntryIsCreatedForSepaFileThenJournalEntryIsCreatedIncludingPayments() throws ServiceException {
         List<Invoice> invoices = invoiceService.findAllInvoices(document);
         assertFalse("Without invoices this test has no purpoese", invoices.isEmpty());
         Date date = DateUtil.createDate(2015, 11, 24);
@@ -136,12 +137,14 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
         automaticCollectionService.createJournalEntryForAutomaticCollection(document, date, journalEntryId, journalEntryDescription,
                 invoices, configurationService.getAccount(document, bankAccountId), configurationService.getAccount(document, debtorAccountId));
 
+        // Check created journal entry
         JournalEntry journalEntry = ledgerService.findJournalEntry(document, journalEntryId);
         assertNotNull(journalEntry);
         assertEquals(date, journalEntry.getDate());
         assertEquals(journalEntryDescription, journalEntry.getDescription());
         assertNull(journalEntry.getIdOfCreatedInvoice());
 
+        // Check created journal entry details
         List<JournalEntryDetail> journalEntryDetails = ledgerService.findJournalEntryDetails(document, journalEntry);
         assertEquals(2 * invoices.size(), journalEntryDetails.size());
         for (int i=0; i<invoices.size(); i++) {
@@ -149,12 +152,14 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
             assertEquals(journalEntryDetail.getAccountId(), bankAccountId);
             assertEquals(journalEntryDetail.getAmount(), invoices.get(i).getAmountToBePaid());
             assertEquals(journalEntryDetail.getInvoiceId(), invoices.get(i).getId());
+            assertNotNull(journalEntryDetail.getPaymentId());
             assertTrue(journalEntryDetail.isDebet());
 
             journalEntryDetail = journalEntryDetails.get(2 * i + 1);
             assertEquals(journalEntryDetail.getAccountId(), debtorAccountId);
             assertEquals(journalEntryDetail.getAmount(), invoices.get(i).getAmountToBePaid());
             assertNull(journalEntryDetail.getInvoiceId());
+            assertNull(journalEntryDetail.getPaymentId());
             assertFalse(journalEntryDetail.isDebet());
         }
     }

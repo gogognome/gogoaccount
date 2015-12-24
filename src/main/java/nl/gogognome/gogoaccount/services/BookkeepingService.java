@@ -98,7 +98,7 @@ public class BookkeepingService {
                 startBalance.setId("start");
                 startBalance.setDescription("start balance");
                 startBalance.setDate(dayBeforeStart);
-                ledgerService.createJournalEntry(newDocument, startBalance, journalEntryDetails);
+                ledgerService.addJournalEntry(newDocument, startBalance, journalEntryDetails);
             } catch (IllegalArgumentException  e) {
                 throw new ServiceException("Failed to create journal for start balance.", e);
             }
@@ -106,7 +106,7 @@ public class BookkeepingService {
             // Copy journals starting from the specified date
             for (JournalEntry journalEntry : ledgerService.findJournalEntries(document)) {
                 if (DateUtil.compareDayOfYear(date, journalEntry.getDate()) <= 0) {
-                    ledgerService.createJournalEntry(newDocument, journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
+                    ledgerService.addJournalEntry(newDocument, journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
                 }
             }
 

@@ -37,17 +37,8 @@ public class LedgerService {
         return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findByInvoiceId(invoiceId));
     }
 
-    public JournalEntry createJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
-        return ServiceTransaction.withResult(() -> {
-            JournalEntry createdJournalEntry = new JournalEntryDAO(document).create(journalEntry);
-            JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
-            for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
-                journalEntryDetail.setJournalEntryUniqueId(createdJournalEntry.getUniqueId());
-                journalEntryDetailDAO.create(journalEntryDetail);
-            }
-            document.notifyChange();
-            return createdJournalEntry;
-        });
+    public JournalEntry addJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
+        return addJournalEntry(document, journalEntry, journalEntryDetails, false);
     }
 
     public List<JournalEntryDetail> findJournalEntryDetails(Document document, JournalEntry journalEntry) throws ServiceException {
@@ -71,23 +62,12 @@ public class LedgerService {
     public JournalEntry addJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails, boolean createPayments)
             throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            Amount totalDebet = null;
-            Amount totalCredit = null;
-            for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
-                if (journalEntryDetail.isDebet()) {
-                    totalDebet = Amount.add(totalDebet, journalEntryDetail.getAmount());
-                } else {
-                    totalCredit = Amount.add(totalCredit, journalEntryDetail.getAmount());
-                }
-            }
-
-            if (!Amount.areEqual(totalDebet, totalCredit)) {
-                throw new IllegalArgumentException("The sum of debet and credit amounts differ for journal " + journalEntry.getId() + "!");
-            }
+            validateDebetAndCreditSumsAreEqual(journalEntry, journalEntryDetails);
 
             if (createPayments) {
                 createPaymentsForItemsOfJournal(document, journalEntry, journalEntryDetails);
             }
+
             JournalEntry createdJournalEntry = new JournalEntryDAO(document).create(journalEntry);
             for (JournalEntryDetail detail : journalEntryDetails) {
                 detail.setJournalEntryUniqueId(createdJournalEntry.getUniqueId());
@@ -96,6 +76,22 @@ public class LedgerService {
             document.notifyChange();
             return createdJournalEntry;
         });
+    }
+
+    private void validateDebetAndCreditSumsAreEqual(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
+        Amount totalDebet = null;
+        Amount totalCredit = null;
+        for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
+            if (journalEntryDetail.isDebet()) {
+                totalDebet = Amount.add(totalDebet, journalEntryDetail.getAmount());
+            } else {
+                totalCredit = Amount.add(totalCredit, journalEntryDetail.getAmount());
+            }
+        }
+
+        if (!Amount.areEqual(totalDebet, totalCredit)) {
+            throw new IllegalArgumentException("The sum of debet and credit amounts differ for journal " + journalEntry.getId() + "!");
+        }
     }
 
     /**

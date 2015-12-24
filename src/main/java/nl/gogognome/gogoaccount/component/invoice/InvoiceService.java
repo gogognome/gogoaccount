@@ -135,7 +135,7 @@ public class InvoiceService {
                     invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
                     LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
                     journalEntry.setIdOfCreatedInvoice(invoice.getId());
-                    ledgerService.createJournalEntry(document, journalEntry, journalEntryDetails);
+                    ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails);
                     changedDatabase = true;
                 } catch (SQLException e) {
                     partiesForWhichCreationFailed.add(party);

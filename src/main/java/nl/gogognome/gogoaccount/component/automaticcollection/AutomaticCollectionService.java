@@ -151,7 +151,7 @@ public class AutomaticCollectionService {
             detail.setDebet(false);
             details.add(detail);
         }
-        ObjectFactory.create(LedgerService.class).createJournalEntry(document, journalEntry, details);
+        ObjectFactory.create(LedgerService.class).addJournalEntry(document, journalEntry, details, true);
     }
 
     public void createCsvForAutomaticCollectionFile(Document document, File csvFile, List<Invoice> invoices) throws ServiceException {
