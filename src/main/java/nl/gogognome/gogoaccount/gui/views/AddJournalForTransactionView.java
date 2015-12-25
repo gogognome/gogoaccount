@@ -102,8 +102,8 @@ public class AddJournalForTransactionView extends EditJournalView {
         Account debetAccount = importBankStatementService.getFromAccount(document, t);
         Account creditAccount = importBankStatementService.getToAccount(document, t);
         if (debetAccount != null && creditAccount != null) {
-            itemsTableModel.addRow(createDefaultItemToBeAdded());
-            itemsTableModel.addRow(createDefaultItemToBeAdded());
+            journalEntryDetailsTableModel.addRow(createDefaultItemToBeAdded());
+            journalEntryDetailsTableModel.addRow(createDefaultItemToBeAdded());
         }
     }
 
@@ -127,7 +127,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     @Override
     protected JournalEntryDetail createDefaultItemToBeAdded() throws ServiceException {
-        switch (itemsTableModel.getRowCount()) {
+        switch (journalEntryDetailsTableModel.getRowCount()) {
         case 0: { // first item
             Account account = importBankStatementService.getToAccount(document, importedTransaction);
             if (account == null) {

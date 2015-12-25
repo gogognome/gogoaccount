@@ -68,10 +68,9 @@ public class EditJournalView extends View {
 
     protected StringModel descriptionModel = new StringModel();
 
-    /** The table containing journal items. */
-    private JTable itemsTable;
+    private JTable journalEntryDetailsTable;
 
-    protected JournalEntryDetailsTableModel itemsTableModel;
+    protected JournalEntryDetailsTableModel journalEntryDetailsTableModel;
 
     /** The date model used to edit the date. */
     protected DateModel dateModel = new DateModel();
@@ -107,7 +106,7 @@ public class EditJournalView extends View {
 
     private void initModels() {
         try {
-            itemsTableModel = new JournalEntryDetailsTableModel(document);
+            journalEntryDetailsTableModel = new JournalEntryDetailsTableModel(document);
 
             initModelsForJournal(journalEntryToBeEdited, journalEntryDetailsToBeEdited);
         } catch (ServiceException e) {
@@ -126,7 +125,7 @@ public class EditJournalView extends View {
             descriptionModel.setString(initialValuesJournalEntry.getDescription());
 
             for (JournalEntryDetail item : initialDetails) {
-                itemsTableModel.addRow(item);
+                journalEntryDetailsTableModel.addRow(item);
             }
         }
 		initValuesForNextJournal();
@@ -144,7 +143,7 @@ public class EditJournalView extends View {
         valuesEditPanel = vep;
 
         // Create table of items
-        itemsTable = widgetFactory.createTable(itemsTableModel);
+        journalEntryDetailsTable = widgetFactory.createTable(journalEntryDetailsTableModel);
 
         JPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
@@ -158,7 +157,7 @@ public class EditJournalView extends View {
 	        buttonPanel.add(createOkAndNextButton());
         }
 
-        JScrollPane scrollableTable = new JScrollPane(itemsTable);
+        JScrollPane scrollableTable = new JScrollPane(journalEntryDetailsTable);
 
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
@@ -183,7 +182,7 @@ public class EditJournalView extends View {
     }
 
     private JButton createAddButton() {
-	    return widgetFactory.createButton("ajd.addItem", new AbstractAction() {
+	    return widgetFactory.createButton("ajd.addItem",  new AbstractAction() {
 	        @Override
 			public void actionPerformed(ActionEvent evt) {
 	            ActionRunner.run(EditJournalView.this, () -> handleAddButtonPressed());
@@ -246,7 +245,7 @@ public class EditJournalView extends View {
         if (journalEntry != null) {
             try {
                 createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
-                itemsTableModel.clear();
+                journalEntryDetailsTableModel.clear();
                 valuesEditPanel.requestFocus();
                 initValuesForNextJournal();
             } catch (Exception e) {
@@ -283,7 +282,7 @@ public class EditJournalView extends View {
     }
 
     private List<JournalEntryDetail> getJournalEntryDetailsFromDialog() {
-        return itemsTableModel.getRows();
+        return journalEntryDetailsTableModel.getRows();
     }
 
     /** Handles the add button. Lets the user add a journal item. */
@@ -296,7 +295,7 @@ public class EditJournalView extends View {
 
             JournalEntryDetail item = view.getEnteredJournalEntryDetail();
             if (item != null) {
-                itemsTableModel.addRow(item);
+                journalEntryDetailsTableModel.addRow(item);
             }
         });
     }
@@ -314,9 +313,9 @@ public class EditJournalView extends View {
 	/** Handles the edit button. Lets the user edit a journal item. */
     private void handleEditButtonPressed() {
         HandleException.for_(this, () -> {
-            int row = itemsTable.getSelectedRow();
+            int row = journalEntryDetailsTable.getSelectedRow();
             if (row != -1) {
-                JournalEntryDetail item = itemsTableModel.getRow(row);
+                JournalEntryDetail item = journalEntryDetailsTableModel.getRow(row);
                 if (item != null) {
                     EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, item);
                     ViewDialog dialog = new ViewDialog(this, view);
@@ -324,7 +323,7 @@ public class EditJournalView extends View {
 
                     item = view.getEnteredJournalEntryDetail();
                     if (item != null) {
-                        itemsTableModel.updateRow(row, item);
+                        journalEntryDetailsTableModel.updateRow(row, item);
                     }
                 }
             }
@@ -333,7 +332,7 @@ public class EditJournalView extends View {
 
     /** Handles the delete button. Deletes a journal item. */
     private void handleDeleteButtonPressed() {
-        itemsTableModel.removeRow(itemsTable.getSelectedRow());
+        journalEntryDetailsTableModel.removeRow(journalEntryDetailsTable.getSelectedRow());
     }
 
     /**
