@@ -8,6 +8,8 @@ import nl.gogognome.lib.swing.plaf.DefaultLookAndFeel;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
@@ -35,9 +37,12 @@ public class Start {
     }
 
     private void startApplication(String[] args) {
+        Logger logger = LoggerFactory.getLogger(Start.class);
+        logger.info("Gogo account is starting");
         initFactory(Locale.getDefault());
         parseArguments(args);
         DefaultLookAndFeel.useDefaultLookAndFeel();
+        logger.debug("Locale: " + Locale.getDefault());
         MainFrame mainFrame = initFrame();
 
         if (fileName != null) {

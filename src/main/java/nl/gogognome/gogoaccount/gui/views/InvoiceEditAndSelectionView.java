@@ -6,10 +6,10 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
-import nl.gogognome.lib.swing.ActionWrapper;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
+import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.views.View;
 
 import javax.swing.*;
@@ -18,7 +18,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * This class implements a view for selecting and editing invoices.

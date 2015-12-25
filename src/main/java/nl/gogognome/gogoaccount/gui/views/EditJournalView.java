@@ -1,28 +1,10 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.util.Date;
-import java.util.List;
-
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
-
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
-import nl.gogognome.gogoaccount.gui.ActionRunner;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -30,10 +12,19 @@ import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.action.Actions;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.StringModel;
+import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class implements the dialog for editing a single journal.
@@ -145,7 +136,8 @@ public class EditJournalView extends View {
         // Create table of items
         journalEntryDetailsTable = widgetFactory.createTable(journalEntryDetailsTableModel);
 
-        JPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
+        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
+        addCloseable(buttonPanel);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
         buttonPanel.add(createAddButton());
         buttonPanel.add(createEditButton());
@@ -182,48 +174,30 @@ public class EditJournalView extends View {
     }
 
     private JButton createAddButton() {
-	    return widgetFactory.createButton("ajd.addItem",  new AbstractAction() {
-	        @Override
-			public void actionPerformed(ActionEvent evt) {
-	            ActionRunner.run(EditJournalView.this, () -> handleAddButtonPressed());
-	        }
-	    });
+        return widgetFactory.createButton("ajd.addItem", Actions.build(this, this::handleAddButtonPressed));
     }
 
     private JButton createEditButton() {
-    	return widgetFactory.createButton("ajd.editItem", new AbstractAction() {
-    		@Override
-			public void actionPerformed(ActionEvent evt) {
-	            handleEditButtonPressed();
-	        }
-	    });
+        Action action = Actions.build(this, this::handleEditButtonPressed);
+        addCloseable(Tables.onSelectionChange(journalEntryDetailsTable, () -> {
+            LoggerFactory.getLogger(EditJournalView.class).info("Selection changed");
+            action.setEnabled(journalEntryDetailsTable.getSelectedRowCount() == 1);
+        }));
+        return widgetFactory.createButton("ajd.editItem", action);
     }
 
     private JButton createDeleteButton() {
-    	return widgetFactory.createButton("ajd.deleteItem", new AbstractAction() {
-	        @Override
-			public void actionPerformed(ActionEvent evt) {
-	            handleDeleteButtonPressed();
-	        }
-	    });
+        Action action = Actions.build(this, this::handleDeleteButtonPressed);
+        addCloseable(Tables.onSelectionChange(journalEntryDetailsTable, () -> action.setEnabled(journalEntryDetailsTable.getSelectedRowCount() > 0)));
+        return widgetFactory.createButton("ajd.deleteItem", action);
     }
 
     private JButton createOkButton() {
-    	return widgetFactory.createButton("gen.ok", new AbstractAction() {
-	        @Override
-			public void actionPerformed(ActionEvent evt) {
-	            handleOkButtonPressed();
-	        }
-	    });
+    	return widgetFactory.createButton("gen.ok", Actions.build(this, this::handleOkButtonPressed));
     }
 
     private JButton createOkAndNextButton() {
-    	return widgetFactory.createButton("ajd.okAndNextJournal", new AbstractAction() {
-	        @Override
-			public void actionPerformed(ActionEvent evt) {
-	        	handleOkAndNextButtonPressed();
-	        }
-	    });
+    	return widgetFactory.createButton("ajd.okAndNextJournal", Actions.build(this, this::handleOkAndNextButtonPressed));
     }
 
     /** Handles the OK button. Closes the dialog. */
