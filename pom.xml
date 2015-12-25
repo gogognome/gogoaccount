@@ -1,198 +1,200 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>nl.gogognome.gogoaccount</groupId>
-  <artifactId>gogoaccount</artifactId>
-  <version>2.4</version>
-  <packaging>jar</packaging>
+    <groupId>nl.gogognome.gogoaccount</groupId>
+    <artifactId>gogoaccount</artifactId>
+    <version>2.4</version>
+    <packaging>jar</packaging>
 
-  <name>Gogo Account</name>
-  <url>http://www.gogognome.nl/en</url>
-  <description>Gogo account is a simple bookkeeping application intended for
-     small clubs or for personal use.</description>
+    <name>Gogo Account</name>
+    <url>http://www.gogognome.nl/en</url>
+    <description>Gogo account is a simple bookkeeping application intended for
+        small clubs or for personal use.
+    </description>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-  <build>
-    <plugins>
-    
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-          <showDeprecation>true</showDeprecation>
-          <showWarnings>true</showWarnings>
-        </configuration>
-      </plugin>
-        
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <mainClass>nl.gogognome.gogoaccount.gui.Start</mainClass>
-            </manifest>
-          </archive>
-        </configuration>        
-      </plugin>
-    
-	  <plugin>
-	    <groupId>nl.gogognome</groupId>
-	    <artifactId>image-modifier-maven-plugin</artifactId>
-	    <executions>
-	      <execution>
-	      	<id>generateSplashImage</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>modifyImage</goal>
-            </goals>
-	        <configuration>
-	          <sourceImage>sketches/splash.png</sourceImage>
-	          <destinationImage>target/classes/splash.png</destinationImage>
-	          <commands>
-	            <command>color: 0, 0, 0</command>
-	            <command>font: Arial Bold, 60</command>
-	            <command>text: 40, 450, gogo account ${project.version}</command>
-	          </commands>
-	        </configuration>
-	      </execution>
-	      <execution>
-	      	<id>generateAboutImage</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>modifyImage</goal>
-            </goals>
-	        <configuration>
-	          <sourceImage>sketches/about.png</sourceImage>
-	          <destinationImage>target/classes/about.png</destinationImage>
-	          <commands>
-	            <command>color: 0, 0, 0</command>
-	            <command>font: Arial Bold, 30</command>
-	            <command>text: 140, 30, gogo account ${project.version}</command>
-	          </commands>
-	        </configuration>
-	      </execution>
-	    </executions>
-	  </plugin>
-	  
-      <plugin>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>unpack-dependencies</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/classes</outputDirectory>
-              <excludeArtifactIds>junit</excludeArtifactIds>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    
-      <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.6</version>
-        <executions>
-          <execution>
-            <phase>pre-site</phase>
-            <configuration>
-            <target>
-              <ant antfile="build.xml" target="doc" />
-            </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
- 
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.8.2</version>
-      <scope>test</scope>
-    </dependency>  
-    <dependency>
-      <groupId>nl.gogognome</groupId>
-      <artifactId>gogoswing</artifactId>
-      <version>1.0</version>
-      <scope>compile</scope>
-    </dependency>  
-    <dependency>
-      <groupId>nl.gogognome</groupId>
-      <artifactId>gogolib</artifactId>
-      <version>3.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.6.1</version>
-      <scope>compile</scope>
-    </dependency>  
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
-      <version>1.6.1</version>
-      <scope>compile</scope>
-    </dependency>  
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>1.4</version>
-      <scope>compile</scope>
-    </dependency>  
-    <dependency>
-      <groupId>freemarker</groupId>
-      <artifactId>freemarker</artifactId>
-      <version>2.3.6</version>
-      <scope>compile</scope>
-    </dependency>  
-    <dependency>
-      <groupId>net.sf.jodreports</groupId>
-      <artifactId>jodreports</artifactId>      
-      <version>2.4.0</version>
-      <scope>compile</scope>
-    </dependency>  
-    <dependency>
-      <groupId>net.sf.opencsv</groupId>
-      <artifactId>opencsv</artifactId>      
-      <version>2.3</version>
-      <scope>compile</scope>
-    </dependency>  
-    <dependency>
-      <groupId>xom</groupId>
-      <artifactId>xom</artifactId>      
-      <version>1.2.5</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-    	<groupId>com.google.guava</groupId>
-    	<artifactId>guava</artifactId>
-    	<version>15.0</version>
-    </dependency>
-    <dependency>
-      <groupId>nl.gogognome</groupId>
-      <artifactId>gogodataaccess</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <version>1.2.134</version>
-    </dependency>
-  </dependencies>
-  
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>nl.gogognome.gogoaccount.gui.Start</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>nl.gogognome</groupId>
+                <artifactId>image-modifier-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generateSplashImage</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>modifyImage</goal>
+                        </goals>
+                        <configuration>
+                            <sourceImage>sketches/splash.png</sourceImage>
+                            <destinationImage>target/classes/splash.png</destinationImage>
+                            <commands>
+                                <command>color: 0, 0, 0</command>
+                                <command>font: Arial Bold, 60</command>
+                                <command>text: 40, 450, gogo account ${project.version}</command>
+                            </commands>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generateAboutImage</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>modifyImage</goal>
+                        </goals>
+                        <configuration>
+                            <sourceImage>sketches/about.png</sourceImage>
+                            <destinationImage>target/classes/about.png</destinationImage>
+                            <commands>
+                                <command>color: 0, 0, 0</command>
+                                <command>font: Arial Bold, 30</command>
+                                <command>text: 140, 30, gogo account ${project.version}</command>
+                            </commands>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>unpack-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                            <excludeArtifactIds>junit</excludeArtifactIds>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <phase>pre-site</phase>
+                        <configuration>
+                            <target>
+                                <ant antfile="build.xml" target="doc"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>nl.gogognome</groupId>
+            <artifactId>gogoswing</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>nl.gogognome</groupId>
+            <artifactId>gogolib</artifactId>
+            <version>3.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.13</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.13</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.4</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+            <version>2.3.6</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.jodreports</groupId>
+            <artifactId>jodreports</artifactId>
+            <version>2.4.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>2.3</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>xom</groupId>
+            <artifactId>xom</artifactId>
+            <version>1.2.5</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>15.0</version>
+        </dependency>
+        <dependency>
+            <groupId>nl.gogognome</groupId>
+            <artifactId>gogodataaccess</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.2.134</version>
+        </dependency>
+    </dependencies>
+
 </project>
