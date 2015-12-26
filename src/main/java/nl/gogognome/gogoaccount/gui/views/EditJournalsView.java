@@ -12,16 +12,15 @@ import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.action.Actions;
+import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 
 /**
  * This class allows the user to browse the journals and to edit individual journals.
@@ -37,26 +36,19 @@ public class EditJournalsView extends View {
 
     private JournalsTableModel journalsTableModel;
     private JTable journalsTable;
-    private ListSelectionListener listSelectionListener;
 
     private Document document;
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
 	/**
-	 * Creates the "Edit journals" view.
 	 * @param document the database whose journals are being edited
 	 */
 	public EditJournalsView(Document document) {
-		super();
         this.document = document;
     }
 
-    /**
-     * @see View#onInit()
-     */
     @Override
     public void onInit() {
-        // Create table of journals
         try {
             journalsTableModel = new JournalsTableModel(document);
             journalsTable = widgetFactory.createSortedTable(journalsTableModel);
@@ -67,39 +59,18 @@ public class EditJournalsView extends View {
             itemsTable.setRowSelectionAllowed(false);
             itemsTable.setColumnSelectionAllowed(false);
 
-            // Let items table be updated when another row is selected in the journals table.
-            listSelectionListener = new ListSelectionListenerImpl();
-            journalsTable.getSelectionModel().addListSelectionListener(listSelectionListener);
-
-            // Create button panel
-            JPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
-            buttonPanel.setOpaque(false);
-
-            JButton editButton = widgetFactory.createButton("ejd.editJournal", new EditAction());
-            buttonPanel.add(editButton);
-
-            JButton addButton = widgetFactory.createButton("ejd.addJournal", new AddAction());
-            buttonPanel.add(addButton);
-
-            JButton deleteButton = widgetFactory.createButton("ejd.deleteJournal", new DeleteAction());
-            buttonPanel.add(deleteButton);
-
-            // Add components to the view.
-            JPanel tablesPanel = new JPanel(new GridBagLayout());
-            tablesPanel.setOpaque(false);
-
-            JScrollPane scrollPane = widgetFactory.createScrollPane(journalsTable, "editJournalsView.journals");
-            tablesPanel.add(scrollPane, SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
-                    GridBagConstraints.CENTER, GridBagConstraints.BOTH, 0, 0, 0, 0));
-
-            scrollPane = widgetFactory.createScrollPane(itemsTable, "editJournalsView.journalItems");
-            tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
+            Tables.onSelectionChange(journalsTable, () -> {
+                int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
+                if (row != -1) {
+                    updateJournalItemTable(row);
+                }
+            });
 
             setLayout(new BorderLayout());
             setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            add(tablesPanel, BorderLayout.CENTER);
-            add(buttonPanel, BorderLayout.SOUTH);
+            add(buildPanelWithTables(), BorderLayout.CENTER);
+            add(createButtonPanel(), BorderLayout.SOUTH);
 
             SwingUtils.selectFirstRow(journalsTable);
         } catch (ServiceException e) {
@@ -108,6 +79,35 @@ public class EditJournalsView extends View {
         }
 	}
 
+    private JPanel buildPanelWithTables() {
+        JPanel tablesPanel = new JPanel(new GridBagLayout());
+        tablesPanel.setOpaque(false);
+
+        JScrollPane scrollPane = widgetFactory.createScrollPane(journalsTable, "editJournalsView.journals");
+        tablesPanel.add(scrollPane, SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
+                GridBagConstraints.CENTER, GridBagConstraints.BOTH, 0, 0, 0, 0));
+
+        scrollPane = widgetFactory.createScrollPane(itemsTable, "editJournalsView.journalItems");
+        tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
+        return tablesPanel;
+    }
+
+    private ButtonPanel createButtonPanel() {
+        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
+        buttonPanel.setOpaque(false);
+
+        Action editAction = Actions.build(this, this::editJournal);
+        addCloseable(Tables.onSelectionChange(journalsTable, () -> editAction.setEnabled(journalsTable.getSelectedRowCount() == 1)));
+        buttonPanel.addButton("ejd.editJournal", editAction);
+
+        buttonPanel.addButton("ejd.addJournal", this::addJournal);
+
+        Action deleteAction = Actions.build(this, this::deleteJournal);
+        addCloseable(Tables.onSelectionChange(journalsTable, () -> deleteAction.setEnabled(journalsTable.getSelectedRowCount() > 0)));
+        buttonPanel.addButton("ejd.deleteJournal", deleteAction);
+        return buttonPanel;
+    }
+
     @Override
     public String getTitle() {
         return textResource.getString("editJournalsView.title");
@@ -115,8 +115,6 @@ public class EditJournalsView extends View {
 
     @Override
     public void onClose() {
-		journalsTable.getSelectionModel().removeListSelectionListener(listSelectionListener);
-        journalsTable = null;
     }
 
     /**
@@ -192,44 +190,6 @@ public class EditJournalsView extends View {
     @Override
     public boolean requestFocusInWindow() {
         return journalsTable.requestFocusInWindow();
-    }
-
-	private class EditAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-		    editJournal();
-		}
-	}
-
-	private class AddAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-		    addJournal();
-		}
-	}
-
-    private class DeleteAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent e) {
-		    deleteJournal();
-		}
-	}
-
-	private class ListSelectionListenerImpl implements ListSelectionListener {
-	    @Override
-		public void valueChanged(ListSelectionEvent event) {
-	        //Ignore extra messages.
-	        if (event.getValueIsAdjusting()) { return; }
-
-	        int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
-	        if (row != -1) {
-                try {
-                    updateJournalItemTable(row);
-                } catch (ServiceException e) {
-                    logger.warn("Ignored exception: " + e.getMessage(), e);
-                }
-            }
-	    }
     }
 
 	private class DocumentListenerImpl implements DocumentListener {
