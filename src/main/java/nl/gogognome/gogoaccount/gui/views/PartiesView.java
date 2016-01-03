@@ -333,7 +333,11 @@ public class PartiesView extends View {
             }
             onSearch();
 
-            SwingUtils.selectRowWithModelIndex(table, row);
+            try {
+                SwingUtils.selectRowWithModelIndex(table, row);
+            } catch (IndexOutOfBoundsException e) {
+                // ignore this exception. It occurs when a party is changed such that it does not match the current filter anymore.
+            }
         });
     }
 
