@@ -124,4 +124,24 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
         assertEquals("[1101 Pietje Puk]", partyService.findParties(document, searchCriteria).toString());
     }
 
+    @Test
+    public void performanceTest() throws ServiceException {
+        for (int i=0; i<10000; i++) {
+            Party party = new Party("p-" + i);
+            party.setName("Hendrik Erikszoon");
+            party.setAddress("Willemstraat 5");
+            party.setZipCode("6122 CC");
+            party.setCity("Heerenveen");
+            party.setBirthDate(DateUtil.createDate(1976, 4, 23));
+            party.setRemarks("This is an excellent person!");
+
+            partyService.createParty(document, party, Arrays.asList("excellent-" + i, "party-" + i));
+        }
+
+        for (int i=0; i<1000; i++) {
+            partyService.getParty(document, "p-" + i);
+            partyService.getParty(document, "p-123");
+        }
+    }
+
 }
