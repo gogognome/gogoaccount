@@ -67,7 +67,7 @@ public class Start {
 
         Factory.bindSingleton(TextResource.class, tr);
         Factory.bindSingleton(WidgetFactory.class, new WidgetFactory(tr));
-        Factory.bindSingleton(BeanFactory.class, new BeanFactory());
+        Factory.bindSingleton(BeanFactory.class, new BeanFactory(tr));
         Factory.bindSingleton(Locale.class, locale);
         Factory.bindSingleton(AmountFormat.class, new AmountFormat(locale, Currency.getInstance("EUR")));
     }

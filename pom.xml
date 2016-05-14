@@ -35,6 +35,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -47,6 +48,7 @@
             <plugin>
                 <groupId>nl.gogognome</groupId>
                 <artifactId>image-modifier-maven-plugin</artifactId>
+                <version>1.0</version>
                 <executions>
                     <execution>
                         <id>generateSplashImage</id>
@@ -129,7 +131,7 @@
         <dependency>
             <groupId>nl.gogognome</groupId>
             <artifactId>gogoswing</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

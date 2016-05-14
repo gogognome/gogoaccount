@@ -8,7 +8,7 @@ public class ServiceTransaction {
 
     public static void withoutResult(RunnableWithoutReturnValue runnable) throws ServiceException {
         try {
-            RequireTransaction.withoutResult(runnable);
+            RequireTransaction.runs(runnable);
         } catch (Exception e) {
             throw new ServiceException(e);
         }
@@ -16,7 +16,7 @@ public class ServiceTransaction {
 
     public static <T> T withResult(RunnableWithReturnValue<T> runnable) throws ServiceException {
         try {
-            return RequireTransaction.withResult(runnable);
+            return RequireTransaction.returns(runnable);
         } catch (Exception e) {
             throw new ServiceException(e);
         }
