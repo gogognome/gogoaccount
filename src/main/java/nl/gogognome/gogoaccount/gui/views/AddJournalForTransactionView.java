@@ -91,9 +91,10 @@ public class AddJournalForTransactionView extends EditJournalView {
     }
 
     @Override
-    protected void createNewJournal(JournalEntry journalEntry, java.util.List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
-        super.createNewJournal(journalEntry, journalEntryDetails);
+    protected JournalEntry createNewJournal(JournalEntry journalEntry, java.util.List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
+        journalEntry = super.createNewJournal(journalEntry, journalEntryDetails);
         plugin.journalAdded(journalEntry);
+        return journalEntry;
     }
 
     private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {

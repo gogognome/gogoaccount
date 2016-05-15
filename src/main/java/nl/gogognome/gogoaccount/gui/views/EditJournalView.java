@@ -238,8 +238,8 @@ public class EditJournalView extends View {
         }
 	}
 
-	protected void createNewJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
-		ObjectFactory.create(LedgerService.class).addJournalEntry(document, journalEntry, journalEntryDetails, true);
+	protected JournalEntry createNewJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
+		return ObjectFactory.create(LedgerService.class).addJournalEntry(document, journalEntry, journalEntryDetails, true);
 	}
 
 	protected void initValuesForNextJournal() throws ServiceException {
