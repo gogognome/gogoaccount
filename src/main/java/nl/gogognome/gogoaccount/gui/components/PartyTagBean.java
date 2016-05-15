@@ -9,6 +9,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import nl.gogognome.gogoaccount.gui.views.HandleException;
+import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.gui.beans.ComboBoxBean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -39,9 +40,9 @@ public class PartyTagBean extends JPanel {
     private void initBean() {
         setLayout(new GridBagLayout());
         BeanFactory beanFactory = Factory.getInstance(BeanFactory.class);
-        ComboBoxBean<String> comboboxBean = beanFactory.createComboBoxBean(types);
+        Bean comboboxBean = beanFactory.createComboBoxBean(types);
 
-        add(comboboxBean, SwingUtils.createTextFieldGBConstraints(0, 0));
+        add(comboboxBean.getComponent(), SwingUtils.createTextFieldGBConstraints(0, 0));
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         JButton button = wf.createIconButton("gen.btnNew", new NewPartyTypeAction(), 21);
         add(button);

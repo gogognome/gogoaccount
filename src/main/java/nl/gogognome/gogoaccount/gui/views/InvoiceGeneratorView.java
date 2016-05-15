@@ -12,8 +12,7 @@ import nl.gogognome.gogoaccount.gui.components.AmountTextField;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
-import nl.gogognome.lib.gui.beans.ComboBoxBean;
-import nl.gogognome.lib.gui.beans.DateSelectionBean;
+import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -219,10 +218,10 @@ public class InvoiceGeneratorView extends View {
         tfId.setToolTipText(textResource.getString("invoiceGeneratorView.tooltip"));
         invoiceGenerationDateModel = new DateModel();
         invoiceGenerationDateModel.setDate(new Date(), null);
-        DateSelectionBean dateSelectionBean = beanFactory.createDateSelectionBean(invoiceGenerationDateModel);
-        headerPanel.add(widgetFactory.createLabel("invoiceGeneratorView.date", dateSelectionBean),
+        Bean dateSelectionBean = beanFactory.createDateSelectionBean(invoiceGenerationDateModel);
+        headerPanel.add(widgetFactory.createLabel("invoiceGeneratorView.date", dateSelectionBean.getComponent()),
                 SwingUtils.createLabelGBConstraints(0, row));
-        headerPanel.add(dateSelectionBean,
+        headerPanel.add(dateSelectionBean.getComponent(),
                 SwingUtils.createLabelGBConstraints(1, row));
         row++;
 
@@ -256,9 +255,8 @@ public class InvoiceGeneratorView extends View {
             TemplateLine line = templateLines.get(i);
             int top = 3;
             int bottom = 3;
-            ComboBoxBean<Account> cbAccount = beanFactory.createComboBoxBean(line.accountListModel);
-            cbAccount.setItemFormatter(new AccountFormatter());
-            templateLinesPanel.add(cbAccount,
+            Bean cbAccount = beanFactory.createComboBoxBean(line.accountListModel, new AccountFormatter());
+            templateLinesPanel.add(cbAccount.getComponent(),
                     SwingUtils.createGBConstraints(1, row, 1, 1, 3.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 0, bottom, 5));
@@ -303,7 +301,7 @@ public class InvoiceGeneratorView extends View {
 
         @Override
         public void actionPerformed(ActionEvent event) {
-            TemplateLine line = templateLines.remove(index);
+            templateLines.remove(index);
             updateTemplateLinesPanelAndRepaint();
         }
     }
