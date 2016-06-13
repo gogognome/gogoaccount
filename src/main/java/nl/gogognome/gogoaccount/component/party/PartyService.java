@@ -3,13 +3,23 @@ package nl.gogognome.gogoaccount.component.party;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
+import nl.gogognome.lib.util.StringUtil;
+import nl.gogognome.textsearch.criteria.Criterion;
+import nl.gogognome.textsearch.criteria.Parser;
+import nl.gogognome.textsearch.string.CriterionMatcher;
+import nl.gogognome.textsearch.string.StringSearchFactory;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toList;
+import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 
 public class PartyService {
+
+    private final CriterionMatcher criterionMatcher = new StringSearchFactory().caseInsensitiveCriterionMatcher();
 
     public Party createParty(Document document, Party party, List<String> tags) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
@@ -55,14 +65,43 @@ public class PartyService {
         return ServiceTransaction.withResult(() -> new TagDAO(document).findPartyIdToTags());
     }
 
-    public List<Party> findParties(Document document, PartySearchCriteria searchCriteria) throws ServiceException {
+    public List<Party> findParties(Document document, String searchCriterion) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
+            Criterion criterion = isNullOrEmpty(searchCriterion) ? null : new Parser().parse(searchCriterion);
             Map<String, List<String>> partyIdToTags = new TagDAO(document).findPartyIdToTags();
             return new PartyDAO(document).findAll().stream()
-                    .filter(party -> searchCriteria.matches(party, partyIdToTags.get(party.getId())))
+                    .filter(party -> matches(criterion, party, partyIdToTags.get(party.getId())))
                     .sorted()
                     .collect(toList());
         });
+    }
+
+    private boolean matches(Criterion criterion, Party party, List<String> tags) {
+        if (criterion == null) {
+            return true;
+        }
+
+        String[] criteria = new String[10 + tags.size()];
+        int index = 0;
+        criteria[index++] = party.getId();
+        criteria[index++] = party.getName();
+        criteria[index++] = party.getAddress();
+        criteria[index++] = party.getZipCode();
+        criteria[index++] = party.getCity();
+        criteria[index++] = party.getRemarks();
+        criteria[index++] = formatDate("yyyyMMdd", party.getBirthDate());
+        criteria[index++] = formatDate("yyyy-MM-dd", party.getBirthDate());
+        criteria[index++] = formatDate("ddMMyyyy", party.getBirthDate());
+        criteria[index++] = formatDate("dd-MM-yyyy", party.getBirthDate());
+
+        for (String tag : tags) {
+            criteria[index++] = tag;
+        }
+        return criterionMatcher.matches(criterion, criteria);
+    }
+
+    private String formatDate(String dateFormat, Date date) {
+        return date == null ? null : new SimpleDateFormat(dateFormat).format(date);
     }
 
     public boolean existsParty(Document document, String partyId) throws ServiceException {

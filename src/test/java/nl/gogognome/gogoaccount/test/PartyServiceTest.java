@@ -1,7 +1,6 @@
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartySearchCriteria;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.util.DateUtil;
@@ -103,25 +102,11 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testPartySearchCriteria() throws Exception {
-        PartySearchCriteria searchCriteria = new PartySearchCriteria();
-        searchCriteria.setName("Puk");
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, searchCriteria).toString());
-
-        searchCriteria = new PartySearchCriteria();
-        searchCriteria.setAddress("Sterrenlaan");
-        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, searchCriteria).toString());
-
-        searchCriteria = new PartySearchCriteria();
-        searchCriteria.setBirthDate(DateUtil.createDate(1980, 2, 23));
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, searchCriteria).toString());
-
-        searchCriteria = new PartySearchCriteria();
-        searchCriteria.setCity("Eind");
-        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, searchCriteria).toString());
-
-        searchCriteria = new PartySearchCriteria();
-        searchCriteria.setZipCode("15");
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, searchCriteria).toString());
+        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, "Puk").toString());
+        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, "Sterrenlaan").toString());
+        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, "19800223").toString());
+        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, "Eind").toString());
+        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, "15").toString());
     }
 
     @Test

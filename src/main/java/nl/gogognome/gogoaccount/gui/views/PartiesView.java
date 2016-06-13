@@ -3,9 +3,7 @@ package nl.gogognome.gogoaccount.gui.views;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
 import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartySearchCriteria;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -14,14 +12,9 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
 import nl.gogognome.lib.swing.action.ActionWrapper;
-import nl.gogognome.lib.swing.models.DateModel;
-import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.util.StringUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -34,7 +27,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -47,8 +39,6 @@ public class PartiesView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-    private final Logger logger = LoggerFactory.getLogger(PartiesView.class);
-
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
     private final AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
 
@@ -60,20 +50,13 @@ public class PartiesView extends View {
     private boolean selectioEnabled;
     private boolean multiSelectionEnabled;
 
-    private StringModel idModel = new StringModel();
-    private StringModel nameModel = new StringModel();
-    private StringModel addressModel = new StringModel();
-    private StringModel zipCodeModel = new StringModel();
-    private StringModel cityModel = new StringModel();
-    private ListModel<String> tagListModel = new ListModel<>();
-    private DateModel birthDateModel = new DateModel();
+    private StringModel searchCriterionModel = new StringModel();
 
     private JTextArea taRemarks;
 
     private JButton btSearch;
     private JButton btSelect;
 
-    private DocumentListener documentListener;
     private ListSelectionListener listSelectionListener;
     private FocusListener focusListener;
 
@@ -100,13 +83,8 @@ public class PartiesView extends View {
 
     @Override
     public void onInit() {
-    	initModels();
     	addComponents();
     	addListeners();
-    }
-
-    private void initModels() {
-    	updateTypeListModel();
     }
 
     private void addComponents() {
@@ -145,15 +123,9 @@ public class PartiesView extends View {
     private JPanel createSearchCriteriaPanel() {
         ifc = new InputFieldsColumn();
         addCloseable(ifc);
-        ifc.setBorder(widgetFactory.createTitleBorderWithPadding("partiesView.searchCriteria"));
+        ifc.setBorder(widgetFactory.createTitleBorderWithPadding("partiesView.filter"));
 
-        ifc.addField("partiesView.id", idModel);
-        ifc.addField("partiesView.name", nameModel);
-        ifc.addField("partiesView.address", addressModel);
-        ifc.addField("partiesView.zipCode", zipCodeModel);
-        ifc.addField("partiesView.city", cityModel);
-        ifc.addField("partiesView.birthDate", birthDateModel);
-        ifc.addComboBoxField("partiesView.tag", tagListModel, null);
+        ifc.addField("gen.filterCriterion", searchCriterionModel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
         ActionWrapper actionWrapper = widgetFactory.createAction("partiesView.btnSearch");
@@ -189,6 +161,7 @@ public class PartiesView extends View {
         JPanel detailPanel = new JPanel(new GridBagLayout());
 
         taRemarks = new JTextArea();
+        taRemarks.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(taRemarks);
         scrollPane.setPreferredSize(new Dimension(500, 100));
 
@@ -201,22 +174,7 @@ public class PartiesView extends View {
 		return detailPanel;
 	}
 
-    private void updateTypeListModel() {
-        List<String> items = new ArrayList<>();
-        try {
-            items.add("\u00a0");
-            items.addAll(partyService.findPartyTags(document));
-        } catch (ServiceException e) {
-            logger.warn("Ignored exception", e);
-        } finally {
-            tagListModel.setItems(items);
-        }
-    }
-
     private void addListeners() {
-    	documentListener = new DocumentListenerImpl();
-    	document.addListener(documentListener);
-
         listSelectionListener = new RemarksUpdateSelectionListener();
         table.getSelectionModel().addListSelectionListener(listSelectionListener);
 
@@ -240,7 +198,6 @@ public class PartiesView extends View {
     }
 
     private void removeListeners() {
-    	document.removeListener(documentListener);
     	table.getSelectionModel().removeListSelectionListener(listSelectionListener);
     	removeListeners(ifc);
     }
@@ -257,31 +214,8 @@ public class PartiesView extends View {
 
     private void onSearch() {
         try {
-            PartySearchCriteria searchCriteria = new PartySearchCriteria();
-
-            if (!StringUtil.isNullOrEmpty(idModel.getString())) {
-                searchCriteria.setId(idModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(nameModel.getString())) {
-                searchCriteria.setName(nameModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(addressModel.getString())) {
-                searchCriteria.setAddress(addressModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(zipCodeModel.getString())) {
-                searchCriteria.setZipCode(zipCodeModel.getString());
-            }
-            if (!StringUtil.isNullOrEmpty(cityModel.getString())) {
-                searchCriteria.setCity(cityModel.getString());
-            }
-            if (birthDateModel.getDate() != null) {
-                searchCriteria.setBirthDate(birthDateModel.getDate());
-            }
-            if (tagListModel.getSelectedIndex() > 0) {
-                searchCriteria.setTag(tagListModel.getSelectedItem());
-            }
-
-            partiesTableModel.replaceRows(partyService.findParties(document, searchCriteria), partyService.findPartyIdToTags(document));
+            List<Party> matchingParties = partyService.findParties(document, searchCriterionModel.getString());
+            partiesTableModel.replaceRows(matchingParties, partyService.findPartyIdToTags(document));
             SwingUtils.selectFirstRow(table);
             table.requestFocusInWindow();
 
@@ -441,11 +375,4 @@ public class PartiesView extends View {
             }
 		}
     }
-
-	private class DocumentListenerImpl implements DocumentListener {
-		@Override
-		public void documentChanged(Document document) {
-			updateTypeListModel();
-		}
-	}
 }

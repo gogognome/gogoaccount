@@ -197,6 +197,11 @@
             <artifactId>h2</artifactId>
             <version>1.2.134</version>
         </dependency>
+        <dependency>
+            <groupId>nl.gogognome</groupId>
+            <artifactId>gogotextsearch</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 
 </project>
