@@ -394,7 +394,7 @@ public class ReportTask implements Task {
 
             result.append(textFormat.getHorizontalSeparator());
 
-            Map<String, Account> idToAccount = configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
+            Map<String, Account> idToAccount = configurationService.findAllAccounts(document).stream().collect(toMap(Account::getId, a -> a));
 
             for (int i=startIndex; i<endIndex; i++) {
                 values[0] = textResource.formatDate("gen.dateFormat", journalEntries.get(i).getDate());
@@ -466,8 +466,8 @@ public class ReportTask implements Task {
             for (LedgerLine line : report.getLedgerLinesForAccount(account)) {
                 values[0] = textResource.formatDate("gen.dateFormat", line.date);
                 values[2] = line.description;
-                values[4] = amountFormat.formatAmountWithoutCurrency(line.debetAmount.toBigInteger());
-                values[6] = amountFormat.formatAmountWithoutCurrency(line.creditAmount.toBigInteger());
+                values[4] = amountFormat.formatAmountWithoutCurrency(line.debetAmount != null ? line.debetAmount.toBigInteger() : null);
+                values[6] = amountFormat.formatAmountWithoutCurrency(line.creditAmount != null ? line.creditAmount.toBigInteger() : null);
                 values[8] = "";
 
                 Invoice invoice = line.invoice;
