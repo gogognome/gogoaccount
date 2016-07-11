@@ -23,6 +23,12 @@ import nl.gogognome.lib.swing.views.ViewTabbedPane;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -33,15 +39,18 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.print.PrinterException;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.URL;
 import java.util.*;
 
 import static nl.gogognome.gogoaccount.gui.ActionRunner.run;
 
+@Component
 public class MainFrame extends JFrame implements ActionListener, DocumentListener {
 
     private static final long serialVersionUID = 1L;
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     /** The current database of the application. */
     private Document document;
@@ -61,9 +70,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final DocumentService documentService = ObjectFactory.create(DocumentService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final ResourceLoader resourceLoader;
 
-    public MainFrame() {
-        super();
+    @Autowired
+    public MainFrame(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -77,12 +88,18 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
         setTitle(createTitle());
 
-        // Set icon
-        URL url = ClassLoader.getSystemResource("icon-32x32.png");
-        Image image = Toolkit.getDefaultToolkit().createImage(url);
-        setIconImage(image);
-
+        setIcon();
         setMinimumSize(new Dimension(800, 600));
+    }
+
+    private void setIcon() {
+        try {
+            Resource imageResource = resourceLoader.getResource("icon-32x32.png");
+            Image image = Toolkit.getDefaultToolkit().createImage(imageResource.getURL());
+            setIconImage(image);
+        } catch (IOException e) {
+            log.warn("Failed to load icon", e);
+        }
     }
 
     /**
@@ -193,9 +210,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
         if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
         if ("mi.viewInvoicesOverview".equals(command)) { handleViewPartyOverview(); }
-        if ("mi.addJournal".equals(command)) { run(this, () -> handleAddJournal()); }
-        if ("mi.editJournals".equals(command)) { run(this, () -> handleEditJournals()); }
-        if ("mi.addInvoices".equals(command)) { run(this, () -> handleAddInvoices()); }
+        if ("mi.addJournal".equals(command)) { run(this, this::handleAddJournal); }
+        if ("mi.editJournals".equals(command)) { run(this, this::handleEditJournals); }
+        if ("mi.addInvoices".equals(command)) { run(this, this::handleAddInvoices); }
         if ("mi.editParties".equals(command)) { handleEditParties(); }
         if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
         if ("mi.about".equals(command)) { handleAbout(); }

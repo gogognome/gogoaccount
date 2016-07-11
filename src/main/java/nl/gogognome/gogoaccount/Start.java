@@ -1,5 +1,6 @@
-package nl.gogognome.gogoaccount.gui;
+package nl.gogognome.gogoaccount;
 
+import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -10,8 +11,13 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ConfigurableApplicationContext;
 
 import javax.swing.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.Currency;
 import java.util.Locale;
@@ -19,9 +25,12 @@ import java.util.Locale;
 /**
  * Starts gogo account with the graphical user interface.
  */
+@SpringBootApplication
 public class Start {
 
+    private final static Logger logger = LoggerFactory.getLogger(Start.class);
     private String fileName;
+    private final Object lock = new Object();
 
     /**
      * Starts the application.
@@ -37,13 +46,13 @@ public class Start {
     }
 
     private void startApplication(String[] args) {
-        Logger logger = LoggerFactory.getLogger(Start.class);
-        logger.info("Gogo account is starting");
         initFactory(Locale.getDefault());
         parseArguments(args);
         DefaultLookAndFeel.useDefaultLookAndFeel();
         logger.debug("Locale: " + Locale.getDefault());
-        MainFrame mainFrame = initFrame();
+
+        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Start.class).headless(false).web(false).run(args);
+        MainFrame mainFrame = initFrame(ctx);
 
         if (fileName != null) {
             File file = new File(fileName);
@@ -57,6 +66,18 @@ public class Start {
             }
         } else {
             mainFrame.handleNewEdition();
+        }
+
+        waitForFrameToClose();
+    }
+
+    private void waitForFrameToClose() {
+        try {
+            synchronized (lock) {
+                lock.wait();
+            }
+        } catch (InterruptedException e) {
+            logger.debug("Wait was interrupted", e);
         }
     }
 
@@ -87,12 +108,24 @@ public class Start {
         }
     }
 
-    private MainFrame initFrame() {
-        MainFrame mainFrame = new MainFrame();
+    private MainFrame initFrame(ConfigurableApplicationContext ctx) {
+        MainFrame mainFrame = ctx.getBean(MainFrame.class);
         mainFrame.setVisible(true);
         SwingUtils.center(mainFrame);
         mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        mainFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                onFrameClosed();
+            }
+        });
         return mainFrame;
+    }
+
+    private void onFrameClosed() {
+        synchronized (lock) {
+            lock.notifyAll();
+        }
     }
 
 }
