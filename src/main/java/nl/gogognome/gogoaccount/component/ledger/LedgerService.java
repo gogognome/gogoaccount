@@ -11,10 +11,12 @@ import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.textsearch.criteria.Criterion;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LedgerService {
 
@@ -24,6 +26,15 @@ public class LedgerService {
 
     public List<JournalEntry> findJournalEntries(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findAll("date"));
+    }
+
+    public List<FormattedJournalEntry> findFormattedJournalEntries(Document document, Criterion criterion) throws ServiceException {
+        FormattedJournalEntryFinder formattedJournalEntryFinder = new FormattedJournalEntryFinder();
+        return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findAll("date")
+            .stream()
+            .map(journalEntry -> formattedJournalEntryFinder.format(document, journalEntry))
+            .filter(journalEntry -> formattedJournalEntryFinder.matches(criterion, journalEntry))
+            .collect(Collectors.toList()));
     }
 
     /**

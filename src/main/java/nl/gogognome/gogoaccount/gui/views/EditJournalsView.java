@@ -2,6 +2,7 @@ package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.ledger.FormattedJournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
@@ -9,18 +10,27 @@ import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.action.Actions;
+import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.textsearch.criteria.Criterion;
+import nl.gogognome.textsearch.criteria.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.List;
+
+import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 
 /**
  * This class allows the user to browse the journals and to edit individual journals.
@@ -31,16 +41,18 @@ public class EditJournalsView extends View {
 
     private Logger logger = LoggerFactory.getLogger(EditJournalsView.class);
 
-    private JTable itemsTable;
-    private JournalEntryDetailsTableModel itemsTableModel;
-
-    private JournalsTableModel journalsTableModel;
-    private JTable journalsTable;
-
     private Document document;
+
+    private JTable journalEntryDetailsTable;
+    private JournalEntryDetailsTableModel journalEntryDetailsTableModel;
+
+    private FormattedJournalEntriesTableModel journalEntriesTableModel;
+    private JTable journalEntriesTable;
+    private StringModel searchCriterionModel = new StringModel();
+
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
 
-	/**
+    /**
 	 * @param document the database whose journals are being edited
 	 */
 	public EditJournalsView(Document document) {
@@ -50,17 +62,17 @@ public class EditJournalsView extends View {
     @Override
     public void onInit() {
         try {
-            journalsTableModel = new JournalsTableModel(document);
-            journalsTable = widgetFactory.createSortedTable(journalsTableModel);
+            journalEntriesTableModel = new FormattedJournalEntriesTableModel(getFilteredRows());
+            journalEntriesTable = widgetFactory.createSortedTable(journalEntriesTableModel);
 
             // Create table of items
-            itemsTableModel = new JournalEntryDetailsTableModel(document);
-            itemsTable = widgetFactory.createTable(itemsTableModel);
-            itemsTable.setRowSelectionAllowed(false);
-            itemsTable.setColumnSelectionAllowed(false);
+            journalEntryDetailsTableModel = new JournalEntryDetailsTableModel(document);
+            journalEntryDetailsTable = widgetFactory.createTable(journalEntryDetailsTableModel);
+            journalEntryDetailsTable.setRowSelectionAllowed(false);
+            journalEntryDetailsTable.setColumnSelectionAllowed(false);
 
-            Tables.onSelectionChange(journalsTable, () -> {
-                int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
+            Tables.onSelectionChange(journalEntriesTable, () -> {
+                int row = SwingUtils.getSelectedRowConvertedToModel(journalEntriesTable);
                 if (row != -1) {
                     updateJournalItemTable(row);
                 }
@@ -72,7 +84,7 @@ public class EditJournalsView extends View {
             add(buildPanelWithTables(), BorderLayout.CENTER);
             add(createButtonPanel(), BorderLayout.SOUTH);
 
-            SwingUtils.selectFirstRow(journalsTable);
+            SwingUtils.selectFirstRow(journalEntriesTable);
         } catch (ServiceException e) {
             logger.warn("Ignored exception: " + e.getMessage(), e);
             close();
@@ -80,16 +92,50 @@ public class EditJournalsView extends View {
 	}
 
     private JPanel buildPanelWithTables() {
+        InputFieldsColumn ifc = new InputFieldsColumn();
+        addCloseable(ifc);
+        ifc.setBorder(widgetFactory.createTitleBorderWithPadding("editJournalsView.filter"));
+
+        ifc.addField("gen.filterCriterion", searchCriterionModel);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        ActionWrapper actionWrapper = widgetFactory.createAction("gen.btnSearch");
+        actionWrapper.setAction(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onSearch();
+            }
+        });
+        JButton search = new JButton(actionWrapper);
+
+        buttonPanel.add(search);
+        ifc.add(buttonPanel, SwingUtils.createGBConstraints(0, 10, 2, 1, 0.0, 0.0,
+                GridBagConstraints.EAST, GridBagConstraints.NONE, 5, 0, 0, 0));
+        setDefaultButton(search);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(ifc, BorderLayout.NORTH);
+
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
 
-        JScrollPane scrollPane = widgetFactory.createScrollPane(journalsTable, "editJournalsView.journals");
+        JScrollPane scrollPane = widgetFactory.createScrollPane(journalEntriesTable, "editJournalsView.journals");
         tablesPanel.add(scrollPane, SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH, 0, 0, 0, 0));
 
-        scrollPane = widgetFactory.createScrollPane(itemsTable, "editJournalsView.journalItems");
+        scrollPane = widgetFactory.createScrollPane(journalEntryDetailsTable, "editJournalsView.journalItems");
         tablesPanel.add(scrollPane, SwingUtils.createPanelGBConstraints(0, 1));
-        return tablesPanel;
+
+        panel.add(tablesPanel, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void onSearch() {
+        try {
+            journalEntriesTableModel.replaceRows(getFilteredRows());
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        }
     }
 
     private ButtonPanel createButtonPanel() {
@@ -97,13 +143,13 @@ public class EditJournalsView extends View {
         buttonPanel.setOpaque(false);
 
         Action editAction = Actions.build(this, this::editJournal);
-        addCloseable(Tables.onSelectionChange(journalsTable, () -> editAction.setEnabled(journalsTable.getSelectedRowCount() == 1)));
+        addCloseable(Tables.onSelectionChange(journalEntriesTable, () -> editAction.setEnabled(journalEntriesTable.getSelectedRowCount() == 1)));
         buttonPanel.addButton("ejd.editJournal", editAction);
 
         buttonPanel.addButton("ejd.addJournal", this::addJournal);
 
         Action deleteAction = Actions.build(this, this::deleteJournal);
-        addCloseable(Tables.onSelectionChange(journalsTable, () -> deleteAction.setEnabled(journalsTable.getSelectedRowCount() > 0)));
+        addCloseable(Tables.onSelectionChange(journalEntriesTable, () -> deleteAction.setEnabled(journalEntriesTable.getSelectedRowCount() > 0)));
         buttonPanel.addButton("ejd.deleteJournal", deleteAction);
         return buttonPanel;
     }
@@ -123,7 +169,7 @@ public class EditJournalsView extends View {
      * @param row the row of the journal whose items should be shown.
      */
     private void updateJournalItemTable(int row) throws ServiceException {
-        itemsTableModel.setJournalEntryDetails(ledgerService.findJournalEntryDetails(document, journalsTableModel.getRow(row)));
+        journalEntryDetailsTableModel.setJournalEntryDetails(ledgerService.findJournalEntryDetails(document, journalEntriesTableModel.getRow(row).journalEntry));
     }
 
     /**
@@ -131,9 +177,9 @@ public class EditJournalsView extends View {
      */
     private void editJournal() {
         try {
-            int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
+            int row = SwingUtils.getSelectedRowConvertedToModel(journalEntriesTable);
             if (row != -1) {
-                JournalEntry journalEntry = journalsTableModel.getRow(row);
+                JournalEntry journalEntry = journalEntriesTableModel.getRow(row).journalEntry;
                 EditJournalController controller = new EditJournalController(this, document, journalEntry);
                 controller.execute();
                 updateJournalItemTable(row);
@@ -164,10 +210,10 @@ public class EditJournalsView extends View {
      * This method lets the user delete the selected journal.
      */
     private void deleteJournal() {
-        int row = SwingUtils.getSelectedRowConvertedToModel(journalsTable);
+        int row = SwingUtils.getSelectedRowConvertedToModel(journalEntriesTable);
         if (row != -1) {
         	DeleteJournalController controller =
-        		new DeleteJournalController(this, document, journalsTableModel.getRow(row));
+        		new DeleteJournalController(this, document, journalEntriesTableModel.getRow(row).journalEntry);
             try {
                 controller.execute();
             } catch (ServiceException e) {
@@ -176,30 +222,15 @@ public class EditJournalsView extends View {
         }
     }
 
-    /**
-     * This method is called when the focus is requested for this view.
-     */
-    @Override
-    public void requestFocus() {
-        journalsTable.requestFocus();
+    public List<FormattedJournalEntry> getFilteredRows() throws ServiceException {
+        Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
+        return ledgerService.findFormattedJournalEntries(document, criterion);
     }
 
-    /**
-     * This method is called when the focus is requested for this view.
-     */
-    @Override
-    public boolean requestFocusInWindow() {
-        return journalsTable.requestFocusInWindow();
-    }
-
-	private class DocumentListenerImpl implements DocumentListener {
+    private class DocumentListenerImpl implements DocumentListener {
 		@Override
 		public void documentChanged(Document document) {
-            try {
-                journalsTableModel.replaceRows(ledgerService.findJournalEntries(document));
-            } catch (ServiceException e) {
-                logger.warn("Ignored exception: " + e.getMessage(), e);
-            }
+            onSearch();
         }
 	}
 }

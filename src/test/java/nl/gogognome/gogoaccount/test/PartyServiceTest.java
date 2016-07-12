@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.textsearch.criteria.StringLiteral;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -102,11 +103,11 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testPartySearchCriteria() throws Exception {
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, "Puk").toString());
-        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, "Sterrenlaan").toString());
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, "19800223").toString());
-        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, "Eind").toString());
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, "15").toString());
+        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, new StringLiteral("Puk")).toString());
+        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Sterrenlaan")).toString());
+        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, new StringLiteral("19800223")).toString());
+        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Eind")).toString());
+        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, new StringLiteral("15")).toString());
     }
 
     @Test

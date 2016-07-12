@@ -15,6 +15,8 @@ import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.textsearch.criteria.Criterion;
+import nl.gogognome.textsearch.criteria.Parser;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -31,6 +33,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 
 /**
  * This class implements a view for adding, removing, editing and (optionally) selecting parties.
@@ -128,7 +131,7 @@ public class PartiesView extends View {
         ifc.addField("gen.filterCriterion", searchCriterionModel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        ActionWrapper actionWrapper = widgetFactory.createAction("partiesView.btnSearch");
+        ActionWrapper actionWrapper = widgetFactory.createAction("gen.btnSearch");
         actionWrapper.setAction(new SearchAction());
         btSearch = new JButton(actionWrapper);
 
@@ -214,7 +217,8 @@ public class PartiesView extends View {
 
     private void onSearch() {
         try {
-            List<Party> matchingParties = partyService.findParties(document, searchCriterionModel.getString());
+            Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
+            List<Party> matchingParties = partyService.findParties(document, criterion);
             partiesTableModel.replaceRows(matchingParties, partyService.findPartyIdToTags(document));
             SwingUtils.selectFirstRow(table);
             table.requestFocusInWindow();
