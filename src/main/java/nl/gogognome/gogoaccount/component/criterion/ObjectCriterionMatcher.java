@@ -9,7 +9,15 @@ import java.util.Date;
 
 public class ObjectCriterionMatcher {
 
-    private final CriterionMatcher criterionMatcher = new StringSearchFactory().caseInsensitiveCriterionMatcher();
+    private final CriterionMatcher criterionMatcher;
+
+    public ObjectCriterionMatcher() {
+        this(new StringSearchFactory().caseInsensitiveCriterionMatcher());
+    }
+
+    ObjectCriterionMatcher(CriterionMatcher criterionMatcher) {
+        this.criterionMatcher = criterionMatcher;
+    }
 
     public boolean matches(Criterion criterion, Object... params) {
         int resultSize = countResultingSize(params);
