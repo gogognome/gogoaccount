@@ -25,10 +25,9 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -45,7 +44,6 @@ import java.util.*;
 
 import static nl.gogognome.gogoaccount.gui.ActionRunner.run;
 
-@Component
 public class MainFrame extends JFrame implements ActionListener, DocumentListener {
 
     private static final long serialVersionUID = 1L;
@@ -70,10 +68,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final DocumentService documentService = ObjectFactory.create(DocumentService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private BeanFactory beanFactory;
     private final ResourceLoader resourceLoader;
 
-    @Autowired
-    public MainFrame(ResourceLoader resourceLoader) {
+    public MainFrame(BeanFactory beanFactory, ResourceLoader resourceLoader) {
+        this.beanFactory = beanFactory;
         this.resourceLoader = resourceLoader;
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
