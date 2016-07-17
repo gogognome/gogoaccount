@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.component.criterion;
 
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.mockito.VarArgsMatcher;
 import nl.gogognome.textsearch.criteria.Criterion;
 import nl.gogognome.textsearch.string.CriterionMatcher;
 import org.junit.Test;
@@ -16,6 +17,7 @@ public class ObjectCriterionMatcherTest {
     private Criterion criterion = mock(Criterion.class);
 
     @Test
+    @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     public void convertsParametersToStrings() {
         assertConvertsParameters(emptyList(), emptyList());
         assertConvertsParameters(asList("bla"), asList("bla"));

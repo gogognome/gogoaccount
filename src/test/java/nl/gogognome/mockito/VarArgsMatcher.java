@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.component.criterion;
+package nl.gogognome.mockito;
 
 import org.mockito.ArgumentMatcher;
 import org.mockito.internal.matchers.VarargMatcher;
@@ -19,17 +19,18 @@ public class VarArgsMatcher<T> extends ArgumentMatcher<T[]> implements VarargMat
     }
 
     public static <T> T[] varArg(Predicate<List<T>> predicate) {
-        argThat(new VarArgsMatcher<T>(predicate));
+        argThat(new VarArgsMatcher<>(predicate));
         return null;
     }
 
     public static <T> T[] varArgEquals(List<T> expectedArguments) {
-        return varArg(actualArguments -> expectedArguments.equals(actualArguments));
+        return varArg(expectedArguments::equals);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean matches(Object argument) {
-        if (argument != null && !argument.getClass().isArray()) {
+        if (argument == null || !argument.getClass().isArray()) {
             return predicate.test(Collections.singletonList((T) argument));
         }
         return predicate.test(Arrays.asList((T[]) argument));
