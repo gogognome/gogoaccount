@@ -29,9 +29,9 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
@@ -41,6 +41,7 @@ import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTO
  * This class implements a view in which the user can generate invoices
  * for multiple parties.
  */
+@SuppressWarnings("UnusedAssignment")
 public class InvoiceGeneratorView extends View {
 
     private static final long serialVersionUID = 1L;
@@ -265,8 +266,8 @@ public class InvoiceGeneratorView extends View {
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                             top, 0, bottom, 5));
 
-            JButton deleteButton = widgetFactory.createButton("invoiceGeneratorView.delete", null);
-            deleteButton.addActionListener(new DeleteActionListener(i));
+            int index = i;
+            JButton deleteButton = widgetFactory.createButton("invoiceGeneratorView.delete", () -> onDelete(index));
             templateLinesPanel.add(deleteButton,
                     SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0,
                             GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
@@ -287,23 +288,9 @@ public class InvoiceGeneratorView extends View {
                         0, 0, 0, 0));
     }
 
-    private class DeleteActionListener implements ActionListener {
-        /** Index of the line to be deleted by this action. */
-        private final int index;
-
-        /**
-         * Constructor.
-         * @param index index of the line to be deleted by this action.
-         */
-        public DeleteActionListener(int index) {
-            this.index = index;
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent event) {
-            templateLines.remove(index);
-            updateTemplateLinesPanelAndRepaint();
-        }
+    private void onDelete(int index) {
+        templateLines.remove(index);
+        updateTemplateLinesPanelAndRepaint();
     }
 
     /**
@@ -314,59 +301,63 @@ public class InvoiceGeneratorView extends View {
      */
     private void onAddInvoicesToBookkeeping() {
         HandleException.for_(this, () -> {
-            // Validate the input.
             Date date = invoiceGenerationDateModel.getDate();
-            if (date == null) {
-                MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
+            List<InvoiceLineDefinition> invoiceLines = templateLines.stream()
+                    .map(line -> new InvoiceLineDefinition(line.tfAmount.getAmount(), line.accountListModel.getSelectedItem()))
+                    .collect(toList());
+
+            if (!validateInput(date, invoiceLines)) {
                 return;
             }
 
-            List<InvoiceLineDefinition> invoiceLines = new ArrayList<>(templateLines.size());
-            for (TemplateLine line : templateLines) {
-                invoiceLines.add(new InvoiceLineDefinition(line.tfAmount.getAmount(), line.accountListModel.getSelectedItem()));
-            }
-
-            for (InvoiceLineDefinition line : invoiceLines) {
-                if (line.getAmount() == null) {
-                    MessageDialog.showMessage(this, "gen.titleError",
-                            "invoiceGeneratorView.emptyAmountsFound");
-                    return;
-                }
-
-                if (line.getAccount() == null) {
-                    MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.emptyAccountFound");
-                    return;
-                }
-            }
-
-            // Let the user select the parties.
-            PartiesView partiesView = new PartiesView(document);
-            partiesView.setSelectioEnabled(true);
-            partiesView.setMultiSelectionEnabled(true);
-            ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
-            dialog.showDialog();
-            Party[] parties = partiesView.getSelectedParties();
+            Party[] parties = selectParties();
             if (parties == null) {
-                // No parties have been selected. Abort this method.
                 return;
             }
 
-            // Ask the user whether he/she is sure to generate the invoices.
             int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "invoiceGeneratorView.areYouSure");
             if (choice != MessageDialog.YES_OPTION) {
-                // The user canceled the operation.
                 return;
             }
 
-            try {
-                Account account = rbSalesInvoice.isSelected() ? debtorAccountModel.getSelectedItem() : creditorAccountModel.getSelectedItem();
-                invoiceService.createInvoiceAndJournalForParties(document, account, tfId.getText(), Arrays.asList(parties), date, tfDescription.getText(), invoiceLines);
-            } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(this, e, "gen.titleError");
-                return;
-            }
+            generateInvoices(date, invoiceLines, parties);
             MessageDialog.showMessage(this, "gen.titleMessage", "invoiceGeneratorView.messageSuccess");
         });
+    }
+
+    private void generateInvoices(Date date, List<InvoiceLineDefinition> invoiceLines, Party[] parties) throws ServiceException {
+        Account account = rbSalesInvoice.isSelected() ? debtorAccountModel.getSelectedItem() : creditorAccountModel.getSelectedItem();
+        invoiceService.createInvoiceAndJournalForParties(document, account, tfId.getText(), Arrays.asList(parties), date, tfDescription.getText(), invoiceLines);
+    }
+
+    private Party[] selectParties() {
+        PartiesView partiesView = new PartiesView(document);
+        partiesView.setSelectioEnabled(true);
+        partiesView.setMultiSelectionEnabled(true);
+        ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
+        dialog.showDialog();
+        return partiesView.getSelectedParties();
+    }
+
+    private boolean validateInput(Date date, List<InvoiceLineDefinition> invoiceLines) {
+        if (date == null) {
+            MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
+            return false;
+        }
+
+        for (InvoiceLineDefinition line : invoiceLines) {
+            if (line.getAmount() == null) {
+                MessageDialog.showMessage(this, "gen.titleError",
+                        "invoiceGeneratorView.emptyAmountsFound");
+                return false;
+            }
+
+            if (line.getAccount() == null) {
+                MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.emptyAccountFound");
+                return false;
+            }
+        }
+        return true;
     }
 
     private void onInvoiceTypeChanged() {

@@ -127,10 +127,11 @@ public abstract class AbstractBookkeepingTest {
         journalEntry.setDate(DateUtil.createDate(2011, 3, 5));
         journalEntry.setIdOfCreatedInvoice("inv1");
 
-        List<String> descriptions = Arrays.asList("Contributie 2011", "Contributie");
-        List<Amount> amounts = Arrays.asList(null, createAmount(20));
+        List<String> descriptions = Arrays.asList("Contributie");
+        List<Amount> amounts = Arrays.asList(createAmount(20));
         Party party = new PartyService().getParty(document, "1101");
         Invoice invoice = new Invoice(journalEntry.getIdOfCreatedInvoice());
+        invoice.setDescription("Contributie 2011");
         invoice.setConcerningPartyId(party.getId());
         invoice.setPayingPartyId(party.getId());
         invoice.setAmountToBePaid(createAmount(20));

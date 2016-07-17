@@ -175,7 +175,7 @@ public class AutomaticCollectionService {
                     line[7] = partyAutomaticCollectionSettings.getAddress();
                     line[8] = (partyAutomaticCollectionSettings.getZipCode() + ' ' + partyAutomaticCollectionSettings.getCity()).trim();
                     line[9] = "OTHR";
-                    line[10] = invoiceService.findDescriptions(document, invoice).get(0);
+                    line[10] = invoice.getDescription();
                     csvWriter.writeNext(line);
                 }
             }

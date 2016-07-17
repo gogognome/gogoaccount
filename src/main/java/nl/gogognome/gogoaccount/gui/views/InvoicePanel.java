@@ -86,11 +86,7 @@ class InvoicePanel extends JPanel implements Closeable {
         titlePanel = new JPanel(new GridBagLayout());
         titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         StringBuilder sb = new StringBuilder(invoice.getId());
-        for (int i=0; i<amounts.size(); i++) {
-            if (amounts.get(i) == null) {
-                sb.append(' ').append(descriptions.get(i));
-            }
-        }
+        sb.append(' ').append(invoice.getDescription());
 
         if (mustPayingPartyBeShown()) {
             sb.append(' ');

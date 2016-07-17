@@ -35,6 +35,7 @@ public class Invoice implements Comparable<Invoice> {
     private Amount amountToBePaid;
 
     private Date issueDate;
+    private String description;
 
     public Invoice(String id) {
         this.id = id;
@@ -46,6 +47,14 @@ public class Invoice implements Comparable<Invoice> {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public String getPayingPartyId() {
@@ -110,4 +119,5 @@ public class Invoice implements Comparable<Invoice> {
     public int hashCode() {
         return id.hashCode();
     }
+
 }

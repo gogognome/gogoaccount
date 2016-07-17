@@ -66,17 +66,8 @@ public class InvoiceService {
                 String specificDescription =
                         !StringUtil.isNullOrEmpty(description) ? replaceKeywords(description, party) : null;
 
-                // First create the invoice instance. It is needed when the journal is created.
-                int size = invoiceLineDefinitions.size() - 1;
-                if (specificDescription != null) {
-                    size++;
-                }
-                List<String> descriptions = new ArrayList<>(size);
-                List<Amount> amounts = new ArrayList<>(size);
-                if (specificDescription != null) {
-                    descriptions.add(specificDescription);
-                    amounts.add(null);
-                }
+                List<String> descriptions = new ArrayList<>();
+                List<Amount> amounts = new ArrayList<>();
 
                 Amount totalAmount = null;
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
@@ -94,6 +85,7 @@ public class InvoiceService {
                     specificId = suggestNewInvoiceId(document, specificId);
                 }
                 Invoice invoice = new Invoice(specificId);
+                invoice.setDescription(specificDescription);
                 invoice.setConcerningPartyId(party.getId());
                 invoice.setPayingPartyId(party.getId());
                 invoice.setAmountToBePaid(debtorOrCreditorAccount.getType() == DEBTOR ? totalAmount : totalAmount.negate());

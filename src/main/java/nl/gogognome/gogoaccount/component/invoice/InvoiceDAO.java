@@ -22,6 +22,7 @@ class InvoiceDAO extends AbstractDomainClassDAO<Invoice> {
     @Override
     protected Invoice getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
         Invoice invoice = new Invoice(result.getString("id"));
+        invoice.setDescription(result.getString("description"));
         invoice.setIssueDate(result.getDate("issue_date"));
         invoice.setAmountToBePaid(AmountInDatabase.parse(result.getString("amount_to_be_paid")));
         invoice.setConcerningPartyId(result.getString("concerning_party_id"));
@@ -33,6 +34,7 @@ class InvoiceDAO extends AbstractDomainClassDAO<Invoice> {
     protected NameValuePairs getNameValuePairs(Invoice invoice) throws SQLException {
         return new NameValuePairs()
                 .add("id", invoice.getId())
+                .add("description", invoice.getDescription())
                 .add("issue_date", invoice.getIssueDate())
                 .add("amount_to_be_paid", AmountInDatabase.format(invoice.getAmountToBePaid()))
                 .add("concerning_party_id", invoice.getConcerningPartyId())

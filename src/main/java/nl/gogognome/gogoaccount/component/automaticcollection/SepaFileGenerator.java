@@ -109,7 +109,7 @@ class SepaFileGenerator {
                         "Those settings are required to generate a SEPA file");
             }
             addInvoiceElements(doc, paymentInformationIdentification, invoice, party, partyAutomaticCollectionSettings, settings,
-                    getInvoiceDescription(document, invoice));
+                    invoice.getDescription());
         }
 
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -119,10 +119,6 @@ class SepaFileGenerator {
             StreamResult streamResult = new StreamResult(outputStream);
             transformer.transform(new DOMSource(doc), streamResult);
         }
-    }
-
-    private String getInvoiceDescription(Document document, Invoice invoice) throws ServiceException {
-        return ObjectFactory.create(InvoiceService.class).findDescriptions(document, invoice).get(0);
     }
 
     private void addInvoiceElements(org.w3c.dom.Document doc, Element parent, Invoice invoice, Party party,

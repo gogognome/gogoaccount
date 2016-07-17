@@ -1,3 +1,4 @@
 0: createInitialDatabase.sql
 10: automatic-collection.sql
 20: type-to-tags.sql
+30: add-invoice-description.sql
