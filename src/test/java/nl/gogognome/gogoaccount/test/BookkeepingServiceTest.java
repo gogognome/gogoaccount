@@ -86,7 +86,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
             report.getAssetsInclLossAccount().toString());
 
-        assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Winst]",
+        assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Profit]",
                 report.getLiabilitiesInclProfitAccount().toString());
 
         checkAmount(20, report.getAmount(new Account("", "", AccountType.LIABILITY)));
@@ -98,16 +98,16 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         checkAmount(10, report.getBalanceForDebtor(party));
         checkAmount(0, report.getBalanceForCreditor(party));
 
-        assertEquals("[ null beginsaldo 30000 null, " +
+        assertEquals("[ null start balance 30000 null, " +
                         "20110510 t2 Payment 1000 null inv1,  " +
-                        "null totaal mutaties 1000 0,  " +
-                        "null eindsaldo 31000 null]",
+                        "null total mutations 1000 0,  " +
+                        "null end balance 31000 null]",
                 report.getLedgerLinesForAccount(configurationService.getAccount(document, "101")).toString());
 
-        assertEquals("[ null beginsaldo null 0, " +
+        assertEquals("[ null start balance null 0, " +
                 "20110305 t1 Payment null 2000 inv1,  " +
-                "null totaal mutaties 0 2000,  " +
-                "null eindsaldo null 2000]",
+                "null total mutations 0 2000,  " +
+                "null end balance null 2000]",
                 report.getLedgerLinesForAccount(configurationService.getAccount(document, "300")).toString());
 
         checkTotalsOfReport(report);
@@ -127,7 +127,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
             report.getAssetsInclLossAccount().toString());
 
-        assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Winst]",
+        assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Profit]",
                 report.getLiabilitiesInclProfitAccount().toString());
 
         checkAmount(20, report.getAmount(new Account("", "", AccountType.LIABILITY)));
@@ -139,9 +139,9 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         checkAmount(20, report.getBalanceForDebtor(party));
         checkAmount(0, report.getBalanceForCreditor(party));
 
-        assertEquals("[ null beginsaldo 30000 null,  " +
-                        "null totaal mutaties 0 0,  " +
-                        "null eindsaldo 30000 null]",
+        assertEquals("[ null start balance 30000 null,  " +
+                        "null total mutations 0 0,  " +
+                        "null end balance 30000 null]",
                 report.getLedgerLinesForAccount(configurationService.getAccount(document, "101")).toString());
 
         checkTotalsOfReport(report);

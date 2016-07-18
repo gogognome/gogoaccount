@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.test;
 
+import junit.framework.Assert;
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
@@ -23,6 +24,7 @@ import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.lib.swing.RunnableWithException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -34,7 +36,9 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.*;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static junit.framework.Assert.*;
 
 /**
@@ -109,7 +113,7 @@ public abstract class AbstractBookkeepingTest {
     }
 
     private void initFactory() {
-        TextResource tr = new TextResource(new Locale("nl"));
+        TextResource tr = new TextResource(new Locale("en"));
         tr.loadResourceBundle("stringresources");
         Factory.bindSingleton(TextResource.class, tr);
 
@@ -127,8 +131,8 @@ public abstract class AbstractBookkeepingTest {
         journalEntry.setDate(DateUtil.createDate(2011, 3, 5));
         journalEntry.setIdOfCreatedInvoice("inv1");
 
-        List<String> descriptions = Arrays.asList("Contributie");
-        List<Amount> amounts = Arrays.asList(createAmount(20));
+        List<String> descriptions = singletonList("Contributie");
+        List<Amount> amounts = singletonList(createAmount(20));
         Party party = new PartyService().getParty(document, "1101");
         Invoice invoice = new Invoice(journalEntry.getIdOfCreatedInvoice());
         invoice.setDescription("Contributie 2011");
@@ -151,7 +155,7 @@ public abstract class AbstractBookkeepingTest {
     }
 
     private List<Account> createAccounts() {
-        return Arrays.asList(
+        return asList(
                 new Account("100", "Kas", AccountType.ASSET),
                 new Account("101", "Betaalrekening", AccountType.ASSET),
                 new Account("190", "Debiteuren", AccountType.DEBTOR),
@@ -373,4 +377,16 @@ public abstract class AbstractBookkeepingTest {
         assertEquals(expected.getInvoiceId(), actual.getInvoiceId());
     }
 
+    protected <T extends Exception> T assertThrows(Class<T> expectedExceptionClass, RunnableWithException runnable) {
+        try {
+            runnable.run();
+            Assert.fail("Expected exception was not thrown!");
+            return null; // will never be executed
+        } catch (Exception e) {
+            assertTrue("Expected exception of type " + expectedExceptionClass + " but actual type was " + e.getClass(),
+                    e.getClass().equals(expectedExceptionClass));
+            //noinspection unchecked
+            return (T) e;
+        }
+    }
 }
