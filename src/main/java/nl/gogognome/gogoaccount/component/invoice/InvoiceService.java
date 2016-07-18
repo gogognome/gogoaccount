@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
+import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
 
 /**
@@ -54,7 +55,7 @@ public class InvoiceService {
     public void createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, String id, List<Party> parties,
             Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
-            validateInvoice(issueDate, invoiceLineDefinitions);
+            validateInvoice(issueDate, id, debtorOrCreditorAccount, invoiceLineDefinitions);
             boolean changedDatabase = false;
 
             InvoiceDAO invoiceDAO = new InvoiceDAO(document);
@@ -77,7 +78,7 @@ public class InvoiceService {
                     }
                     totalAmount = totalAmount == null ? amount : totalAmount.add(amount);
 
-                    descriptions.add(line.getAccount().getName());
+                    descriptions.add(line.getDescription());
                     amounts.add(debtorOrCreditorAccount.getType() == DEBTOR ? amount : amount.negate());
                 }
 
@@ -153,12 +154,18 @@ public class InvoiceService {
         });
     }
 
-    private void validateInvoice(Date issueDate, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
+    private void validateInvoice(Date issueDate, String id, Account debtorOrCreditorAccount, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
+        TextResource tr = Factory.getInstance(TextResource.class);
         if (issueDate == null) {
-            throw new ServiceException("No date has been specified!");
+            throw new ServiceException(tr.getString("InvoiceService.issueDateNull"));
+        }
+        if (id == null) {
+            throw new ServiceException(tr.getString("InvoiceService.idIsNull"));
+    }
+        if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
+            throw new ServiceException(tr.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
         }
 
-        TextResource tr = Factory.getInstance(TextResource.class);
         if (invoiceLineDefinitions.isEmpty()) {
             throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));
         }

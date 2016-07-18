@@ -8,7 +8,7 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceLineDefinition;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
-import nl.gogognome.gogoaccount.gui.components.AmountTextField;
+import nl.gogognome.gogoaccount.models.AmountModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
@@ -19,6 +19,7 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
+import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 
@@ -28,10 +29,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
@@ -66,11 +65,15 @@ public class InvoiceGeneratorView extends View {
     /** Instances of this class represent a single line of the invoice template. */
     private class TemplateLine {
         private final ListModel<Account> accountListModel = new ListModel<>();
-        AmountTextField tfAmount;
+        private StringModel descriptionModel;
+        private AmountModel amountModel;
 
         public TemplateLine(List<Account> accounts, Currency currency) {
-            tfAmount = new AmountTextField(currency);
+            amountModel = new AmountModel(currency);
+            descriptionModel = new StringModel();
             accountListModel.setItems(accounts);
+            accountListModel.addModelChangeListener(
+                    model -> descriptionModel.setString(accountListModel.getSelectedItem() != null ? accountListModel.getSelectedItem().getName() : null));
         }
     }
 
@@ -139,12 +142,7 @@ public class InvoiceGeneratorView extends View {
     private ButtonPanel createButtonPanel() {
         // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
-        buttonPanel.add(widgetFactory.createButton("invoiceGeneratorView.addInvoices", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onAddInvoicesToBookkeeping();
-            }
-        }));
+        buttonPanel.add(widgetFactory.createButton("invoiceGeneratorView.addInvoices", this::onAddInvoicesToBookkeeping));
         buttonPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
         return buttonPanel;
     }
@@ -248,8 +246,10 @@ public class InvoiceGeneratorView extends View {
 
         templateLinesPanel.add(new JLabel(textResource.getString("gen.account")),
                 SwingUtils.createLabelGBConstraints(1, 0));
-        templateLinesPanel.add(new JLabel(textResource.getString("gen.amount")),
+        templateLinesPanel.add(new JLabel(textResource.getString("gen.description")),
                 SwingUtils.createLabelGBConstraints(2, 0));
+        templateLinesPanel.add(new JLabel(textResource.getString("gen.amount")),
+                SwingUtils.createLabelGBConstraints(3, 0));
 
         int row = 1;
         for (int i=0; i<templateLines.size(); i++) {
@@ -258,34 +258,25 @@ public class InvoiceGeneratorView extends View {
             int bottom = 3;
             Bean cbAccount = beanFactory.createComboBoxBean(line.accountListModel, new AccountFormatter());
             templateLinesPanel.add(cbAccount.getComponent(),
-                    SwingUtils.createGBConstraints(1, row, 1, 1, 3.0, 0.0,
-                            GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                            top, 0, bottom, 5));
-            templateLinesPanel.add(line.tfAmount,
-                    SwingUtils.createGBConstraints(2, row, 1, 1, 1.0, 0.0,
-                            GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                            top, 0, bottom, 5));
+                    SwingUtils.createLabelGBConstraints(1, row));
+            templateLinesPanel.add(beanFactory.createTextFieldBean(line.descriptionModel) .getComponent(),
+                    SwingUtils.createTextFieldGBConstraints(2, row));
+            templateLinesPanel.add(beanFactory.createRightAlignedTextFieldBean(line.amountModel).getComponent(),
+                    SwingUtils.createTextFieldGBConstraints(3, row));
 
             int index = i;
             JButton deleteButton = widgetFactory.createButton("invoiceGeneratorView.delete", () -> onDelete(index));
             templateLinesPanel.add(deleteButton,
-                    SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0,
-                            GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                            top, 5, bottom, 0));
+                    SwingUtils.createLabelGBConstraints(4, row));
             row++;
         }
 
-        JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent event) {
+        JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", () -> {
                 templateLines.add(new TemplateLine(accounts, currency));
                 updateTemplateLinesPanelAndRepaint();
             }
-        });
-        templateLinesPanel.add(newButton,
-                SwingUtils.createGBConstraints(4, row, 1, 1, 1.0, 0.0,
-                        GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                        0, 0, 0, 0));
+        );
+        templateLinesPanel.add(newButton, SwingUtils.createLabelGBConstraints(4, row));
     }
 
     private void onDelete(int index) {
@@ -293,17 +284,11 @@ public class InvoiceGeneratorView extends View {
         updateTemplateLinesPanelAndRepaint();
     }
 
-    /**
-     * This method is called when the "add invoices" button has been pressed.
-     * The user will be asked to select the parties for which invoices are generated.
-     * After that, a dialog asks whether the user is sure to continue. Only if the user explicitly
-     * states "yes" the invoices will be added to the bookkeeping.
-     */
     private void onAddInvoicesToBookkeeping() {
         HandleException.for_(this, () -> {
             Date date = invoiceGenerationDateModel.getDate();
             List<InvoiceLineDefinition> invoiceLines = templateLines.stream()
-                    .map(line -> new InvoiceLineDefinition(line.tfAmount.getAmount(), line.accountListModel.getSelectedItem()))
+                    .map(line -> new InvoiceLineDefinition(line.amountModel.getAmount(), line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
                     .collect(toList());
 
             if (!validateInput(date, invoiceLines)) {
