@@ -200,7 +200,6 @@ public class EditJournalView extends View {
     	return widgetFactory.createButton("ajd.okAndNextJournal", Actions.build(this, this::handleOkAndNextButtonPressed));
     }
 
-    /** Handles the OK button. Closes the dialog. */
     private void handleOkButtonPressed() {
         JournalEntry journalEntry = getJournalEntryFromDialog();
         if (journalEntry != null) {
@@ -213,7 +212,6 @@ public class EditJournalView extends View {
         }
     }
 
-	/** Handles the Ok + next button. */
     private void handleOkAndNextButtonPressed() {
         JournalEntry journalEntry = getJournalEntryFromDialog();
         if (journalEntry != null) {
