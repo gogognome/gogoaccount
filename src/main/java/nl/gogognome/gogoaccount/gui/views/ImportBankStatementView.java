@@ -1,41 +1,19 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.awt.GridBagLayout;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
+import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
+import nl.gogognome.gogoaccount.component.importer.RabobankCSVImporter;
+import nl.gogognome.gogoaccount.component.importer.TransactionImporter;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
-import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
-import nl.gogognome.gogoaccount.component.importer.RabobankCSVImporter;
-import nl.gogognome.gogoaccount.component.importer.TransactionImporter;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
@@ -50,9 +28,17 @@ import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -103,7 +89,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         initModels();
         addComponents();
         addListeners();
-        disableEnableButtons();
+        updateButtonsStatus();
         updateJournalItemTable();
     }
 
@@ -121,7 +107,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
                 new ImporterFormatter());
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
-        importButton = buttonPanel.addButton("importBankStatementView.import", new ImportAction());
+        importButton = buttonPanel.addButton("importBankStatementView.import", this::handleImport);
 
         JPanel importPanel = new JPanel(new BorderLayout());
         importPanel.add(ifc, BorderLayout.NORTH);
@@ -143,9 +129,9 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         ButtonPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonsPanel.setOpaque(false);
 
-        editButton = buttonsPanel.addButton("ejd.editJournal", new EditAction());
-        addButton = buttonsPanel.addButton("ejd.addJournal", new AddAction());
-        deleteButton = buttonsPanel.addButton("ejd.deleteJournal", new DeleteAction());
+        editButton = buttonsPanel.addButton("ejd.editJournal", this::editJournalForSelectedTransaction);
+        addButton = buttonsPanel.addButton("ejd.addJournal", this::addJournalForSelectedTransaction);
+        deleteButton = buttonsPanel.addButton("ejd.deleteJournal", this::deleteJournalFromSelectedTransaction);
 
         // Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
@@ -193,7 +179,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      */
     private void updateJournalItemTable() {
         try {
-            int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
+            int row = getSelectedRowIndexInTableModel();
             List<JournalEntryDetail> journalEntryDetails;
             if (row != -1) {
                 JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
@@ -249,7 +235,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     }
 
     private void editJournalForSelectedTransaction() {
-        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+        int row = getSelectedRowIndexInTableModel();
         if (row != -1) {
             JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
             EditJournalController controller = new EditJournalController(this, document, journalEntry);
@@ -270,7 +256,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     private void deleteJournalFromSelectedTransaction() {
         try {
-            int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+            int row = getSelectedRowIndexInTableModel();
             if (row != -1) {
                 JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
                 DeleteJournalController controller = new DeleteJournalController(this, document, journalEntry);
@@ -278,6 +264,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
                 if (controller.isJournalDeleted()) {
                     updateTransactionJournal(row, null);
+                    updateButtonsStatus();
                 }
             }
         } catch (ServiceException e) {
@@ -292,13 +279,17 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         updateJournalItemTable();
     }
 
-    private void disableEnableButtons() {
-        int row = SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
+    private void updateButtonsStatus() {
+        int row = getSelectedRowIndexInTableModel();
         boolean rowSelected = row != -1;
-        boolean journalPresent = rowSelected && transactionJournalsTableModel.getRow(row).getJournalEntry() != null;
+        boolean selectedRowHasJournalEntry = rowSelected && transactionJournalsTableModel.getRow(row).getJournalEntry() != null;
         addButton.setEnabled(rowSelected);
-        editButton.setEnabled(journalPresent);
-        deleteButton.setEnabled(journalPresent);
+        editButton.setEnabled(selectedRowHasJournalEntry);
+        deleteButton.setEnabled(selectedRowHasJournalEntry);
+    }
+
+    private int getSelectedRowIndexInTableModel() {
+        return SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
     }
 
     @Override
@@ -314,19 +305,17 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-        //Ignore extra messages.
-        if (e.getValueIsAdjusting()) {
-            return;
+        if (!e.getValueIsAdjusting()) {
+            updateJournalItemTable();
         }
 
-        updateJournalItemTable();
-        disableEnableButtons();
+        updateButtonsStatus();
     }
 
     @Override
     public void journalAdded(JournalEntry journalEntry) {
         try {
-            int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+            int row = getSelectedRowIndexInTableModel();
             if (row != -1) {
                 updateTransactionJournal(row, journalEntry);
                 setLinkBetweenImportedTransactionAccountAndAccount(
@@ -357,50 +346,24 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     public ImportedTransaction getNextImportedTransaction() {
         ImportedTransaction importedTransaction = null;
 
-        int row = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
-        if (row != -1) {
-            while (row < transactionJournalsTableModel.getRowCount()) {
-                if (transactionJournalsTableModel.getRow(row).getJournalEntry() != null) {
-                    row++;
+        int tableRowIndex = transactionsJournalsTable.getSelectionModel().getMinSelectionIndex();
+        if (tableRowIndex != -1) {
+            while (tableRowIndex < transactionJournalsTableModel.getRowCount()) {
+                int modelIndex = transactionsJournalsTable.convertRowIndexToModel(tableRowIndex);
+                if (transactionJournalsTableModel.getRow(modelIndex).getJournalEntry() != null) {
+                    tableRowIndex++;
                 } else {
                     break;
                 }
             }
         }
 
-        if (row != -1 && row < transactionJournalsTableModel.getRowCount()) {
-            transactionsJournalsTable.getSelectionModel().setSelectionInterval(row, row);
-            importedTransaction = transactionJournalsTableModel.getRow(row).getImportedTransaction();
+        if (tableRowIndex != -1 && tableRowIndex < transactionJournalsTableModel.getRowCount()) {
+            transactionsJournalsTable.getSelectionModel().setSelectionInterval(tableRowIndex, tableRowIndex);
+            int modelIndex = transactionsJournalsTable.convertRowIndexToModel(tableRowIndex);
+            importedTransaction = transactionJournalsTableModel.getRow(modelIndex).getImportedTransaction();
         }
         return importedTransaction;
-    }
-
-    private final class ImportAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            handleImport();
-        }
-    }
-
-    private class AddAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            addJournalForSelectedTransaction();
-        }
-    }
-
-    private class EditAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            editJournalForSelectedTransaction();
-        }
-    }
-
-    private class DeleteAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            deleteJournalFromSelectedTransaction();
-        }
     }
 }
 
