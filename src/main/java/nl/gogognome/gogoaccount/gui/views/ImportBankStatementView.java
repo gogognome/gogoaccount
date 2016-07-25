@@ -10,6 +10,7 @@ import nl.gogognome.gogoaccount.component.importer.TransactionImporter;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
@@ -51,10 +52,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private static final long serialVersionUID = 1L;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ImportBankStatementView.class);
+    public static final String IMPORT_BANK_STATEMENT_VIEW_PATH = "ImportBankStatementView.path";
 
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
     private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
     private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
+    private final SettingsService settingsService = ObjectFactory.create(SettingsService.class);
 
     private FileModel fileSelectionModel = new FileModel();
 
@@ -81,9 +84,6 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         this.document = document;
     }
 
-    /**
-     * @see View#onInit()
-     */
     @Override
     public void onInit() {
         initModels();
@@ -97,6 +97,17 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         List<TransactionImporter> importers = new ArrayList<>();
         importers.add(new RabobankCSVImporter());
         importersModel.setItems(importers);
+        importersModel.setSelectedIndex(0, null);
+
+        String defaultPath;
+        try {
+            defaultPath = settingsService.findValueForSetting(document, IMPORT_BANK_STATEMENT_VIEW_PATH);
+            if (defaultPath != null) {
+                fileSelectionModel.setFile(new File(defaultPath), null);
+            }
+        } catch (ServiceException e) {
+            LOGGER.warn("Ignored exception while getting setting " + IMPORT_BANK_STATEMENT_VIEW_PATH, e);
+        }
     }
 
     private void addComponents() {
@@ -195,8 +206,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     private void handleImport() {
         File file = fileSelectionModel.getFile();
+
         Reader reader = null;
         try {
+            settingsService.save(document, IMPORT_BANK_STATEMENT_VIEW_PATH, file.getParent());
+
             reader = new FileReader(file);
             TransactionImporter importer = importersModel.getSelectedItem();
             List<ImportedTransaction> transactions = importer.importTransactions(reader);
