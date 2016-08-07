@@ -1,27 +1,24 @@
-package nl.gogognome.gogoaccount.test;
+package nl.gogognome.gogoaccount.component.invoice;
 
-import junit.framework.Assert;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.gogoaccount.test.AbstractBookkeepingTest;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.textsearch.criteria.StringLiteral;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.*;
 
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 public class InvoiceServiceTest extends AbstractBookkeepingTest {
@@ -99,8 +96,8 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     public void cannotCreateInvoicesWithoutAmountOnSingleLine() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        List<InvoiceLineDefinition> lines = asList(
-            new InvoiceLineDefinition(null, "Zaalhuur", configurationService.getAccount(document, "400")));
+        List<InvoiceLineDefinition> lines = singletonList(
+                new InvoiceLineDefinition(null, "Zaalhuur", configurationService.getAccount(document, "400")));
 
         Account debtor = configurationService.getAccount(document, "190");
         ServiceException exception = assertThrows(ServiceException.class, () ->
@@ -113,7 +110,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount a = createAmount(20);
-        List<InvoiceLineDefinition> lines = asList(
+        List<InvoiceLineDefinition> lines = singletonList(
                 new InvoiceLineDefinition(a, "Zaalhuur", configurationService.getAccount(document, "400")));
 
         ServiceException exception = assertThrows(ServiceException.class, () ->
@@ -126,7 +123,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount a = createAmount(20);
-        List<InvoiceLineDefinition> lines = asList(
+        List<InvoiceLineDefinition> lines = singletonList(
                 new InvoiceLineDefinition(a, "Zaalhuur", configurationService.getAccount(document, "400")));
 
         Account nonDebtorAndNonCreditor = configurationService.getAccount(document, "400");
@@ -205,10 +202,10 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         invoiceService.createInvoiceAndJournalForParties(document,
                 debtors,
                 invoiceId,
-                Collections.singletonList(party),
+                singletonList(party),
                 DateUtil.createDate(2011, 8, 7),
                 "Invoice " + invoiceId + " to be paid: " + amountToBePaid + ", paid: " + amountPaid,
-                Collections.singletonList(new InvoiceLineDefinition(createAmount(amountToBePaid), "Contribution", contribution)));
+                singletonList(new InvoiceLineDefinition(createAmount(amountToBePaid), "Contribution", contribution)));
 
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("P9543");
@@ -225,5 +222,35 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         assertEquals(
                 Arrays.stream(expectedOverviews).reduce("", String::concat),
                 overviews.stream().map(o -> o.getInvoiceId() + ' ' + o.getDescription() + ' ' + o.getPartyName()).reduce("", String::concat));
+    }
+
+    @Test
+    public void testMatches() {
+        InvoiceOverview overview = new InvoiceOverview();
+        overview.setAmountPaid(createAmount(123));
+        overview.setAmountToBePaid(createAmount(456));
+        overview.setDescription("Description");
+        overview.setInvoiceId("Invoice id");
+        overview.setIssueDate(DateUtil.createDate(2011, 5, 6));
+        overview.setPartyId("Party id");
+        overview.setPartyName("Party name");
+
+        assertTrue(invoiceService.matches(null, overview, amountFormat));
+        assertMatches(overview, "123");
+        assertMatches(overview, "456");
+        assertMatches(overview, "Description");
+        assertMatches(overview, "Invoice id");
+        assertMatches(overview, "20110506");
+        assertMatches(overview, "Party id");
+        assertMatches(overview, "Party name");
+        assertNotMatches(overview, "789");
+    }
+
+    private void assertMatches(InvoiceOverview overview, String text) {
+        assertTrue(invoiceService.matches(new StringLiteral(text), overview, amountFormat));
+    }
+
+    private void assertNotMatches(InvoiceOverview overview, String text) {
+        assertFalse(invoiceService.matches(new StringLiteral(text), overview, amountFormat));
     }
 }

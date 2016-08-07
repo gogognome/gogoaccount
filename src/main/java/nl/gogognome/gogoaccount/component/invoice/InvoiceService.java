@@ -428,7 +428,7 @@ public class InvoiceService {
         return overview;
     }
 
-    private boolean matches(Criterion criterion, InvoiceOverview invoiceOverview, AmountFormat amountFormat) {
+    protected boolean matches(Criterion criterion, InvoiceOverview invoiceOverview, AmountFormat amountFormat) {
         if (criterion == null) {
             return true;
         }
