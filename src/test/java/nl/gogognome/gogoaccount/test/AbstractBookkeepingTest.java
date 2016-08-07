@@ -59,6 +59,22 @@ public abstract class AbstractBookkeepingTest {
     protected AmountFormat amountFormat;
     protected Amount zero;
 
+    protected Account cash = new Account("100", "Kas", AccountType.ASSET);
+    protected Account bankAccount = new Account("101", "Betaalrekening", AccountType.ASSET);
+    protected Account debtors =  new Account("190", "Debiteuren", AccountType.DEBTOR);
+
+    protected Account  equity = new Account("200", "Eigen vermogen", AccountType.EQUITY);
+    protected Account creditors = new Account("290", "Crediteuren", AccountType.CREDITOR);
+
+    protected Account sportsHallRent = new Account("400", "Zaalhuur", AccountType.EXPENSE);
+    protected Account unforeseenExpenses = new Account("490", "Onvoorzien", AccountType.EXPENSE);
+
+    protected Account contribution = new Account("300", "Contributie", AccountType.REVENUE);
+    protected Account unforeseenRevenues = new Account("390", "Onvoorzien", AccountType.REVENUE);
+
+    protected Party pietPuk;
+    protected Party janPieterszoon;
+
     @Before
     public void initBookkeeping() throws Exception {
         initFactory();
@@ -156,38 +172,38 @@ public abstract class AbstractBookkeepingTest {
 
     private List<Account> createAccounts() {
         return asList(
-                new Account("100", "Kas", AccountType.ASSET),
-                new Account("101", "Betaalrekening", AccountType.ASSET),
-                new Account("190", "Debiteuren", AccountType.DEBTOR),
+                cash,
+                bankAccount,
+                debtors,
 
-                new Account("200", "Eigen vermogen", AccountType.LIABILITY),
-                new Account("290", "Crediteuren", AccountType.CREDITOR),
+                equity,
+                creditors,
 
-                new Account("400", "Zaalhuur", AccountType.EXPENSE),
-                new Account("490", "Onvoorzien", AccountType.EXPENSE),
+                sportsHallRent,
+                unforeseenExpenses,
 
-                new Account("300", "Contributie", AccountType.REVENUE),
-                new Account("390", "Onvoorzien", AccountType.REVENUE)
+                contribution,
+                unforeseenRevenues
         );
     }
 
     private List<Party> createParties() {
         List<Party> parties = new ArrayList<>();
-        Party party = new Party("1101");
-        party.setName("Pietje Puk");
-        party.setAddress("Eikenlaan 64");
-        party.setZipCode("1535 DS");
-        party.setCity("Den Bosch");
-        party.setBirthDate(DateUtil.createDate(1980, 2, 23));
-        party.setRemarks("Is vaak afwezig");
-        parties.add(party);
+        pietPuk = new Party("1101");
+        pietPuk.setName("Pietje Puk");
+        pietPuk.setAddress("Eikenlaan 64");
+        pietPuk.setZipCode("1535 DS");
+        pietPuk.setCity("Den Bosch");
+        pietPuk.setBirthDate(DateUtil.createDate(1980, 2, 23));
+        pietPuk.setRemarks("Is vaak afwezig");
+        parties.add(pietPuk);
 
-        party = new Party("1102");
-        party.setName("Jan Pieterszoon");
-        party.setAddress("Sterrenlaan 532");
-        party.setZipCode("5217 FG");
-        party.setCity("Eindhoven");
-        parties.add(party);
+        janPieterszoon = new Party("1102");
+        janPieterszoon.setName("Jan Pieterszoon");
+        janPieterszoon.setAddress("Sterrenlaan 532");
+        janPieterszoon.setZipCode("5217 FG");
+        janPieterszoon.setCity("Eindhoven");
+        parties.add(janPieterszoon);
 
         return parties;
     }

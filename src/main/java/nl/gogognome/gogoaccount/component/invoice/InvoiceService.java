@@ -1,6 +1,8 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
@@ -11,24 +13,27 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.util.StringUtil;
+import nl.gogognome.textsearch.criteria.Criterion;
 
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.*;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
 
-/**
- * This class offers methods for handling invoices.
- *
- * @author Sander Kooijmans
- */
 public class InvoiceService {
+
+    private final ObjectCriterionMatcher objectCriterionMatcher = new ObjectCriterionMatcher();
 
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
@@ -70,13 +75,13 @@ public class InvoiceService {
                 List<String> descriptions = new ArrayList<>();
                 List<Amount> amounts = new ArrayList<>();
 
-                Amount totalAmount = null;
+                Amount totalAmount = new Amount(BigInteger.ZERO);
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                     Amount amount = line.getAmount();
                     if (amount == null) {
                         throw new ServiceException("Amount must be filled in for all lines.");
                     }
-                    totalAmount = totalAmount == null ? amount : totalAmount.add(amount);
+                    totalAmount = totalAmount.add(amount);
 
                     descriptions.add(line.getDescription());
                     amounts.add(debtorOrCreditorAccount.getType() == DEBTOR ? amount : amount.negate());
@@ -318,12 +323,12 @@ public class InvoiceService {
 
     public List<String> findDescriptions(Document document, Invoice invoice) throws ServiceException {
         return ServiceTransaction.withResult(() -> new InvoiceDetailDAO(document).findForInvoice(invoice.getId())
-                .stream().map(detail -> detail.getDescription()).collect(toList()));
+                .stream().map(InvoiceDetail::getDescription).collect(toList()));
     }
 
     public List<Amount> findAmounts(Document document, Invoice invoice) throws ServiceException {
         return ServiceTransaction.withResult(() -> new InvoiceDetailDAO(document).findForInvoice(invoice.getId())
-                .stream().map(detail -> detail.getAmount()).collect(toList()));
+                .stream().map(InvoiceDetail::getAmount).collect(toList()));
     }
 
     /**
@@ -388,4 +393,54 @@ public class InvoiceService {
     public boolean hasPayments(Document document, String invoiceId) throws ServiceException {
         return ServiceTransaction.withResult(() -> new PaymentDAO(document).hasPayments(invoiceId));
     }
+
+    public List<InvoiceOverview> findInvoiceOverviews(Document document, Criterion criterion, boolean includeClosedInvoices) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            Currency currency = new ConfigurationService().getBookkeeping(document).getCurrency();
+            AmountFormat amountFormat = new AmountFormat(document.getLocale(), currency);
+            List<Invoice> invoices = new InvoiceDAO(document).findAll();
+            Map<String, List<Payment>> invoiceIdToPayments = new PaymentDAO(document).findAll()
+                    .stream()
+                    .collect(groupingBy(payment -> payment.getInvoiceId()));
+            Map<String, Party> partyIdToParty = new PartyService().findAllParties(document)
+                    .stream()
+                    .collect(toMap(party -> party.getId(), party -> party));
+            return invoices.stream()
+                    .map(invoice -> buildInvoiceOverview(invoice, invoiceIdToPayments, partyIdToParty))
+                    .filter(overview -> includeClosedInvoices || !overview.getAmountToBePaid().equals(overview.getAmountPaid()))
+                    .filter(overview -> matches(criterion, overview, amountFormat))
+                    .collect(toList());
+        });
+    }
+
+    private InvoiceOverview buildInvoiceOverview(Invoice invoice, Map<String, List<Payment>> invoiceIdToPayments, Map<String, Party> partyIdToParty) {
+        InvoiceOverview overview = new InvoiceOverview();
+        overview.setInvoiceId(invoice.getId());
+        overview.setDescription(invoice.getDescription());
+        overview.setIssueDate(invoice.getIssueDate());
+        overview.setAmountToBePaid(invoice.getAmountToBePaid());
+        List<Payment> payments = invoiceIdToPayments.getOrDefault(invoice.getId(), emptyList());
+        overview.setAmountPaid(payments.stream()
+                .map(payment -> payment.getAmount())
+                .reduce(new Amount(BigInteger.ZERO), (a, b) -> a.add(b)));
+        overview.setPartyId(invoice.getConcerningPartyId());
+        overview.setPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
+        return overview;
+    }
+
+    private boolean matches(Criterion criterion, InvoiceOverview invoiceOverview, AmountFormat amountFormat) {
+        if (criterion == null) {
+            return true;
+        }
+
+        return objectCriterionMatcher.matches(criterion,
+                amountFormat.formatAmount(invoiceOverview.getAmountPaid().toBigInteger()),
+                amountFormat.formatAmount(invoiceOverview.getAmountToBePaid().toBigInteger()),
+                invoiceOverview.getDescription(),
+                invoiceOverview.getInvoiceId(),
+                invoiceOverview.getIssueDate(),
+                invoiceOverview.getPartyId(),
+                invoiceOverview.getPartyName());
+    }
+
 }
