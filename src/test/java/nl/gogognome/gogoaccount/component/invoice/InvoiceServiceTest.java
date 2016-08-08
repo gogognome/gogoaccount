@@ -166,36 +166,67 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void findInvoiceOverviewsWithoutCriterionIncludeClosedInvoices() throws ServiceException {
+        removeExistingInvoices();
         createInvoiceWithPayment("I-001", 100, 100, pietPuk);
         createInvoiceWithPayment("I-002", 100, 80, janPieterszoon);
         createInvoiceWithPayment("I-003", 100, 120, janPieterszoon);
         List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, null, true);
         assertInvoiceOverviewsEqual(overviews,
-                "inv1 Contributie 2011 Pietje Puk",
                 "I-001 Invoice I-001 to be paid: 100, paid: 100 Pietje Puk",
                 "I-002 Invoice I-002 to be paid: 100, paid: 80 Jan Pieterszoon",
                 "I-003 Invoice I-003 to be paid: 100, paid: 120 Jan Pieterszoon");
     }
 
     @Test
-    public void findInvoiceOverviewsWithoutCriterionExcludeClosedInvoices() throws ServiceException {
+    public void findInvoiceOverviewsWithoutCriterionExcludeClosedInvoices_amountPaidEqualsAmountToBePaid() throws ServiceException {
+        removeExistingInvoices();
         createInvoiceWithPayment("I-001", 100, 100, pietPuk);
+        List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, null, false);
+        assertTrue(overviews.isEmpty());
+    }
+
+    @Test
+    public void findInvoiceOverviewsWithoutCriterionExcludeClosedInvoices_amountPaidSmallerThanAmountToBePaid() throws ServiceException {
+        removeExistingInvoices();
+        createInvoiceWithPayment("I-003", 100, 80, janPieterszoon);
+        List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, null, false);
+        assertInvoiceOverviewsEqual(overviews,
+                "I-003 Invoice I-003 to be paid: 100, paid: 80 Jan Pieterszoon");
+    }
+
+    @Test
+    public void findInvoiceOverviewsWithoutCriterionExcludeClosedInvoices_amountPaidLargerThanAmountToBePaid() throws ServiceException {
+        removeExistingInvoices();
         createInvoiceWithPayment("I-003", 100, 120, janPieterszoon);
         List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, null, false);
         assertInvoiceOverviewsEqual(overviews,
-                "inv1 Contributie 2011 Pietje Puk",
                 "I-003 Invoice I-003 to be paid: 100, paid: 120 Jan Pieterszoon");
     }
 
     @Test
-    public void findInvoiceOverviewsWitCriterionIncludeClosedInvoices() throws ServiceException {
+    public void findInvoiceOverviewsWitCriterionIncludeClosedInvoices_CriterionIsPuk() throws ServiceException {
+        removeExistingInvoices();
         createInvoiceWithPayment("I-001", 100, 100, pietPuk);
         createInvoiceWithPayment("I-002", 100, 80, janPieterszoon);
         createInvoiceWithPayment("I-003", 100, 120, janPieterszoon);
         List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, new StringLiteral("puk"), true);
         assertInvoiceOverviewsEqual(overviews,
-                "inv1 Contributie 2011 Pietje Puk",
                 "I-001 Invoice I-001 to be paid: 100, paid: 100 Pietje Puk");
+    }
+
+    private void removeExistingInvoices() throws ServiceException {
+        for (JournalEntry entry : ledgerService.findJournalEntries(document)) {
+            for (JournalEntryDetail detail : ledgerService.findJournalEntryDetails(document, entry)) {
+                if (detail.getPaymentId() != null) {
+                    ledgerService.removeJournal(document, entry);
+                }
+            }
+        }
+        for (JournalEntry entry : ledgerService.findJournalEntries(document)) {
+            if (entry.getIdOfCreatedInvoice() != null) {
+                ledgerService.removeJournal(document, entry);
+            }
+        }
     }
 
     private void createInvoiceWithPayment(String invoiceId, int amountToBePaid, int amountPaid, Party party) throws ServiceException {
