@@ -6,10 +6,8 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
 import nl.gogognome.gogoaccount.gui.views.*;
-import nl.gogognome.gogoaccount.services.AddressLabelPrinter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
@@ -26,6 +24,8 @@ import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -36,7 +36,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -67,11 +66,10 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
     private final DocumentService documentService = ObjectFactory.create(DocumentService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
-    private BeanFactory beanFactory;
+    private final ConfigurableListableBeanFactory beanFactory;
     private final ResourceLoader resourceLoader;
 
-    public MainFrame(BeanFactory beanFactory, ResourceLoader resourceLoader) {
+    public MainFrame(ConfigurableListableBeanFactory  beanFactory, ResourceLoader resourceLoader) {
         this.beanFactory = beanFactory;
         this.resourceLoader = resourceLoader;
         createMenuBar();
@@ -154,7 +152,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", e -> handleGenerateInvoices());
         JMenuItem miGenerateReport = widgetFactory.createMenuItem("mi.generateReport", e -> handleGenerateReport());
         JMenuItem miGenerateAutoCollectionFile = widgetFactory.createMenuItem("mi.generateAutoCollectionFile", e -> handleGenerateAutomaticCollectionFile());
-//		JMenuItem miPrintAddressLabels = wf.createMenuItem("mi.printAddressLabels", this);
 
         // the help menu
         JMenuItem miAbout = widgetFactory.createMenuItem("mi.about", this);
@@ -213,7 +210,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.editJournals".equals(command)) { run(this, this::handleEditJournals); }
         if ("mi.addInvoices".equals(command)) { run(this, this::handleAddInvoices); }
         if ("mi.editParties".equals(command)) { handleEditParties(); }
-        if ("mi.printAddressLabels".equals(command)) { handlePrintAddressLabels(); }
         if ("mi.about".equals(command)) { handleAbout(); }
     }
 
@@ -377,6 +373,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             document.addListener(this);
         }
 
+        beanFactory.registerSingleton("document", document);
+
         documentChanged(document);
         handleViewBalanceAndOperationalResult();
     }
@@ -432,22 +430,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 ensureAccountsPresent(() -> openView(GenerateAutomaticCollectionFileView.class));
             }
         });
-    }
-
-    private void handlePrintAddressLabels() {
-        AddressLabelPrinter alp;
-        try {
-            alp = new AddressLabelPrinter(partyService.findAllParties(document));
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            return;
-        }
-
-        try {
-            alp.printAddressLabels();
-        } catch (PrinterException e) {
-            MessageDialog.showMessage(this, "gen.error", "mf.problemWhilePrinting");
-        }
     }
 
     private void handleAddInvoices() throws ServiceException {

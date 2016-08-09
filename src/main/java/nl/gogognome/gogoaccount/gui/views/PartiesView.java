@@ -11,7 +11,6 @@ import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
-import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -131,9 +130,7 @@ public class PartiesView extends View {
         ifc.addField("gen.filterCriterion", searchCriterionModel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        ActionWrapper actionWrapper = widgetFactory.createAction("gen.btnSearch");
-        actionWrapper.setAction(new SearchAction());
-        btSearch = new JButton(actionWrapper);
+        btSearch = widgetFactory.createButton("gen.btnSearch", () -> onSearch());
 
         buttonPanel.add(btSearch);
         ifc.add(buttonPanel, SwingUtils.createGBConstraints(0, 10, 2, 1, 0.0, 0.0,
@@ -324,13 +321,6 @@ public class PartiesView extends View {
 		    } else {
 		        taRemarks.setText("");
 		    }
-		}
-	}
-
-	private final class SearchAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent event) {
-		    onSearch();
 		}
 	}
 
