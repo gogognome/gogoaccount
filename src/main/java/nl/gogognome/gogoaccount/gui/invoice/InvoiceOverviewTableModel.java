@@ -1,19 +1,18 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
-import com.google.common.base.Joiner;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceOverview;
-import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
-import nl.gogognome.lib.util.DayOfYearComparator;
+import nl.gogognome.lib.text.AmountFormat;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
-public class InvoiceTableModel extends AbstractListTableModel<InvoiceOverview> {
+import static java.util.Collections.emptyList;
+
+public class InvoiceOverviewTableModel extends AbstractListTableModel<InvoiceOverview> {
 
     private final static ColumnDefinition ID =
             new ColumnDefinition("gen.id", String.class, 40);
@@ -38,44 +37,35 @@ public class InvoiceTableModel extends AbstractListTableModel<InvoiceOverview> {
     private final static List<ColumnDefinition> COLUMN_DEFINITIONS =
             Arrays.asList(ID, DESCRIPTION, ISSUE_DATE, PARTY, AMOUNT_TO_BE_PAID, AMOUNT_PAID);
 
-    private Map<String, List<String>> partyIdToTags;
+    private AmountFormat amountFormat;
 
-    public InvoiceTableModel() {
-        super(COLUMN_DEFINITIONS);
+    public InvoiceOverviewTableModel(AmountFormat amountFormat) {
+        super(COLUMN_DEFINITIONS, emptyList());
+        this.amountFormat = amountFormat;
     }
 
-    public void replaceRows(List<InvoiceOverview> invoices) {
-        super.replaceRows(invoices);
-        this.partyIdToTags = partyIdToTags;
+    public void replaceRows(List<InvoiceOverview> invoiceOverviews) {
+        super.replaceRows(invoiceOverviews);
     }
 
     @Override
     public Object getValueAt(int row, int col) {
         Object result = null;
-        Party party = getRow(row);
+        InvoiceOverview invoiceOverview = getRow(row);
 
         ColumnDefinition colDef = COLUMN_DEFINITIONS.get(col);
         if (ID == colDef) {
-            result = party.getId();
-        } else if (NAME == colDef) {
-            result = party.getName();
-        } else if (ADDRESS == colDef) {
-            result = party.getAddress();
-        } else if (ZIP_CODE == colDef) {
-            result = party.getZipCode();
-        } else if (CITY == colDef) {
-            result = party.getCity();
-        } else if (BIRTH_DATE == colDef) {
-            result = party.getBirthDate();
-        } else if (TAGS == colDef) {
-            result = Joiner.on(", ").join(partyIdToTags.get(party.getId()));
-        } else if (REMARKS == colDef) {
-            String remarks = party.getRemarks();
-            if (remarks != null && remarks.length() > 30) {
-                int size = Math.max(20, remarks.lastIndexOf(' ', 30));
-                remarks = remarks.substring(0, size) + "...";
-            }
-            result = remarks;
+            result = invoiceOverview.getInvoiceId();
+        } else if (DESCRIPTION == colDef) {
+            result = invoiceOverview.getDescription();
+        } else if (ISSUE_DATE == colDef) {
+            result = invoiceOverview.getIssueDate();
+        } else if (PARTY == colDef) {
+            result = invoiceOverview.getPartyId() + " - " + invoiceOverview.getPartyName();
+        } else if (AMOUNT_TO_BE_PAID == colDef) {
+            result = amountFormat.formatAmount(invoiceOverview.getAmountToBePaid().toBigInteger());
+        } else if (AMOUNT_PAID == colDef) {
+            result = amountFormat.formatAmount(invoiceOverview.getAmountPaid().toBigInteger());
         }
 
         return result;

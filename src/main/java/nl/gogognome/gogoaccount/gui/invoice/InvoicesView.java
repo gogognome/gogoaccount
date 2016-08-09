@@ -1,34 +1,42 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.gui.views.PartiesTableModel;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceOverview;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
+import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.TableRowSelectAction;
-import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.textsearch.criteria.Criterion;
+import nl.gogognome.textsearch.criteria.Parser;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.util.List;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
+import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 
 public class InvoicesView extends View {
 
     private final Document document;
+
+    private final InvoiceOverviewTableModel invoicesTableModel;
+    private final InvoiceService invoiceService;
 
     private StringModel searchCriterionModel = new StringModel();
 
     private JTable table;
     private JButton btSearch;
 
-    public InvoicesView(Document document) {
+    public InvoicesView(Document document, InvoiceOverviewTableModel invoicesTableModel, InvoiceService invoiceService) {
         this.document = document;
+        this.invoicesTableModel = invoicesTableModel;
+        this.invoiceService = invoiceService;
     }
 
     @Override
@@ -39,6 +47,10 @@ public class InvoicesView extends View {
     @Override
     public void onInit() {
         addComponents();
+    }
+
+    @Override
+    public void onClose() {
     }
 
     private void addComponents() {
@@ -77,8 +89,7 @@ public class InvoicesView extends View {
         resultPanel.setBorder(new CompoundBorder(new TitledBorder(textResource.getString("invoicesView.foundInvoices")),
                 new EmptyBorder(5, 12, 5, 12)));
 
-        invoicesTableModel = new InvoiceTableModel();
-        table = widgetFactory.createSortedTable(partiesTableModel);
+        table = widgetFactory.createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         resultPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
@@ -86,4 +97,15 @@ public class InvoicesView extends View {
         return resultPanel;
     }
 
+    private void onSearch() {
+        try {
+            Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
+            List<InvoiceOverview> matchingInvoices = invoiceService.findInvoiceOverviews(document, criterion, true);
+            invoicesTableModel.replaceRows(matchingInvoices);
+            SwingUtils.selectFirstRow(table);
+            table.requestFocusInWindow();
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+        }
+    }
 }

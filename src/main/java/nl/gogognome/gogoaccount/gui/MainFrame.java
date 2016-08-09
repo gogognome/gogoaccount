@@ -7,6 +7,7 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
+import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -23,9 +24,8 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -47,7 +47,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private static final long serialVersionUID = 1L;
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /** The current database of the application. */
     private Document document;
@@ -95,7 +95,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             Image image = Toolkit.getDefaultToolkit().createImage(imageResource.getURL());
             setIconImage(image);
         } catch (IOException e) {
-            log.warn("Failed to load icon", e);
+            logger.warn("Failed to load icon", e);
         }
     }
 
@@ -146,7 +146,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         // the view menu
         JMenuItem miViewBalanceAndOpertaionalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
         JMenuItem miViewAccountOverview = widgetFactory.createMenuItem("mi.viewAccountOverview", this);
-        JMenuItem miViewPartyOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", this);
+        JMenuItem miViewPartyOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", e -> handleInvoiceOverview());
 
         // the reporting menu
         JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", e -> handleGenerateInvoices());
@@ -205,7 +205,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.exit".equals(command)) { handleExit(); }
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
         if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
-        if ("mi.viewInvoicesOverview".equals(command)) { handleViewPartyOverview(); }
         if ("mi.addJournal".equals(command)) { run(this, this::handleAddJournal); }
         if ("mi.editJournals".equals(command)) { run(this, this::handleEditJournals); }
         if ("mi.addInvoices".equals(command)) { run(this, this::handleAddInvoices); }
@@ -323,15 +322,14 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     public void loadFile(File file) {
-        Document newDocument;
         try {
-            newDocument = doLoadFile(file);
+            Document newDocument = doLoadFile(file);
+            newDocument.notifyChange();
+            setDocument(newDocument);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
             return;
         }
-        newDocument.notifyChange();
-        setDocument(newDocument);
     }
 
     private Document doLoadFile(File file) throws ServiceException {
@@ -357,7 +355,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
      * Replaces the old database by the new database.
      * @param newDocument the new database
      */
-    private void setDocument(Document newDocument) {
+    private void setDocument(Document newDocument) throws ServiceException {
         viewTabbedPane.closeAllViews();
 
         for (View view : openViews.values()) {
@@ -373,7 +371,15 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             document.addListener(this);
         }
 
-        beanFactory.registerSingleton("document", document);
+        if (document != null) {
+            Currency newCurrency = configurationService.getBookkeeping(newDocument).getCurrency();
+
+            beanFactory.registerSingleton("document", document);
+            beanFactory.registerSingleton("amountFormat", new AmountFormat(document.getLocale(), newCurrency));
+        } else {
+            beanFactory.destroyBean("document");
+            beanFactory.destroyBean("amountFormat");
+        }
 
         documentChanged(document);
         handleViewBalanceAndOperationalResult();
@@ -398,8 +404,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         ensureAccountsPresent(() -> openView(AccountMutationsView.class));
     }
 
-    private void handleViewPartyOverview() {
-        ensureAccountsPresent(() -> openView(InvoicesPerPartyView.class));
+    private void handleInvoiceOverview() {
+        ensureAccountsPresent(() -> openView(InvoicesView.class));
     }
 
     private void handleAddJournal() throws ServiceException {
@@ -462,6 +468,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private View createView(Class<? extends View> viewClass) throws Exception {
+        try {
+            return beanFactory.getBean(viewClass);
+        } catch (BeansException e) {
+            logger.debug("Class " + viewClass.getName() + " could not be created with Spring: " + e.getMessage());
+        }
         Constructor<? extends View> c = viewClass.getConstructor(Document.class);
         return c.newInstance(document);
     }
