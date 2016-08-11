@@ -24,8 +24,6 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -38,7 +36,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.*;
 
 import static nl.gogognome.gogoaccount.gui.ActionRunner.run;
@@ -66,11 +63,13 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
     private final DocumentService documentService = ObjectFactory.create(DocumentService.class);
     private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final ConfigurableListableBeanFactory beanFactory;
+    private final ViewFactory viewFactory;
+    private final DocumentRegistry documentRegistry;
     private final ResourceLoader resourceLoader;
 
-    public MainFrame(ConfigurableListableBeanFactory  beanFactory, ResourceLoader resourceLoader) {
-        this.beanFactory = beanFactory;
+    public MainFrame(ViewFactory viewFactory, DocumentRegistry documentRegistry, ResourceLoader resourceLoader) {
+        this.viewFactory = viewFactory;
+        this.documentRegistry = documentRegistry;
         this.resourceLoader = resourceLoader;
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -371,15 +370,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             document.addListener(this);
         }
 
-        if (document != null) {
-            Currency newCurrency = configurationService.getBookkeeping(newDocument).getCurrency();
-
-            beanFactory.registerSingleton("document", document);
-            beanFactory.registerSingleton("amountFormat", new AmountFormat(document.getLocale(), newCurrency));
-        } else {
-            beanFactory.destroyBean("document");
-            beanFactory.destroyBean("amountFormat");
-        }
+        documentRegistry.register(document);
 
         documentChanged(document);
         handleViewBalanceAndOperationalResult();
@@ -451,7 +442,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             View view = openViews.get(viewClass);
             if (view == null) {
                 try {
-                    view = createView(viewClass);
+                    view = viewFactory.createView(viewClass);
                 } catch (Exception e) {
                     MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
                     return;
@@ -465,16 +456,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 viewTabbedPane.selectView(view);
             }
         });
-    }
-
-    private View createView(Class<? extends View> viewClass) throws Exception {
-        try {
-            return beanFactory.getBean(viewClass);
-        } catch (BeansException e) {
-            logger.debug("Class " + viewClass.getName() + " could not be created with Spring: " + e.getMessage());
-        }
-        Constructor<? extends View> c = viewClass.getConstructor(Document.class);
-        return c.newInstance(document);
     }
 
     /**
