@@ -112,7 +112,7 @@ public class InvoicesPerPartyView extends View {
 		addCloseable(row);
 		row.addVariableSizeField("InvoicesSinglePartyView.party", new PartyBean(document, partyModel));
 		row.addField("InvoicesSinglePartyView.date", dateModel);
-		row.addField("InvoicesSinglePartyView.includeClosedInvoices", includeClosedInvoicesModel);
+		row.addField("invoicesView.includePaidInvoices", includeClosedInvoicesModel);
 		return row;
 	}
 

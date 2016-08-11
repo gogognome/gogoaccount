@@ -7,6 +7,7 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.models.BooleanModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.textsearch.criteria.Criterion;
@@ -29,6 +30,7 @@ public class InvoicesView extends View {
     private final InvoiceService invoiceService;
 
     private StringModel searchCriterionModel = new StringModel();
+    private BooleanModel includePaidInvoicesModel = new BooleanModel();
 
     private JTable table;
     private JButton btSearch;
@@ -47,6 +49,7 @@ public class InvoicesView extends View {
     @Override
     public void onInit() {
         addComponents();
+        onSearch();
     }
 
     @Override
@@ -74,9 +77,10 @@ public class InvoicesView extends View {
         ifc.setBorder(widgetFactory.createTitleBorderWithPadding("invoicesView.filter"));
 
         ifc.addField("gen.filterCriterion", searchCriterionModel);
+        ifc.addField("invoicesView.includePaidInvoices", includePaidInvoicesModel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        btSearch = widgetFactory.createButton("gen.btnSearch", () -> onSearch());
+        btSearch = widgetFactory.createButton("gen.btnSearch", this::onSearch);
 
         buttonPanel.add(btSearch);
         ifc.add(buttonPanel, SwingUtils.createGBConstraints(0, 10, 2, 1, 0.0, 0.0,
@@ -100,7 +104,7 @@ public class InvoicesView extends View {
     private void onSearch() {
         try {
             Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
-            List<InvoiceOverview> matchingInvoices = invoiceService.findInvoiceOverviews(document, criterion, true);
+            List<InvoiceOverview> matchingInvoices = invoiceService.findInvoiceOverviews(document, criterion, includePaidInvoicesModel.getBoolean());
             invoicesTableModel.replaceRows(matchingInvoices);
             SwingUtils.selectFirstRow(table);
             table.requestFocusInWindow();
