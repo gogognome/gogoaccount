@@ -5,11 +5,14 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceOverview;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
+import nl.gogognome.lib.swing.CloseableJPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.BooleanModel;
 import nl.gogognome.lib.swing.models.StringModel;
+import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.textsearch.criteria.Criterion;
 import nl.gogognome.textsearch.criteria.Parser;
 
@@ -25,6 +28,7 @@ import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 public class InvoicesView extends View {
 
     private final Document document;
+    private final AmountFormat amountFormat;
 
     private final InvoiceOverviewTableModel invoicesTableModel;
     private final InvoiceService invoiceService;
@@ -34,9 +38,11 @@ public class InvoicesView extends View {
 
     private JTable table;
     private JButton btSearch;
+    private CloseableJPanel invoiceDetailsPanel;
 
-    public InvoicesView(Document document, InvoiceOverviewTableModel invoicesTableModel, InvoiceService invoiceService) {
+    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceOverviewTableModel invoicesTableModel, InvoiceService invoiceService) {
         this.document = document;
+        this.amountFormat = amountFormat;
         this.invoicesTableModel = invoicesTableModel;
         this.invoiceService = invoiceService;
     }
@@ -57,18 +63,10 @@ public class InvoicesView extends View {
     }
 
     private void addComponents() {
-        setLayout(new GridBagLayout());
-        add(createSearchCriteriaAndResultsPanel(), SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 1.0,
-                GridBagConstraints.CENTER, GridBagConstraints.BOTH, 12, 12, 12, 12));
+        setLayout(new BorderLayout());
+        add(createSearchCriteriaPanel(), BorderLayout.NORTH);
+        add(createSearchResultPanel(), BorderLayout.CENTER);
         setDefaultButton(btSearch);
-    }
-
-    private JPanel createSearchCriteriaAndResultsPanel() {
-        JPanel result = new JPanel(new BorderLayout());
-        result.add(createSearchCriteriaPanel(), BorderLayout.NORTH);
-        result.add(createSearchResultPanel(), BorderLayout.CENTER);
-
-        return result;
     }
 
     private JPanel createSearchCriteriaPanel() {
@@ -94,11 +92,44 @@ public class InvoicesView extends View {
                 new EmptyBorder(5, 12, 5, 12)));
 
         table = widgetFactory.createSortedTable(invoicesTableModel);
-        table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
+        table.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        Tables.onSelectionChange(table, () -> onSelectionChanged());
         resultPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
 
         return resultPanel;
+    }
+
+    private void showDetailResultPanel(InvoiceOverview selectedInvoice) {
+        invoiceDetailsPanel = new CloseableJPanel();
+        invoiceDetailsPanel.setBorder(widgetFactory.createTitleBorderWithPadding("invoicesView.invoiceDetails"));
+        invoiceDetailsPanel.setLayout(new GridBagLayout());
+        InputFieldsColumn ifc = new InputFieldsColumn();
+        ifc.addReadonlyField("gen.id", new StringModel(selectedInvoice.getInvoiceId()));
+        ifc.addReadonlyField("gen.description", new StringModel(selectedInvoice.getDescription()));
+        ifc.addReadonlyField("gen.issueDate", new StringModel(textResource.formatDate("gen.dateFormat", selectedInvoice.getIssueDate())));
+        ifc.addReadonlyField("gen.party", new StringModel(selectedInvoice.getPartyId() + " - " + selectedInvoice.getPartyName()));
+        ifc.addReadonlyField("gen.amountToBePaid", new StringModel(amountFormat.formatAmountWithoutCurrency(selectedInvoice.getAmountToBePaid().toBigInteger())));
+        invoiceDetailsPanel.add(ifc, SwingUtils.createGBConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
+        add(invoiceDetailsPanel, BorderLayout.SOUTH);
+    }
+
+    private void hideDetailsResultPanel() {
+        if (invoiceDetailsPanel != null) {
+            remove(invoiceDetailsPanel);
+            invoiceDetailsPanel.close();
+            invoiceDetailsPanel = null;
+        }
+    }
+
+    private void onSelectionChanged() {
+        hideDetailsResultPanel();
+        int rowIndex = Tables.getSelectedRowConvertedToModel(table);
+        if (rowIndex != -1) {
+            InvoiceOverview selectedInvoice = invoicesTableModel.getRow(rowIndex);
+            showDetailResultPanel(selectedInvoice);
+        }
+        repaint();
+        revalidate();
     }
 
     private void onSearch() {
@@ -106,7 +137,7 @@ public class InvoicesView extends View {
             Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
             List<InvoiceOverview> matchingInvoices = invoiceService.findInvoiceOverviews(document, criterion, includePaidInvoicesModel.getBoolean());
             invoicesTableModel.replaceRows(matchingInvoices);
-            SwingUtils.selectFirstRow(table);
+            Tables.selectFirstRow(table);
             table.requestFocusInWindow();
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");

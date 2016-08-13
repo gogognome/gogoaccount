@@ -63,9 +63,9 @@ public class InvoiceOverviewTableModel extends AbstractListTableModel<InvoiceOve
         } else if (PARTY == colDef) {
             result = invoiceOverview.getPartyId() + " - " + invoiceOverview.getPartyName();
         } else if (AMOUNT_TO_BE_PAID == colDef) {
-            result = amountFormat.formatAmount(invoiceOverview.getAmountToBePaid().toBigInteger());
+            result = amountFormat.formatAmountWithoutCurrency(invoiceOverview.getAmountToBePaid().toBigInteger());
         } else if (AMOUNT_PAID == colDef) {
-            result = amountFormat.formatAmount(invoiceOverview.getAmountPaid().toBigInteger());
+            result = amountFormat.formatAmountWithoutCurrency(invoiceOverview.getAmountPaid().toBigInteger());
         }
 
         return result;
