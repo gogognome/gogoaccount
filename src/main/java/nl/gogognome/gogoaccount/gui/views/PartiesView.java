@@ -12,6 +12,7 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
 import nl.gogognome.lib.swing.models.StringModel;
+import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.textsearch.criteria.Criterion;
@@ -130,7 +131,7 @@ public class PartiesView extends View {
         ifc.addField("gen.filterCriterion", searchCriterionModel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        btSearch = widgetFactory.createButton("gen.btnSearch", () -> onSearch());
+        btSearch = widgetFactory.createButton("gen.btnSearch", this::onSearch);
 
         buttonPanel.add(btSearch);
         ifc.add(buttonPanel, SwingUtils.createGBConstraints(0, 10, 2, 1, 0.0, 0.0,
@@ -147,9 +148,9 @@ public class PartiesView extends View {
         table = widgetFactory.createSortedTable(partiesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
-        TableRowSelectAction trsa = new TableRowSelectAction(table, new SelectionActionImpl());
-        addCloseable(trsa);
-        trsa.registerListeners();
+        TableRowSelectAction action = new TableRowSelectAction(table, new SelectionActionImpl());
+        addCloseable(action);
+        action.registerListeners();
 
         resultPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
         resultPanel.add(createDetailPanel(), BorderLayout.SOUTH);
@@ -217,7 +218,7 @@ public class PartiesView extends View {
             Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
             List<Party> matchingParties = partyService.findParties(document, criterion);
             partiesTableModel.replaceRows(matchingParties, partyService.findPartyIdToTags(document));
-            SwingUtils.selectFirstRow(table);
+            Tables.selectFirstRow(table);
             table.requestFocusInWindow();
 
             // Update the default button if the select button is present
@@ -248,7 +249,7 @@ public class PartiesView extends View {
 
     private void onEditParty() {
         HandleException.for_(this, () -> {
-            int row = SwingUtils.getSelectedRowConvertedToModel(table);
+            int row = Tables.getSelectedRowConvertedToModel(table);
             if (row == -1) {
                 return;
             }
@@ -269,7 +270,7 @@ public class PartiesView extends View {
             onSearch();
 
             try {
-                SwingUtils.selectRowWithModelIndex(table, row);
+                Tables.selectRowWithModelIndex(table, row);
             } catch (IndexOutOfBoundsException e) {
                 // ignore this exception. It occurs when a party is changed such that it does not match the current filter anymore.
             }
@@ -278,7 +279,7 @@ public class PartiesView extends View {
 
     private void onDeleteParty() {
         try {
-            int row = SwingUtils.getSelectedRowConvertedToModel(table);
+            int row = Tables.getSelectedRowConvertedToModel(table);
             if (row == -1) {
                 return;
             }
@@ -296,7 +297,7 @@ public class PartiesView extends View {
     }
 
     private void onSelectParty() {
-        int rows[] = SwingUtils.getSelectedRowsConvertedToModel(table);
+        int rows[] = Tables.getSelectedRowsConvertedToModel(table);
         selectedParties = new Party[rows.length];
         for (int i = 0; i < rows.length; i++) {
             selectedParties[i] = partiesTableModel.getRow(rows[i]);
@@ -315,7 +316,7 @@ public class PartiesView extends View {
     private final class RemarksUpdateSelectionListener implements ListSelectionListener {
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
-		    int row = SwingUtils.getSelectedRowConvertedToModel(table);
+		    int row = Tables.getSelectedRowConvertedToModel(table);
 		    if (row != -1) {
 		        taRemarks.setText(partiesTableModel.getRow(row).getRemarks());
 		    } else {

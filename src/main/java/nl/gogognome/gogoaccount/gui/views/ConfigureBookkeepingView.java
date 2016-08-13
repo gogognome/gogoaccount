@@ -41,11 +41,11 @@ public class ConfigureBookkeepingView extends View {
     private final StringModel descriptionModel = new StringModel();
     private final ListModel<Currency> currencyModel = new ListModel<>();
     private final DateModel startDateModel = new DateModel();
-    private final StringModel organiztionNameModel = new StringModel();
-    private final StringModel organiztionAddressModel = new StringModel();
-    private final StringModel organiztionZipCodeModel = new StringModel();
-    private final StringModel organiztionCityModel = new StringModel();
-    private final StringModel organiztionCountryModel = new StringModel();
+    private final StringModel organisationNameModel = new StringModel();
+    private final StringModel organizationAddressModel = new StringModel();
+    private final StringModel organizationZipCodeModel = new StringModel();
+    private final StringModel organizationCityModel = new StringModel();
+    private final StringModel organizationCountryModel = new StringModel();
     private final BooleanModel enableAutomaticCollectionModel = new BooleanModel();
     private final StringModel ibanModel = new StringModel();
     private final StringModel bicModel = new StringModel();
@@ -97,11 +97,11 @@ public class ConfigureBookkeepingView extends View {
         currencyModel.setItems(CurrencyUtil.getAllCurrencies());
         currencyModel.setSelectedItem(bookkeeping.getCurrency(), null);
 
-        organiztionNameModel.setString(bookkeeping.getOrganizationName());
-        organiztionAddressModel.setString(bookkeeping.getOrganizationAddress());
-        organiztionCityModel.setString(bookkeeping.getOrganizationZipCode());
-        organiztionZipCodeModel.setString(bookkeeping.getOrganizationCity());
-        organiztionCountryModel.setString(bookkeeping.getOrganizationCountry());
+        organisationNameModel.setString(bookkeeping.getOrganizationName());
+        organizationAddressModel.setString(bookkeeping.getOrganizationAddress());
+        organizationCityModel.setString(bookkeeping.getOrganizationZipCode());
+        organizationZipCodeModel.setString(bookkeeping.getOrganizationCity());
+        organizationCountryModel.setString(bookkeeping.getOrganizationCountry());
         enableAutomaticCollectionModel.setBoolean(bookkeeping.isEnableAutomaticCollection());
 
         AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
@@ -116,11 +116,11 @@ public class ConfigureBookkeepingView extends View {
         startDateModel.addModelChangeListener(modelChangeListener);
         descriptionModel.addModelChangeListener(modelChangeListener);
         currencyModel.addModelChangeListener(modelChangeListener);
-        organiztionNameModel.addModelChangeListener(modelChangeListener);
-        organiztionAddressModel.addModelChangeListener(modelChangeListener);
-        organiztionZipCodeModel.addModelChangeListener(modelChangeListener);
-        organiztionCityModel.addModelChangeListener(modelChangeListener);
-        organiztionCountryModel.addModelChangeListener(modelChangeListener);
+        organisationNameModel.addModelChangeListener(modelChangeListener);
+        organizationAddressModel.addModelChangeListener(modelChangeListener);
+        organizationZipCodeModel.addModelChangeListener(modelChangeListener);
+        organizationCityModel.addModelChangeListener(modelChangeListener);
+        organizationCountryModel.addModelChangeListener(modelChangeListener);
         enableAutomaticCollectionModel.addModelChangeListener(modelChangeListener);
         ibanModel.addModelChangeListener(modelChangeListener);
         bicModel.addModelChangeListener(modelChangeListener);
@@ -151,11 +151,11 @@ public class ConfigureBookkeepingView extends View {
         ifc.addField("ConfigureBookkeepingView.description", descriptionModel);
         ifc.addField("ConfigureBookkeepingView.startDate", startDateModel);
         ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel, new CurrencyFormatter());
-        ifc.addField("ConfigureBookkeepingView.organizationName", organiztionNameModel);
-        ifc.addField("ConfigureBookkeepingView.organizationAddress", organiztionAddressModel);
-        ifc.addField("ConfigureBookkeepingView.organizationZipCode", organiztionZipCodeModel);
-        ifc.addField("ConfigureBookkeepingView.organizationCity", organiztionCityModel);
-        ifc.addField("ConfigureBookkeepingView.organizationCountry", organiztionCountryModel);
+        ifc.addField("ConfigureBookkeepingView.organizationName", organisationNameModel);
+        ifc.addField("ConfigureBookkeepingView.organizationAddress", organizationAddressModel);
+        ifc.addField("ConfigureBookkeepingView.organizationZipCode", organizationZipCodeModel);
+        ifc.addField("ConfigureBookkeepingView.organizationCity", organizationCityModel);
+        ifc.addField("ConfigureBookkeepingView.organizationCountry", organizationCountryModel);
         ifc.addField("ConfigureBookkeepingView.enableAutomaticCollection", enableAutomaticCollectionModel);
 
         automaticCollectionInputFields.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.automaticCollectionSettings"));
@@ -219,11 +219,11 @@ public class ConfigureBookkeepingView extends View {
             } catch (Exception e) {
                 throw new ServiceException("Invalid currency entered");
             }
-            bookkeeping.setOrganizationName(organiztionNameModel.getString());
-            bookkeeping.setOrganizationAddress(organiztionAddressModel.getString());
-            bookkeeping.setOrganizationZipCode(organiztionZipCodeModel.getString());
-            bookkeeping.setOrganizationCity(organiztionCityModel.getString());
-            bookkeeping.setOrganizationCountry(organiztionCountryModel.getString());
+            bookkeeping.setOrganizationName(organisationNameModel.getString());
+            bookkeeping.setOrganizationAddress(organizationAddressModel.getString());
+            bookkeeping.setOrganizationZipCode(organizationZipCodeModel.getString());
+            bookkeeping.setOrganizationCity(organizationCityModel.getString());
+            bookkeeping.setOrganizationCountry(organizationCountryModel.getString());
             bookkeeping.setEnableAutomaticCollection(enableAutomaticCollectionModel.getBoolean());
             configurationService.updateBookkeeping(document, bookkeeping);
 
@@ -260,23 +260,23 @@ public class ConfigureBookkeepingView extends View {
      *         row has been selected
      */
     private AccountDefinition getSelectedAccountDefinition() {
-        AccountDefinition accountDefintion = null;
-        int[] rows = SwingUtils.getSelectedRowsConvertedToModel(table);
+        AccountDefinition accountDefinition = null;
+        int[] rows = Tables.getSelectedRowsConvertedToModel(table);
         if (rows.length == 1) {
-            accountDefintion = tableModel.getRow(rows[0]);
+            accountDefinition = tableModel.getRow(rows[0]);
         }
-        return accountDefintion;
+        return accountDefinition;
     }
 
     private void onDeleteAccount() {
-        AccountDefinition accountDefintion = getSelectedAccountDefinition();
-        Account account = accountDefintion.account;
+        AccountDefinition accountDefinition = getSelectedAccountDefinition();
+        Account account = accountDefinition.account;
         int choice = MessageDialog.showYesNoQuestion(this, "ConfigureBookkeepingView.deleteAccountTitle",
                 "ConfigureBookkeepingView.deleteAccountAreYouSure",	account.getId() + " - " + account.getName());
         if (choice == MessageDialog.YES_OPTION) {
             try {
                 configurationService.deleteAccount(document, account);
-                int index = SwingUtils.getSelectedRowConvertedToModel(table);
+                int index = Tables.getSelectedRowConvertedToModel(table);
                 tableModel.removeRow(index);
             } catch (ServiceException e) {
                 MessageDialog.showErrorMessage(getParentWindow(), e, "ConfigureBookkeepingView.deleteAccountException");
@@ -305,7 +305,7 @@ public class ConfigureBookkeepingView extends View {
 
     private void onEditAccount() {
         HandleException.for_(this, () -> {
-            int[] rows = SwingUtils.getSelectedRowsConvertedToModel(table);
+            int[] rows = Tables.getSelectedRowsConvertedToModel(table);
             if (rows.length == 1) {
                 AccountDefinition definition = tableModel.getRow(rows[0]);
                 EditAccountView eav = new EditAccountView(definition.account);

@@ -10,6 +10,7 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
 import nl.gogognome.lib.swing.action.ActionWrapper;
+import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
 
 import javax.swing.*;
@@ -37,7 +38,7 @@ public class InvoiceEditAndSelectionView extends View {
     private Document document;
 
     /** Indicates whether this view should also allow the user to select an invoice. */
-    private boolean selectioEnabled;
+    private boolean selectionEnabled;
 
     /**
      * Indicates that multiple invoices can be selected (<code>true</code>) or at most
@@ -55,7 +56,7 @@ public class InvoiceEditAndSelectionView extends View {
     private JButton btSearch;
     private JButton btSelect;
 
-    /** Focus listener used to change the deafult button. */
+    /** Focus listener used to change the default button. */
     private FocusListener focusListener;
 
     /**
@@ -78,7 +79,7 @@ public class InvoiceEditAndSelectionView extends View {
      */
     public InvoiceEditAndSelectionView(Document document, boolean selectionEnabled, boolean multiSelectionEnabled) {
         this.document = document;
-        this.selectioEnabled = selectionEnabled;
+        this.selectionEnabled = selectionEnabled;
         this.multiSelectionEnabled = multiSelectionEnabled;
     }
 
@@ -98,7 +99,7 @@ public class InvoiceEditAndSelectionView extends View {
         });
 
         JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 0, 5));
-        if (selectioEnabled) {
+        if (selectionEnabled) {
             buttonPanel.add(new JLabel());
             buttonPanel.add(btSelect);
         }
@@ -174,9 +175,9 @@ public class InvoiceEditAndSelectionView extends View {
         table = widgetFactory.createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
         Action selectionAction = new SelectInvoiceAction();
-        TableRowSelectAction trsa = new TableRowSelectAction(table, selectionAction);
-        addCloseable(trsa);
-        trsa.registerListeners();
+        TableRowSelectAction action = new TableRowSelectAction(table, selectionAction);
+        addCloseable(action);
+        action.registerListeners();
 
         resultPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
@@ -210,7 +211,7 @@ public class InvoiceEditAndSelectionView extends View {
             searchCriteria.setIncludeClosedInvoices(btIncludeClosedInvoices.isSelected());
 
             invoicesTableModel.replaceRows(invoiceService.findInvoices(document, searchCriteria));
-            SwingUtils.selectFirstRow(table);
+            Tables.selectFirstRow(table);
             table.requestFocusInWindow();
 
             // Update the default button if the select button is present
@@ -226,7 +227,7 @@ public class InvoiceEditAndSelectionView extends View {
      * This method is called when the "select invoice" button is pressed.
      */
     private void onSelectInvoice() {
-        int rows[] = SwingUtils.getSelectedRowsConvertedToModel(table);
+        int rows[] = Tables.getSelectedRowsConvertedToModel(table);
         selectedInvoices = new ArrayList<>();
         for (int row : rows) {
             selectedInvoices.add(invoicesTableModel.getRow(row));
@@ -245,7 +246,7 @@ public class InvoiceEditAndSelectionView extends View {
     private final class SelectInvoiceAction extends AbstractAction {
 		@Override
 		public void actionPerformed(ActionEvent e) {
-		    if (selectioEnabled) {
+		    if (selectionEnabled) {
 		        onSelectInvoice();
 		    }
 		}

@@ -72,7 +72,7 @@ public class EditJournalsView extends View {
             journalEntryDetailsTable.setColumnSelectionAllowed(false);
 
             Tables.onSelectionChange(journalEntriesTable, () -> {
-                int row = SwingUtils.getSelectedRowConvertedToModel(journalEntriesTable);
+                int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
                 if (row != -1) {
                     updateJournalItemTable(row);
                 }
@@ -84,7 +84,7 @@ public class EditJournalsView extends View {
             add(buildPanelWithTables(), BorderLayout.CENTER);
             add(createButtonPanel(), BorderLayout.SOUTH);
 
-            SwingUtils.selectFirstRow(journalEntriesTable);
+            Tables.selectFirstRow(journalEntriesTable);
         } catch (ServiceException e) {
             logger.warn("Ignored exception: " + e.getMessage(), e);
             close();
@@ -177,7 +177,7 @@ public class EditJournalsView extends View {
      */
     private void editJournal() {
         try {
-            int row = SwingUtils.getSelectedRowConvertedToModel(journalEntriesTable);
+            int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
             if (row != -1) {
                 JournalEntry journalEntry = journalEntriesTableModel.getRow(row).journalEntry;
                 EditJournalController controller = new EditJournalController(this, document, journalEntry);
@@ -210,7 +210,7 @@ public class EditJournalsView extends View {
      * This method lets the user delete the selected journal.
      */
     private void deleteJournal() {
-        int row = SwingUtils.getSelectedRowConvertedToModel(journalEntriesTable);
+        int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
         if (row != -1) {
         	DeleteJournalController controller =
         		new DeleteJournalController(this, document, journalEntriesTableModel.getRow(row).journalEntry);

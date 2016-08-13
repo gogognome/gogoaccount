@@ -21,10 +21,8 @@ import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.models.AbstractModel;
-import nl.gogognome.lib.swing.models.FileModel;
+import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.models.ListModel;
-import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.TextResource;
@@ -221,7 +219,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
                 fileSelectionModel.setEnabled(true, this);
                 importersModel.setEnabled(true, this);
                 addTransactionsToTable(transactions);
-                SwingUtils.selectFirstRow(transactionsJournalsTable);
+                Tables.selectFirstRow(transactionsJournalsTable);
             } else {
                 MessageDialog.showWarningMessage(this, "importBankStatementView.noTransactionsFound", file.getAbsolutePath());
             }
@@ -303,7 +301,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     }
 
     private int getSelectedRowIndexInTableModel() {
-        return SwingUtils.getSelectedRowConvertedToModel(transactionsJournalsTable);
+        return Tables.getSelectedRowConvertedToModel(transactionsJournalsTable);
     }
 
     @Override

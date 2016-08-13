@@ -74,8 +74,8 @@ public class BeanConfiguration {
     // use this: http://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html  see section Lookup method injection
     @Bean
     @Scope("prototype")
-    public InvoicesView invoicesView(Document document, InvoiceOverviewTableModel invoiceOverviewTableModel, InvoiceService invoiceService) {
-        return new InvoicesView(document, invoiceOverviewTableModel, invoiceService);
+    public InvoicesView invoicesView(Document document, AmountFormat amountFormat, InvoiceOverviewTableModel invoiceOverviewTableModel, InvoiceService invoiceService) {
+        return new InvoicesView(document, amountFormat, invoiceOverviewTableModel, invoiceService);
     }
 
     @Bean
