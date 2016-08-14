@@ -10,6 +10,7 @@ import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +28,8 @@ public class InvoiceBean extends JPanel {
 
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
-	/** The database used to select the invoice from. */
     private Document document;
+    private final AmountFormat amountFormat;
 
     /** Contains a description of the selected invoice. */
     private JTextField tfDescription;
@@ -36,8 +37,9 @@ public class InvoiceBean extends JPanel {
     /** The invoice that is selected in this selector. */
     private Invoice selectedInvoice;
 
-    public InvoiceBean(Document document) {
+    public InvoiceBean(Document document, AmountFormat amountFormat) {
         this.document = document;
+        this.amountFormat = amountFormat;
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
@@ -92,7 +94,7 @@ public class InvoiceBean extends JPanel {
         Container finalParent = parent;
 
         HandleException.for_(parent, () -> {
-            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, true);
+            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, amountFormat, true);
             ViewDialog dialog = new ViewDialog(finalParent, invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {

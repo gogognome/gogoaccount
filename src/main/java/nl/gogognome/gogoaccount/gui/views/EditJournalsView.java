@@ -63,11 +63,11 @@ public class EditJournalsView extends View {
     public void onInit() {
         try {
             journalEntriesTableModel = new FormattedJournalEntriesTableModel(getFilteredRows());
-            journalEntriesTable = widgetFactory.createSortedTable(journalEntriesTableModel);
+            journalEntriesTable = Tables.createSortedTable(journalEntriesTableModel);
 
             // Create table of items
             journalEntryDetailsTableModel = new JournalEntryDetailsTableModel(document);
-            journalEntryDetailsTable = widgetFactory.createTable(journalEntryDetailsTableModel);
+            journalEntryDetailsTable = Tables.createTable(journalEntryDetailsTableModel);
             journalEntryDetailsTable.setRowSelectionAllowed(false);
             journalEntryDetailsTable.setColumnSelectionAllowed(false);
 
@@ -132,7 +132,7 @@ public class EditJournalsView extends View {
 
     private void onSearch() {
         try {
-            journalEntriesTableModel.replaceRows(getFilteredRows());
+            journalEntriesTableModel.setRows(getFilteredRows());
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }

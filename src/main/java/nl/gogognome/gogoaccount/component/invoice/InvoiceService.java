@@ -331,6 +331,10 @@ public class InvoiceService {
                 .stream().map(InvoiceDetail::getAmount).collect(toList()));
     }
 
+    public List<InvoiceDetail> findDetails(Document document, Invoice invoice) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new InvoiceDetailDAO(document).findForInvoice(invoice.getId()));
+    }
+
     /**
      * Checks whether the specified <code>Invoice</code> matches these criteria.
      * @param invoice the invoice
@@ -401,10 +405,10 @@ public class InvoiceService {
             List<Invoice> invoices = new InvoiceDAO(document).findAll();
             Map<String, List<Payment>> invoiceIdToPayments = new PaymentDAO(document).findAll()
                     .stream()
-                    .collect(groupingBy(payment -> payment.getInvoiceId()));
+                    .collect(groupingBy(Payment::getInvoiceId));
             Map<String, Party> partyIdToParty = new PartyService().findAllParties(document)
                     .stream()
-                    .collect(toMap(party -> party.getId(), party -> party));
+                    .collect(toMap(Party::getId, party -> party));
             return invoices.stream()
                     .map(invoice -> buildInvoiceOverview(invoice, invoiceIdToPayments, partyIdToParty))
                     .filter(overview -> includeClosedInvoices || !overview.getAmountToBePaid().equals(overview.getAmountPaid()))
@@ -414,14 +418,13 @@ public class InvoiceService {
     }
 
     private InvoiceOverview buildInvoiceOverview(Invoice invoice, Map<String, List<Payment>> invoiceIdToPayments, Map<String, Party> partyIdToParty) {
-        InvoiceOverview overview = new InvoiceOverview();
-        overview.setInvoiceId(invoice.getId());
+        InvoiceOverview overview = new InvoiceOverview(invoice.getId());
         overview.setDescription(invoice.getDescription());
         overview.setIssueDate(invoice.getIssueDate());
         overview.setAmountToBePaid(invoice.getAmountToBePaid());
         List<Payment> payments = invoiceIdToPayments.getOrDefault(invoice.getId(), emptyList());
         overview.setAmountPaid(payments.stream()
-                .map(payment -> payment.getAmount())
+                .map(Payment::getAmount)
                 .reduce(new Amount(BigInteger.ZERO), (a, b) -> a.add(b)));
         overview.setPartyId(invoice.getConcerningPartyId());
         overview.setPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
@@ -437,7 +440,7 @@ public class InvoiceService {
                 amountFormat.formatAmount(invoiceOverview.getAmountPaid().toBigInteger()),
                 amountFormat.formatAmount(invoiceOverview.getAmountToBePaid().toBigInteger()),
                 invoiceOverview.getDescription(),
-                invoiceOverview.getInvoiceId(),
+                invoiceOverview.getId(),
                 invoiceOverview.getIssueDate(),
                 invoiceOverview.getPartyId(),
                 invoiceOverview.getPartyName());

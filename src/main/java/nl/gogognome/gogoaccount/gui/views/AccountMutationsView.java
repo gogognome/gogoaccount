@@ -11,10 +11,8 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.models.AbstractModel;
-import nl.gogognome.lib.swing.models.DateModel;
+import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.models.ListModel;
-import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.views.View;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +79,7 @@ public class AccountMutationsView extends View {
 		JPanel northPanel = createInputFieldsPanel();
 		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
 
-		JTable table = widgetFactory.createSortedTable(tableModel);
+		JTable table = Tables.createSortedTable(tableModel);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		tableScrollPane = widgetFactory.createScrollPane(table);
 

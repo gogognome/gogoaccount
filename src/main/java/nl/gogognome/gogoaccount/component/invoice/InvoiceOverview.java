@@ -4,38 +4,15 @@ import nl.gogognome.lib.text.Amount;
 
 import java.util.Date;
 
-public class InvoiceOverview {
+public class InvoiceOverview extends Invoice {
 
-    private String invoiceId;
-    private String description;
-    private Date issueDate;
     private Amount amountToBePaid;
     private Amount amountPaid;
     private String partyId;
     private String partyName;
 
-    public String getInvoiceId() {
-        return invoiceId;
-    }
-
-    public void setInvoiceId(String invoiceId) {
-        this.invoiceId = invoiceId;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Date getIssueDate() {
-        return issueDate;
-    }
-
-    public void setIssueDate(Date issueDate) {
-        this.issueDate = issueDate;
+    public InvoiceOverview(String id) {
+        super(id);
     }
 
     public Amount getAmountToBePaid() {

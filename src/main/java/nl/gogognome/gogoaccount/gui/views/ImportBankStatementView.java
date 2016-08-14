@@ -25,6 +25,7 @@ import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
@@ -71,15 +72,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private JButton editButton;
     private JButton deleteButton;
 
-    Document document;
+    private final Document document;
+    private final AmountFormat amountFormat;
 
-    /**
-     * Creates the view.
-     * @param document the database
-     */
-    public ImportBankStatementView(Document document) {
-        super();
+    public ImportBankStatementView(Document document, AmountFormat amountFormat) {
         this.document = document;
+        this.amountFormat = amountFormat;
     }
 
     @Override
@@ -124,13 +122,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         importPanel.setBorder(widgetFactory.createTitleBorderWithPadding("importBankStatementView.importSettings"));
 
         // Create table of journals
-        transactionJournalsTableModel = new TransactionsJournalsTableModel(
-                Collections.<Transaction>emptyList(), document);
-        transactionsJournalsTable = widgetFactory.createSortedTable(transactionJournalsTableModel);
+        transactionJournalsTableModel = new TransactionsJournalsTableModel(amountFormat, document);
+        transactionsJournalsTable = Tables.createSortedTable(transactionJournalsTableModel);
 
         // Create table of items
         itemsTableModel = new JournalEntryDetailsTableModel(document);
-        JTable itemsTable = widgetFactory.createTable(itemsTableModel);
+        JTable itemsTable = Tables.createTable(itemsTableModel);
         itemsTable.setRowSelectionAllowed(false);
         itemsTable.setColumnSelectionAllowed(false);
 

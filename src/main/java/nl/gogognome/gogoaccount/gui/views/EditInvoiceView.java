@@ -1,43 +1,38 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.text.ParseException;
-import java.util.*;
-
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
+import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.ColumnDefinition;
+import nl.gogognome.lib.swing.ListTableModel;
 import nl.gogognome.lib.swing.MessageDialog;
-import nl.gogognome.lib.swing.models.AbstractModel;
-import nl.gogognome.lib.swing.models.DateModel;
-import nl.gogognome.lib.swing.models.ModelChangeListener;
-import nl.gogognome.lib.swing.models.StringModel;
+import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.util.Tuple;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Currency;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class lets the user edit an existing invoice.
@@ -166,8 +161,8 @@ public class EditInvoiceView extends OkCancelView {
                     tuples.add(new Tuple<>(descriptions.get(i), amounts.get(i)));
                 }
             }
-            tableModel = new DescriptionAndAmountTableModel(tuples);
-            table = widgetFactory.createTable(tableModel);
+            tableModel = new DescriptionAndAmountTableModel(amountFormat, tuples);
+            table = Tables.createTable(tableModel);
             JScrollPane scrollPane = widgetFactory.createScrollPane(table);
             middlePanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -339,20 +334,19 @@ public class EditInvoiceView extends OkCancelView {
 	/**
      * Table model for the table containing descriptions and models.
      */
-    private static class DescriptionAndAmountTableModel
-    		extends AbstractListTableModel<Tuple<String, Amount>> {
+    private static class DescriptionAndAmountTableModel extends ListTableModel<Tuple<String, Amount>> {
 
-    	private final static ColumnDefinition DESCRIPTIONS =
-    		new ColumnDefinition("editInvoiceView.tableHeader.descriptions", String.class, 300);
-
-    	private final static ColumnDefinition AMOUNTS =
-    		new ColumnDefinition("editInvoiceView.tableHeader.amounts", String.class, 100);
-
-    	private final static List<ColumnDefinition> COLUMN_DEFINITIONS =
-    		Arrays.asList(DESCRIPTIONS, AMOUNTS);
-
-        public DescriptionAndAmountTableModel(List<Tuple<String, Amount>> tuples) {
-        	super(COLUMN_DEFINITIONS, tuples);
+        public DescriptionAndAmountTableModel(AmountFormat amountFormat, List<Tuple<String, Amount>> tuples) {
+        	super(
+                    ColumnDefinition.<Tuple<String, Amount>>builder("editInvoiceView.tableHeader.descriptions", String.class, 300)
+                        .add(row -> row.getFirst())
+                        .build(),
+                    ColumnDefinition.<Tuple<String, Amount>>builder("editInvoiceView.tableHeader.amounts", String.class, 100)
+                        .add(new AmountCellRenderer(amountFormat))
+                        .add(row -> row.getSecond() == null || row.getSecond().isZero() ? null : row.getSecond())
+                        .build()
+            );
+            setRows(tuples);
         }
 
         /**
@@ -372,24 +366,6 @@ public class EditInvoiceView extends OkCancelView {
          */
         public void updateRow(int index, String description, Amount amount) {
             updateRow(index, new Tuple<>(description, amount));
-        }
-
-        @Override
-		public Object getValueAt(int rowIndex, int columnIndex) {
-        	ColumnDefinition colDef = COLUMN_DEFINITIONS.get(columnIndex);
-        	Tuple<String, Amount> tuple = getRow(rowIndex);
-            Object result = null;
-
-            if (DESCRIPTIONS == colDef) {
-                result = tuple.getFirst();
-            } else if (AMOUNTS == colDef) {
-                Amount a = tuple.getSecond();
-                if (a != null && !a.isZero()) {
-                    result = Factory.getInstance(AmountFormat.class).formatAmountWithoutCurrency(a.toBigInteger());
-                }
-            }
-
-            return result;
         }
 
     }

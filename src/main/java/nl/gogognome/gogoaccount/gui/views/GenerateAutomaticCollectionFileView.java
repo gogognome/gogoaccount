@@ -20,6 +20,7 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;
 
 import javax.swing.*;
@@ -32,6 +33,7 @@ import java.util.List;
 public class GenerateAutomaticCollectionFileView extends View {
 
     private final Document document;
+    private final AmountFormat amountFormat;
 
     private FileModel sepaFileModel = new FileModel();
     private DateModel collectionDateModel = new DateModel(new Date());
@@ -40,8 +42,9 @@ public class GenerateAutomaticCollectionFileView extends View {
     private nl.gogognome.lib.swing.models.ListModel<Account> bankAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
     private nl.gogognome.lib.swing.models.ListModel<Account> debtorAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
 
-    public GenerateAutomaticCollectionFileView(Document document) {
+    public GenerateAutomaticCollectionFileView(Document document, AmountFormat amountFormat) {
         this.document = document;
+        this.amountFormat = amountFormat;
     }
 
     @Override
@@ -113,7 +116,7 @@ public class GenerateAutomaticCollectionFileView extends View {
             }
 
             // Let the user select the invoices that should be added to the SEPA file.
-            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, true, true);
+            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, amountFormat, true, true);
             ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {

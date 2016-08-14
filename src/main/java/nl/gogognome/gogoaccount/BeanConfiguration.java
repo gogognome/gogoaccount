@@ -5,9 +5,9 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
-import nl.gogognome.gogoaccount.gui.invoice.InvoiceOverviewTableModel;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
+import nl.gogognome.gogoaccount.gui.views.ImportBankStatementView;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.AmountFormat;
@@ -71,17 +71,16 @@ public class BeanConfiguration {
         };
     }
 
-    // use this: http://docs.spring.io/spring/docs/current/spring-framework-reference/html/beans.html  see section Lookup method injection
     @Bean
     @Scope("prototype")
-    public InvoicesView invoicesView(Document document, AmountFormat amountFormat, InvoiceOverviewTableModel invoiceOverviewTableModel, InvoiceService invoiceService) {
-        return new InvoicesView(document, amountFormat, invoiceOverviewTableModel, invoiceService);
+    public InvoicesView invoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService) {
+        return new InvoicesView(document, amountFormat, invoiceService);
     }
 
     @Bean
     @Scope("prototype")
-    public InvoiceOverviewTableModel invoiceOverviewTableModel(AmountFormat amountFormat) {
-        return new InvoiceOverviewTableModel(amountFormat);
+    public ImportBankStatementView importBankStatementView(Document document, AmountFormat amountFormat) {
+        return new ImportBankStatementView(document, amountFormat);
     }
 
     @Bean

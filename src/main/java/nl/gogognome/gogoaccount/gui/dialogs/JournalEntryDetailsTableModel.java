@@ -10,8 +10,8 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
-import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
+import nl.gogognome.lib.swing.ListTableModel;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class JournalEntryDetailsTableModel extends AbstractListTableModel<JournalEntryDetail> {
+public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDetail> {
 
     private final Logger logger = LoggerFactory.getLogger(JournalEntryDetailsTableModel.class);
 
@@ -33,21 +33,21 @@ public class JournalEntryDetailsTableModel extends AbstractListTableModel<Journa
 
 	private static final long serialVersionUID = 1L;
 
-	private final static ColumnDefinition ACCOUNT =
-		new ColumnDefinition("gen.account", String.class, 300);
+	private final static ColumnDefinition<JournalEntryDetail> ACCOUNT =
+		new ColumnDefinition<JournalEntryDetail>("gen.account", String.class, 300);
 
-	private final static ColumnDefinition DEBET =
-		new ColumnDefinition.Builder("gen.debet", String.class, 100)
+	private final static ColumnDefinition<JournalEntryDetail> DEBET =
+		ColumnDefinition.<JournalEntryDetail>builder("gen.debet", String.class, 100)
 			.add(new RightAlignedRenderer()).build();
 
-	private final static ColumnDefinition CREDIT =
-		new ColumnDefinition.Builder("gen.credit", String.class, 100)
+	private final static ColumnDefinition<JournalEntryDetail> CREDIT =
+		ColumnDefinition.<JournalEntryDetail>builder("gen.credit", String.class, 100)
 			.add(new RightAlignedRenderer()).build();
 
-	private final static ColumnDefinition INVOICE =
-		new ColumnDefinition("gen.invoice", String.class, 300);
+	private final static ColumnDefinition<JournalEntryDetail> INVOICE =
+		new ColumnDefinition<JournalEntryDetail>("gen.invoice", String.class, 300);
 
-	private final static List<ColumnDefinition> COLUMN_DEFINTIIONS =
+	private final static List<ColumnDefinition<JournalEntryDetail>> COLUMN_DEFINTIIONS =
 		Arrays.asList(ACCOUNT, DEBET, CREDIT, INVOICE);
 
     private final Document document;
@@ -60,7 +60,7 @@ public class JournalEntryDetailsTableModel extends AbstractListTableModel<Journa
     // TODO: replace parameter by list of objects that contain all details to be shown so that no service calls are needed by this class.
     @Deprecated
     public void setJournalEntryDetails(List<JournalEntryDetail> journalEntryDetails) {
-    	replaceRows(journalEntryDetails);
+    	setRows(journalEntryDetails);
     }
 
     @Override

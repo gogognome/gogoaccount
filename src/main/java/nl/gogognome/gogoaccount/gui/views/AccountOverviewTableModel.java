@@ -1,56 +1,57 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.Report.LedgerLine;
-import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
-import nl.gogognome.lib.swing.AbstractListTableModel;
 import nl.gogognome.lib.swing.ColumnDefinition;
+import nl.gogognome.lib.swing.ListTableModel;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import static java.util.Arrays.asList;
+
 /**
  * This class implements a model for a <code>JTable</code> that shows an overview
  * of an account at a specific date.
  */
-public class AccountOverviewTableModel extends AbstractListTableModel<AccountOverviewTableModel.LineInfo> {
+public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTableModel.LineInfo> {
 
     private static final long serialVersionUID = 1L;
 
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
-    private final static ColumnDefinition DATE =
-        new ColumnDefinition("gen.date", Date.class, 75);
+    private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> DATE =
+            new ColumnDefinition<>("gen.date", Date.class, 75);
 
-    private final static ColumnDefinition ID =
-        new ColumnDefinition("gen.id", String.class, 100);
+    private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> ID =
+            new ColumnDefinition<>("gen.id", String.class, 100);
 
-    private final static ColumnDefinition DESCRIPTION =
-        new ColumnDefinition("gen.description", String.class, 200);
+    private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> DESCRIPTION =
+            new ColumnDefinition<>("gen.description", String.class, 200);
 
-    private final static ColumnDefinition DEBET =
-        new ColumnDefinition.Builder("gen.debet", String.class, 100)
+    private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> DEBET =
+        ColumnDefinition.<AccountOverviewTableModel.LineInfo>builder("gen.debet", String.class, 100)
     		.add(new RightAlignedRenderer()).build();
 
-    private final static ColumnDefinition CREDIT =
-        new ColumnDefinition.Builder("gen.credit", String.class, 100)
+    private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> CREDIT =
+        ColumnDefinition.<AccountOverviewTableModel.LineInfo>builder("gen.credit", String.class, 100)
     		.add(new RightAlignedRenderer()).build();
 
-    private final static ColumnDefinition INVOICE =
-        new ColumnDefinition("gen.invoice", String.class, 200);
+    private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> INVOICE =
+            new ColumnDefinition<>("gen.invoice", String.class, 200);
 
-    private final static List<ColumnDefinition> COLUMN_DEFINITIONS = Arrays.asList(
+    private final static List<ColumnDefinition<AccountOverviewTableModel.LineInfo>> COLUMN_DEFINITIONS = asList(
         DATE, ID, DESCRIPTION, DEBET, CREDIT, INVOICE
     );
 

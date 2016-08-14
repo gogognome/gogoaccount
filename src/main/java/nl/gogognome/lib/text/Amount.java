@@ -2,6 +2,7 @@ package nl.gogognome.lib.text;
 
 import java.math.BigInteger;
 import java.text.DecimalFormatSymbols;
+import java.util.Comparator;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Locale;
@@ -11,7 +12,7 @@ import java.util.Locale;
  * ints or longs, since floats and doubles suffer from rounding differences
  * and all of them lack checks for overflows.
  */
-public class Amount
+public class Amount implements Comparable<Amount>
 {
     /** Represents the amount in cents. */
     private BigInteger amount;

@@ -50,7 +50,7 @@ public class PartiesView extends View {
     private JTable table;
 	private PartiesTableModel partiesTableModel;
 
-    private boolean selectioEnabled;
+    private boolean selectionEnabled;
     private boolean multiSelectionEnabled;
 
     private StringModel searchCriterionModel = new StringModel();
@@ -71,8 +71,8 @@ public class PartiesView extends View {
         this.document = document;
     }
 
-    public void setSelectioEnabled(boolean selectioEnabled) {
-		this.selectioEnabled = selectioEnabled;
+    public void setSelectionEnabled(boolean selectionEnabled) {
+		this.selectionEnabled = selectionEnabled;
 	}
 
     public void setMultiSelectionEnabled(boolean multiSelectionEnabled) {
@@ -101,7 +101,7 @@ public class PartiesView extends View {
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
-        if (selectioEnabled) {
+        if (selectionEnabled) {
             buttonPanel.add(new JLabel());
             buttonPanel.add(btSelect);
         }
@@ -145,7 +145,7 @@ public class PartiesView extends View {
             new EmptyBorder(5, 12, 5, 12)));
 
         partiesTableModel = new PartiesTableModel(emptyList(), emptyMap());
-        table = widgetFactory.createSortedTable(partiesTableModel);
+        table = Tables.createSortedTable(partiesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
 
         TableRowSelectAction action = new TableRowSelectAction(table, new SelectionActionImpl());
@@ -217,7 +217,7 @@ public class PartiesView extends View {
         try {
             Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
             List<Party> matchingParties = partyService.findParties(document, criterion);
-            partiesTableModel.replaceRows(matchingParties, partyService.findPartyIdToTags(document));
+            partiesTableModel.setRows(matchingParties, partyService.findPartyIdToTags(document));
             Tables.selectFirstRow(table);
             table.requestFocusInWindow();
 
@@ -363,7 +363,7 @@ public class PartiesView extends View {
 	private class SelectionActionImpl extends AbstractAction {
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
-            if (selectioEnabled) {
+            if (selectionEnabled) {
                 onSelectParty();
             } else {
                 onEditParty();

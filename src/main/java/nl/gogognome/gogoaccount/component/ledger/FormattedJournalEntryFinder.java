@@ -52,7 +52,8 @@ public class FormattedJournalEntryFinder {
 
     private void addInvoice(Document document, FormattedJournalEntry formattedJournalEntry, Invoice invoice, Amount amount) throws ServiceException {
         AmountFormat af = Factory.getInstance(AmountFormat.class);
-        formattedJournalEntry.invoiceDescription = append(formattedJournalEntry.invoiceDescription, invoice.getId() + " - " + invoice.getDescription() + " - " +  af.formatAmount(amount.toBigInteger()));
+        formattedJournalEntry.invoiceDescription = append(formattedJournalEntry.invoiceDescription, invoice.getId()
+                + " - " + invoice.getDescription() + " - " +  af.formatAmountWithoutCurrency(amount.toBigInteger()));
         Party party = partyService.getParty(document, invoice.getPayingPartyId());
         formattedJournalEntry.party = append(formattedJournalEntry.party, party.getId() + " - " + party.getName());
     }

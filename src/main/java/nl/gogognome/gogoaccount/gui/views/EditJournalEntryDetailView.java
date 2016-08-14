@@ -83,7 +83,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
             sideListModel.setItems(sides);
             sideListModel.setSelectedIndex(0, null);
 
-            invoiceBean = new InvoiceBean(document);
+            invoiceBean = new InvoiceBean(document, amountFormat);
 
             if (itemToBeEdited != null) {
                 initModelsForItemToBeEdited();

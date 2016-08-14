@@ -317,7 +317,7 @@ public class InvoiceGeneratorView extends View {
 
     private Party[] selectParties() {
         PartiesView partiesView = new PartiesView(document);
-        partiesView.setSelectioEnabled(true);
+        partiesView.setSelectionEnabled(true);
         partiesView.setMultiSelectionEnabled(true);
         ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);
         dialog.showDialog();

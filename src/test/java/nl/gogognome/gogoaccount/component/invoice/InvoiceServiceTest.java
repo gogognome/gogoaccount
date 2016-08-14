@@ -252,16 +252,15 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     private void assertInvoiceOverviewsEqual(List<InvoiceOverview> overviews, String... expectedOverviews) {
         assertEquals(
                 Arrays.stream(expectedOverviews).reduce("", String::concat),
-                overviews.stream().map(o -> o.getInvoiceId() + ' ' + o.getDescription() + ' ' + o.getPartyName()).reduce("", String::concat));
+                overviews.stream().map(o -> o.getId() + ' ' + o.getDescription() + ' ' + o.getPartyName()).reduce("", String::concat));
     }
 
     @Test
     public void testMatches() {
-        InvoiceOverview overview = new InvoiceOverview();
+        InvoiceOverview overview = new InvoiceOverview("Invoice id");
         overview.setAmountPaid(createAmount(123));
         overview.setAmountToBePaid(createAmount(456));
         overview.setDescription("Description");
-        overview.setInvoiceId("Invoice id");
         overview.setIssueDate(DateUtil.createDate(2011, 5, 6));
         overview.setPartyId("Party id");
         overview.setPartyName("Party name");

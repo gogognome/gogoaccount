@@ -12,6 +12,7 @@ import nl.gogognome.lib.swing.TableRowSelectAction;
 import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.text.AmountFormat;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,8 +24,6 @@ import java.util.ArrayList;
 
 /**
  * This class implements a view for selecting and editing invoices.
- *
- * TODO: implement editing invoices
  */
 public class InvoiceEditAndSelectionView extends View {
 
@@ -34,8 +33,8 @@ public class InvoiceEditAndSelectionView extends View {
 
     private JTable table;
 
-    /** The database whose invoices are to be shown and changed. */
-    private Document document;
+    private final Document document;
+    private final AmountFormat amountFormat;
 
     /** Indicates whether this view should also allow the user to select an invoice. */
     private boolean selectionEnabled;
@@ -65,8 +64,8 @@ public class InvoiceEditAndSelectionView extends View {
      * @param selectionEnabled <code>true</code> if the user should be able to select an invoice;
      *         <code>false</code> if the user cannot select an invoice
      */
-    public InvoiceEditAndSelectionView(Document document, boolean selectionEnabled) {
-        this(document, selectionEnabled, false);
+    public InvoiceEditAndSelectionView(Document document, AmountFormat amountFormat, boolean selectionEnabled) {
+        this(document, amountFormat, selectionEnabled, false);
     }
 
     /**
@@ -77,8 +76,9 @@ public class InvoiceEditAndSelectionView extends View {
      * @param multiSelectionEnabled indicates that multiple invoices can be selected (<code>true</code>) or
      *         at most one invoice (<code>false</code>)
      */
-    public InvoiceEditAndSelectionView(Document document, boolean selectionEnabled, boolean multiSelectionEnabled) {
+    public InvoiceEditAndSelectionView(Document document, AmountFormat amountFormat, boolean selectionEnabled, boolean multiSelectionEnabled) {
         this.document = document;
+        this.amountFormat = amountFormat;
         this.selectionEnabled = selectionEnabled;
         this.multiSelectionEnabled = multiSelectionEnabled;
     }
@@ -171,8 +171,8 @@ public class InvoiceEditAndSelectionView extends View {
         resultPanel.setBorder(widgetFactory.createTitleBorderWithPadding(
                 "invoicesView.foundInvoices"));
 
-        invoicesTableModel = new InvoicesTableModel(document);
-        table = widgetFactory.createSortedTable(invoicesTableModel);
+        invoicesTableModel = new InvoicesTableModel(document, amountFormat);
+        table = Tables.createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
         Action selectionAction = new SelectInvoiceAction();
         TableRowSelectAction action = new TableRowSelectAction(table, selectionAction);
@@ -210,7 +210,7 @@ public class InvoiceEditAndSelectionView extends View {
             }
             searchCriteria.setIncludeClosedInvoices(btIncludeClosedInvoices.isSelected());
 
-            invoicesTableModel.replaceRows(invoiceService.findInvoices(document, searchCriteria));
+            invoicesTableModel.setRows(invoiceService.findInvoices(document, searchCriteria));
             Tables.selectFirstRow(table);
             table.requestFocusInWindow();
 

@@ -134,7 +134,7 @@ public class EditJournalView extends View {
         valuesEditPanel = vep;
 
         // Create table of items
-        journalEntryDetailsTable = widgetFactory.createTable(journalEntryDetailsTableModel);
+        journalEntryDetailsTable = Tables.createTable(journalEntryDetailsTableModel);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         addCloseable(buttonPanel);

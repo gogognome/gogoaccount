@@ -1,13 +1,5 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.util.Arrays;
-import java.util.Date;
-
-import javax.swing.AbstractAction;
-import javax.swing.SwingConstants;
-
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
@@ -20,11 +12,18 @@ import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
+import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Date;
 
 public class InvoiceToOdtView extends View {
 
     private final Document document;
+    private final AmountFormat amountFormat;
 
     private FileModel templateFileModel = new FileModel();
     private FileModel odtFileModel = new FileModel();
@@ -33,8 +32,9 @@ public class InvoiceToOdtView extends View {
     private StringModel ourReferenceModel = new StringModel();
     private DateModel dueDateModel = new DateModel();
 
-    public InvoiceToOdtView(Document document) {
+    public InvoiceToOdtView(Document document, AmountFormat amountFormat) {
         this.document = document;
+        this.amountFormat = amountFormat;
     }
 
     /**
@@ -67,7 +67,7 @@ public class InvoiceToOdtView extends View {
             }
 
             // Let the user select the invoices that should be added to the ODT file.
-            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, true, true);
+            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, amountFormat, true, true);
             ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {

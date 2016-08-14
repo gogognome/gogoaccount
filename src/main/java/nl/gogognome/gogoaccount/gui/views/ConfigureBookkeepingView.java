@@ -25,7 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
 
@@ -170,7 +169,7 @@ public class ConfigureBookkeepingView extends View {
                 BorderFactory.createTitledBorder(textResource.getString("ConfigureBookkeepingView.accounts")),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
         tableModel = new AccountTableModel(getAccountDefinitions(document));
-        table = widgetFactory.createSortedTable(tableModel);
+        table = Tables.createSortedTable(tableModel);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(e -> updateButtonState());
@@ -371,44 +370,24 @@ public class ConfigureBookkeepingView extends View {
         }
     }
 
-    private static class AccountTableModel extends AbstractListTableModel<AccountDefinition> {
-
-        private final static ColumnDefinition ID =
-                new ColumnDefinition("ConfigureBookkeepingView.id", String.class, 50);
-
-        private final static ColumnDefinition NAME =
-                new ColumnDefinition("ConfigureBookkeepingView.name", String.class, 400);
-
-        private final static ColumnDefinition USED =
-                new ColumnDefinition("ConfigureBookkeepingView.used", Icon.class, 50);
-
-        private final static ColumnDefinition TYPE =
-                new ColumnDefinition("ConfigureBookkeepingView.type", String.class, 150);
-
-        private final static List<ColumnDefinition> COLUMN_DEFINITIONS = Arrays.asList(
-                ID, NAME, USED, TYPE
-                );
+    private static class AccountTableModel extends ListTableModel<AccountDefinition> {
 
         public AccountTableModel(List<AccountDefinition> accountDefinitions) {
-            super(COLUMN_DEFINITIONS, accountDefinitions);
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            ColumnDefinition colDef = getColumnDefinition(columnIndex);
-            if (ID.equals(colDef)) {
-                return getRow(rowIndex).account.getId();
-            } else if (NAME.equals(colDef)) {
-                return getRow(rowIndex).account.getName();
-            } else if (USED.equals(colDef)) {
-                return getRow(rowIndex).used ?
-                        Factory.getInstance(WidgetFactory.class).createIcon("ConfigureBookkeepingView.tickIcon16") : null;
-            } else if (TYPE.equals(colDef)) {
-                return Factory.getInstance(TextResource.class).getString("gen.ACCOUNTTYPE_" +
-                        getRow(rowIndex).account.getType().name());
-            }
-            return null;
+            super(
+                    ColumnDefinition.<AccountDefinition>builder("ConfigureBookkeepingView.id", String.class, 50)
+                        .add(row -> row.account.getId())
+                        .build(),
+                    ColumnDefinition.<AccountDefinition>builder("ConfigureBookkeepingView.name", String.class, 400)
+                        .add(row -> row.account.getName())
+                        .build(),
+                    ColumnDefinition.<AccountDefinition>builder("ConfigureBookkeepingView.used", Icon.class, 50)
+                        .add(row -> row.used ? Factory.getInstance(WidgetFactory.class).createIcon("ConfigureBookkeepingView.tickIcon16") : null)
+                        .build(),
+                    ColumnDefinition.<AccountDefinition>builder("ConfigureBookkeepingView.type", String.class, 150)
+                        .add(row -> Factory.getInstance(TextResource.class).getString("gen.ACCOUNTTYPE_" + row.account.getType().name()))
+                        .build()
+            );
+            setRows(accountDefinitions);
         }
     }
 }
