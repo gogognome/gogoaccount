@@ -156,8 +156,7 @@ public class InvoiceEditAndSelectionView extends View {
         row++;
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        ActionWrapper actionWrapper = widgetFactory.createAction("invoicesView.btnSearch");
-        actionWrapper.setAction(new SearchAction());
+        ActionWrapper actionWrapper = widgetFactory.createActionWrapper("invoicesView.btnSearch", this::onSearch);
         btSearch = new JButton(actionWrapper);
 
         buttonPanel.add(btSearch);
@@ -252,10 +251,4 @@ public class InvoiceEditAndSelectionView extends View {
 		}
 	}
 
-	private final class SearchAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent event) {
-		    onSearch();
-		}
-	}
 }
