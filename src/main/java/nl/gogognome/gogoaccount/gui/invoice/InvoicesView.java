@@ -1,9 +1,7 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceOverview;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -21,11 +19,10 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.Date;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 
 public class InvoicesView extends View {
@@ -96,7 +93,7 @@ public class InvoicesView extends View {
         invoicesTableModel = buildInvoiceOverviewTableModel();
         table = Tables.createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        Tables.onSelectionChange(table, () -> onSelectionChanged());
+        Tables.onSelectionChange(table, this::onSelectionChanged);
         resultPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
 
         return resultPanel;
@@ -120,6 +117,16 @@ public class InvoicesView extends View {
             detailsWithHeaderTable.setBorder(widgetFactory.createTitleBorder("invoicesView.invoiceLines"));
             invoiceDetailsPanel.add(detailsWithHeaderTable,
                     SwingUtils.createGBConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, 10, 0, 0, 0));
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+        }
+
+        try {
+            JTable paymentsTable = Tables.createSortedTable(buildPaymentsTableModel(invoiceService.findPayments(document, selectedInvoice)));
+            JPanel detailsWithHeaderTable = Tables.createNonScrollableTablePanel(paymentsTable);
+            detailsWithHeaderTable.setBorder(widgetFactory.createTitleBorder("invoicesView.payments"));
+            invoiceDetailsPanel.add(detailsWithHeaderTable,
+                    SwingUtils.createGBConstraints(0, 2, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, 10, 0, 0, 0));
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, "gen.internalError", e);
         }
@@ -159,40 +166,54 @@ public class InvoicesView extends View {
     }
 
     private ListTableModel<InvoiceOverview> buildInvoiceOverviewTableModel() {
-        return new ListTableModel<InvoiceOverview>(
+        return new ListTableModel<>(asList(
                 ColumnDefinition.<InvoiceOverview>builder("gen.id", String.class, 40)
-                        .add(row -> row.getId())
+                        .add(Invoice::getId)
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.description", String.class, 200)
-                        .add(row -> row.getDescription())
+                        .add(Invoice::getDescription)
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.issueDate", String.class, 100)
-                        .add(row -> row.getIssueDate())
+                        .add(Invoice::getIssueDate)
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.party", String.class, 200)
                         .add(row -> row.getPartyId() + " - " + row.getPartyName())
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountToBePaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
-                        .add(row -> row.getAmountToBePaid())
+                        .add(InvoiceOverview::getAmountToBePaid)
                         .build(),
-                ColumnDefinition.<InvoiceOverview>builder("gen.amountePaid", Amount.class, 100)
+                ColumnDefinition.<InvoiceOverview>builder("gen.amountPaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
-                        .add(row -> row.getAmountPaid())
-                        .build());
+                        .add(InvoiceOverview::getAmountPaid)
+                        .build()));
     }
 
     private ListTableModel<InvoiceDetail> buildDetailTableModel(List<InvoiceDetail> details) {
-        ListTableModel<InvoiceDetail> tableModel = new ListTableModel<InvoiceDetail>(
+        ListTableModel<InvoiceDetail> tableModel = new ListTableModel<>(asList(
                 ColumnDefinition.<InvoiceDetail>builder("gen.description", String.class, 200)
-                        .add(row -> row.getDescription())
+                        .add(InvoiceDetail::getDescription)
                         .build(),
                 ColumnDefinition.<InvoiceDetail>builder("gen.amountToBePaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
-                        .add(row -> row.getAmount())
+                        .add(InvoiceDetail::getAmount)
                         .build()
-        );
+        ));
         tableModel.setRows(details);
+        return tableModel;
+    }
+
+    private ListTableModel<Payment> buildPaymentsTableModel(List<Payment> payments) {
+        ListTableModel<Payment> tableModel = new ListTableModel<>(asList(
+                ColumnDefinition.<Payment>builder("gen.description", String.class, 200)
+                        .add(Payment::getDescription)
+                        .build(),
+                ColumnDefinition.<Payment>builder("gen.amountPaid", Amount.class, 100)
+                        .add(new AmountCellRenderer(amountFormat))
+                        .add(Payment::getAmount)
+                        .build()
+        ));
+        tableModel.setRows(payments);
         return tableModel;
     }
 }
