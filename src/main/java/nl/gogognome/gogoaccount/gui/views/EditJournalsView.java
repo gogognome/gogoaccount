@@ -99,7 +99,7 @@ public class EditJournalsView extends View {
         ifc.addField("gen.filterCriterion", searchCriterionModel);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        ActionWrapper actionWrapper = widgetFactory.createAction("gen.btnSearch");
+        ActionWrapper actionWrapper = widgetFactory.createActionWrapper("gen.btnSearch");
         actionWrapper.setAction(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
