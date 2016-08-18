@@ -129,7 +129,7 @@ public class InvoicesView extends View {
         ifc.addReadonlyField("gen.id", new StringModel(selectedInvoice.getId()));
         ifc.addReadonlyField("gen.description", new StringModel(selectedInvoice.getDescription()));
         ifc.addReadonlyField("gen.issueDate", new StringModel(textResource.formatDate("gen.dateFormat", selectedInvoice.getIssueDate())));
-        ifc.addReadonlyField("gen.party", new StringModel(selectedInvoice.getPartyId() + " - " + selectedInvoice.getPartyName()));
+        ifc.addReadonlyField("gen.party", new StringModel(selectedInvoice.getPayingPartyId() + " - " + selectedInvoice.getPayingPartyName()));
         ifc.addReadonlyField("gen.amountToBePaid", new StringModel(amountFormat.formatAmountWithoutCurrency(selectedInvoice.getAmountToBePaid().toBigInteger())));
         invoiceDetailsPanel.add(ifc, SwingUtils.createGBConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
 
@@ -199,7 +199,7 @@ public class InvoicesView extends View {
                         .add(Invoice::getIssueDate)
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.party", String.class, 200)
-                        .add(row -> row.getPartyId() + " - " + row.getPartyName())
+                        .add(row -> row.getPayingPartyId() + " - " + row.getPayingPartyName())
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountToBePaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))

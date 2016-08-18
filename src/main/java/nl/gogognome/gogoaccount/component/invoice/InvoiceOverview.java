@@ -2,14 +2,11 @@ package nl.gogognome.gogoaccount.component.invoice;
 
 import nl.gogognome.lib.text.Amount;
 
-import java.util.Date;
-
 public class InvoiceOverview extends Invoice {
 
     private Amount amountToBePaid;
     private Amount amountPaid;
-    private String partyId;
-    private String partyName;
+    private String payingPartyName;
 
     public InvoiceOverview(String id) {
         super(id);
@@ -31,19 +28,11 @@ public class InvoiceOverview extends Invoice {
         this.amountPaid = amountPaid;
     }
 
-    public String getPartyId() {
-        return partyId;
+    public String getPayingPartyName() {
+        return payingPartyName;
     }
 
-    public void setPartyId(String partyId) {
-        this.partyId = partyId;
-    }
-
-    public String getPartyName() {
-        return partyName;
-    }
-
-    public void setPartyName(String partyName) {
-        this.partyName = partyName;
+    public void setPayingPartyName(String payingPartyName) {
+        this.payingPartyName = payingPartyName;
     }
 }

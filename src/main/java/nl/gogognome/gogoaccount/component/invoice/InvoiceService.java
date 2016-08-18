@@ -422,12 +422,13 @@ public class InvoiceService {
         overview.setDescription(invoice.getDescription());
         overview.setIssueDate(invoice.getIssueDate());
         overview.setAmountToBePaid(invoice.getAmountToBePaid());
+        overview.setPayingPartyId(invoice.getPayingPartyId());
+        overview.setConcerningPartyId(invoice.getConcerningPartyId());
         List<Payment> payments = invoiceIdToPayments.getOrDefault(invoice.getId(), emptyList());
         overview.setAmountPaid(payments.stream()
                 .map(Payment::getAmount)
                 .reduce(new Amount(BigInteger.ZERO), (a, b) -> a.add(b)));
-        overview.setPartyId(invoice.getConcerningPartyId());
-        overview.setPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
+        overview.setPayingPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
         return overview;
     }
 
@@ -442,8 +443,8 @@ public class InvoiceService {
                 invoiceOverview.getDescription(),
                 invoiceOverview.getId(),
                 invoiceOverview.getIssueDate(),
-                invoiceOverview.getPartyId(),
-                invoiceOverview.getPartyName());
+                invoiceOverview.getPayingPartyId(),
+                invoiceOverview.getPayingPartyName());
     }
 
 }
