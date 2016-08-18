@@ -143,9 +143,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miEditParties = widgetFactory.createMenuItem("mi.editParties", this);
 
         // the view menu
-        JMenuItem miViewBalanceAndOpertaionalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
-        JMenuItem miViewAccountOverview = widgetFactory.createMenuItem("mi.viewAccountOverview", this);
-        JMenuItem miViewPartyOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", e -> handleInvoiceOverview());
+        JMenuItem miBalanceAndOpertaionalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
+        JMenuItem miAccountOverview = widgetFactory.createMenuItem("mi.viewAccountOverview", this);
+        JMenuItem miInvoiceOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", e -> handleInvoiceOverview());
 
         // the reporting menu
         JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", e -> handleGenerateInvoices());
@@ -169,9 +169,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         editMenu.add(miAddInvoices);
         editMenu.add(miEditParties);
 
-        viewMenu.add(miViewBalanceAndOpertaionalResult);
-        viewMenu.add(miViewAccountOverview);
-        viewMenu.add(miViewPartyOverview);
+        viewMenu.add(miBalanceAndOpertaionalResult);
+        viewMenu.add(miAccountOverview);
+        viewMenu.add(miInvoiceOverview);
 
         reportingMenu.add(miGenerateInvoices);
         reportingMenu.add(miGenerateReport);
