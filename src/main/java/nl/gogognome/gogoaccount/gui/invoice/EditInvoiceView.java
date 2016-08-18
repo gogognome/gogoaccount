@@ -25,6 +25,7 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
+import nl.gogognome.lib.util.StringUtil;
 import nl.gogognome.lib.util.Tuple;
 
 import javax.swing.*;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.Date;
 import java.util.List;
+
+import static java.util.Arrays.asList;
 
 /**
  * This class lets the user edit an existing invoice.
@@ -57,6 +60,7 @@ public class EditInvoiceView extends OkCancelView {
     private StringModel idModel = new StringModel();
     private StringModel amountModel = new StringModel();
     private DateModel dateModel = new DateModel();
+    private StringModel descriptionModel = new StringModel();
     private PartyModel concerningPartyModel = new PartyModel();
     private PartyModel payingPartyModel = new PartyModel();
 
@@ -116,6 +120,7 @@ public class EditInvoiceView extends OkCancelView {
             idModel.setString(initialInvoice.getId());
             idModel.setEnabled(false, null);
             dateModel.setDate(initialInvoice.getIssueDate());
+            descriptionModel.setString(initialInvoice.getDescription());
             concerningPartyModel.setParty(initialInvoice.getConcerningPartyId() != null ? partyService.getParty(document, initialInvoice.getConcerningPartyId()) : null);
             payingPartyModel.setParty(initialInvoice.getPayingPartyId() != null ? partyService.getParty(document, initialInvoice.getPayingPartyId()): null);
             amountModel.setString(amountFormat.formatAmountWithoutCurrency(
@@ -138,13 +143,12 @@ public class EditInvoiceView extends OkCancelView {
         InputFieldsColumn ifc = new InputFieldsColumn();
         addCloseable(ifc);
 
-        ifc.addField("editInvoiceView.id", idModel);
-        ifc.addField("editInvoiceView.issueDate", dateModel);
-        ifc.addVariableSizeField("editInvoiceView.concerningParty",
-        		new PartyBean(document, concerningPartyModel));
-        ifc.addVariableSizeField("editInvoiceView.payingParty",
-        		new PartyBean(document, payingPartyModel));
-        ifc.addField("editInvoiceView.amount", amountModel);
+        ifc.addField("gen.id", idModel);
+        ifc.addField("gen.issueDate", dateModel);
+        ifc.addField("gen.description", descriptionModel);
+        ifc.addVariableSizeField("editInvoiceView.concerningParty", new PartyBean(document, concerningPartyModel));
+        ifc.addVariableSizeField("editInvoiceView.payingParty", new PartyBean(document, payingPartyModel));
+        ifc.addField("gen.amount", amountModel);
 
     	return ifc;
     }
@@ -266,6 +270,12 @@ public class EditInvoiceView extends OkCancelView {
             return;
         }
 
+        String description = descriptionModel.getString();
+        if (StringUtil.isNullOrEmpty(description)) {
+            MessageDialog.showWarningMessage(this, "editInvoiceView.noDescriptionEntered");
+            return;
+        }
+
         Party concerningParty = concerningPartyModel.getParty();
         if (concerningParty == null) {
             MessageDialog.showWarningMessage(this, "editInvoiceView.noConcerningPartyEntered");
@@ -295,10 +305,11 @@ public class EditInvoiceView extends OkCancelView {
         }
 
         editedInvoice = new Invoice(id);
+        editedInvoice.setDescription(description);
+        editedInvoice.setIssueDate(issueDate);
         editedInvoice.setPayingPartyId(payingParty.getId());
         editedInvoice.setConcerningPartyId(concerningParty.getId());
         editedInvoice.setAmountToBePaid(amount);
-        editedInvoice.setIssueDate(issueDate);
         closeAction.actionPerformed(null);
     }
 
@@ -339,15 +350,15 @@ public class EditInvoiceView extends OkCancelView {
     private static class DescriptionAndAmountTableModel extends ListTableModel<Tuple<String, Amount>> {
 
         public DescriptionAndAmountTableModel(AmountFormat amountFormat, List<Tuple<String, Amount>> tuples) {
-        	super(
+        	super(asList(
                     ColumnDefinition.<Tuple<String, Amount>>builder("editInvoiceView.tableHeader.descriptions", String.class, 300)
-                        .add(row -> row.getFirst())
+                        .add(Tuple::getFirst)
                         .build(),
                     ColumnDefinition.<Tuple<String, Amount>>builder("editInvoiceView.tableHeader.amounts", String.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
                         .add(row -> row.getSecond() == null || row.getSecond().isZero() ? null : row.getSecond())
                         .build()
-            );
+            ));
             setRows(tuples);
         }
 
