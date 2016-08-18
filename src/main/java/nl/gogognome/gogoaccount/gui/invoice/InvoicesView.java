@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -35,7 +36,8 @@ public class InvoicesView extends View {
 
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
-    private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesSinglePartyView.edit", this::onEditSelectedInvoice);;
+    private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesSinglePartyView.edit", this::onEditSelectedInvoice);
+    private DocumentListener documentListener;
 
     private JTable table;
     private ListTableModel<InvoiceOverview> invoicesTableModel;
@@ -57,10 +59,21 @@ public class InvoicesView extends View {
     public void onInit() {
         addComponents();
         onSearch();
+        addListeners();
     }
 
     @Override
     public void onClose() {
+        removeListeners();
+    }
+
+    private void addListeners() {
+        documentListener = doc -> onSearch();
+        document.addListener(documentListener);
+    }
+
+    private void removeListeners() {
+        document.removeListener(documentListener);
     }
 
     private void addComponents() {
