@@ -8,7 +8,7 @@ import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
-import nl.gogognome.gogoaccount.gui.controllers.EditInvoiceController;
+import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceController;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;

@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.*;
+import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.models.BooleanModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.models.Tables;
@@ -34,6 +35,7 @@ public class InvoicesView extends View {
 
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
+    private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesSinglePartyView.edit", this::onEditSelectedInvoice);;
 
     private JTable table;
     private ListTableModel<InvoiceOverview> invoicesTableModel;
@@ -65,6 +67,7 @@ public class InvoicesView extends View {
         setLayout(new BorderLayout());
         add(createSearchCriteriaPanel(), BorderLayout.NORTH);
         add(createSearchResultPanel(), BorderLayout.CENTER);
+        add(createButtonPanel(), BorderLayout.EAST);
         setDefaultButton(btSearch);
     }
 
@@ -97,6 +100,12 @@ public class InvoicesView extends View {
         resultPanel.add(widgetFactory.createScrollPane(table), BorderLayout.CENTER);
 
         return resultPanel;
+    }
+
+    private Component createButtonPanel() {
+        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
+        buttonPanel.addButton(editSelectedInvoiceAction);
+        return buttonPanel;
     }
 
     private void showDetailResultPanel(InvoiceOverview selectedInvoice) {
@@ -143,11 +152,11 @@ public class InvoicesView extends View {
     }
 
     private void onSelectionChanged() {
+        boolean exactlyOneInvoiceSelected = Tables.getSelectedRowsConvertedToModel(table).length == 1;
+        editSelectedInvoiceAction.setEnabled(exactlyOneInvoiceSelected);
         hideDetailsResultPanel();
-        int rowIndex = Tables.getSelectedRowConvertedToModel(table);
-        if (rowIndex != -1) {
-            InvoiceOverview selectedInvoice = invoicesTableModel.getRow(rowIndex);
-            showDetailResultPanel(selectedInvoice);
+        if (exactlyOneInvoiceSelected) {
+            showDetailResultPanel(invoicesTableModel.getRow(Tables.getSelectedRowConvertedToModel(table)));
         }
         repaint();
         revalidate();
@@ -187,6 +196,12 @@ public class InvoicesView extends View {
                         .add(new AmountCellRenderer(amountFormat))
                         .add(InvoiceOverview::getAmountPaid)
                         .build()));
+    }
+
+    private void onEditSelectedInvoice() {
+        int rowIndex = Tables.getSelectedRowConvertedToModel(table);
+        InvoiceOverview selectedInvoice = invoicesTableModel.getRow(rowIndex);
+        new EditInvoiceController(this, document, selectedInvoice).execute();
     }
 
     private ListTableModel<InvoiceDetail> buildDetailTableModel(List<InvoiceDetail> details) {

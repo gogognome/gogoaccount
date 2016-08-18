@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.gui.views;
+package nl.gogognome.gogoaccount.gui.invoice;
 
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -9,6 +9,8 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
+import nl.gogognome.gogoaccount.gui.views.EditDescriptionAndAmountView;
+import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -114,8 +116,8 @@ public class EditInvoiceView extends OkCancelView {
             idModel.setString(initialInvoice.getId());
             idModel.setEnabled(false, null);
             dateModel.setDate(initialInvoice.getIssueDate());
-            concerningPartyModel.setParty(partyService.getParty(document, initialInvoice.getConcerningPartyId()));
-            payingPartyModel.setParty(partyService.getParty(document, initialInvoice.getPayingPartyId()));
+            concerningPartyModel.setParty(initialInvoice.getConcerningPartyId() != null ? partyService.getParty(document, initialInvoice.getConcerningPartyId()) : null);
+            payingPartyModel.setParty(initialInvoice.getPayingPartyId() != null ? partyService.getParty(document, initialInvoice.getPayingPartyId()): null);
             amountModel.setString(amountFormat.formatAmountWithoutCurrency(
                 initialInvoice.getAmountToBePaid().toBigInteger()));
         } else {
