@@ -29,7 +29,7 @@ class InvoicesTableModel extends ListTableModel<Invoice> {
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
     private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
-    // TODOL Get rid of service calls!
+    // TODO: Get rid of service calls!
     public InvoicesTableModel(Document document, AmountFormat amountFormat) {
         setColumnDefinitions(
                 ColumnDefinition.<Invoice>builder("gen.id", String.class, 40)
