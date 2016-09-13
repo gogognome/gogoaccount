@@ -1,14 +1,16 @@
-package nl.gogognome.gogoaccount.gui.views;
+package nl.gogognome.gogoaccount.gui.invoice;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceLineDefinition;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
+import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
-import nl.gogognome.gogoaccount.models.AmountModel;
+import nl.gogognome.gogoaccount.gui.views.HandleException;
+import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
@@ -29,7 +31,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.*;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -48,9 +53,9 @@ public class InvoiceGeneratorView extends View {
     private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
 
     private final Document document;
+    private final AmountFormulaParser amountFormulaParser;
 
     private List<Account> accounts;
-    private Currency currency;
 
     JPanel debtorOrCreditorPanel = new JPanel(new GridBagLayout());
     private final JTextField tfDescription = new JTextField();
@@ -66,22 +71,31 @@ public class InvoiceGeneratorView extends View {
     private class TemplateLine {
         private final ListModel<Account> accountListModel = new ListModel<>();
         private StringModel descriptionModel;
-        private AmountModel amountModel;
+        private StringModel amountModel;
+        private AmountFormula amountFormula;
 
-        public TemplateLine(List<Account> accounts, Currency currency) {
-            amountModel = new AmountModel(currency);
+        public TemplateLine(List<Account> accounts) {
+            amountModel = new StringModel();
             descriptionModel = new StringModel();
             accountListModel.setItems(accounts);
             accountListModel.addModelChangeListener(
                     model -> descriptionModel.setString(accountListModel.getSelectedItem() != null ? accountListModel.getSelectedItem().getName() : null));
+            amountModel.addModelChangeListener(model -> {
+                try {
+                    amountFormula = amountFormulaParser.parse(amountModel.getString());
+                } catch (ParseException e) {
+                    amountFormula = null;
+                }
+            });
         }
     }
 
     private final List<TemplateLine> templateLines = new ArrayList<>();
     private JPanel templateLinesPanel;
 
-    public InvoiceGeneratorView(Document document) {
+    public InvoiceGeneratorView(Document document, AmountFormulaParser amountFormulaParser) {
         this.document = document;
+        this.amountFormulaParser = amountFormulaParser;
     }
 
     @Override
@@ -96,7 +110,6 @@ public class InvoiceGeneratorView extends View {
     @Override
     public void onInit() {
         try {
-            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
             accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
             debtorAccountModel = new ListModel<>(accounts.stream().filter(a -> a.getType() == DEBTOR).collect(toList()));
             if (debtorAccountModel.getItems().size() == 1) {
@@ -106,7 +119,6 @@ public class InvoiceGeneratorView extends View {
             if (creditorAccountModel.getItems().size() == 1) {
                 creditorAccountModel.setSelectedIndex(0, null);
             }
-            currency = bookkeeping.getCurrency();
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.error");
             close();
@@ -151,7 +163,7 @@ public class InvoiceGeneratorView extends View {
         templateLinesPanel = new JPanel(new GridBagLayout());
 
         // Add one empty line so the user can start editing the template.
-        templateLines.add(new TemplateLine(accounts, currency));
+        templateLines.add(new TemplateLine(accounts));
 
         updateTemplateLinesPanel();
     }
@@ -254,8 +266,6 @@ public class InvoiceGeneratorView extends View {
         int row = 1;
         for (int i=0; i<templateLines.size(); i++) {
             TemplateLine line = templateLines.get(i);
-            int top = 3;
-            int bottom = 3;
             Bean cbAccount = beanFactory.createComboBoxBean(line.accountListModel, new AccountFormatter());
             templateLinesPanel.add(cbAccount.getComponent(),
                     SwingUtils.createLabelGBConstraints(1, row));
@@ -272,7 +282,7 @@ public class InvoiceGeneratorView extends View {
         }
 
         JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", () -> {
-                templateLines.add(new TemplateLine(accounts, currency));
+                templateLines.add(new TemplateLine(accounts));
                 updateTemplateLinesPanelAndRepaint();
             }
         );
@@ -288,7 +298,7 @@ public class InvoiceGeneratorView extends View {
         HandleException.for_(this, () -> {
             Date date = invoiceGenerationDateModel.getDate();
             List<InvoiceLineDefinition> invoiceLines = templateLines.stream()
-                    .map(line -> new InvoiceLineDefinition(line.amountModel.getAmount(), line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
+                    .map(line -> new InvoiceLineDefinition(line.amountFormula, line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
                     .collect(toList());
 
             if (!validateInput(date, invoiceLines)) {
@@ -331,7 +341,7 @@ public class InvoiceGeneratorView extends View {
         }
 
         for (InvoiceLineDefinition line : invoiceLines) {
-            if (line.getAmount() == null) {
+            if (line.getAmountFormula() == null) {
                 MessageDialog.showMessage(this, "gen.titleError",
                         "invoiceGeneratorView.emptyAmountsFound");
                 return false;

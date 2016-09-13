@@ -25,9 +25,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.*;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
 
@@ -59,6 +57,11 @@ public class InvoiceService {
     // TODO: move creation of journals to ledger component
     public void createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, String id, List<Party> parties,
             Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
+        for (InvoiceLineDefinition line : invoiceLineDefinitions) {
+            if (line.getAmountFormula() == null) {
+                throw new ServiceException("Amount must be filled in for all lines.");
+            }
+        }
         ServiceTransaction.withoutResult(() -> {
             validateInvoice(issueDate, id, debtorOrCreditorAccount, invoiceLineDefinitions);
             boolean changedDatabase = false;
@@ -66,8 +69,10 @@ public class InvoiceService {
             InvoiceDAO invoiceDAO = new InvoiceDAO(document);
             InvoiceDetailDAO invoiceDetailsDAO = new InvoiceDetailDAO(document);
             List<Party> partiesForWhichCreationFailed = new LinkedList<>();
-
+            Map<String, List<String>> partyIdToTags = new PartyService().findPartyIdToTags(document);
             for (Party party : parties) {
+                List<String> tags = partyIdToTags.getOrDefault(party.getId(), emptyList());
+
                 String specificId = replaceKeywords(id, party);
                 String specificDescription =
                         !StringUtil.isNullOrEmpty(description) ? replaceKeywords(description, party) : null;
@@ -77,10 +82,7 @@ public class InvoiceService {
 
                 Amount totalAmount = new Amount(BigInteger.ZERO);
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-                    Amount amount = line.getAmount();
-                    if (amount == null) {
-                        throw new ServiceException("Amount must be filled in for all lines.");
-                    }
+                    Amount amount =  line.getAmountFormula().getAmount(tags);
                     totalAmount = totalAmount.add(amount);
 
                     descriptions.add(line.getDescription());
@@ -101,7 +103,7 @@ public class InvoiceService {
                 List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
                 for (InvoiceLineDefinition line : invoiceLineDefinitions) {
                     JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-                    journalEntryDetail.setAmount(line.getAmount());
+                    journalEntryDetail.setAmount(line.getAmountFormula().getAmount(tags));
                     journalEntryDetail.setAccountId(line.getAccount().getId());
                     journalEntryDetail.setDebet(debtorOrCreditorAccount.getType() != DEBTOR);
                     journalEntryDetails.add(journalEntryDetail);
@@ -175,10 +177,6 @@ public class InvoiceService {
             throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));
         }
         for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-            if (line.getAmount() == null) {
-                throw new ServiceException(tr.getString("InvoiceService.lineWithoutAmount"));
-            }
-
             if (line.getAccount() == null) {
                 throw new ServiceException(tr.getString("InvoiceService.lineWithoutAccount"));
             }

@@ -2,6 +2,7 @@ package nl.gogognome.gogoaccount.component.invoice;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
@@ -67,19 +68,6 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void cannotCreateInvoicesWithoutAmountToBePaidSelected() throws Exception {
-        List<Party> parties = partyService.findAllParties(document);
-        Date issueDate = DateUtil.createDate(2011, 8, 20);
-        List<InvoiceLineDefinition> lines = singletonList(
-                new InvoiceLineDefinition(null, "Zaalhuur", configurationService.getAccount(document, "400")));
-
-        Account debtor = configurationService.getAccount(document, "190");
-        ServiceException exception = assertThrows(ServiceException.class, () ->
-                invoiceService.createInvoiceAndJournalForParties(document, debtor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines));
-        assertEquals("nl.gogognome.dataaccess.DataAccessException: A line without amount has been found!", exception.getMessage());
-    }
-
-    @Test
     public void cannotCreateInvoicesWithoutId() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
@@ -97,12 +85,12 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         List<InvoiceLineDefinition> lines = singletonList(
-                new InvoiceLineDefinition(null, "Zaalhuur", configurationService.getAccount(document, "400")));
+                new InvoiceLineDefinition((AmountFormula) null, "Zaalhuur", configurationService.getAccount(document, "400")));
 
         Account debtor = configurationService.getAccount(document, "190");
         ServiceException exception = assertThrows(ServiceException.class, () ->
             invoiceService.createInvoiceAndJournalForParties(document, debtor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines));
-        assertEquals("nl.gogognome.dataaccess.DataAccessException: A line without amount has been found!", exception.getMessage());
+        assertEquals("Amount must be filled in for all lines.", exception.getMessage());
     }
 
     @Test

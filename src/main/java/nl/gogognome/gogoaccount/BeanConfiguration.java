@@ -3,8 +3,10 @@ package nl.gogognome.gogoaccount;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
+import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.views.ImportBankStatementView;
@@ -81,6 +83,12 @@ public class BeanConfiguration {
     @Scope("prototype")
     public ImportBankStatementView importBankStatementView(Document document, AmountFormat amountFormat) {
         return new ImportBankStatementView(document, amountFormat);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public InvoiceGeneratorView invoiceGeneratorView(Document document, AmountFormulaParser amountFormulaParser) {
+        return new InvoiceGeneratorView(document, amountFormulaParser);
     }
 
     @Bean
