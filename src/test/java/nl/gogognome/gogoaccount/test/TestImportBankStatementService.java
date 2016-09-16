@@ -19,9 +19,6 @@ import static junit.framework.Assert.assertNull;
 
 public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
-	private ConfigurationService configurationService = new ConfigurationService();
-	private ImportBankStatementService importBankStatementService = new ImportBankStatementService();
-	
 	@Test
 	public void testGettersFromImportedTransaction() throws Exception {
 		List<ImportedTransaction> transactions = importRabobankTransactions(

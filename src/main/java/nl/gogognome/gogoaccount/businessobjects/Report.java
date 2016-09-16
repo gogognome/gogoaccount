@@ -44,7 +44,7 @@ public class Report {
         }
     }
 
-    private final Date endDate;
+    private Date endDate;
 
     private List<Account> assets;
     private List<Account> liabilities;
@@ -68,8 +68,11 @@ public class Report {
 
     private TextResource textResource = Factory.getInstance(TextResource.class);
 
-    public Report(Date endDate) {
+    public Report() {
         super();
+    }
+
+    public void setEndDate(Date endDate) {
         this.endDate = endDate;
     }
 

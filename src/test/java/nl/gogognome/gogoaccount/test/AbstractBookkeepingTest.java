@@ -24,6 +24,7 @@ import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
+import nl.gogognome.helpers.TestTextResource;
 import nl.gogognome.lib.swing.RunnableWithException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
@@ -46,24 +47,24 @@ import static junit.framework.Assert.*;
  */
 public abstract class AbstractBookkeepingTest {
 
-    private final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService();
-    private final BookkeepingService bookkeepingService = new BookkeepingService();
-    private final ConfigurationService configurationService = new ConfigurationService();
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    protected final AmountFormat amountFormat = new AmountFormat(Locale.US, Currency.getInstance("EUR"));
+    protected final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
+    protected final PartyService partyService = ObjectFactory.create(PartyService.class);
+    protected final ConfigurationService configurationService = new ConfigurationService();
+    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService);
+    protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), invoiceService, partyService);
+    protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(ledgerService);
+    protected final BookkeepingService bookkeepingService = new BookkeepingService(ledgerService, configurationService, invoiceService, partyService);
 
     protected Document document;
     protected Bookkeeping bookkeeping;
-    protected AmountFormat amountFormat;
     protected Amount zero;
 
     protected Account cash = new Account("100", "Kas", AccountType.ASSET);
     protected Account bankAccount = new Account("101", "Betaalrekening", AccountType.ASSET);
-    protected Account debtors =  new Account("190", "Debiteuren", AccountType.DEBTOR);
+    protected Account debtor =  new Account("190", "Debiteuren", AccountType.DEBTOR);
 
-    protected Account  equity = new Account("200", "Eigen vermogen", AccountType.EQUITY);
+    protected Account equity = new Account("200", "Eigen vermogen", AccountType.EQUITY);
     protected Account creditors = new Account("290", "Crediteuren", AccountType.CREDITOR);
 
     protected Account sportsHallRent = new Account("400", "Zaalhuur", AccountType.EXPENSE);
@@ -77,6 +78,7 @@ public abstract class AbstractBookkeepingTest {
 
     @Before
     public void initBookkeeping() throws Exception {
+        configurationService.setLedgerService(ledgerService);
         initFactory();
 
         document = ObjectFactory.create(DocumentService.class).createNewDocumentInMemory("New bookkeeping");
@@ -133,7 +135,6 @@ public abstract class AbstractBookkeepingTest {
         tr.loadResourceBundle("stringresources");
         Factory.bindSingleton(TextResource.class, tr);
 
-        amountFormat = new AmountFormat(tr.getLocale(), Currency.getInstance("EUR"));
         Factory.bindSingleton(AmountFormat.class, amountFormat);
     }
 
@@ -174,7 +175,7 @@ public abstract class AbstractBookkeepingTest {
         return asList(
                 cash,
                 bankAccount,
-                debtors,
+                debtor,
 
                 equity,
                 creditors,

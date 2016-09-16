@@ -13,7 +13,6 @@ import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.View;
@@ -61,14 +60,18 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private TextResource textResource = Factory.getInstance(TextResource.class);
     private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
-    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
-    private final DocumentService documentService = ObjectFactory.create(DocumentService.class);
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
+    private final BookkeepingService bookkeepingService;
+    private final DocumentService documentService;
+    private final ConfigurationService configurationService;
     private final ViewFactory viewFactory;
     private final DocumentRegistry documentRegistry;
     private final ResourceLoader resourceLoader;
 
-    public MainFrame(ViewFactory viewFactory, DocumentRegistry documentRegistry, ResourceLoader resourceLoader) {
+    public MainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
+                     ViewFactory viewFactory, DocumentRegistry documentRegistry, ResourceLoader resourceLoader) {
+        this.bookkeepingService = bookkeepingService;
+        this.documentService = documentService;
+        this.configurationService = configurationService;
         this.viewFactory = viewFactory;
         this.documentRegistry = documentRegistry;
         this.resourceLoader = resourceLoader;

@@ -1,13 +1,10 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.test.AbstractBookkeepingTest;
 import nl.gogognome.lib.text.Amount;
@@ -24,19 +21,14 @@ import static junit.framework.Assert.*;
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 public class InvoiceServiceTest extends AbstractBookkeepingTest {
 
-    private final ConfigurationService configurationService = new ConfigurationService();
-    private final InvoiceService invoiceService = new InvoiceService();
-    private final LedgerService ledgerService = new LedgerService();
-    private final PartyService partyService = new PartyService();
-
     @Test
     public void whenCreatingInvoiceIdAndNameShouldBeFilledInInvoicesIdAndDescription() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount amount = createAmount(20);
         Account debtor = configurationService.getAccount(document, "190");
-        invoiceService.createInvoiceAndJournalForParties(document, debtor, "inv-{id}", parties, issueDate, "Invoice for {name}",
-                singletonList(new InvoiceLineDefinition(amount, "Zaalhuur", configurationService.getAccount(document, "400"))));
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "inv-{id}", issueDate, "Invoice for {name}", buildSomeLine());
+        ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
 
         for (Party party : parties) {
             Invoice invoice = invoiceService.getInvoice(document, "inv-" + party.getId());
@@ -51,8 +43,8 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Account debtor = configurationService.getAccount(document, "190");
-        invoiceService.createInvoiceAndJournalForParties(document, debtor, "auto", parties, issueDate, "Invoice for {name}",
-                singletonList(new InvoiceLineDefinition(createAmount(20), "Zaalhuur", configurationService.getAccount(document, "400"))));
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", buildSomeLine());
+        ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
 
         Set<String> ids = new HashSet<>();
         for (Party p : parties) {
@@ -71,25 +63,25 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     public void cannotCreateInvoicesWithoutId() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        List<InvoiceLineDefinition> lines = singletonList(
-                new InvoiceLineDefinition(createAmount(20), "Zaalhuur", configurationService.getAccount(document, "400")));
-
         Account debtor = configurationService.getAccount(document, "190");
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, null, issueDate, "Invoice for {name}", buildSomeLine());
+
         ServiceException exception = assertThrows(ServiceException.class, () ->
-                invoiceService.createInvoiceAndJournalForParties(document, debtor, null, parties, issueDate, "Invoice for {name}", lines));
-        assertEquals("nl.gogognome.dataaccess.DataAccessException: An invoice must have an id!", exception.getMessage());
+                ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties));
+
+        assertEquals("An invoice must have an id!", exception.getMessage());
     }
 
     @Test
     public void cannotCreateInvoicesWithoutAmountOnSingleLine() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        List<InvoiceLineDefinition> lines = singletonList(
-                new InvoiceLineDefinition((AmountFormula) null, "Zaalhuur", configurationService.getAccount(document, "400")));
-
+        List<InvoiceTemplateLine> lines = singletonList(new InvoiceTemplateLine((AmountFormula) null, "Zaalhuur", configurationService.getAccount(document, "400")));
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", lines);
         Account debtor = configurationService.getAccount(document, "190");
+
         ServiceException exception = assertThrows(ServiceException.class, () ->
-            invoiceService.createInvoiceAndJournalForParties(document, debtor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines));
+            ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties));
         assertEquals("Amount must be filled in for all lines.", exception.getMessage());
     }
 
@@ -97,27 +89,25 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     public void cannotCreateInvoicesWithoutDebtorOrCreditor() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        Amount a = createAmount(20);
-        List<InvoiceLineDefinition> lines = singletonList(
-                new InvoiceLineDefinition(a, "Zaalhuur", configurationService.getAccount(document, "400")));
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", buildSomeLine());
 
         ServiceException exception = assertThrows(ServiceException.class, () ->
-            invoiceService.createInvoiceAndJournalForParties(document, null, "inv-{id}", parties, issueDate, "Invoice for {name}", lines));
-        assertEquals("nl.gogognome.dataaccess.DataAccessException: Selected account muet have type Debtor or Creditor!", exception.getMessage());
+            ledgerService.createInvoiceAndJournalForParties(document, null, invoiceTemplate, parties));
+
+        assertEquals("resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType", exception.getMessage());
     }
 
     @Test
     public void cannotCreateInvoicesWithAccountThatIsNotDebtorNorCreditor() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        Amount a = createAmount(20);
-        List<InvoiceLineDefinition> lines = singletonList(
-                new InvoiceLineDefinition(a, "Zaalhuur", configurationService.getAccount(document, "400")));
+        Account nonDebtorAndNonCreditor = sportsHallRent;
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", buildSomeLine());
 
-        Account nonDebtorAndNonCreditor = configurationService.getAccount(document, "400");
         ServiceException exception = assertThrows(ServiceException.class, () ->
-            invoiceService.createInvoiceAndJournalForParties(document, nonDebtorAndNonCreditor, "inv-{id}", parties, issueDate, "Invoice for {name}", lines));
-        assertEquals("nl.gogognome.dataaccess.DataAccessException: Selected account muet have type Debtor or Creditor!", exception.getMessage());
+            ledgerService.createInvoiceAndJournalForParties(document, nonDebtorAndNonCreditor, invoiceTemplate, parties));
+
+        assertEquals("resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType", exception.getMessage());
     }
 
     @Test
@@ -218,13 +208,13 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     }
 
     private void createInvoiceWithPayment(String invoiceId, int amountToBePaid, int amountPaid, Party party) throws ServiceException {
-        invoiceService.createInvoiceAndJournalForParties(document,
-                debtors,
-                invoiceId,
-                singletonList(party),
-                DateUtil.createDate(2011, 8, 7),
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, invoiceId, DateUtil.createDate(2011, 8, 7),
                 "Invoice " + invoiceId + " to be paid: " + amountToBePaid + ", paid: " + amountPaid,
-                singletonList(new InvoiceLineDefinition(createAmount(amountToBePaid), "Contribution", contribution)));
+                singletonList(new InvoiceTemplateLine(createAmount(amountToBePaid), "Contribution", contribution)));
+        ledgerService.createInvoiceAndJournalForParties(document,
+                debtor,
+                invoiceTemplate,
+                singletonList(party));
 
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("P9543");
@@ -232,7 +222,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         journalEntry.setDate(DateUtil.createDate(2011, 8, 30));
         List<JournalEntryDetail> details = Arrays.asList(
                 buildJournalEntryDetail(amountPaid, cash.getId(), true, invoiceId, null),
-                buildJournalEntryDetail(amountPaid, debtors.getId(), false)
+                buildJournalEntryDetail(amountPaid, debtor.getId(), false)
         );
         ledgerService.addJournalEntry(document, journalEntry, details, true);
     }
@@ -271,4 +261,9 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     private void assertNotMatches(InvoiceOverview overview, String text) {
         assertFalse(invoiceService.matches(new StringLiteral(text), overview, amountFormat));
     }
+
+    private List<InvoiceTemplateLine> buildSomeLine() throws ServiceException {
+        return singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", configurationService.getAccount(document, "400")));
+    }
+
 }

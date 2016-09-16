@@ -26,36 +26,38 @@ import java.util.Date;
  */
 public class AccountMutationsView extends View {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
     private final Logger logger = LoggerFactory.getLogger(AccountMutationsView.class);
 
-	private Document document;
+    private final Document document;
+    private final BookkeepingService bookkeepingService;
 
-	private JScrollPane tableScrollPane;
-	private AccountOverviewTableModel tableModel;
+    private JScrollPane tableScrollPane;
+    private AccountOverviewTableModel tableModel;
 
-	private DateModel dateModel = new DateModel(new Date());
-	private ListModel<Account> accountListModel = new ListModel<>();
+    private DateModel dateModel = new DateModel(new Date());
+    private ListModel<Account> accountListModel = new ListModel<>();
 
-	private ModelChangeListener modelListener;
-	private DocumentListener documentListener;
+    private ModelChangeListener modelListener;
+    private DocumentListener documentListener;
 
-	private Report report;
+    private Report report;
 
-	public AccountMutationsView(Document document) {
-		super();
-		this.document = document;
-	}
+    public AccountMutationsView(Document document, BookkeepingService bookkeepingService) {
+        super();
+        this.document = document;
+        this.bookkeepingService = bookkeepingService;
+    }
 
-	@Override
-	public String getTitle() {
-		return textResource.getString("AccountMutationsView.title");
-	}
+    @Override
+    public String getTitle() {
+        return textResource.getString("AccountMutationsView.title");
+    }
 
-	@Override
-	public void onInit() {
-		try {
+    @Override
+    public void onInit() {
+        try {
             initModels();
             addComponents();
             addListeners();
@@ -68,93 +70,93 @@ public class AccountMutationsView extends View {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
             close();
         }
-	}
+    }
 
-	private void initModels() {
-		tableModel = new AccountOverviewTableModel();
-		setAccountsInListModel();
-	}
+    private void initModels() {
+        tableModel = new AccountOverviewTableModel();
+        setAccountsInListModel();
+    }
 
-	private void addComponents() {
-		JPanel northPanel = createInputFieldsPanel();
-		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
+    private void addComponents() {
+        JPanel northPanel = createInputFieldsPanel();
+        northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
 
-		JTable table = Tables.createSortedTable(tableModel);
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		tableScrollPane = widgetFactory.createScrollPane(table);
+        JTable table = Tables.createSortedTable(tableModel);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        tableScrollPane = widgetFactory.createScrollPane(table);
 
-		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		setLayout(new BorderLayout());
-		add(northPanel, BorderLayout.NORTH);
-		add(tableScrollPane, BorderLayout.CENTER);
-	}
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setLayout(new BorderLayout());
+        add(northPanel, BorderLayout.NORTH);
+        add(tableScrollPane, BorderLayout.CENTER);
+    }
 
-	private JPanel createInputFieldsPanel() {
-		InputFieldsRow row = new InputFieldsRow();
-		addCloseable(row);
+    private JPanel createInputFieldsPanel() {
+        InputFieldsRow row = new InputFieldsRow();
+        addCloseable(row);
 
-		row.addComboBoxField("AccountMutationsView.account", accountListModel,
-				new AccountFormatter());
-		row.addField("AccountMutationsView.date", dateModel);
+        row.addComboBoxField("AccountMutationsView.account", accountListModel,
+                new AccountFormatter());
+        row.addField("AccountMutationsView.date", dateModel);
 
-		return row;
-	}
+        return row;
+    }
 
-	@Override
-	public void onClose() {
-		removeListeners();
-	}
+    @Override
+    public void onClose() {
+        removeListeners();
+    }
 
-	private void addListeners() {
-		modelListener = new ModelChangeListenerImpl();
-		dateModel.addModelChangeListener(modelListener);
-		accountListModel.addModelChangeListener(modelListener);
+    private void addListeners() {
+        modelListener = new ModelChangeListenerImpl();
+        dateModel.addModelChangeListener(modelListener);
+        accountListModel.addModelChangeListener(modelListener);
 
-		documentListener = new DocumentListenerImpl();
-		document.addListener(documentListener);
-	}
+        documentListener = new DocumentListenerImpl();
+        document.addListener(documentListener);
+    }
 
-	private void removeListeners() {
-		document.removeListener(documentListener);
-		dateModel.removeModelChangeListener(modelListener);
-		accountListModel.removeModelChangeListener(modelListener);
-	}
+    private void removeListeners() {
+        document.removeListener(documentListener);
+        dateModel.removeModelChangeListener(modelListener);
+        accountListModel.removeModelChangeListener(modelListener);
+    }
 
-	private void updateReportAndTableModel() throws ServiceException {
-		Date date = dateModel.getDate();
-		if (date != null) {
-			updateReport(date);
-		} else {
-			report = null;
-		}
+    private void updateReportAndTableModel() throws ServiceException {
+        Date date = dateModel.getDate();
+        if (date != null) {
+            updateReport(date);
+        } else {
+            report = null;
+        }
 
-		updateTableModel();
-	}
+        updateTableModel();
+    }
 
-	private void updateReport(Date date) {
-		try {
-			report = new BookkeepingService().createReport(document, date);
-		} catch (ServiceException e) {
-			report = null;
-			MessageDialog.showErrorMessage(this, e, "gen.internalError");
-		}
-	}
+    private void updateReport(Date date) {
+        try {
+            report = bookkeepingService.createReport(document, date);
+        } catch (ServiceException e) {
+            report = null;
+            MessageDialog.showErrorMessage(this, e, "gen.internalError");
+        }
+    }
 
-	private void updateTableModel() throws ServiceException {
-		Account account = accountListModel.getSelectedItem();
-		tableModel.setAccountAndDate(document, report, account);
+    private void updateTableModel() throws ServiceException {
+        Account account = accountListModel.getSelectedItem();
+        tableModel.setAccountAndDate(document, report, account);
 
-		if (account != null && report != null) {
-			tableScrollPane.setBorder(widgetFactory.createTitleBorder("vao.accountAtDate",
-			        account.getId() + " - " + account.getName(),
-			        textResource.formatDate("gen.dateFormat", report.getEndDate())));
-		} else {
-			tableModel.clear();
-			tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
-		}
-	}
+        if (account != null && report != null) {
+            tableScrollPane.setBorder(widgetFactory.createTitleBorder("vao.accountAtDate",
+                    account.getId() + " - " + account.getName(),
+                    textResource.formatDate("gen.dateFormat", report.getEndDate())));
+        } else {
+            tableModel.clear();
+            tableScrollPane.setBorder(widgetFactory.createTitleBorder("AccountMutationsView.initialTableTitle"));
+        }
+    }
 
-	private void setAccountsInListModel() {
+    private void setAccountsInListModel() {
         try {
             accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
         } catch (ServiceException e) {
@@ -162,9 +164,9 @@ public class AccountMutationsView extends View {
         }
     }
 
-	private final class ModelChangeListenerImpl implements ModelChangeListener {
-		@Override
-		public void modelChanged(AbstractModel model) {
+    private final class ModelChangeListenerImpl implements ModelChangeListener {
+        @Override
+        public void modelChanged(AbstractModel model) {
             try {
                 if (model == accountListModel && report != null) {
                     updateTableModel();
@@ -174,18 +176,18 @@ public class AccountMutationsView extends View {
             } catch (ServiceException e ) {
                 logger.warn("ignored exception: " + e.getMessage(), e);
             }
-		}
-	}
+        }
+    }
 
-	private final class DocumentListenerImpl implements DocumentListener {
-		@Override
-		public void documentChanged(Document document) {
+    private final class DocumentListenerImpl implements DocumentListener {
+        @Override
+        public void documentChanged(Document document) {
             try {
                 setAccountsInListModel();
                 updateReportAndTableModel();
             } catch (ServiceException e) {
                 logger.warn("ignored exception: " + e.getMessage(), e);
             }
-		}
-	}
+        }
+    }
 }

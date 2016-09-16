@@ -18,9 +18,6 @@ import static junit.framework.Assert.*;
 
 public class TestDatabase extends AbstractBookkeepingTest {
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-
     @Test
     public void testGetAllAccounts() throws Exception {
         List<Account> accounts = configurationService.findAllAccounts(document);

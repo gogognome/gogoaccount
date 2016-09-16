@@ -5,17 +5,17 @@ import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.ConstantAmount;
 import nl.gogognome.lib.text.Amount;
 
-public class InvoiceLineDefinition {
+public class InvoiceTemplateLine {
 
     private final AmountFormula amountFormula;
     private final String description;
     private final Account account;
 
-    public InvoiceLineDefinition(Amount amount, String description, Account account) {
+    public InvoiceTemplateLine(Amount amount, String description, Account account) {
         this(new ConstantAmount(amount), description, account);
     }
 
-    public InvoiceLineDefinition(AmountFormula amountFormula, String description, Account account) {
+    public InvoiceTemplateLine(AmountFormula amountFormula, String description, Account account) {
         this.amountFormula = amountFormula;
         this.description = description;
         this.account = account;

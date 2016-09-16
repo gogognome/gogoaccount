@@ -25,12 +25,6 @@ import static org.junit.Assert.*;
 
 public class LedgerServiceTest extends AbstractBookkeepingTest {
 
-    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
-
     @Test
     public void checkThatOneInvoiceExistsAndJournalEntry_t2_generatedAPaymentForTheInvoice() throws ServiceException {
         List<Invoice> invoices = invoiceService.findAllInvoices(document);

@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount;
 
 import nl.gogognome.gogoaccount.gui.MainFrame;
+import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
 import nl.gogognome.lib.gui.beans.BeanFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -52,6 +53,7 @@ public class Start {
         logger.debug("Locale: " + Locale.getDefault());
 
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Start.class).headless(false).web(false).run(args);
+        ctx.getBean(TextResourceRegistry.class).register(Factory.getInstance(TextResource.class));
         MainFrame mainFrame = initFrame(ctx);
 
         if (fileName != null) {

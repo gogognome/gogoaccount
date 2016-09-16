@@ -28,14 +28,14 @@ import static java.util.stream.Collectors.toMap;
 
 public class ReportBuilder {
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
+    private final LedgerService ledgerService;
+    private final PartyService partyService;
 
     private final Document document;
     private final Bookkeeping bookkeeping;
-    private final Report report;
+    private Report report;
 
     private Map<String, Account> idToAccount;
     private Map<Account, Amount> accountToTotalDebet = new HashMap<>();
@@ -45,11 +45,20 @@ public class ReportBuilder {
 
     private TextResource textResource = Factory.getInstance(TextResource.class);
 
-    public ReportBuilder(Document document, Date date) throws ServiceException {
+    public ReportBuilder(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
+                         LedgerService ledgerService, PartyService partyService) throws ServiceException {
         this.document = document;
-        idToAccount = configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
+        this.partyService = partyService;
+        idToAccount = this.configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
         bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-        this.report = new Report(date);
+    }
+
+    public ReportBuilder init() {
+        this.report = new Report();
+        return this;
     }
 
     public Report build() throws ServiceException {
@@ -74,6 +83,10 @@ public class ReportBuilder {
                 report.setBalanceForCreditor(party, balance);
             }
         }
+    }
+
+    public void setEndDate(Date date) {
+        report.setEndDate(date);
     }
 
     public void setAssets(List<Account> assets) {

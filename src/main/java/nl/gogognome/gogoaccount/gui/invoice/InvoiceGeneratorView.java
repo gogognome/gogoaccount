@@ -3,10 +3,11 @@ package nl.gogognome.gogoaccount.gui.invoice;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceLineDefinition;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
@@ -40,6 +41,8 @@ import java.util.List;
 import static java.util.stream.Collectors.toList;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.PURCHASE;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
 
 /**
  * This class implements a view in which the user can generate invoices
@@ -50,7 +53,7 @@ public class InvoiceGeneratorView extends View {
 
     private static final long serialVersionUID = 1L;
 
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final LedgerService ledgerService;
 
     private final Document document;
     private final AmountFormulaParser amountFormulaParser;
@@ -93,7 +96,8 @@ public class InvoiceGeneratorView extends View {
     private final List<TemplateLine> templateLines = new ArrayList<>();
     private JPanel templateLinesPanel;
 
-    public InvoiceGeneratorView(Document document, AmountFormulaParser amountFormulaParser) {
+    public InvoiceGeneratorView(LedgerService ledgerService, Document document, AmountFormulaParser amountFormulaParser) {
+        this.ledgerService = ledgerService;
         this.document = document;
         this.amountFormulaParser = amountFormulaParser;
     }
@@ -297,8 +301,8 @@ public class InvoiceGeneratorView extends View {
     private void onAddInvoicesToBookkeeping() {
         HandleException.for_(this, () -> {
             Date date = invoiceGenerationDateModel.getDate();
-            List<InvoiceLineDefinition> invoiceLines = templateLines.stream()
-                    .map(line -> new InvoiceLineDefinition(line.amountFormula, line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
+            List<InvoiceTemplateLine> invoiceLines = templateLines.stream()
+                    .map(line -> new InvoiceTemplateLine(line.amountFormula, line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
                     .collect(toList());
 
             if (!validateInput(date, invoiceLines)) {
@@ -320,9 +324,11 @@ public class InvoiceGeneratorView extends View {
         });
     }
 
-    private void generateInvoices(Date date, List<InvoiceLineDefinition> invoiceLines, Party[] parties) throws ServiceException {
+    private void generateInvoices(Date date, List<InvoiceTemplateLine> invoiceLines, Party[] parties) throws ServiceException {
         Account account = rbSalesInvoice.isSelected() ? debtorAccountModel.getSelectedItem() : creditorAccountModel.getSelectedItem();
-        invoiceService.createInvoiceAndJournalForParties(document, account, tfId.getText(), Arrays.asList(parties), date, tfDescription.getText(), invoiceLines);
+        InvoiceTemplate.Type type = rbSalesInvoice.isSelected() ? SALE : PURCHASE;
+        InvoiceTemplate template = new InvoiceTemplate(type, tfId.getText(), date, tfDescription.getText(), invoiceLines);
+        ledgerService.createInvoiceAndJournalForParties(document, account, template, Arrays.asList(parties));
     }
 
     private Party[] selectParties() {
@@ -334,13 +340,13 @@ public class InvoiceGeneratorView extends View {
         return partiesView.getSelectedParties();
     }
 
-    private boolean validateInput(Date date, List<InvoiceLineDefinition> invoiceLines) {
+    private boolean validateInput(Date date, List<InvoiceTemplateLine> invoiceLines) {
         if (date == null) {
             MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
             return false;
         }
 
-        for (InvoiceLineDefinition line : invoiceLines) {
+        for (InvoiceTemplateLine line : invoiceLines) {
             if (line.getAmountFormula() == null) {
                 MessageDialog.showMessage(this, "gen.titleError",
                         "invoiceGeneratorView.emptyAmountsFound");

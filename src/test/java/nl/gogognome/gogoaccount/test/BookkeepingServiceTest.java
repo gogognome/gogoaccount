@@ -1,45 +1,27 @@
 package nl.gogognome.gogoaccount.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
+import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
+import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.AccountType;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.util.DateUtil;
-
-import org.junit.Test;
+import static junit.framework.Assert.*;
 
 
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
-
-    private final BookkeepingService bookkeepingService = ObjectFactory.create(BookkeepingService.class);
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
 
     @Test
     public void testStartBalance() throws Exception {

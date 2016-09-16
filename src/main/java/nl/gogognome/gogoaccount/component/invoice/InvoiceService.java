@@ -1,39 +1,37 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
-import nl.gogognome.lib.util.StringUtil;
 import nl.gogognome.textsearch.criteria.Criterion;
 
 import java.math.BigInteger;
-import java.sql.SQLException;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.*;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
 
 public class InvoiceService {
 
     private final ObjectCriterionMatcher objectCriterionMatcher = new ObjectCriterionMatcher();
 
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final AmountFormat amountFormat;
+    private final PartyService partyService;
+
+    public InvoiceService(AmountFormat amountFormat, PartyService partyService) {
+        this.amountFormat = amountFormat;
+        this.partyService = partyService;
+    }
 
     public Invoice getInvoice(Document document, String invoiceId) throws ServiceException {
         return ServiceTransaction.withResult(() -> new InvoiceDAO(document).get(invoiceId));
@@ -43,168 +41,55 @@ public class InvoiceService {
         return ServiceTransaction.withResult(() -> new InvoiceDAO(document).findAll("id"));
     }
 
-    /**
-     * Creates invoices and journals for a number of parties.
-     * @param document the database to which the invoices are to be added.
-     * @param debtorOrCreditorAccount a debtor account for a sales invoice, a creditor account for a purchase invoice
-     * @param id the id of the invoices
-     * @param parties the parties
-     * @param issueDate the date of issue of the invoices
-     * @param description an optional description for the invoices
-     * @param invoiceLineDefinitions the lines of a single invoice
-     * @throws ServiceException if a problem occurs while creating invoices for one or more of the parties
-     */
-    // TODO: move creation of journals to ledger component
-    public void createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, String id, List<Party> parties,
-            Date issueDate, String description, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
-        for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-            if (line.getAmountFormula() == null) {
-                throw new ServiceException("Amount must be filled in for all lines.");
-            }
-        }
-        ServiceTransaction.withoutResult(() -> {
-            validateInvoice(issueDate, id, debtorOrCreditorAccount, invoiceLineDefinitions);
-            boolean changedDatabase = false;
+    public Invoice create(Document document, InvoiceDefinition invoiceDefinition) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            validateInvoice(invoiceDefinition);
 
             InvoiceDAO invoiceDAO = new InvoiceDAO(document);
             InvoiceDetailDAO invoiceDetailsDAO = new InvoiceDetailDAO(document);
-            List<Party> partiesForWhichCreationFailed = new LinkedList<>();
-            Map<String, List<String>> partyIdToTags = new PartyService().findPartyIdToTags(document);
-            for (Party party : parties) {
-                List<String> tags = partyIdToTags.getOrDefault(party.getId(), emptyList());
 
-                String specificId = replaceKeywords(id, party);
-                String specificDescription =
-                        !StringUtil.isNullOrEmpty(description) ? replaceKeywords(description, party) : null;
-
-                List<String> descriptions = new ArrayList<>();
-                List<Amount> amounts = new ArrayList<>();
-
-                Amount totalAmount = new Amount(BigInteger.ZERO);
-                for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-                    Amount amount =  line.getAmountFormula().getAmount(tags);
-                    totalAmount = totalAmount.add(amount);
-
-                    descriptions.add(line.getDescription());
-                    amounts.add(debtorOrCreditorAccount.getType() == DEBTOR ? amount : amount.negate());
-                }
-
-                if (invoiceDAO.exists(specificId)) {
-                    specificId = suggestNewInvoiceId(document, specificId);
-                }
-                Invoice invoice = new Invoice(specificId);
-                invoice.setDescription(specificDescription);
-                invoice.setConcerningPartyId(party.getId());
-                invoice.setPayingPartyId(party.getId());
-                invoice.setAmountToBePaid(debtorOrCreditorAccount.getType() == DEBTOR ? totalAmount : totalAmount.negate());
-                invoice.setIssueDate(issueDate);
-
-                // Create the journal.
-                List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
-                for (InvoiceLineDefinition line : invoiceLineDefinitions) {
-                    JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-                    journalEntryDetail.setAmount(line.getAmountFormula().getAmount(tags));
-                    journalEntryDetail.setAccountId(line.getAccount().getId());
-                    journalEntryDetail.setDebet(debtorOrCreditorAccount.getType() != DEBTOR);
-                    journalEntryDetails.add(journalEntryDetail);
-                }
-
-                JournalEntryDetail totalJournalEntryDetail = new JournalEntryDetail();
-                totalJournalEntryDetail.setAmount(totalAmount);
-                totalJournalEntryDetail.setAccountId(debtorOrCreditorAccount.getId());
-                totalJournalEntryDetail.setDebet(debtorOrCreditorAccount.getType() == DEBTOR);
-                if (debtorOrCreditorAccount.getType() == DEBTOR) {
-                    journalEntryDetails.add(0, totalJournalEntryDetail);
-                } else {
-                    journalEntryDetails.add(totalJournalEntryDetail);
-                }
-
-                JournalEntry journalEntry;
-                try {
-                    journalEntry = new JournalEntry();
-                    journalEntry.setId(specificId);
-                    journalEntry.setDescription(specificDescription);
-                    journalEntry.setDate(issueDate);
-                    journalEntry.setIdOfCreatedInvoice(specificId);
-                } catch (IllegalArgumentException e) {
-                    throw new ServiceException("The debet and credit amounts are not in balance!", e);
-                }
-
-                try {
-                    invoice = invoiceDAO.create(invoice);
-                    invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
-                    LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-                    journalEntry.setIdOfCreatedInvoice(invoice.getId());
-                    ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails);
-                    changedDatabase = true;
-                } catch (SQLException e) {
-                    partiesForWhichCreationFailed.add(party);
-                }
+            String specificId = invoiceDefinition.getId();
+            if (invoiceDAO.exists(specificId)) {
+                specificId = suggestNewInvoiceId(document, specificId);
             }
 
-            if (changedDatabase) {
-                document.notifyChange();
-            }
+            Invoice invoice = new Invoice(specificId);
+            invoice.setDescription(invoiceDefinition.getDescription());
+            invoice.setConcerningPartyId(invoiceDefinition.getParty().getId());
+            invoice.setPayingPartyId(invoiceDefinition.getParty().getId());
+            Amount totalAmount = invoiceDefinition.getTotalAmount();
+            invoice.setAmountToBePaid(invoiceDefinition.getType() == SALE ? totalAmount : totalAmount.negate());
+            invoice.setIssueDate(invoiceDefinition.getIssueDate());
 
-            if (!partiesForWhichCreationFailed.isEmpty()) {
-                if (partiesForWhichCreationFailed.size() == 1) {
-                    Party party = partiesForWhichCreationFailed.get(0);
-                    throw new ServiceException("Failed to create journal for " + party.getId() + " - " + party.getName());
-                } else {
-                    StringBuilder sb = new StringBuilder(1000);
-                    for (Party party : partiesForWhichCreationFailed) {
-                        sb.append('\n').append(party.getId()).append(" - ").append(party.getName());
-                    }
-                    throw new ServiceException("Failed to create journal for the parties:" + sb.toString());
-                }
-            }
+            invoice = invoiceDAO.create(invoice);
+            List<String> descriptions = invoiceDefinition.getLines().stream().map(l -> l.getDescription()).collect(toList());
+            List<Amount> amounts = invoiceDefinition.getLines().stream().map(l -> l.getAmount()).collect(toList());
+            invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
+
+            document.notifyChange();
+            return invoice;
         });
     }
 
-    private void validateInvoice(Date issueDate, String id, Account debtorOrCreditorAccount, List<InvoiceLineDefinition> invoiceLineDefinitions) throws ServiceException {
+    private void validateInvoice(InvoiceDefinition invoiceDefinition) throws ServiceException {
         TextResource tr = Factory.getInstance(TextResource.class);
-        if (issueDate == null) {
+        if (invoiceDefinition.getIssueDate() == null) {
             throw new ServiceException(tr.getString("InvoiceService.issueDateNull"));
         }
-        if (id == null) {
+        if (invoiceDefinition.getId() == null) {
             throw new ServiceException(tr.getString("InvoiceService.idIsNull"));
-    }
-        if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
-            throw new ServiceException(tr.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
         }
-
-        if (invoiceLineDefinitions.isEmpty()) {
+        if (invoiceDefinition.getLines().isEmpty()) {
             throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));
         }
-        for (InvoiceLineDefinition line : invoiceLineDefinitions) {
+        for (InvoiceDefinitionLine line : invoiceDefinition.getLines()) {
             if (line.getAccount() == null) {
                 throw new ServiceException(tr.getString("InvoiceService.lineWithoutAccount"));
             }
-        }
-    }
-
-    /**
-     * Replaces the keywords <code>{id}</code> and <code>{name}</code> with the corresponding
-     * attributes of the specified party.
-     * @param s the string in which the replacement has to be made
-     * @param party the party
-     * @return the string after the replacements have taken place
-     */
-    private static String replaceKeywords(String s, Party party) {
-        StringBuilder sb = new StringBuilder(s);
-        String[] keywords = new String[] { "{id}", "{name}" };
-        String[] values = new String[] {
-                party.getId(), party.getName()
-        };
-
-        for (int k=0; k<keywords.length; k++) {
-            String keyword = keywords[k];
-            String value = values[k];
-            for (int index=sb.indexOf(keyword); index != -1; index=sb.indexOf(keyword)) {
-                sb.replace(index, index+keyword.length(), value);
+            if (line.getAmount() == null) {
+                throw new ServiceException("Amount must be filled in for all lines.");
             }
         }
-        return sb.toString();
     }
 
     /**
@@ -398,8 +283,6 @@ public class InvoiceService {
 
     public List<InvoiceOverview> findInvoiceOverviews(Document document, Criterion criterion, boolean includeClosedInvoices) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            Currency currency = new ConfigurationService().getBookkeeping(document).getCurrency();
-            AmountFormat amountFormat = new AmountFormat(document.getLocale(), currency);
             List<Invoice> invoices = new InvoiceDAO(document).findAll();
             Map<String, List<Payment>> invoiceIdToPayments = new PaymentDAO(document).findAll()
                     .stream()

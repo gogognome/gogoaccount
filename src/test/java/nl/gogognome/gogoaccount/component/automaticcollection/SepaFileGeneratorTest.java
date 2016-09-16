@@ -12,6 +12,7 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.test.AbstractBookkeepingTest;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static java.util.stream.Collectors.toList;
 import static junit.framework.Assert.assertEquals;
@@ -32,12 +34,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.*;
 
 public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
-
-    private final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService();
-    private final ConfigurationService configurationService = new ConfigurationService();
-    private final InvoiceService invoiceService = new InvoiceService();
-    private final LedgerService ledgerService = new LedgerService();
-    private final PartyService partyService = new PartyService();
 
     private final List<Integer> reportedProgress = new ArrayList<>();
     private final TaskProgressListener progressListener = p -> reportedProgress.add(p);

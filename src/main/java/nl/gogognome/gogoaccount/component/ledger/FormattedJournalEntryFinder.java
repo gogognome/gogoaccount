@@ -19,10 +19,15 @@ import java.util.List;
 public class FormattedJournalEntryFinder {
 
     private final ObjectCriterionMatcher objectCriterionMatcher = new ObjectCriterionMatcher();
-    private final LedgerService ledgerService = new LedgerService();
-    private final InvoiceService invoiceService = new InvoiceService();
+    private final LedgerService ledgerService;
+    private final InvoiceService invoiceService;
     private final PartyService partyService = new PartyService();
     private Logger logger = LoggerFactory.getLogger(LedgerService.class);
+
+    public FormattedJournalEntryFinder(LedgerService ledgerService, InvoiceService invoiceService) {
+        this.ledgerService = ledgerService;
+        this.invoiceService = invoiceService;
+    }
 
     FormattedJournalEntry format(Document document, JournalEntry journalEntry) {
         FormattedJournalEntry formattedJournalEntry = new FormattedJournalEntry();

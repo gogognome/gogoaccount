@@ -4,21 +4,38 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.invoice.*;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.Factory;
 import nl.gogognome.textsearch.criteria.Criterion;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyList;
+import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
+import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.PURCHASE;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
+
 public class LedgerService {
+
+    private final TextResource textResource;
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
+
+    public LedgerService(TextResource textResource, InvoiceService invoiceService, PartyService partyService) {
+        this.textResource = textResource;
+        this.invoiceService = invoiceService;
+        this.partyService = partyService;
+    }
 
     public JournalEntry findJournalEntry(Document document, String id) throws ServiceException {
         return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findById(id));
@@ -29,12 +46,118 @@ public class LedgerService {
     }
 
     public List<FormattedJournalEntry> findFormattedJournalEntries(Document document, Criterion criterion) throws ServiceException {
-        FormattedJournalEntryFinder formattedJournalEntryFinder = new FormattedJournalEntryFinder();
+        FormattedJournalEntryFinder formattedJournalEntryFinder = new FormattedJournalEntryFinder(this, invoiceService);
         return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findAll("date")
             .stream()
             .map(journalEntry -> formattedJournalEntryFinder.format(document, journalEntry))
             .filter(journalEntry -> formattedJournalEntryFinder.matches(criterion, journalEntry))
             .collect(Collectors.toList()));
+    }
+
+    /**
+     * Creates invoices and journals for a number of parties.
+     * @param document the database to which the invoices are to be added.
+     * @param debtorOrCreditorAccount a debtor account for a sales invoice, a creditor account for a purchase invoice
+     * @param invoiceTemplate the definition of the invoice
+     * @param parties the parties
+     * @throws ServiceException if a problem occurs while creating invoices for one or more of the parties
+     */
+    public void createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, InvoiceTemplate invoiceTemplate,
+                                                  List<Party> parties) throws ServiceException {
+        if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
+            throw new ServiceException(textResource.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
+        }
+        if (debtorOrCreditorAccount.getType() == DEBTOR && invoiceTemplate.getType() != SALE) {
+            throw new ServiceException(textResource.getString("InvoiceService.salesInvoiceMustHaveDebtor"));
+        }
+        if (debtorOrCreditorAccount.getType() == CREDITOR && invoiceTemplate.getType() != PURCHASE) {
+            throw new ServiceException(textResource.getString("InvoiceService.purchaseInvoiceMustHaveCreditor"));
+        }
+
+        validateInvoice(invoiceTemplate);
+
+        ServiceTransaction.withoutResult(() -> {
+            List<Party> partiesForWhichCreationFailed = new LinkedList<>();
+            Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
+            for (Party party : parties) {
+                List<String> tags = partyIdToTags.getOrDefault(party.getId(), emptyList());
+                InvoiceDefinition invoiceDefinition = invoiceTemplate.getInvoiceDefinitionFor(party, tags);
+
+                try {
+                    Invoice invoice = invoiceService.create(document, invoiceDefinition);
+                    JournalEntry journalEntry = buildJournalEntry(invoice);
+                    List<JournalEntryDetail> journalEntryDetails = buildJournalEntryDetails(debtorOrCreditorAccount, invoiceDefinition);
+                    addJournalEntry(document, journalEntry, journalEntryDetails);
+                } catch (ServiceException e) {
+                    partiesForWhichCreationFailed.add(party);
+                }
+            }
+
+            if (!partiesForWhichCreationFailed.isEmpty()) {
+                if (partiesForWhichCreationFailed.size() == 1) {
+                    Party party = partiesForWhichCreationFailed.get(0);
+                    throw new ServiceException("Failed to create journal for " + party.getId() + " - " + party.getName());
+                } else {
+                    StringBuilder sb = new StringBuilder(1000);
+                    for (Party party : partiesForWhichCreationFailed) {
+                        sb.append('\n').append(party.getId()).append(" - ").append(party.getName());
+                    }
+                    throw new ServiceException("Failed to create journal for the parties:" + sb.toString());
+                }
+            }
+        });
+    }
+
+    private JournalEntry buildJournalEntry(Invoice invoice) {
+        JournalEntry journalEntry = new JournalEntry();
+        journalEntry.setDescription(invoice.getDescription());
+        journalEntry.setDate(invoice.getIssueDate());
+        journalEntry.setId(invoice.getId());
+        journalEntry.setIdOfCreatedInvoice(invoice.getId());
+        return journalEntry;
+    }
+
+    private List<JournalEntryDetail> buildJournalEntryDetails(Account debtorOrCreditorAccount, InvoiceDefinition invoiceDefinition) {
+        List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
+        for (InvoiceDefinitionLine line : invoiceDefinition.getLines()) {
+            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+            journalEntryDetail.setAmount(line.getAmount());
+            journalEntryDetail.setAccountId(line.getAccount().getId());
+            journalEntryDetail.setDebet(invoiceDefinition.getType() != SALE);
+            journalEntryDetails.add(journalEntryDetail);
+        }
+
+        JournalEntryDetail totalJournalEntryDetail = new JournalEntryDetail();
+        totalJournalEntryDetail.setAmount(invoiceDefinition.getTotalAmount());
+        totalJournalEntryDetail.setAccountId(debtorOrCreditorAccount.getId());
+        totalJournalEntryDetail.setDebet(invoiceDefinition.getType() == SALE);
+        if (invoiceDefinition.getType() == SALE) {
+            journalEntryDetails.add(0, totalJournalEntryDetail);
+        } else {
+            journalEntryDetails.add(totalJournalEntryDetail);
+        }
+        return journalEntryDetails;
+    }
+
+    private void validateInvoice(InvoiceTemplate invoiceTemplate) throws ServiceException {
+        TextResource tr = Factory.getInstance(TextResource.class);
+        if (invoiceTemplate.getIssueDate() == null) {
+            throw new ServiceException(tr.getString("InvoiceService.issueDateNull"));
+        }
+        if (invoiceTemplate.getId() == null) {
+            throw new ServiceException(tr.getString("InvoiceService.idIsNull"));
+        }
+        if (invoiceTemplate.getLines().isEmpty()) {
+            throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));
+        }
+        for (InvoiceTemplateLine line : invoiceTemplate.getLines()) {
+            if (line.getAccount() == null) {
+                throw new ServiceException(tr.getString("InvoiceService.lineWithoutAccount"));
+            }
+            if (line.getAmountFormula() == null) {
+                throw new ServiceException("Amount must be filled in for all lines.");
+            }
+        }
     }
 
     /**
@@ -136,7 +259,7 @@ public class LedgerService {
         payment.setAmount(amount);
         payment.setDate(date);
         payment.setInvoiceId(journalEntryDetail.getInvoiceId());
-        return ObjectFactory.create(InvoiceService.class).createPayment(document, payment);
+        return invoiceService.createPayment(document, payment);
     }
 
     /**
@@ -146,7 +269,6 @@ public class LedgerService {
     public void updateJournal(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             // Update payments. Remove payments from old journal and add payments of the new journal.
-            InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
             List<JournalEntryDetail> oldJournalEntryDetails = journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId());
             journalEntryDetailDAO.deleteByJournalEntry(journalEntry.getUniqueId());
@@ -178,7 +300,6 @@ public class LedgerService {
      */
     public void removeJournal(Document document, JournalEntry journalEntry) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
-            InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
             List<JournalEntryDetail> journalEntryDetails = journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId());
             for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {

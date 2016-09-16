@@ -26,13 +26,20 @@ import java.util.*;
  */
 public class BookkeepingService {
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final LedgerService ledgerService;
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
+
+    public BookkeepingService(LedgerService ledgerService, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService) {
+        this.ledgerService = ledgerService;
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.partyService = partyService;
+    }
 
     public Document closeBookkeeping(Document document, File newBookkeepingFile, String description, Date date, Account equity) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-
             Document newDocument = ObjectFactory.create(DocumentService.class).createNewDocument(newBookkeepingFile, "New bookkeeping");
             newDocument.setFileName(null);
             ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
@@ -130,26 +137,28 @@ public class BookkeepingService {
     // TODO: move to new report component
     public Report createReport(Document document, Date date) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            ReportBuilder rb = new ReportBuilder(document, date);
-            rb.setAssets(configurationService.findAssets(document));
-            rb.setLiabilities(configurationService.findLiabilities(document));
-            rb.setExpenses(configurationService.findExpenses(document));
-            rb.setRevenues(configurationService.findRevenues(document));
+            ReportBuilder reportBuilder = new ReportBuilder(document, configurationService, invoiceService, ledgerService, partyService);
+            reportBuilder.init();
+            reportBuilder.setEndDate(date);
+            reportBuilder.setAssets(configurationService.findAssets(document));
+            reportBuilder.setLiabilities(configurationService.findLiabilities(document));
+            reportBuilder.setExpenses(configurationService.findExpenses(document));
+            reportBuilder.setRevenues(configurationService.findRevenues(document));
 
-            List<JournalEntry> journalEntries = ObjectFactory.create(LedgerService.class).findJournalEntries(document);
+            List<JournalEntry> journalEntries = ledgerService.findJournalEntries(document);
             for (JournalEntry journalEntry : journalEntries) {
                 if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
-                    rb.addJournal(journalEntry);
+                    reportBuilder.addJournal(journalEntry);
                 }
             }
 
             for (Invoice invoice : invoiceService.findAllInvoices(document)) {
                 if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
-                    rb.addInvoice(invoice);
+                    reportBuilder.addInvoice(invoice);
                 }
             }
 
-            return rb.build();
+            return reportBuilder.build();
         });
     }
 

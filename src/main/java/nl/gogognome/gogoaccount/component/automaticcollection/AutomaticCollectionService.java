@@ -17,7 +17,6 @@ import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.AmountFormat;
 
-import javax.print.Doc;
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -33,6 +32,12 @@ import java.util.*;
 import static java.util.stream.Collectors.toList;
 
 public class AutomaticCollectionService {
+
+    private final LedgerService ledgerService;
+
+    public AutomaticCollectionService(LedgerService ledgerService) {
+        this.ledgerService = ledgerService;
+    }
 
     public AutomaticCollectionSettings getSettings(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> new AutomaticCollectionSettingsDAO(document).getSettings());
@@ -151,7 +156,7 @@ public class AutomaticCollectionService {
             detail.setDebet(false);
             details.add(detail);
         }
-        ObjectFactory.create(LedgerService.class).addJournalEntry(document, journalEntry, details, true);
+        ledgerService.addJournalEntry(document, journalEntry, details, true);
     }
 
     public void createCsvForAutomaticCollectionFile(Document document, File csvFile, List<Invoice> invoices) throws ServiceException {
