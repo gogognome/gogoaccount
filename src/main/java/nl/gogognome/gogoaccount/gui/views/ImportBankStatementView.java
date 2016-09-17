@@ -7,15 +7,17 @@ import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
 import nl.gogognome.gogoaccount.component.importer.RabobankCSVImporter;
 import nl.gogognome.gogoaccount.component.importer.TransactionImporter;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.settings.SettingsService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -53,10 +55,14 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final static Logger LOGGER = LoggerFactory.getLogger(ImportBankStatementView.class);
     public static final String IMPORT_BANK_STATEMENT_VIEW_PATH = "ImportBankStatementView.path";
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
-    private final SettingsService settingsService = ObjectFactory.create(SettingsService.class);
+    private final ConfigurationService configurationService;
+    private final LedgerService ledgerService;
+    private final ImportBankStatementService importBankStatementService;
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
+    private final SettingsService settingsService;
+    private final ViewFactory viewFactory;
+    private final EditJournalController editJournalController;
 
     private FileModel fileSelectionModel = new FileModel();
 
@@ -75,9 +81,18 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final Document document;
     private final AmountFormat amountFormat;
 
-    public ImportBankStatementView(Document document, AmountFormat amountFormat) {
+    public ImportBankStatementView(Document document, AmountFormat amountFormat, ConfigurationService configurationService, ImportBankStatementService importBankStatementService, InvoiceService invoiceService, LedgerService ledgerService,
+                                   PartyService partyService, SettingsService settingsService, ViewFactory viewFactory, EditJournalController editJournalController) {
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
+        this.importBankStatementService = importBankStatementService;
+        this.partyService = partyService;
+        this.settingsService = settingsService;
         this.document = document;
         this.amountFormat = amountFormat;
+        this.viewFactory = viewFactory;
+        this.editJournalController = editJournalController;
     }
 
     @Override
@@ -122,11 +137,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         importPanel.setBorder(widgetFactory.createTitleBorderWithPadding("importBankStatementView.importSettings"));
 
         // Create table of journals
-        transactionJournalsTableModel = new TransactionsJournalsTableModel(amountFormat, document);
+        transactionJournalsTableModel = new TransactionsJournalsTableModel(amountFormat, invoiceService, partyService, document);
         transactionsJournalsTable = Tables.createSortedTable(transactionJournalsTableModel);
 
         // Create table of items
-        itemsTableModel = new JournalEntryDetailsTableModel(document);
+        itemsTableModel = new JournalEntryDetailsTableModel(document, configurationService, invoiceService, partyService);
         JTable itemsTable = Tables.createTable(itemsTableModel);
         itemsTable.setRowSelectionAllowed(false);
         itemsTable.setColumnSelectionAllowed(false);
@@ -247,17 +262,19 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         int row = getSelectedRowIndexInTableModel();
         if (row != -1) {
             JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
-            EditJournalController controller = new EditJournalController(this, document, journalEntry);
-            controller.execute();
-            if (controller.isJournalUpdated()) {
-                updateTransactionJournal(row, controller.getUpdatedJournalEntry());
+            editJournalController.setOwner(this);
+            editJournalController.setJournalEntry(journalEntry);
+            editJournalController.execute();
+            if (editJournalController.isJournalUpdated()) {
+                updateTransactionJournal(row, editJournalController.getUpdatedJournalEntry());
             }
         }
     }
 
     private void addJournalForSelectedTransaction() {
         HandleException.for_(this, () -> {
-            AddJournalForTransactionView view = new AddJournalForTransactionView(document, this);
+            AddJournalForTransactionView view = (AddJournalForTransactionView) viewFactory.createView(AddJournalForTransactionView.class);
+            view.setInitialValuesPlugin(this);
             ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();
         });

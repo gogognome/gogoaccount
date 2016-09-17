@@ -7,7 +7,6 @@ import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
@@ -32,6 +31,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 	private static final long serialVersionUID = 1L;
 
     private final Document document;
+    private final BookkeepingService bookkeepingService;
     private final DateModel dateModel;
     private final BalanceSheet balanceSheet;
 
@@ -42,14 +42,10 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
     private final WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
-    /**
-     * Creates a new <code>OperationalResultComponent</code>.
-     * @param document the database used to create the operational result
-     * @param dateModel the date model used to determine the date of the operational result
-     */
-    public OperationalResultComponent(Document document, DateModel dateModel) throws ServiceException {
+    public OperationalResultComponent(Document document, BookkeepingService bookkeepingService, DateModel dateModel) throws ServiceException {
         super();
         this.document = document;
+        this.bookkeepingService = bookkeepingService;
         this.dateModel = dateModel;
 
         TextResource textResource = Factory.getInstance(TextResource.class);
@@ -87,7 +83,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
         }
 
         try {
-			report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
+			report = bookkeepingService.createReport(document, date);
 
             setBorder(widgetFactory.createTitleBorder("operationalResultComponent.title",
                     report.getEndDate()));

@@ -5,11 +5,11 @@ import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.views.EditJournalView;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
 
@@ -20,30 +20,35 @@ import java.awt.*;
  */
 public class EditJournalController {
 
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-	private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final InvoiceService invoiceService;
+	private final LedgerService ledgerService;
+    private final ViewFactory viewFactory;
 
     private Component owner;
     private Document document;
     private JournalEntry journalEntry;
     private JournalEntry updatedJournalEntry;
 
-    /**
-     * Constructs the controller.
-     * @param owner the component that uses this controller
-     * @param document the database
-     * @param journalEntry the journal to be edited
-     */
-    public EditJournalController(Component owner, Document document, JournalEntry journalEntry) {
-        super();
-        this.owner = owner;
+    public EditJournalController(Document document, InvoiceService invoiceService, LedgerService ledgerService, ViewFactory viewFactory) {
         this.document = document;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
+        this.viewFactory = viewFactory;
+    }
+
+    public void setOwner(Component owner) {
+        this.owner = owner;
+    }
+
+    public void setJournalEntry(JournalEntry journalEntry) {
         this.journalEntry = journalEntry;
     }
 
     public void execute() {
         HandleException.for_(owner, () -> {
-			EditJournalView view = new EditJournalView(document, "ejd.editJournalTitle", journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
+			EditJournalView view = (EditJournalView) viewFactory.createView(EditJournalView.class);
+            view.setJournalEntryToBeEdited(journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
+            view.setTitle("ejd.editJournalTitle");
 			ViewDialog dialog = new ViewDialog(owner, view);
 			dialog.showDialog();
 

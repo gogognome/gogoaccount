@@ -3,12 +3,15 @@ package nl.gogognome.gogoaccount.gui.views;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
+import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
-import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.text.AmountFormat;
@@ -29,31 +32,27 @@ public class AddJournalForTransactionView extends EditJournalView {
         void journalAdded(JournalEntry journalEntry);
     }
 
-    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
+    private final ImportBankStatementService importBankStatementService;
 
     private Plugin plugin;
 
     private ImportedTransaction importedTransaction;
 
     private JLabel fromAccount = new JLabel();
-
     private JLabel amount = new JLabel();
-
     private JLabel date = new JLabel();
-
     private JLabel toAccount = new JLabel();
-
     private JLabel description = new JLabel();
 
-    /**
-     * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
-     * To add one or more new journals, set <code>journal</code> to <code>null</code>.
-     *
-     * @param document the database to which the journal must be added
-     * @param plugin plugin used to determine initial values for a new journal
-     */
-    public AddJournalForTransactionView(Document document, Plugin plugin) {
-        super(document, "ajd.title", null, null);
+    public AddJournalForTransactionView(Document document, ConfigurationService configurationService,
+                                        ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
+                                        PartyService partyService, ViewFactory viewFactory) {
+        super(document, configurationService, invoiceService, partyService, viewFactory);
+        this.importBankStatementService = importBankStatementService;
+        setTitle("ajd.title");
+    }
+
+    public void setInitialValuesPlugin(Plugin plugin) {
         this.plugin = plugin;
     }
 

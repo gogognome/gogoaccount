@@ -33,9 +33,9 @@ public class ConfigureBookkeepingView extends View {
     private static final long serialVersionUID = 1L;
 
     private final Document document;
-    private final AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final AutomaticCollectionService automaticCollectionService;
+    private final ConfigurationService configurationService;
+    private final LedgerService ledgerService;
 
     private final StringModel descriptionModel = new StringModel();
     private final ListModel<Currency> currencyModel = new ListModel<>();
@@ -62,12 +62,11 @@ public class ConfigureBookkeepingView extends View {
     private JPanel settingsPanel = new JPanel(new BorderLayout());
     private InputFieldsColumn automaticCollectionInputFields;
 
-    /**
-     * Constructor.
-     * @param document the database whose bookkeeping is to be configured.
-     */
-    public ConfigureBookkeepingView(Document document) {
+    public ConfigureBookkeepingView(Document document, AutomaticCollectionService automaticCollectionService, ConfigurationService configurationService, LedgerService ledgerService) {
         this.document = document;
+        this.automaticCollectionService = automaticCollectionService;
+        this.configurationService = configurationService;
+        this.ledgerService = ledgerService;
     }
 
     @Override

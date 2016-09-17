@@ -1,10 +1,14 @@
 package nl.gogognome.gogoaccount.gui.views;
 
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -33,18 +37,23 @@ public class EditJournalView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-    protected Document document;
+    protected final Document document;
+    private InputFieldsColumn valuesEditPanel;
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
+    private final ViewFactory viewFactory;
 
     private String titleId;
 
     /**
-     * The journal used to initialize the view. <code>null</code> indicates that a new journal
+     * The journal used to initialize the editJournalEntryDetailView. <code>null</code> indicates that a new journal
      * is to be edited.
      */
     protected JournalEntry journalEntryToBeEdited;
 
     /**
-     * The journal details used to initialize the view. <code>null</code> indicates that a new journal
+     * The journal details used to initialize the editJournalEntryDetailView. <code>null</code> indicates that a new journal
      * is to be edited.
      */
     protected List<JournalEntryDetail> journalEntryDetailsToBeEdited;
@@ -56,37 +65,29 @@ public class EditJournalView extends View {
     private String idOfCreatedInvoice;
 
     protected StringModel idModel = new StringModel();
-
     protected StringModel descriptionModel = new StringModel();
-
     private JTable journalEntryDetailsTable;
-
     protected JournalEntryDetailsTableModel journalEntryDetailsTableModel;
-
-    /** The date model used to edit the date. */
     protected DateModel dateModel = new DateModel();
-
-    /** The journal edited by the journal. This will only be filled when the user is editing a journal. */
     protected JournalEntry editedJournalEntry;
-
     protected List<JournalEntryDetail> editedJournalEntryDetails;
 
-    private InputFieldsColumn valuesEditPanel;
-
-    /**
-     * Constructor. To edit an existing journal, give <code>journal</code> a non-<code>null</code> value.
-     * To add one or more new journals, set <code>journal</code> to <code>null</code>.
-     *
-     * @param document the database to which the journal must be added
-     * @param titleId the id of the title
-     * @param journalEntry the journal used to initialize the elements of the view. Must be <code>null</code>
-     *        to edit a new journal
-     */
-    public EditJournalView(Document document, String titleId, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
+    public EditJournalView(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
+                           PartyService partyService, ViewFactory viewFactory) {
         this.document = document;
-        this.titleId = titleId;
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.partyService = partyService;
+        this.viewFactory = viewFactory;
+    }
+
+    public void setJournalEntryToBeEdited(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
         this.journalEntryToBeEdited = journalEntry;
         this.journalEntryDetailsToBeEdited = journalEntryDetails;
+    }
+
+    public void setTitle(String titleId) {
+        this.titleId = titleId;
     }
 
     @Override
@@ -97,7 +98,7 @@ public class EditJournalView extends View {
 
     private void initModels() {
         try {
-            journalEntryDetailsTableModel = new JournalEntryDetailsTableModel(document);
+            journalEntryDetailsTableModel = new JournalEntryDetailsTableModel(document, configurationService, invoiceService, partyService);
 
             initModelsForJournal(journalEntryToBeEdited, journalEntryDetailsToBeEdited);
         } catch (ServiceException e) {
@@ -123,7 +124,7 @@ public class EditJournalView extends View {
 	}
 
 	/**
-     * Adds components to the view.
+     * Adds components to the editJournalEntryDetailView.
      */
     private void addComponents() {
         InputFieldsColumn vep = new InputFieldsColumn();
@@ -260,12 +261,12 @@ public class EditJournalView extends View {
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() throws ServiceException {
         HandleException.for_(this, () -> {
-            JournalEntryDetail defaultItem = createDefaultItemToBeAdded();
-            EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, defaultItem);
-            ViewDialog dialog = new ViewDialog(this, view);
+            EditJournalEntryDetailView editJournalEntryDetailView = (EditJournalEntryDetailView) viewFactory.createView(EditJournalEntryDetailView.class);
+            editJournalEntryDetailView.setItemToBeEdited(createDefaultItemToBeAdded());
+            ViewDialog dialog = new ViewDialog(this, editJournalEntryDetailView);
             dialog.showDialog();
 
-            JournalEntryDetail item = view.getEnteredJournalEntryDetail();
+            JournalEntryDetail item = editJournalEntryDetailView.getEnteredJournalEntryDetail();
             if (item != null) {
                 journalEntryDetailsTableModel.addRow(item);
             }
@@ -289,11 +290,12 @@ public class EditJournalView extends View {
             if (row != -1) {
                 JournalEntryDetail item = journalEntryDetailsTableModel.getRow(row);
                 if (item != null) {
-                    EditJournalEntryDetailView view = new EditJournalEntryDetailView(document, item);
-                    ViewDialog dialog = new ViewDialog(this, view);
+                    EditJournalEntryDetailView editJournalEntryDetailView = (EditJournalEntryDetailView) viewFactory.createView(EditJournalEntryDetailView.class);
+                    editJournalEntryDetailView.setItemToBeEdited(item);
+                    ViewDialog dialog = new ViewDialog(this, editJournalEntryDetailView);
                     dialog.showDialog();
 
-                    item = view.getEnteredJournalEntryDetail();
+                    item = editJournalEntryDetailView.getEnteredJournalEntryDetail();
                     if (item != null) {
                         journalEntryDetailsTableModel.updateRow(row, item);
                     }
@@ -309,7 +311,7 @@ public class EditJournalView extends View {
 
     /**
      * Gets the journal entered by the user. This method only returns a non-<code>null</code> value
-     * if this view was initialized with a journal and the user closed the view by pressing the
+     * if this editJournalEntryDetailView was initialized with a journal and the user closed the editJournalEntryDetailView by pressing the
      * Ok button. Otherwise, this method returns <code>null</code>.
      * @return the journal entered by the user or <code>null</code>
      */

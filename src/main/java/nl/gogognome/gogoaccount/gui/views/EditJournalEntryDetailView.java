@@ -29,8 +29,8 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     private static final long serialVersionUID = 1L;
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
 
     private Document document;
     private InvoiceBean invoiceBean;
@@ -44,14 +44,14 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     private AmountFormat amountFormat;
 
-    /**
-     * Constructor.
-     * @param document the database
-     * @param item the item used to fill in the initial values of the fields.
-     */
-    public EditJournalEntryDetailView(Document document, JournalEntryDetail item) {
+    public EditJournalEntryDetailView(Document document, ConfigurationService configurationService, InvoiceService invoiceService) {
         this.document = document;
-        this.itemToBeEdited = item;
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+    }
+
+    public void setItemToBeEdited(JournalEntryDetail itemToBeEdited) {
+        this.itemToBeEdited = itemToBeEdited;
     }
 
     @Override
@@ -87,6 +87,10 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
             if (itemToBeEdited != null) {
                 initModelsForItemToBeEdited();
+            } else {
+                accountListModel.setSelectedIndex(0, null);
+                amountModel.setString(null);
+                sideListModel.setSelectedIndex(0, null);
             }
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");

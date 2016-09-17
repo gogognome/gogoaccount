@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.CommandLinePropertySource;
+import org.springframework.core.env.SimpleCommandLinePropertySource;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
@@ -48,11 +50,13 @@ public class Start {
 
     private void startApplication(String[] args) {
         initFactory(Locale.getDefault());
-        parseArguments(args);
+        CommandLinePropertySource clps = new SimpleCommandLinePropertySource(args);
+        parseArguments(clps);
         DefaultLookAndFeel.useDefaultLookAndFeel();
         logger.debug("Locale: " + Locale.getDefault());
 
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Start.class).headless(false).web(false).run(args);
+        ctx.getEnvironment().getPropertySources().addFirst(clps);
         ctx.getBean(TextResourceRegistry.class).register(Factory.getInstance(TextResource.class));
         MainFrame mainFrame = initFrame(ctx);
 
@@ -95,17 +99,17 @@ public class Start {
         Factory.bindSingleton(AmountFormat.class, new AmountFormat(locale, Currency.getInstance("EUR")));
     }
 
-    /**
-     * Parses arguments: language must be set before creating main frame
-     * @param args command line arguments
-     */
-    private void parseArguments(String[] args) {
-        for (String arg : args) {
-            if (arg.startsWith("-lang=")) {
-                Locale locale = new Locale(arg.substring(6));
-                initFactory(locale);
-            } else {
-                fileName = arg;
+    private void parseArguments(CommandLinePropertySource commandLinePropertySource) {
+        if (commandLinePropertySource.containsProperty("lang")) {
+            Locale locale = new Locale(commandLinePropertySource.getProperty("lang"));
+            initFactory(locale);
+        }
+
+        if (commandLinePropertySource.containsProperty("nonOptionArgs")) {
+            fileName = commandLinePropertySource.getProperty("nonOptionArgs");
+            int index = fileName.indexOf(',');
+            if (index != -1) {
+                fileName = fileName.substring(0, index);
             }
         }
     }

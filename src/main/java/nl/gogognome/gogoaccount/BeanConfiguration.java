@@ -1,27 +1,31 @@
 package nl.gogognome.gogoaccount;
 
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
+import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
+import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
+import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceController;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
-import nl.gogognome.gogoaccount.gui.views.AccountMutationsView;
-import nl.gogognome.gogoaccount.gui.views.ImportBankStatementView;
+import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
-import org.springframework.beans.BeansException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -29,12 +33,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.core.io.ResourceLoader;
 
-import java.lang.reflect.Constructor;
 import java.util.Currency;
 import java.util.Locale;
 
 @Configuration
 public class BeanConfiguration {
+
+    private final Logger logger = LoggerFactory.getLogger(BeanConfiguration.class);
 
     @Bean
     public MainFrame mainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
@@ -49,11 +54,6 @@ public class BeanConfiguration {
             public View createView(Class<? extends View> viewClass) {
                 try {
                     return beanFactory.getBean(viewClass);
-                } catch (BeansException e) {
-                }
-                try {
-                    Constructor<? extends View> c = viewClass.getConstructor(Document.class);
-                    return c.newInstance(beanFactory.getBean("document"));
                 } catch (Exception e) {
                     throw new RuntimeException("Could not create instance of view " + viewClass.getName(), e);
                 }
@@ -61,8 +61,27 @@ public class BeanConfiguration {
         };
     }
 
+    public static class DocumentWrapper {
+        public Document document;
+    }
+
     @Bean
-    public DocumentRegistry documentRegistry(ConfigurableListableBeanFactory beanFactory, ConfigurationService configurationService) {
+    public DocumentWrapper documentWrapper() {
+        return new DocumentWrapper();
+    }
+
+    public static class AmountFormatWrapper {
+        public AmountFormat amountFormat;
+    }
+
+    @Bean
+    public AmountFormatWrapper amountFormatWrapper() {
+        return new AmountFormatWrapper();
+    }
+
+    @Bean
+    public DocumentRegistry documentRegistry(ConfigurableListableBeanFactory beanFactory, ConfigurationService configurationService,
+                                             DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper) {
         return new DocumentRegistry() {
             @Override
             public void register(Document document) {
@@ -70,14 +89,14 @@ public class BeanConfiguration {
                     try {
                         Currency currency = configurationService.getBookkeeping(document).getCurrency();
 
-                        beanFactory.registerSingleton("document", document);
-                        beanFactory.registerSingleton("amountFormat", new AmountFormat(document.getLocale(), currency));
+                        documentWrapper.document = document;
+                        amountFormatWrapper.amountFormat = new AmountFormat(document.getLocale(), currency);
                     } catch (ServiceException e) {
                         throw new RuntimeException("Could not get currency", e);
                     }
                 } else {
-                    beanFactory.destroyBean("document");
-                    beanFactory.destroyBean("amountFormat");
+                    documentWrapper.document = null;
+                    amountFormatWrapper.amountFormat = null;
                 }
             }
         };
@@ -114,26 +133,88 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public AccountMutationsView accountMutationsView(Document document, BookkeepingService bookkeepingService) {
-        return new AccountMutationsView(document, bookkeepingService);
+    public AccountMutationsView accountMutationsView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService) {
+        return new AccountMutationsView(documentWrapper.document, bookkeepingService);
     }
 
     @Bean
     @Scope("prototype")
-    public InvoicesView invoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService) {
-        return new InvoicesView(document, amountFormat, invoiceService);
+    public BalanceAndOperationResultView balanceAndOperationResultView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService) {
+        return new BalanceAndOperationResultView(documentWrapper.document, bookkeepingService);
     }
 
     @Bean
     @Scope("prototype")
-    public ImportBankStatementView importBankStatementView(Document document, AmountFormat amountFormat) {
-        return new ImportBankStatementView(document, amountFormat);
+    public ConfigureBookkeepingView configureBookkeepingView(DocumentWrapper documentWrapper,
+                                                             AutomaticCollectionService automaticCollectionService,
+                                                             ConfigurationService configurationService,
+                                                             LedgerService ledgerService) {
+        return new ConfigureBookkeepingView(documentWrapper.document, automaticCollectionService, configurationService, ledgerService);
     }
 
     @Bean
     @Scope("prototype")
-    public InvoiceGeneratorView invoiceGeneratorView(Document document, AmountFormulaParser amountFormulaParser, LedgerService ledgerService) {
-        return new InvoiceGeneratorView(ledgerService, document, amountFormulaParser);
+    public EditJournalView editJournalView(DocumentWrapper documentWrapper, ConfigurationService configurationService,
+                                           InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
+        return new EditJournalView(documentWrapper.document, configurationService, invoiceService, partyService, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public EditJournalEntryDetailView editJournalEntryDetailView(DocumentWrapper documentWrapper, ConfigurationService configurationService,
+                                           InvoiceService invoiceService) {
+        return new EditJournalEntryDetailView(documentWrapper.document, configurationService, invoiceService);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, InvoiceService invoiceService,
+                                     EditInvoiceController editInvoiceController) {
+        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, editInvoiceController);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public ImportBankStatementView importBankStatementView(DocumentWrapper documentWrapper, AmountFormat amountFormat,
+                                                           ConfigurationService configurationService, LedgerService ledgerService,
+                                                           ImportBankStatementService importBankStatementService,
+                                                           InvoiceService invoiceService, PartyService partyService,
+                                                           SettingsService settingsService, ViewFactory viewFactory,
+                                                           EditJournalController editJournalController) {
+        return new ImportBankStatementView(documentWrapper.document, amountFormat, configurationService,
+                importBankStatementService, invoiceService, ledgerService, partyService, settingsService, viewFactory, editJournalController);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public InvoiceGeneratorView invoiceGeneratorView(DocumentWrapper documentWrapper, AmountFormulaParser amountFormulaParser, LedgerService ledgerService) {
+        return new InvoiceGeneratorView(ledgerService, documentWrapper.document, amountFormulaParser);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public InvoiceToOdtView invoiceToOdtView(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, LedgerService ledgerService) {
+        return new InvoiceToOdtView(documentWrapper.document, amountFormatWrapper.amountFormat);
+    }
+
+
+    @Bean
+    @Scope("prototype")
+    public EditJournalController editJournalController(DocumentWrapper documentWrapper, InvoiceService invoiceService,
+                                                       LedgerService ledgerService, ViewFactory viewFactory) {
+        return new EditJournalController(documentWrapper.document, invoiceService, ledgerService, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public EditInvoiceController editInvoiceController(DocumentWrapper documentWrapper, ViewFactory viewFactory) {
+        return new EditInvoiceController(documentWrapper.document, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public AutomaticCollectionService automaticCollectionService(LedgerService ledgerService) {
+        return new AutomaticCollectionService(ledgerService);
     }
 
     @Bean
@@ -159,6 +240,12 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
+    public ImportBankStatementService importBankStatementService() {
+        return new ImportBankStatementService();
+    }
+
+    @Bean
+    @Scope("prototype")
     public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService) {
         return new InvoiceService(amountFormat, partyService);
     }
@@ -173,5 +260,11 @@ public class BeanConfiguration {
     @Scope("prototype")
     public PartyService partyService() {
         return new PartyService();
+    }
+
+    @Bean
+    @Scope("prototype")
+    public SettingsService settingsService() {
+        return new SettingsService();
     }
 }

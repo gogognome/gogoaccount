@@ -9,7 +9,6 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.ListTableModel;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
@@ -27,9 +26,9 @@ public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDe
     private final Logger logger = LoggerFactory.getLogger(JournalEntryDetailsTableModel.class);
 
     // TODO: Get rid of these services.
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
 
 	private static final long serialVersionUID = 1L;
 
@@ -52,9 +51,12 @@ public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDe
 
     private final Document document;
 
-    public JournalEntryDetailsTableModel(Document document) {
+    public JournalEntryDetailsTableModel(Document document, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService) {
     	super(COLUMN_DEFINTIIONS, Collections.emptyList());
         this.document = document;
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.partyService = partyService;
     }
 
     // TODO: replace parameter by list of objects that contain all details to be shown so that no service calls are needed by this class.

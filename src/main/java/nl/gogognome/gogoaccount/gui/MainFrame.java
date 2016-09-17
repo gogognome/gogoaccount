@@ -405,7 +405,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private void handleAddJournal() throws ServiceException {
         ensureAccountsPresent(() -> {
-            EditJournalView view = new EditJournalView(document, "ajd.title", null, null);
+            viewFactory.createView(EditJournalView.class);
+            EditJournalView view = (EditJournalView) viewFactory.createView(EditJournalView.class);
+            view.setTitle("ajd.title");
             ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();
         });

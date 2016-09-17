@@ -1,15 +1,18 @@
 package nl.gogognome.gogoaccount.gui.views;
 
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.FormattedJournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -50,13 +53,22 @@ public class EditJournalsView extends View {
     private JTable journalEntriesTable;
     private StringModel searchCriterionModel = new StringModel();
 
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
+    private final LedgerService ledgerService;
+    private final PartyService partyService;
+    private final ViewFactory viewFactory;
+    private final EditJournalController editJournalController;
 
-    /**
-	 * @param document the database whose journals are being edited
-	 */
-	public EditJournalsView(Document document) {
+	public EditJournalsView(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
+                            LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory, EditJournalController editJournalController) {
         this.document = document;
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
+        this.partyService = partyService;
+        this.editJournalController = editJournalController;
+        this.viewFactory = viewFactory;
     }
 
     @Override
@@ -66,7 +78,7 @@ public class EditJournalsView extends View {
             journalEntriesTable = Tables.createSortedTable(journalEntriesTableModel);
 
             // Create table of items
-            journalEntryDetailsTableModel = new JournalEntryDetailsTableModel(document);
+            journalEntryDetailsTableModel = new JournalEntryDetailsTableModel(document, configurationService, invoiceService, partyService);
             journalEntryDetailsTable = Tables.createTable(journalEntryDetailsTableModel);
             journalEntryDetailsTable.setRowSelectionAllowed(false);
             journalEntryDetailsTable.setColumnSelectionAllowed(false);
@@ -180,8 +192,9 @@ public class EditJournalsView extends View {
             int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
             if (row != -1) {
                 JournalEntry journalEntry = journalEntriesTableModel.getRow(row).journalEntry;
-                EditJournalController controller = new EditJournalController(this, document, journalEntry);
-                controller.execute();
+                editJournalController.setOwner(this);
+                editJournalController.setJournalEntry(journalEntry);
+                editJournalController.execute();
                 updateJournalItemTable(row);
             }
         } catch (ServiceException e) {
@@ -197,7 +210,8 @@ public class EditJournalsView extends View {
     	try {
             HandleException.for_(this, () -> {
                 document.addListener(documentListener);
-                EditJournalView view = new EditJournalView(document, "ajd.title", null, null);
+                EditJournalView view = (EditJournalView) viewFactory.createView(EditJournalView.class);
+                view.setTitle("ajd.title");
                 ViewDialog dialog = new ViewDialog(this, view);
                 dialog.showDialog();
             });

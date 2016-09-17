@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.components.BalanceComponent;
 import nl.gogognome.gogoaccount.gui.components.OperationalResultComponent;
+import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -37,8 +38,6 @@ import nl.gogognome.lib.swing.views.View;
 
 /**
  * This class implements a view the shows a balance and operation result.
- *
- * @author Sander Kooijmans
  */
 public class BalanceAndOperationResultView extends View {
 
@@ -46,11 +45,13 @@ public class BalanceAndOperationResultView extends View {
 
 	private final static Color BACKGROUND_COLOR = new Color(255, 255, 209);
 
-    private Document document;
+    private final Document document;
+    private final BookkeepingService bookkeepingService;
     private DateModel dateModel;
 
-    public BalanceAndOperationResultView(Document document) {
+    public BalanceAndOperationResultView(Document document, BookkeepingService bookkeepingService) {
         this.document = document;
+        this.bookkeepingService = bookkeepingService;
     }
 
     @Override
@@ -101,13 +102,13 @@ public class BalanceAndOperationResultView extends View {
         JPanel panel = new JPanel(new GridBagLayout());
 
         panel.setBackground(BACKGROUND_COLOR);
-        BalanceComponent balanceComponent = new BalanceComponent(document, dateModel);
+        BalanceComponent balanceComponent = new BalanceComponent(document, bookkeepingService, dateModel);
         addCloseable(balanceComponent);
         balanceComponent.setBackground(BACKGROUND_COLOR);
         panel.add(balanceComponent, createConstraints(0, 0));
 
         OperationalResultComponent operationalResultComponent =
-            new OperationalResultComponent(document, dateModel);
+            new OperationalResultComponent(document, bookkeepingService, dateModel);
         addCloseable(operationalResultComponent);
         operationalResultComponent.setBackground(BACKGROUND_COLOR);
         panel.add(operationalResultComponent, createConstraints(0, 1));

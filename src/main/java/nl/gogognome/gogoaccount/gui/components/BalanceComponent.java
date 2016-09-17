@@ -23,7 +23,6 @@ import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -52,6 +51,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
 	private static final long serialVersionUID = 1L;
 
     private final Document document;
+    private final BookkeepingService bookkeepingService;
     private final DateModel dateModel;
     private final BalanceSheet balanceSheet;
 
@@ -65,11 +65,11 @@ public class BalanceComponent extends JScrollPane implements Closeable {
     /**
      * Creates a new <code>BalanceComponent</code>.
      * @param document the datebase used to create the balance
-     * @param dateModel the date model used to determine the date of the balance
+     * @param bookkeepingService
      */
-    public BalanceComponent(Document document, DateModel dateModel) throws ServiceException {
-        super();
+    public BalanceComponent(Document document, BookkeepingService bookkeepingService, DateModel dateModel) throws ServiceException {
         this.document = document;
+        this.bookkeepingService = bookkeepingService;
         this.dateModel = dateModel;
 
         balanceSheet = new BalanceSheet(textResource.getString("gen.assets"), textResource.getString("gen.liabilities"));
@@ -101,7 +101,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
         }
 
         try {
-			report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
+			report = bookkeepingService.createReport(document, date);
 
             setBorder(Factory.getInstance(WidgetFactory.class)
                     .createTitleBorder("balanceComponent.title", report.getEndDate()));

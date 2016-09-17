@@ -33,6 +33,7 @@ public class InvoicesView extends View {
     private final AmountFormat amountFormat;
 
     private final InvoiceService invoiceService;
+    private final EditInvoiceController editInvoiceController;
 
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
@@ -44,10 +45,11 @@ public class InvoicesView extends View {
     private JButton btSearch;
     private CloseableJPanel invoiceDetailsPanel;
 
-    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService) {
+    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, EditInvoiceController editInvoiceController) {
         this.document = document;
         this.amountFormat = amountFormat;
         this.invoiceService = invoiceService;
+        this.editInvoiceController = editInvoiceController;
     }
 
     @Override
@@ -214,7 +216,9 @@ public class InvoicesView extends View {
     private void onEditSelectedInvoice() {
         int rowIndex = Tables.getSelectedRowConvertedToModel(table);
         InvoiceOverview selectedInvoice = invoicesTableModel.getRow(rowIndex);
-        new EditInvoiceController(this, document, selectedInvoice).execute();
+        editInvoiceController.setOwner(this);
+        editInvoiceController.setInvoiceToBeEdited(selectedInvoice);
+        editInvoiceController.execute();
     }
 
     private ListTableModel<InvoiceDetail> buildDetailTableModel(List<InvoiceDetail> details) {

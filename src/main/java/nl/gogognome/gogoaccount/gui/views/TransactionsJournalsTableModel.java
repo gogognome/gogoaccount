@@ -8,7 +8,6 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.ListTableModel;
 import nl.gogognome.lib.text.Amount;
@@ -17,17 +16,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.List;
 
 class TransactionsJournalsTableModel extends ListTableModel<Transaction> {
 
     private final Logger logger = LoggerFactory.getLogger(TransactionsJournalsTableModel.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
 
 	private final Document document;
 
-    public TransactionsJournalsTableModel(AmountFormat amountFormat, Document document) {
+    public TransactionsJournalsTableModel(AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService, Document document) {
+        this.invoiceService = invoiceService;
+        this.partyService = partyService;
         setColumnDefinitions(
                 ColumnDefinition.<Transaction>builder("importBankStatementView.date", Date.class, 70)
                     .add(row -> row.getImportedTransaction().getDate())
