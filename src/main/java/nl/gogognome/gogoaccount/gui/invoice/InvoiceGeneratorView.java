@@ -9,6 +9,7 @@ import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.gui.views.PartiesView;
@@ -57,6 +58,7 @@ public class InvoiceGeneratorView extends View {
 
     private final Document document;
     private final AmountFormulaParser amountFormulaParser;
+    private final ViewFactory viewFactory;
 
     private List<Account> accounts;
 
@@ -96,10 +98,11 @@ public class InvoiceGeneratorView extends View {
     private final List<TemplateLine> templateLines = new ArrayList<>();
     private JPanel templateLinesPanel;
 
-    public InvoiceGeneratorView(LedgerService ledgerService, Document document, AmountFormulaParser amountFormulaParser) {
+    public InvoiceGeneratorView(LedgerService ledgerService, Document document, AmountFormulaParser amountFormulaParser, ViewFactory viewFactory) {
         this.ledgerService = ledgerService;
         this.document = document;
         this.amountFormulaParser = amountFormulaParser;
+        this.viewFactory = viewFactory;
     }
 
     @Override
@@ -332,7 +335,7 @@ public class InvoiceGeneratorView extends View {
     }
 
     private Party[] selectParties() {
-        PartiesView partiesView = new PartiesView(document);
+        PartiesView partiesView = (PartiesView) viewFactory.createView(PartiesView.class);
         partiesView.setSelectionEnabled(true);
         partiesView.setMultiSelectionEnabled(true);
         ViewDialog dialog = new ViewDialog(getParentWindow(), partiesView);

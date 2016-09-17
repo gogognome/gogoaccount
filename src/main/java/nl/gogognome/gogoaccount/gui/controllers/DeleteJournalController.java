@@ -5,7 +5,6 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 
 import java.awt.*;
@@ -15,25 +14,26 @@ import java.awt.*;
  */
 public class DeleteJournalController {
 
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final Document document;
+    private final InvoiceService invoiceService;
+    private final LedgerService ledgerService;
 
     private Component owner;
-    private Document document;
     private JournalEntry journalEntry;
 
     private boolean journalDeleted;
 
-    /**
-     * Constructs the controller.
-     * @param owner the component that uses this controller
-     * @param document the database
-     * @param journalEntry the journal to be deleted
-     */
-    public DeleteJournalController(Component owner, Document document, JournalEntry journalEntry) {
-        super();
-        this.owner = owner;
+    public DeleteJournalController(Document document, InvoiceService invoiceService, LedgerService ledgerService) {
         this.document = document;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
+    }
+
+    public void setOwner(Component owner) {
+        this.owner = owner;
+    }
+
+    public void setJournalEntryToBeDeleted(JournalEntry journalEntry) {
         this.journalEntry = journalEntry;
     }
 

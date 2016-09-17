@@ -4,8 +4,8 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
@@ -20,32 +20,27 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * This class implements a view for selecting and editing invoices.
  */
 public class InvoiceEditAndSelectionView extends View {
 
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
+    private final Document document;
+    private final AmountFormat amountFormat;
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
 
 	private InvoicesTableModel invoicesTableModel;
 
     private JTable table;
 
-    private final Document document;
-    private final AmountFormat amountFormat;
-
     /** Indicates whether this view should also allow the user to select an invoice. */
     private boolean selectionEnabled;
 
-    /**
-     * Indicates that multiple invoices can be selected (<code>true</code>) or at most
-     * one invoice (<code>false</code>).
-     */
     private boolean multiSelectionEnabled;
 
-    /** The invoices selected by the user or <code>null</code> if no invoice has been selected. */
     private java.util.List<Invoice> selectedInvoices;
 
     private JTextField tfId;
@@ -55,32 +50,23 @@ public class InvoiceEditAndSelectionView extends View {
     private JButton btSearch;
     private JButton btSelect;
 
-    /** Focus listener used to change the default button. */
     private FocusListener focusListener;
 
-    /**
-     * Constructor for an invoices view in which at most one invoice can be selected.
-     * @param document the database used to search for invoices
-     * @param selectionEnabled <code>true</code> if the user should be able to select an invoice;
-     *         <code>false</code> if the user cannot select an invoice
-     */
-    public InvoiceEditAndSelectionView(Document document, AmountFormat amountFormat, boolean selectionEnabled) {
-        this(document, amountFormat, selectionEnabled, false);
-    }
-
-    /**
-     * Constructor.
-     * @param document the database used to search for invoices and to add, delete or update invoices from.
-     * @param selectionEnabled <code>true</code> if the user should be able to select an invoice;
-     *         <code>false</code> if the user cannot select an invoice
-     * @param multiSelectionEnabled indicates that multiple invoices can be selected (<code>true</code>) or
-     *         at most one invoice (<code>false</code>)
-     */
-    public InvoiceEditAndSelectionView(Document document, AmountFormat amountFormat, boolean selectionEnabled, boolean multiSelectionEnabled) {
+    public InvoiceEditAndSelectionView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService) {
         this.document = document;
         this.amountFormat = amountFormat;
-        this.selectionEnabled = selectionEnabled;
-        this.multiSelectionEnabled = multiSelectionEnabled;
+        this.invoiceService = invoiceService;
+        this.partyService = partyService;
+    }
+
+    public void enableSingleSelect() {
+        selectionEnabled = true;
+        multiSelectionEnabled = false;
+    }
+
+    public void enableMultiSelect() {
+        selectionEnabled = true;
+        multiSelectionEnabled = true;
     }
 
     @Override
@@ -170,7 +156,7 @@ public class InvoiceEditAndSelectionView extends View {
         resultPanel.setBorder(widgetFactory.createTitleBorderWithPadding(
                 "invoicesView.foundInvoices"));
 
-        invoicesTableModel = new InvoicesTableModel(document, amountFormat);
+        invoicesTableModel = new InvoicesTableModel(document, amountFormat, invoiceService, partyService);
         table = Tables.createSortedTable(invoicesTableModel);
         table.getSelectionModel().setSelectionMode(multiSelectionEnabled ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
         Action selectionAction = new SelectInvoiceAction();

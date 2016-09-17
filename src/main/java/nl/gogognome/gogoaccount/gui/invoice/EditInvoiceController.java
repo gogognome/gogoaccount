@@ -47,7 +47,9 @@ public class EditInvoiceController {
 
     public void execute() {
         HandleException.for_(owner, () -> {
-            EditInvoiceView view = new EditInvoiceView(document, "EditInvoiceController.editInvoiceTitle", invoice);
+            EditInvoiceView view = (EditInvoiceView) viewFactory.createView(EditInvoiceView.class);
+            view.setTitleId("EditInvoiceController.editInvoiceTitle");
+            view.setInvoiceToBeEdited(invoice);
             ViewDialog dialog = new ViewDialog(owner, view);
             dialog.showDialog();
 

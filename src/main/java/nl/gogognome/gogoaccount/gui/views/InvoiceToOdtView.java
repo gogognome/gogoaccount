@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -12,7 +13,6 @@ import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
-import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ import java.util.Date;
 public class InvoiceToOdtView extends View {
 
     private final Document document;
-    private final AmountFormat amountFormat;
+    private final ViewFactory viewFactory;
 
     private FileModel templateFileModel = new FileModel();
     private FileModel odtFileModel = new FileModel();
@@ -32,9 +32,9 @@ public class InvoiceToOdtView extends View {
     private StringModel ourReferenceModel = new StringModel();
     private DateModel dueDateModel = new DateModel();
 
-    public InvoiceToOdtView(Document document, AmountFormat amountFormat) {
+    public InvoiceToOdtView(Document document, ViewFactory viewFactory) {
         this.document = document;
-        this.amountFormat = amountFormat;
+        this.viewFactory = viewFactory;
     }
 
     /**
@@ -67,7 +67,8 @@ public class InvoiceToOdtView extends View {
             }
 
             // Let the user select the invoices that should be added to the ODT file.
-            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, amountFormat, true, true);
+            InvoiceEditAndSelectionView invoicesView = (InvoiceEditAndSelectionView) viewFactory.createView(InvoiceEditAndSelectionView.class);
+            invoicesView.enableMultiSelect();
             ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {

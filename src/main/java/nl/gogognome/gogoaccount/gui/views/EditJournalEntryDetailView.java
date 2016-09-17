@@ -7,6 +7,8 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -31,6 +33,8 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
+    private final PartyService partyService;
+    private final ViewFactory viewFactory;
 
     private Document document;
     private InvoiceBean invoiceBean;
@@ -44,10 +48,12 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     private AmountFormat amountFormat;
 
-    public EditJournalEntryDetailView(Document document, ConfigurationService configurationService, InvoiceService invoiceService) {
+    public EditJournalEntryDetailView(Document document, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
         this.document = document;
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
+        this.partyService = partyService;
+        this.viewFactory = viewFactory;
     }
 
     public void setItemToBeEdited(JournalEntryDetail itemToBeEdited) {
@@ -83,7 +89,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
             sideListModel.setItems(sides);
             sideListModel.setSelectedIndex(0, null);
 
-            invoiceBean = new InvoiceBean(document, amountFormat);
+            invoiceBean = new InvoiceBean(document, partyService, viewFactory);
 
             if (itemToBeEdited != null) {
                 initModelsForItemToBeEdited();

@@ -8,6 +8,7 @@ import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
+import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
@@ -46,8 +47,8 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     public AddJournalForTransactionView(Document document, ConfigurationService configurationService,
                                         ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
-                                        PartyService partyService, ViewFactory viewFactory) {
-        super(document, configurationService, invoiceService, partyService, viewFactory);
+                                        LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory) {
+        super(document, configurationService, invoiceService, ledgerService, partyService, viewFactory);
         this.importBankStatementService = importBankStatementService;
         setTitle("ajd.title");
     }

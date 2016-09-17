@@ -64,9 +64,9 @@ public class EditJournalController {
 
     private void updateInvoiceCreatedByJournal() throws ServiceException {
         HandleException.for_(owner, () -> {
-            EditInvoiceView editInvoiceView = new EditInvoiceView(document,
-                    "EditJournalController.editInvoiceTitle",
-                    journalEntry.getIdOfCreatedInvoice() != null ? invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice()) : null);
+            EditInvoiceView editInvoiceView = (EditInvoiceView) viewFactory.createView(EditInvoiceView.class);
+            editInvoiceView.setTitleId("EditJournalController.editInvoiceTitle");
+            editInvoiceView.setInvoiceToBeEdited(journalEntry.getIdOfCreatedInvoice() != null ? invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice()) : null);
             ViewDialog editInvoiceDialog = new ViewDialog(owner, editInvoiceView);
             editInvoiceDialog.showDialog();
             Invoice newInvoice = editInvoiceView.getEditedInvoice();

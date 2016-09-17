@@ -62,6 +62,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final PartyService partyService;
     private final SettingsService settingsService;
     private final ViewFactory viewFactory;
+    private final DeleteJournalController deleteJournalController;
     private final EditJournalController editJournalController;
 
     private FileModel fileSelectionModel = new FileModel();
@@ -82,7 +83,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final AmountFormat amountFormat;
 
     public ImportBankStatementView(Document document, AmountFormat amountFormat, ConfigurationService configurationService, ImportBankStatementService importBankStatementService, InvoiceService invoiceService, LedgerService ledgerService,
-                                   PartyService partyService, SettingsService settingsService, ViewFactory viewFactory, EditJournalController editJournalController) {
+                                   PartyService partyService, SettingsService settingsService, ViewFactory viewFactory, DeleteJournalController deleteJournalController, EditJournalController editJournalController) {
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.ledgerService = ledgerService;
@@ -92,6 +93,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         this.document = document;
         this.amountFormat = amountFormat;
         this.viewFactory = viewFactory;
+        this.deleteJournalController = deleteJournalController;
         this.editJournalController = editJournalController;
     }
 
@@ -285,10 +287,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
             int row = getSelectedRowIndexInTableModel();
             if (row != -1) {
                 JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
-                DeleteJournalController controller = new DeleteJournalController(this, document, journalEntry);
-                controller.execute();
+                deleteJournalController.setOwner(this);
+                deleteJournalController.setJournalEntryToBeDeleted(journalEntry);
+                deleteJournalController.execute();
 
-                if (controller.isJournalDeleted()) {
+                if (deleteJournalController.isJournalDeleted()) {
                     updateTransactionJournal(row, null);
                     updateButtonsStatus();
                 }

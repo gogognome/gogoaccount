@@ -6,7 +6,6 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -42,8 +41,8 @@ public class PartiesView extends View {
 
 	private static final long serialVersionUID = 1L;
 
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
-    private final AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
+    private final AutomaticCollectionService automaticCollectionService;
+    private final PartyService partyService;
 
     private Document document;
 
@@ -67,7 +66,9 @@ public class PartiesView extends View {
 
     private InputFieldsColumn ifc;
 
-    public PartiesView(Document document) {
+    public PartiesView(Document document, AutomaticCollectionService automaticCollectionService, PartyService partyService) {
+        this.automaticCollectionService = automaticCollectionService;
+        this.partyService = partyService;
         this.document = document;
     }
 

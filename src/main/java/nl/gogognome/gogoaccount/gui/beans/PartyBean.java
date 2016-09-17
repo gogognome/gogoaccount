@@ -28,6 +28,7 @@ import javax.swing.JTextField;
 
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.models.PartyModel;
@@ -41,26 +42,23 @@ import nl.gogognome.lib.util.Factory;
 
 /**
  * This class implements a widget for selecting a Party.
- *
- * @author Sander Kooijmans
  */
 public class PartyBean extends JPanel implements Closeable {
 
-	private Document document;
-    private JTextField tfDescription;
+	private final Document document;
+    private final PartyModel model;
+    private final ViewFactory viewFacatory;
 
+    private JTextField tfDescription;
     private JButton btSelect;
     private JButton btClear;
 
-    private PartyModel model;
     private ModelChangeListener listener;
 
-    /**
-     * Constructor.
-     */
-    public PartyBean(Document document, PartyModel model) {
+    public PartyBean(Document document, PartyModel model, ViewFactory viewFacatory) {
         this.document = document;
         this.model = model;
+        this.viewFacatory = viewFacatory;
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
@@ -105,7 +103,7 @@ public class PartyBean extends JPanel implements Closeable {
     public void selectParty() {
         Container parent = SwingUtils.getTopLevelContainer(this);
         HandleException.for_(parent, () -> {
-            PartiesView partiesView = new PartiesView(document);
+            PartiesView partiesView = (PartiesView) viewFacatory.createView(PartiesView.class);
             partiesView.setSelectionEnabled(true);
             ViewDialog dialog = new ViewDialog(parent, partiesView);
             dialog.showDialog();

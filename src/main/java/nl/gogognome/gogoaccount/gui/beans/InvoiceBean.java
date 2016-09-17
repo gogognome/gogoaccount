@@ -3,10 +3,10 @@ package nl.gogognome.gogoaccount.gui.beans;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.gui.views.InvoiceEditAndSelectionView;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -26,20 +26,18 @@ public class InvoiceBean extends JPanel {
 
     private final Logger logger = LoggerFactory.getLogger(InvoiceBean.class);
 
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final Document document;
+    private final PartyService partyService;
+    private final ViewFactory viewFactory;
 
-    private Document document;
-    private final AmountFormat amountFormat;
-
-    /** Contains a description of the selected invoice. */
     private JTextField tfDescription;
 
-    /** The invoice that is selected in this selector. */
     private Invoice selectedInvoice;
 
-    public InvoiceBean(Document document, AmountFormat amountFormat) {
+    public InvoiceBean(Document document, PartyService partyService, ViewFactory viewFactory) {
         this.document = document;
-        this.amountFormat = amountFormat;
+        this.partyService = partyService;
+        this.viewFactory = viewFactory;
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
@@ -94,7 +92,8 @@ public class InvoiceBean extends JPanel {
         Container finalParent = parent;
 
         HandleException.for_(parent, () -> {
-            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, amountFormat, true);
+            InvoiceEditAndSelectionView invoicesView = (InvoiceEditAndSelectionView) viewFactory.createView(InvoiceEditAndSelectionView.class);
+            invoicesView.enableSingleSelect();
             ViewDialog dialog = new ViewDialog(finalParent, invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {

@@ -58,15 +58,20 @@ public class EditJournalsView extends View {
     private final LedgerService ledgerService;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
+    private final DeleteJournalController deleteJournalController;
     private final EditJournalController editJournalController;
 
+    private DocumentListener documentListener;
+
 	public EditJournalsView(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
-                            LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory, EditJournalController editJournalController) {
+                            LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory,
+                            DeleteJournalController deleteJournalController, EditJournalController editJournalController) {
         this.document = document;
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.ledgerService = ledgerService;
         this.partyService = partyService;
+        this.deleteJournalController = deleteJournalController;
         this.editJournalController = editJournalController;
         this.viewFactory = viewFactory;
     }
@@ -97,6 +102,9 @@ public class EditJournalsView extends View {
             add(createButtonPanel(), BorderLayout.SOUTH);
 
             Tables.selectFirstRow(journalEntriesTable);
+
+            documentListener = doc -> onSearch();
+            document.addListener(documentListener);
         } catch (ServiceException e) {
             logger.warn("Ignored exception: " + e.getMessage(), e);
             close();
@@ -173,6 +181,7 @@ public class EditJournalsView extends View {
 
     @Override
     public void onClose() {
+        document.removeListener(documentListener);
     }
 
     /**
@@ -206,18 +215,12 @@ public class EditJournalsView extends View {
      * This method lets the user add new journals.
      */
     private void addJournal() {
-    	DocumentListener documentListener = new DocumentListenerImpl();
-    	try {
-            HandleException.for_(this, () -> {
-                document.addListener(documentListener);
-                EditJournalView view = (EditJournalView) viewFactory.createView(EditJournalView.class);
-                view.setTitle("ajd.title");
-                ViewDialog dialog = new ViewDialog(this, view);
-                dialog.showDialog();
-            });
-	    } finally {
-    		document.removeListener(documentListener);
-	    }
+        HandleException.for_(this, () -> {
+            EditJournalView view = (EditJournalView) viewFactory.createView(EditJournalView.class);
+            view.setTitle("ajd.title");
+            ViewDialog dialog = new ViewDialog(this, view);
+            dialog.showDialog();
+        });
     }
 
     /**
@@ -226,10 +229,10 @@ public class EditJournalsView extends View {
     private void deleteJournal() {
         int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
         if (row != -1) {
-        	DeleteJournalController controller =
-        		new DeleteJournalController(this, document, journalEntriesTableModel.getRow(row).journalEntry);
+            deleteJournalController.setOwner(this);
+            deleteJournalController.setJournalEntryToBeDeleted(journalEntriesTableModel.getRow(row).journalEntry);
             try {
-                controller.execute();
+                deleteJournalController.execute();
             } catch (ServiceException e) {
                 MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
             }
@@ -240,11 +243,4 @@ public class EditJournalsView extends View {
         Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
         return ledgerService.findFormattedJournalEntries(document, criterion);
     }
-
-    private class DocumentListenerImpl implements DocumentListener {
-		@Override
-		public void documentChanged(Document document) {
-            onSearch();
-        }
-	}
 }

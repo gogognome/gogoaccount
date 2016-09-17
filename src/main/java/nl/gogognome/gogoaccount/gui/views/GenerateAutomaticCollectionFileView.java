@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.util.ObjectFactory;
@@ -34,6 +35,7 @@ public class GenerateAutomaticCollectionFileView extends View {
 
     private final Document document;
     private final AmountFormat amountFormat;
+    private final ViewFactory viewFactory;
 
     private FileModel sepaFileModel = new FileModel();
     private DateModel collectionDateModel = new DateModel(new Date());
@@ -42,9 +44,10 @@ public class GenerateAutomaticCollectionFileView extends View {
     private nl.gogognome.lib.swing.models.ListModel<Account> bankAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
     private nl.gogognome.lib.swing.models.ListModel<Account> debtorAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
 
-    public GenerateAutomaticCollectionFileView(Document document, AmountFormat amountFormat) {
+    public GenerateAutomaticCollectionFileView(Document document, AmountFormat amountFormat, ViewFactory viewFactory) {
         this.document = document;
         this.amountFormat = amountFormat;
+        this.viewFactory = viewFactory;
     }
 
     @Override
@@ -116,7 +119,8 @@ public class GenerateAutomaticCollectionFileView extends View {
             }
 
             // Let the user select the invoices that should be added to the SEPA file.
-            InvoiceEditAndSelectionView invoicesView = new InvoiceEditAndSelectionView(document, amountFormat, true, true);
+            InvoiceEditAndSelectionView invoicesView = (InvoiceEditAndSelectionView) viewFactory.createView(InvoiceEditAndSelectionView.class);
+            invoicesView.enableMultiSelect();
             ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {

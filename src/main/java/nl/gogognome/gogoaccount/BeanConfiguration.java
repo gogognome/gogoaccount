@@ -14,6 +14,7 @@ import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
+import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceController;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
@@ -155,15 +156,25 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public EditJournalView editJournalView(DocumentWrapper documentWrapper, ConfigurationService configurationService,
-                                           InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
-        return new EditJournalView(documentWrapper.document, configurationService, invoiceService, partyService, viewFactory);
+                                           InvoiceService invoiceService, LedgerService ledgerService, PartyService partyService,
+                                           ViewFactory viewFactory) {
+        return new EditJournalView(documentWrapper.document, configurationService, invoiceService, ledgerService, partyService, viewFactory);
     }
 
     @Bean
     @Scope("prototype")
     public EditJournalEntryDetailView editJournalEntryDetailView(DocumentWrapper documentWrapper, ConfigurationService configurationService,
-                                           InvoiceService invoiceService) {
-        return new EditJournalEntryDetailView(documentWrapper.document, configurationService, invoiceService);
+                                           InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
+        return new EditJournalEntryDetailView(documentWrapper.document, configurationService, invoiceService, partyService, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public EditJournalsView editJournalsView(DocumentWrapper documentWrapper, ConfigurationService configurationService,
+                                           InvoiceService invoiceService, LedgerService ledgerService, PartyService partyService,
+                                             ViewFactory viewFactory, DeleteJournalController deleteJournalController,  EditJournalController editJournalController) {
+        return new EditJournalsView(documentWrapper.document, configurationService, invoiceService, ledgerService,
+                partyService, viewFactory, deleteJournalController, editJournalController);
     }
 
     @Bean
@@ -180,23 +191,44 @@ public class BeanConfiguration {
                                                            ImportBankStatementService importBankStatementService,
                                                            InvoiceService invoiceService, PartyService partyService,
                                                            SettingsService settingsService, ViewFactory viewFactory,
-                                                           EditJournalController editJournalController) {
+                                                           DeleteJournalController deleteJournalController, EditJournalController editJournalController) {
         return new ImportBankStatementView(documentWrapper.document, amountFormat, configurationService,
-                importBankStatementService, invoiceService, ledgerService, partyService, settingsService, viewFactory, editJournalController);
+                importBankStatementService, invoiceService, ledgerService, partyService, settingsService, viewFactory, deleteJournalController, editJournalController);
     }
 
     @Bean
     @Scope("prototype")
-    public InvoiceGeneratorView invoiceGeneratorView(DocumentWrapper documentWrapper, AmountFormulaParser amountFormulaParser, LedgerService ledgerService) {
-        return new InvoiceGeneratorView(ledgerService, documentWrapper.document, amountFormulaParser);
+    public InvoiceEditAndSelectionView invoiceEditAndSelectionView(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper,
+                                                                   InvoiceService invoiceService, PartyService partyService) {
+        return new InvoiceEditAndSelectionView(documentWrapper.document, amountFormatWrapper.amountFormat, invoiceService, partyService);
     }
 
     @Bean
     @Scope("prototype")
-    public InvoiceToOdtView invoiceToOdtView(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, LedgerService ledgerService) {
-        return new InvoiceToOdtView(documentWrapper.document, amountFormatWrapper.amountFormat);
+    public InvoiceGeneratorView invoiceGeneratorView(DocumentWrapper documentWrapper, AmountFormulaParser amountFormulaParser,
+                                                     LedgerService ledgerService, ViewFactory viewFactory) {
+        return new InvoiceGeneratorView(ledgerService, documentWrapper.document, amountFormulaParser, viewFactory);
     }
 
+    @Bean
+    @Scope("prototype")
+    public InvoiceToOdtView invoiceToOdtView(DocumentWrapper documentWrapper, ViewFactory viewFactory) {
+        return new InvoiceToOdtView(documentWrapper.document, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public PartiesView partiesView(DocumentWrapper documentWrapper, AutomaticCollectionService automaticCollectionService,
+                                   PartyService partyService) {
+        return new PartiesView(documentWrapper.document, automaticCollectionService, partyService);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public DeleteJournalController deleteJournalController(DocumentWrapper documentWrapper, InvoiceService invoiceService,
+                                                       LedgerService ledgerService) {
+        return new DeleteJournalController(documentWrapper.document, invoiceService, ledgerService);
+    }
 
     @Bean
     @Scope("prototype")
@@ -267,4 +299,11 @@ public class BeanConfiguration {
     public SettingsService settingsService() {
         return new SettingsService();
     }
+
+    @Bean
+    @Scope("prototype")
+    public AmountFormulaParser amountFormulaParser(AmountFormatWrapper amountFormatWrapper) {
+        return new AmountFormulaParser(amountFormatWrapper.amountFormat);
+    }
+
 }

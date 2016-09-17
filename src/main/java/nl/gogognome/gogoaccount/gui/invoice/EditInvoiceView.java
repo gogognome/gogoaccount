@@ -7,13 +7,13 @@ import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.beans.PartyBean;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.gui.views.EditDescriptionAndAmountView;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.models.PartyModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.ColumnDefinition;
@@ -24,7 +24,6 @@ import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.util.Factory;
 import nl.gogognome.lib.util.StringUtil;
 import nl.gogognome.lib.util.Tuple;
 
@@ -46,48 +45,52 @@ public class EditInvoiceView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final Document document;
+    private final AmountFormat amountFormat;
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
+    private final PartyService partyService;
+    private final ViewFactory viewFacatory;
 
-    private Document document;
     private Currency currency;
 
     private String titleId;
 
-    private Invoice initialInvoice;
+    private Invoice invoiceToBeEdited;
 
     private StringModel idModel = new StringModel();
     private StringModel amountModel = new StringModel();
     private DateModel dateModel = new DateModel();
     private StringModel descriptionModel = new StringModel();
     private PartyModel concerningPartyModel = new PartyModel();
+
     private PartyModel payingPartyModel = new PartyModel();
 
     private ModelChangeListener concerningPartyListener;
-
     private JTable table;
-    private DescriptionAndAmountTableModel tableModel;
 
+    private DescriptionAndAmountTableModel tableModel;
     private Invoice editedInvoice;
     private List<String> editedDescriptions;
+
     private List<Amount> editedAmounts;
 
-    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
-
-    /**
-     * Constructor. To edit an existing invoice, give <code>invoice</code> a non-<code>null</code> value.
-     * To create a new journal, set <code>invoice</code> to <code>null</code>.
-     *
-     * @param document the database to which the journal must be added
-     * @param titleId the id of the title
-     * @param invoice the invoice used to initialize the elements of the view. Must be <code>null</code>
-     *        to edit a new invoice
-     */
-    public EditInvoiceView(Document document, String titleId, Invoice invoice) {
+    public EditInvoiceView(Document document, AmountFormat amountFormat, ConfigurationService configurationService,
+                           InvoiceService invoiceService, PartyService partyService, ViewFactory viewFacatory) {
+        this.amountFormat = amountFormat;
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.partyService = partyService;
+        this.viewFacatory = viewFacatory;
         this.document = document;
+    }
+
+    public void setTitleId(String titleId) {
         this.titleId = titleId;
-        this.initialInvoice = invoice;
+    }
+
+    public void setInvoiceToBeEdited(Invoice invoiceToBeEdited) {
+        this.invoiceToBeEdited = invoiceToBeEdited;
     }
 
     @Override
@@ -116,15 +119,15 @@ public class EditInvoiceView extends OkCancelView {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         currency = bookkeeping.getCurrency();
 
-        if (initialInvoice != null) {
-            idModel.setString(initialInvoice.getId());
+        if (invoiceToBeEdited != null) {
+            idModel.setString(invoiceToBeEdited.getId());
             idModel.setEnabled(false, null);
-            dateModel.setDate(initialInvoice.getIssueDate());
-            descriptionModel.setString(initialInvoice.getDescription());
-            concerningPartyModel.setParty(initialInvoice.getConcerningPartyId() != null ? partyService.getParty(document, initialInvoice.getConcerningPartyId()) : null);
-            payingPartyModel.setParty(initialInvoice.getPayingPartyId() != null ? partyService.getParty(document, initialInvoice.getPayingPartyId()): null);
+            dateModel.setDate(invoiceToBeEdited.getIssueDate());
+            descriptionModel.setString(invoiceToBeEdited.getDescription());
+            concerningPartyModel.setParty(invoiceToBeEdited.getConcerningPartyId() != null ? partyService.getParty(document, invoiceToBeEdited.getConcerningPartyId()) : null);
+            payingPartyModel.setParty(invoiceToBeEdited.getPayingPartyId() != null ? partyService.getParty(document, invoiceToBeEdited.getPayingPartyId()): null);
             amountModel.setString(amountFormat.formatAmountWithoutCurrency(
-                initialInvoice.getAmountToBePaid().toBigInteger()));
+                invoiceToBeEdited.getAmountToBePaid().toBigInteger()));
         } else {
             dateModel.setDate(new Date());
             idModel.setString(invoiceService.suggestNewInvoiceId(document,
@@ -146,8 +149,8 @@ public class EditInvoiceView extends OkCancelView {
         ifc.addField("gen.id", idModel);
         ifc.addField("gen.issueDate", dateModel);
         ifc.addField("gen.description", descriptionModel);
-        ifc.addVariableSizeField("editInvoiceView.concerningParty", new PartyBean(document, concerningPartyModel));
-        ifc.addVariableSizeField("editInvoiceView.payingParty", new PartyBean(document, payingPartyModel));
+        ifc.addVariableSizeField("editInvoiceView.concerningParty", new PartyBean(document, concerningPartyModel, viewFacatory));
+        ifc.addVariableSizeField("editInvoiceView.payingParty", new PartyBean(document, payingPartyModel, viewFacatory));
         ifc.addField("gen.amount", amountModel);
 
     	return ifc;
@@ -160,9 +163,9 @@ public class EditInvoiceView extends OkCancelView {
             JPanel middlePanel = new JPanel(new BorderLayout());
             // TODO: replace by InvoiceDetail
             List<Tuple<String, Amount>> tuples = new ArrayList<>();
-            if (initialInvoice != null) {
-                List<String> descriptions = invoiceService.findDescriptions(document, initialInvoice);
-                List<Amount> amounts = invoiceService.findAmounts(document, initialInvoice);
+            if (invoiceToBeEdited != null) {
+                List<String> descriptions = invoiceService.findDescriptions(document, invoiceToBeEdited);
+                List<Amount> amounts = invoiceService.findAmounts(document, invoiceToBeEdited);
                 for (int i = 0; i < descriptions.size(); i++) {
                     tuples.add(new Tuple<>(descriptions.get(i), amounts.get(i)));
                 }

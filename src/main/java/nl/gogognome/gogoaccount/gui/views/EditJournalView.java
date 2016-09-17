@@ -11,7 +11,6 @@ import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -41,6 +40,7 @@ public class EditJournalView extends View {
     private InputFieldsColumn valuesEditPanel;
     private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
+    private final LedgerService ledgerService;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
 
@@ -73,10 +73,11 @@ public class EditJournalView extends View {
     protected List<JournalEntryDetail> editedJournalEntryDetails;
 
     public EditJournalView(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
-                           PartyService partyService, ViewFactory viewFactory) {
+                           LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory) {
         this.document = document;
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
         this.partyService = partyService;
         this.viewFactory = viewFactory;
     }
@@ -238,7 +239,7 @@ public class EditJournalView extends View {
 	}
 
 	protected JournalEntry createNewJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
-		return ObjectFactory.create(LedgerService.class).addJournalEntry(document, journalEntry, journalEntryDetails, true);
+		return ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, true);
 	}
 
 	protected void initValuesForNextJournal() throws ServiceException {
