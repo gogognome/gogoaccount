@@ -14,7 +14,6 @@ import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -54,6 +53,7 @@ public class InvoiceGeneratorView extends View {
 
     private static final long serialVersionUID = 1L;
 
+    private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
 
     private final Document document;
@@ -98,7 +98,8 @@ public class InvoiceGeneratorView extends View {
     private final List<TemplateLine> templateLines = new ArrayList<>();
     private JPanel templateLinesPanel;
 
-    public InvoiceGeneratorView(LedgerService ledgerService, Document document, AmountFormulaParser amountFormulaParser, ViewFactory viewFactory) {
+    public InvoiceGeneratorView(Document document, ConfigurationService configurationService, LedgerService ledgerService, AmountFormulaParser amountFormulaParser, ViewFactory viewFactory) {
+        this.configurationService = configurationService;
         this.ledgerService = ledgerService;
         this.document = document;
         this.amountFormulaParser = amountFormulaParser;
@@ -117,7 +118,7 @@ public class InvoiceGeneratorView extends View {
     @Override
     public void onInit() {
         try {
-            accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
+            accounts = configurationService.findAllAccounts(document);
             debtorAccountModel = new ListModel<>(accounts.stream().filter(a -> a.getType() == DEBTOR).collect(toList()));
             if (debtorAccountModel.getItems().size() == 1) {
                 debtorAccountModel.setSelectedIndex(0, null);

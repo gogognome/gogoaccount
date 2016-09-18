@@ -8,7 +8,6 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.components.PartyTagBean;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
@@ -34,10 +33,11 @@ public class EditPartyView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
     private final Logger logger = LoggerFactory.getLogger(EditPartyView.class);
 
     private final Document document;
+    private final ConfigurationService configurationService;
+    private final PartyService partyService;
 
     private List<String> tags;
 
@@ -59,19 +59,23 @@ public class EditPartyView extends OkCancelView {
     private final JTextArea taRemarks = new JTextArea(5, 40);
     private JPanel tagsPanel = new JPanel(new GridBagLayout());
 
-    private final Party initialParty;
-    private final List<String> initialTags;
-    private final PartyAutomaticCollectionSettings initialAutomaticCollectionSettings;
+    private Party initialParty;
+    private List<String> initialTags;
+    private PartyAutomaticCollectionSettings initialAutomaticCollectionSettings;
     private Party resultParty;
     private List<String> resultTags;
     private PartyAutomaticCollectionSettings resulAutomaticCollectionSettings;
 
     private ModelChangeListener idUpdateListener;
 
-    protected EditPartyView(Document document, Party party, List<String> initialTags,
-                            PartyAutomaticCollectionSettings automaticCollectionSettings) {
-        super();
+    public EditPartyView(Document document, ConfigurationService configurationService, PartyService partyService) {
         this.document = document;
+        this.configurationService = configurationService;
+        this.partyService = partyService;
+    }
+
+    public void setInitialParty(Party party, List<String> initialTags,
+                                PartyAutomaticCollectionSettings automaticCollectionSettings) {
         this.initialParty = party;
         this.initialTags = initialTags;
         this.initialAutomaticCollectionSettings = automaticCollectionSettings;
@@ -152,7 +156,7 @@ public class EditPartyView extends OkCancelView {
         panel.add(ifc, BorderLayout.NORTH);
 
         try {
-            if (ObjectFactory.create(ConfigurationService.class).getBookkeeping(document).isEnableAutomaticCollection()) {
+            if (configurationService.getBookkeeping(document).isEnableAutomaticCollection()) {
                 InputFieldsColumn automaticCollectionFields = new InputFieldsColumn();
                 automaticCollectionFields.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.automaticCollectionInformation"));
                 automaticCollectionFields.addField("editPartyView.autoCollectionName", automaticCollectionNameModel);

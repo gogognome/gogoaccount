@@ -1,19 +1,3 @@
-/*
-    This file is part of gogo account.
-
-    gogo account is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    gogo account is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package nl.gogognome.gogoaccount.gui.views;
 
 import java.awt.BorderLayout;
@@ -29,7 +13,6 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.RadioButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -45,16 +28,15 @@ import nl.gogognome.lib.util.DateUtil;
  * This view lets the user fill in parameters to generate a report.
  * A report consists of balance sheet, operational result and overviews of
  * debtors and creditors, journals and ledger.
- *
- * @author Sander Kooijmans
  */
 public class GenerateReportView extends OkCancelView {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private Document document;
+    private final Document document;
+    private final ConfigurationService configurationService;
 
-	private DateModel dateModel;
+    private DateModel dateModel;
     private FileModel reportFileModel;
     private FileModel templateFileModel;
     private BooleanModel txtModel;
@@ -67,17 +49,18 @@ public class GenerateReportView extends OkCancelView {
 
     private ModelChangeListener odtSelectionListener;
 
-    public GenerateReportView(Document document) {
-    	this.document = document;
+    public GenerateReportView(Document document, ConfigurationService configurationService) {
+        this.document = document;
+        this.configurationService = configurationService;
     }
 
-	@Override
-	public String getTitle() {
-		return textResource.getString("genreport.title");
-	}
+    @Override
+    public String getTitle() {
+        return textResource.getString("genreport.title");
+    }
 
-	@Override
-	public void onInit() {
+    @Override
+    public void onInit() {
         try {
             initModels();
             addComponents();
@@ -87,53 +70,53 @@ public class GenerateReportView extends OkCancelView {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
             close();
         }
-	}
+    }
 
-	private void initModels() throws ServiceException {
-		Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
-		dateModel = new DateModel(DateUtil.addYears(bookkeeping.getStartOfPeriod(), 1));
+    private void initModels() throws ServiceException {
+        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+        dateModel = new DateModel(DateUtil.addYears(bookkeeping.getStartOfPeriod(), 1));
 
-		reportFileModel = new FileModel();
-		templateFileModel = new FileModel();
-		txtModel = new BooleanModel();
-		txtModel.setBoolean(true);
-		odtModel = new BooleanModel();
-	}
+        reportFileModel = new FileModel();
+        templateFileModel = new FileModel();
+        txtModel = new BooleanModel();
+        txtModel.setBoolean(true);
+        odtModel = new BooleanModel();
+    }
 
-	@Override
-	protected JComponent createCenterComponent() {
-		InputFieldsColumn column = new InputFieldsColumn();
-		addCloseable(column);
+    @Override
+    protected JComponent createCenterComponent() {
+        InputFieldsColumn column = new InputFieldsColumn();
+        addCloseable(column);
 
-		column.addField("genreport.reportFile", reportFileModel);
-		column.addField("genreport.date", dateModel);
-		column.addField("genreport.templateFile", templateFileModel);
-		column.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        column.addField("genreport.reportFile", reportFileModel);
+        column.addField("genreport.date", dateModel);
+        column.addField("genreport.templateFile", templateFileModel);
+        column.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 
-		JPanel typePanel = createTypePanel();
+        JPanel typePanel = createTypePanel();
 
-		JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout());
 
-		panel.add(column, BorderLayout.NORTH);
-		panel.add(typePanel, BorderLayout.SOUTH);
-		return panel;
-	}
+        panel.add(column, BorderLayout.NORTH);
+        panel.add(typePanel, BorderLayout.SOUTH);
+        return panel;
+    }
 
-	private JPanel createTypePanel() {
-		RadioButtonPanel panel = new RadioButtonPanel();
-		panel.addRadioButton("genreport.txt", txtModel);
-		panel.addRadioButton("genreport.odt", odtModel);
-		panel.setBorder(widgetFactory.createTitleBorder("genreport.fileType"));
-		return panel;
-	}
+    private JPanel createTypePanel() {
+        RadioButtonPanel panel = new RadioButtonPanel();
+        panel.addRadioButton("genreport.txt", txtModel);
+        panel.addRadioButton("genreport.odt", odtModel);
+        panel.setBorder(widgetFactory.createTitleBorder("genreport.fileType"));
+        return panel;
+    }
 
-	private void addListeners() {
-		odtSelectionListener = new OdtSelectionListener();
-		odtModel.addModelChangeListener(odtSelectionListener);
-	}
+    private void addListeners() {
+        odtSelectionListener = new OdtSelectionListener();
+        odtModel.addModelChangeListener(odtSelectionListener);
+    }
 
-	@Override
-	protected void onOk() {
+    @Override
+    protected void onOk() {
         Date date = dateModel.getDate();
         if (date == null) {
             MessageDialog.showWarningMessage(this, "ds.parseErrorMessage");
@@ -142,14 +125,14 @@ public class GenerateReportView extends OkCancelView {
 
         File reportFile = reportFileModel.getFile();
         if (reportFile == null) {
-        	MessageDialog.showWarningMessage(this, "genreport.noReportFileSelected");
-        	return;
+            MessageDialog.showWarningMessage(this, "genreport.noReportFileSelected");
+            return;
         }
 
         File templateFile = templateFileModel.getFile();
         if (templateFile == null && odtModel.getBoolean()) {
-        	MessageDialog.showWarningMessage(this, "genreport.noTemplateFileSelected");
-        	return;
+            MessageDialog.showWarningMessage(this, "genreport.noTemplateFileSelected");
+            return;
         }
 
         selectedDate = date;
@@ -158,41 +141,41 @@ public class GenerateReportView extends OkCancelView {
         reportType = txtModel.getBoolean() ? ReportType.PLAIN_TEXT : ReportType.ODT_DOCUMENT;
 
         requestClose();
-	}
+    }
 
-	public Date getDate() {
-		return selectedDate;
-	}
+    public Date getDate() {
+        return selectedDate;
+    }
 
-	public File getReportFile() {
-		return selectedReportFile;
-	}
+    public File getReportFile() {
+        return selectedReportFile;
+    }
 
-	public File getTemplateFile() {
-		return selectedTemplateFile;
-	}
+    public File getTemplateFile() {
+        return selectedTemplateFile;
+    }
 
-	public ReportType getReportType() {
-		return reportType;
-	}
+    public ReportType getReportType() {
+        return reportType;
+    }
 
-	private void updateTemplateSelectionModel() {
-		templateFileModel.setEnabled(odtModel.getBoolean(), odtSelectionListener);
-	}
+    private void updateTemplateSelectionModel() {
+        templateFileModel.setEnabled(odtModel.getBoolean(), odtSelectionListener);
+    }
 
-	@Override
-	public void onClose() {
-		removeListeners();
-	}
+    @Override
+    public void onClose() {
+        removeListeners();
+    }
 
-	private void removeListeners() {
-		odtModel.removeModelChangeListener(odtSelectionListener);
-	}
+    private void removeListeners() {
+        odtModel.removeModelChangeListener(odtSelectionListener);
+    }
 
-	private class OdtSelectionListener implements ModelChangeListener {
-		@Override
-		public void modelChanged(AbstractModel model) {
-			updateTemplateSelectionModel();
-		}
-	}
+    private class OdtSelectionListener implements ModelChangeListener {
+        @Override
+        public void modelChanged(AbstractModel model) {
+            updateTemplateSelectionModel();
+        }
+    }
 }

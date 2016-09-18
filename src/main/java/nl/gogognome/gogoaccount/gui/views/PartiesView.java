@@ -5,6 +5,7 @@ import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticColl
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -41,10 +42,10 @@ public class PartiesView extends View {
 
 	private static final long serialVersionUID = 1L;
 
+    private final Document document;
     private final AutomaticCollectionService automaticCollectionService;
     private final PartyService partyService;
-
-    private Document document;
+    private final ViewFactory viewFactory;
 
     private JTable table;
 	private PartiesTableModel partiesTableModel;
@@ -66,10 +67,11 @@ public class PartiesView extends View {
 
     private InputFieldsColumn ifc;
 
-    public PartiesView(Document document, AutomaticCollectionService automaticCollectionService, PartyService partyService) {
+    public PartiesView(Document document, AutomaticCollectionService automaticCollectionService, PartyService partyService, ViewFactory viewFactory) {
         this.automaticCollectionService = automaticCollectionService;
         this.partyService = partyService;
         this.document = document;
+        this.viewFactory = viewFactory;
     }
 
     public void setSelectionEnabled(boolean selectionEnabled) {
@@ -233,7 +235,7 @@ public class PartiesView extends View {
 
     private void onAddParty() {
         HandleException.for_(this, () -> {
-            EditPartyView editPartyView = new EditPartyView(document, null, null, null);
+            EditPartyView editPartyView = (EditPartyView) viewFactory.createView(EditPartyView.class);
             ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
             dialog.showDialog();
 
@@ -258,7 +260,8 @@ public class PartiesView extends View {
             Party oldParty = partiesTableModel.getRow(row);
             List<String> oldTags = partyService.findTagsForParty(document, oldParty);
             PartyAutomaticCollectionSettings oldSettings = automaticCollectionService.findSettings(document, oldParty);
-            EditPartyView editPartyView = new EditPartyView(document, oldParty, oldTags, oldSettings);
+            EditPartyView editPartyView = (EditPartyView) viewFactory.createView(EditPartyView.class);
+            editPartyView.setInitialParty(oldParty, oldTags, oldSettings);
             ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
             dialog.showDialog();
 

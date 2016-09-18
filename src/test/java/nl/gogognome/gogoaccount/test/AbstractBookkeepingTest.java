@@ -23,7 +23,6 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.helpers.TestTextResource;
 import nl.gogognome.lib.swing.RunnableWithException;
 import nl.gogognome.lib.text.Amount;
@@ -48,13 +47,14 @@ import static junit.framework.Assert.*;
 public abstract class AbstractBookkeepingTest {
 
     protected final AmountFormat amountFormat = new AmountFormat(Locale.US, Currency.getInstance("EUR"));
-    protected final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
-    protected final PartyService partyService = ObjectFactory.create(PartyService.class);
+    protected final PartyService partyService = new PartyService();
     protected final ConfigurationService configurationService = new ConfigurationService();
+    protected final DocumentService documentService = new DocumentService(configurationService);
+    protected final ImportBankStatementService importBankStatementService = new ImportBankStatementService(configurationService);
     protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService);
-    protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), invoiceService, partyService);
-    protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(configurationService, ledgerService, partyService);
-    protected final BookkeepingService bookkeepingService = new BookkeepingService(ledgerService, configurationService, invoiceService, partyService);
+    protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), configurationService, invoiceService, partyService);
+    protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(amountFormat, configurationService, ledgerService, partyService);
+    protected final BookkeepingService bookkeepingService = new BookkeepingService(ledgerService, configurationService, documentService, invoiceService, partyService);
 
     protected Document document;
     protected Bookkeeping bookkeeping;
@@ -81,7 +81,7 @@ public abstract class AbstractBookkeepingTest {
         configurationService.setLedgerService(ledgerService);
         initFactory();
 
-        document = ObjectFactory.create(DocumentService.class).createNewDocumentInMemory("New bookkeeping");
+        document = documentService.createNewDocumentInMemory("New bookkeeping");
         bookkeeping = configurationService.getBookkeeping(document);
         bookkeeping.setCurrency(Currency.getInstance("EUR"));
         bookkeeping.setOrganizationName("My Club");

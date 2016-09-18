@@ -5,11 +5,16 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 
 import java.util.Map;
 
 public class ImportBankStatementService {
+
+    private final ConfigurationService configurationService;
+
+    public ImportBankStatementService(ConfigurationService configurationService) {
+        this.configurationService = configurationService;
+    }
 
     /**
      * @return the account corresponding to the "from account" of the imported transaction;
@@ -32,7 +37,7 @@ public class ImportBankStatementService {
             String key = getKey(account, name);
             String accountId = new ImportedAccountDAO(document).findAccountIdByFrom(key);
             if (accountId != null) {
-                return ObjectFactory.create(ConfigurationService.class).getAccount(document, accountId);
+                return configurationService.getAccount(document, accountId);
             } else {
                 return null;
             }

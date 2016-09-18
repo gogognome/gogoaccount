@@ -8,7 +8,6 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.*;
@@ -88,7 +87,7 @@ public class ConfigureBookkeepingView extends View {
     }
 
     private void initModels() throws ServiceException {
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         startDateModel.setDate(bookkeeping.getStartOfPeriod());
         descriptionModel.setString(bookkeeping.getDescription());
 
@@ -203,7 +202,7 @@ public class ConfigureBookkeepingView extends View {
 
     private void updateDatabaseWithEnteredValues() {
         try {
-            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             bookkeeping.setDescription(descriptionModel.getString());
             if (startDateModel.getDate() != null) {
                 bookkeeping.setStartOfPeriod(startDateModel.getDate());

@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.gui.controllers;
 
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.views.GenerateReportView;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
@@ -18,18 +19,24 @@ import java.util.Date;
 
 public class GenerateReportController {
 
-    private Document document;
+    private final Document document;
+    private final ViewFactory viewFactory;
+
     private Window parentWindow;
 
-    public GenerateReportController(Document document, Window parentWindow) {
+    public GenerateReportController(Document document, ViewFactory viewFactory) {
         super();
         this.document = document;
+        this.viewFactory = viewFactory;
+    }
+
+    public void setParentWindow(Window parentWindow) {
         this.parentWindow = parentWindow;
     }
 
     public void execute() {
         HandleException.for_(parentWindow, () -> {
-            GenerateReportView view = new GenerateReportView(document);
+            GenerateReportView view = (GenerateReportView) viewFactory.createView(GenerateReportView.class);
             ViewDialog dialog = new ViewDialog(parentWindow, view);
             dialog.showDialog();
 

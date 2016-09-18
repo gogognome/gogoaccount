@@ -9,7 +9,6 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
@@ -28,11 +27,13 @@ import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SA
 public class LedgerService {
 
     private final TextResource textResource;
+    private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
 
-    public LedgerService(TextResource textResource, InvoiceService invoiceService, PartyService partyService) {
+    public LedgerService(TextResource textResource, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService) {
         this.textResource = textResource;
+        this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.partyService = partyService;
     }
@@ -252,7 +253,6 @@ public class LedgerService {
             amount = journalEntryDetail.getAmount().negate();
         }
         Date date = journalEntry.getDate();
-        ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
         String description = configurationService.getAccount(document, journalEntryDetail.getAccountId()).getName();
         Payment payment = new Payment(journalEntryDetail.getPaymentId());
         payment.setDescription(description);
@@ -364,7 +364,7 @@ public class LedgerService {
      * @return the balance of this account at start of the bookkeeping
      */
     public Amount getStartBalance(Document document, Account account) throws ServiceException {
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         Date date = bookkeeping.getStartOfPeriod();
 
         // Subtract one day of the period start date, because otherwise the changes

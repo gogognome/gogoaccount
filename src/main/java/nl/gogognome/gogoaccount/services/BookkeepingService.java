@@ -13,7 +13,6 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
@@ -26,23 +25,25 @@ import java.util.*;
  */
 public class BookkeepingService {
 
-    private final LedgerService ledgerService;
     private final ConfigurationService configurationService;
+    private final DocumentService documentService;
+    private final LedgerService ledgerService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
 
-    public BookkeepingService(LedgerService ledgerService, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService) {
+    public BookkeepingService(LedgerService ledgerService, ConfigurationService configurationService, DocumentService documentService,
+                              InvoiceService invoiceService, PartyService partyService) {
         this.ledgerService = ledgerService;
         this.configurationService = configurationService;
+        this.documentService = documentService;
         this.invoiceService = invoiceService;
         this.partyService = partyService;
     }
 
     public Document closeBookkeeping(Document document, File newBookkeepingFile, String description, Date date, Account equity) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            Document newDocument = ObjectFactory.create(DocumentService.class).createNewDocument(newBookkeepingFile, "New bookkeeping");
+            Document newDocument = documentService.createNewDocument(newBookkeepingFile, "New bookkeeping");
             newDocument.setFileName(null);
-            ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
             newBookkeeping.setDescription(description);
@@ -51,7 +52,6 @@ public class BookkeepingService {
             configurationService.updateBookkeeping(newDocument, newBookkeeping);
 
             // Copy the parties
-            PartyService partyService = ObjectFactory.create(PartyService.class);
             Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
             for (Party party : partyService.findAllParties(document)) {
                 partyService.createParty(newDocument, party, partyIdToTags.get(party.getId()));

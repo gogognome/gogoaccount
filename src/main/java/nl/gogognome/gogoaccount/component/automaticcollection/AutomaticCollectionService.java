@@ -5,7 +5,6 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
@@ -32,11 +31,14 @@ import static java.util.stream.Collectors.toList;
 
 public class AutomaticCollectionService {
 
+    private final AmountFormat amountFormat;
     private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
     private final PartyService partyService;
 
-    public AutomaticCollectionService(ConfigurationService configurationService, LedgerService ledgerService, PartyService partyService) {
+    public AutomaticCollectionService(AmountFormat amountFormat, ConfigurationService configurationService, LedgerService ledgerService,
+                                      PartyService partyService) {
+        this.amountFormat = amountFormat;
         this.configurationService = configurationService;
         this.ledgerService = ledgerService;
         this.partyService = partyService;
@@ -82,10 +84,10 @@ public class AutomaticCollectionService {
             Map<String, Party> idToParty = partyService.getIdToParty(document, partyIds);
             Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings =
                     new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds);
-            SepaFileGenerator sepaFileGenerator = new SepaFileGenerator();
 
             // Determine which invoices that lead to validation errors in the SEPA file
-            List<String> invalidInvoices = determineInvalidInvoices(document, fileToCreate, invoices, collectionDate,
+            SepaFileGenerator sepaFileGenerator = new SepaFileGenerator(document, amountFormat, configurationService);
+            List<String> invalidInvoices = determineInvalidInvoices(fileToCreate, invoices, collectionDate,
                     settings, idToParty, idToPartyAutomaticCollectionSettings, sepaFileGenerator, progressListener);
 
             if (!invalidInvoices.isEmpty()) {
@@ -96,7 +98,7 @@ public class AutomaticCollectionService {
             progressListener.onProgressUpdate(100);
 
             // Generate the SEPA file for all invoices
-            sepaFileGenerator.generate(document, settings, invoices, fileToCreate, collectionDate,
+            sepaFileGenerator.generate(settings, invoices, fileToCreate, collectionDate,
                     idToParty, idToPartyAutomaticCollectionSettings);
 
             // Increase sequence number for next SEPA file
@@ -105,12 +107,12 @@ public class AutomaticCollectionService {
         });
     }
 
-    private List<String> determineInvalidInvoices(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate, AutomaticCollectionSettings settings, Map<String, Party> idToParty, Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings, SepaFileGenerator sepaFileGenerator, TaskProgressListener progressListener) throws Exception {
-        List<String> invalidInvoices = new ArrayList<String>();
+    private List<String> determineInvalidInvoices(File fileToCreate, List<Invoice> invoices, Date collectionDate, AutomaticCollectionSettings settings, Map<String, Party> idToParty, Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings, SepaFileGenerator sepaFileGenerator, TaskProgressListener progressListener) throws Exception {
+        List<String> invalidInvoices = new ArrayList<>();
         for (int i=0; i<invoices.size(); i++) {
             progressListener.onProgressUpdate((i+1) * 100 / invoices.size());
             try {
-                sepaFileGenerator.generate(document, settings, invoices.subList(i, i+1), fileToCreate, collectionDate,
+                sepaFileGenerator.generate(settings, invoices.subList(i, i+1), fileToCreate, collectionDate,
                         idToParty, idToPartyAutomaticCollectionSettings);
                 validateSepaAutomaticCollectionFile(fileToCreate);
             } catch (ServiceException e) {

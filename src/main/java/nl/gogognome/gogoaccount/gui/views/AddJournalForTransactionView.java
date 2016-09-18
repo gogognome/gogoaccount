@@ -13,7 +13,6 @@ import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
@@ -33,6 +32,7 @@ public class AddJournalForTransactionView extends EditJournalView {
         void journalAdded(JournalEntry journalEntry);
     }
 
+    private final ConfigurationService configurationService;
     private final ImportBankStatementService importBankStatementService;
 
     private Plugin plugin;
@@ -47,9 +47,10 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     public AddJournalForTransactionView(Document document, ConfigurationService configurationService,
                                         ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
-                                        LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory) {
+                                        LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory, ConfigurationService configurationService1) {
         super(document, configurationService, invoiceService, ledgerService, partyService, viewFactory);
         this.importBankStatementService = importBankStatementService;
+        this.configurationService = configurationService1;
         setTitle("ajd.title");
     }
 
@@ -160,7 +161,7 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     private Account getDefaultAccount() {
         try {
-            return ObjectFactory.create(ConfigurationService.class).findAllAccounts(document).get(0);
+            return configurationService.findAllAccounts(document).get(0);
         } catch (ServiceException e) {
             return null;
         }

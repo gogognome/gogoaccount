@@ -8,7 +8,6 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import org.h2.jdbcx.JdbcDataSource;
 
 import java.io.File;
@@ -19,6 +18,12 @@ import java.util.*;
 import static java.util.stream.Collectors.*;
 
 public class DocumentService {
+
+    private ConfigurationService configurationService;
+
+    public DocumentService(ConfigurationService configurationService) {
+        this.configurationService = configurationService;
+    }
 
     public Document openDocument(String fileName) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
@@ -53,11 +58,10 @@ public class DocumentService {
             registerDataSource(document, jdbcUrl);
             applyDatabaseMigrations(document);
 
-            ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             bookkeeping.setDescription(description);
             bookkeeping.setStartOfPeriod(getFirstDayOfYear(new Date()));
-            ObjectFactory.create(ConfigurationService.class).updateBookkeeping(document, bookkeeping);
+            configurationService.updateBookkeeping(document, bookkeeping);
 
             return document;
         });

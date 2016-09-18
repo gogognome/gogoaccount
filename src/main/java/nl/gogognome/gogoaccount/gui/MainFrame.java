@@ -300,7 +300,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     /** Handles closing the bookkeeping. */
     private void handleCloseBookkeeping() {
         ensureAccountsPresent(() -> {
-            CloseBookkeepingView cbv = new CloseBookkeepingView(document);
+            CloseBookkeepingView cbv = new CloseBookkeepingView(document, configurationService);
             new ViewDialog(this, cbv).showDialog();
             Date date = cbv.getDate();
             Account accountToAddResultTo = cbv.getAccountToAddResultTo();
@@ -331,7 +331,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             setDocument(newDocument);
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
-            return;
         }
     }
 
@@ -361,9 +360,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void setDocument(Document newDocument) throws ServiceException {
         viewTabbedPane.closeAllViews();
 
-        for (View view : openViews.values()) {
-            view.requestClose();
-        }
+        openViews.values().forEach(View::requestClose);
 
         if (document != null) {
             document.removeListener(this);
@@ -422,7 +419,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleGenerateReport() {
-        ensureAccountsPresent(() -> new GenerateReportController(document, this).execute());
+        ensureAccountsPresent(() -> {
+            GenerateReportController generateReportController = new GenerateReportController(document, viewFactory);
+            generateReportController.setParentWindow(this);
+            generateReportController.execute();
+        });
     }
 
     private void handleGenerateAutomaticCollectionFile() {

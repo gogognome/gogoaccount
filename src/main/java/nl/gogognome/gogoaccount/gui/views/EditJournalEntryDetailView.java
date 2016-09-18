@@ -12,7 +12,6 @@ import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.ListModel;
@@ -69,7 +68,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
     @Override
     public void onInit() {
         try {
-            Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             amountFormat = new AmountFormat(Locale.getDefault(), bookkeeping.getCurrency());
 
             initModels();
@@ -82,7 +81,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     private void initModels() {
         try {
-            accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
+            accountListModel.setItems(configurationService.findAllAccounts(document));
 
             List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
                     textResource.getString("gen.credit"));

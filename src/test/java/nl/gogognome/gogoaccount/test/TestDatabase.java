@@ -39,7 +39,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
     public void testHasAccounts() throws Exception {
         assertTrue(configurationService.hasAccounts(document));
 
-        assertFalse(configurationService.hasAccounts(ObjectFactory.create(DocumentService.class).createNewDocumentInMemory("New bookkeeping")));
+        assertFalse(configurationService.hasAccounts(documentService.createNewDocumentInMemory("New bookkeeping")));
     }
 
     @Test

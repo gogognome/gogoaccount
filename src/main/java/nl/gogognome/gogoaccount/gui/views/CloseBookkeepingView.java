@@ -6,7 +6,6 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
@@ -23,13 +22,12 @@ import java.util.Date;
 /**
  * This class implements a view that asks the user to enter some data that is needed
  * to closse the bookkeeping.
- *
- * @author Sander Kooijmans
  */
 public class CloseBookkeepingView extends OkCancelView {
 	private static final long serialVersionUID = 1L;
 
-	private Document document;
+	private final Document document;
+    private final ConfigurationService configurationService;
 
     private DateModel dateModel = new DateModel();
     private StringModel descriptionModel = new StringModel();
@@ -37,12 +35,9 @@ public class CloseBookkeepingView extends OkCancelView {
 
     private boolean dataSuccessfullyEntered;
 
-    /**
-     * Constructor.
-     * @param document the database whose bookkeeping is to be closed
-     */
-    public CloseBookkeepingView(Document document) {
+    public CloseBookkeepingView(Document document, ConfigurationService configurationService) {
         this.document = document;
+        this.configurationService = configurationService;
     }
 
     @Override
@@ -128,9 +123,9 @@ public class CloseBookkeepingView extends OkCancelView {
     }
 
     private void initModels() throws ServiceException {
-        Bookkeeping bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         dateModel.setDate(DateUtil.addYears(bookkeeping.getStartOfPeriod(), 1), null);
-		accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
+		accountListModel.setItems(configurationService.findAllAccounts(document));
 
         String description = bookkeeping.getDescription();
         int year = DateUtil.getField(bookkeeping.getStartOfPeriod(), Calendar.YEAR);

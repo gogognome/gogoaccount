@@ -16,6 +16,7 @@ import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
+import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
 import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceController;
 import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
@@ -23,11 +24,9 @@ import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -47,14 +46,11 @@ public class BeanConfiguration {
 
     @Bean
     public ViewFactory viewFactory(BeanFactory beanFactory) {
-        return new ViewFactory() {
-            @Override
-            public View createView(Class<? extends View> viewClass) {
-                try {
-                    return beanFactory.getBean(viewClass);
-                } catch (Exception e) {
-                    throw new RuntimeException("Could not create instance of view " + viewClass.getName(), e);
-                }
+        return viewClass -> {
+            try {
+                return beanFactory.getBean(viewClass);
+            } catch (Exception e) {
+                throw new RuntimeException("Could not create instance of view " + viewClass.getName(), e);
             }
         };
     }
@@ -78,24 +74,21 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public DocumentRegistry documentRegistry(ConfigurableListableBeanFactory beanFactory, ConfigurationService configurationService,
+    public DocumentRegistry documentRegistry(ConfigurationService configurationService,
                                              DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper) {
-        return new DocumentRegistry() {
-            @Override
-            public void register(Document document) {
-                if (document != null) {
-                    try {
-                        Currency currency = configurationService.getBookkeeping(document).getCurrency();
+        return document -> {
+            if (document != null) {
+                try {
+                    Currency currency = configurationService.getBookkeeping(document).getCurrency();
 
-                        documentWrapper.document = document;
-                        amountFormatWrapper.amountFormat = new AmountFormat(document.getLocale(), currency);
-                    } catch (ServiceException e) {
-                        throw new RuntimeException("Could not get currency", e);
-                    }
-                } else {
-                    documentWrapper.document = null;
-                    amountFormatWrapper.amountFormat = null;
+                    documentWrapper.document = document;
+                    amountFormatWrapper.amountFormat = new AmountFormat(document.getLocale(), currency);
+                } catch (ServiceException e) {
+                    throw new RuntimeException("Could not get currency", e);
                 }
+            } else {
+                documentWrapper.document = null;
+                amountFormatWrapper.amountFormat = null;
             }
         };
     }
@@ -112,12 +105,7 @@ public class BeanConfiguration {
 
     @Bean
     public TextResourceRegistry textResourceRegistry(TextResourceWrapper textResourceWrapper) {
-        return new TextResourceRegistry() {
-            @Override
-            public void register(TextResource textResource) {
-                textResourceWrapper.textResource = textResource;
-            }
-        };
+        return textResource -> textResourceWrapper.textResource = textResource;
     }
 
     @Bean
@@ -131,14 +119,21 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public AccountMutationsView accountMutationsView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService) {
-        return new AccountMutationsView(documentWrapper.document, bookkeepingService);
+    public AccountMutationsView accountMutationsView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService,
+                                                     ConfigurationService configurationService, PartyService partyService) {
+        return new AccountMutationsView(documentWrapper.document, bookkeepingService, configurationService, partyService);
     }
 
     @Bean
     @Scope("prototype")
     public BalanceAndOperationResultView balanceAndOperationResultView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService) {
         return new BalanceAndOperationResultView(documentWrapper.document, bookkeepingService);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public CloseBookkeepingView closeBookkeepingView(DocumentWrapper documentWrapper, ConfigurationService configurationService) {
+        return new CloseBookkeepingView(documentWrapper.document, configurationService);
     }
 
     @Bean
@@ -183,11 +178,24 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
+    public EditPartyView editPartyView(DocumentWrapper documentWrapper, ConfigurationService configurationService,
+                                           PartyService partyService) {
+        return new EditPartyView(documentWrapper.document, configurationService, partyService);
+    }
+
+    @Bean
+    @Scope("prototype")
     public GenerateAutomaticCollectionFileView generateAutomaticCollectionFileView(DocumentWrapper documentWrapper,
                                                                                    AutomaticCollectionService automaticCollectionService,
                                                                                    ConfigurationService configurationService,
                                                                                    ViewFactory viewFactory) {
         return new GenerateAutomaticCollectionFileView(documentWrapper.document, automaticCollectionService, configurationService, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public GenerateReportView generateReportView(DocumentWrapper documentWrapper, ConfigurationService configurationService) {
+        return new GenerateReportView(documentWrapper.document, configurationService);
     }
 
     @Bean
@@ -219,8 +227,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public InvoiceGeneratorView invoiceGeneratorView(DocumentWrapper documentWrapper, AmountFormulaParser amountFormulaParser,
-                                                     LedgerService ledgerService, ViewFactory viewFactory) {
-        return new InvoiceGeneratorView(ledgerService, documentWrapper.document, amountFormulaParser, viewFactory);
+                                                     ConfigurationService configurationService, LedgerService ledgerService, ViewFactory viewFactory) {
+        return new InvoiceGeneratorView(documentWrapper.document, configurationService, ledgerService, amountFormulaParser, viewFactory);
     }
 
     @Bean
@@ -232,8 +240,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public PartiesView partiesView(DocumentWrapper documentWrapper, AutomaticCollectionService automaticCollectionService,
-                                   PartyService partyService) {
-        return new PartiesView(documentWrapper.document, automaticCollectionService, partyService);
+                                   PartyService partyService, ViewFactory viewFactory) {
+        return new PartiesView(documentWrapper.document, automaticCollectionService, partyService, viewFactory);
     }
 
     @Bean
@@ -259,16 +267,22 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public AutomaticCollectionService automaticCollectionService(ConfigurationService configurationService,
+    public GenerateReportController generateReportController(DocumentWrapper documentWrapper, ViewFactory viewFactory) {
+        return new GenerateReportController(documentWrapper.document, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public AutomaticCollectionService automaticCollectionService(AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
                                                                  LedgerService ledgerService, PartyService partyService) {
-        return new AutomaticCollectionService(configurationService, ledgerService, partyService);
+        return new AutomaticCollectionService(amountFormatWrapper.amountFormat, configurationService, ledgerService, partyService);
     }
 
     @Bean
     @Scope("prototype")
     public BookkeepingService bookkeepingService(LedgerService ledgerService, ConfigurationService configurationService,
-                                                 InvoiceService invoiceService, PartyService partyService) {
-        return new BookkeepingService(ledgerService, configurationService, invoiceService, partyService);
+                                                 DocumentService documentService, InvoiceService invoiceService, PartyService partyService) {
+        return new BookkeepingService(ledgerService, configurationService, documentService, invoiceService, partyService);
     }
 
     @Bean
@@ -281,14 +295,14 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public DocumentService documentService() {
-        return new DocumentService();
+    public DocumentService documentService(ConfigurationService configurationService) {
+        return new DocumentService(configurationService);
     }
 
     @Bean
     @Scope("prototype")
-    public ImportBankStatementService importBankStatementService() {
-        return new ImportBankStatementService();
+    public ImportBankStatementService importBankStatementService(ConfigurationService configurationService) {
+        return new ImportBankStatementService(configurationService);
     }
 
     @Bean
@@ -299,8 +313,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public LedgerService ledgerService(TextResourceWrapper textResourceWrapper, InvoiceService invoiceService, PartyService partyService) {
-        return new LedgerService(textResourceWrapper.textResource, invoiceService, partyService);
+    public LedgerService ledgerService(TextResourceWrapper textResourceWrapper, ConfigurationService configurationService,
+                                       InvoiceService invoiceService, PartyService partyService) {
+        return new LedgerService(textResourceWrapper.textResource, configurationService, invoiceService, partyService);
     }
 
     @Bean

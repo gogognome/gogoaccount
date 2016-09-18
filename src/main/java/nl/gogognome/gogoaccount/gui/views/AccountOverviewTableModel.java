@@ -7,7 +7,6 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.ListTableModel;
 import nl.gogognome.lib.swing.RightAlignedRenderer;
@@ -29,7 +28,7 @@ public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTab
 
     private static final long serialVersionUID = 1L;
 
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final PartyService partyService;
 
     private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> DATE =
             new ColumnDefinition<>("gen.date", Date.class, 75);
@@ -69,8 +68,9 @@ public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTab
         String invoice;
     }
 
-    public AccountOverviewTableModel() {
+    public AccountOverviewTableModel(PartyService partyService) {
         super(COLUMN_DEFINITIONS, Collections.<LineInfo>emptyList());
+        this.partyService = partyService;
     }
 
     public void setAccountAndDate(Document document, Report report, Account account) throws ServiceException {

@@ -4,10 +4,8 @@ import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.StringUtil;
@@ -24,7 +22,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 class SepaFileGenerator {
 
@@ -32,17 +32,21 @@ class SepaFileGenerator {
     private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final IbanValidator ibanValidator = new IbanValidator();
 
-    private AmountFormat amountFormat;
-    private Currency currency;
+    private final Document document;
+    private final AmountFormat amountFormat;
+    private final ConfigurationService configurationService;
 
-    public void generate(Document document, AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
+    SepaFileGenerator(Document document, AmountFormat amountFormat, ConfigurationService configurationService) {
+        this.document = document;
+        this.amountFormat = amountFormat;
+        this.configurationService = configurationService;
+    }
+
+    public void generate(AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
                          Date collectionDate, Map<String, Party> idToParty,
                          Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings)
             throws Exception {
-        ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-        currency = bookkeeping.getCurrency();
-        amountFormat = new AmountFormat(Locale.US, bookkeeping.getCurrency());
 
         DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
@@ -132,7 +136,7 @@ class SepaFileGenerator {
         }
         Element instructedAmount = addElement(doc, ddTransactionInformation, "InstdAmt",
                 amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid().toBigInteger()));
-        instructedAmount.setAttribute("Ccy", currency.getCurrencyCode());
+        instructedAmount.setAttribute("Ccy", configurationService.getBookkeeping(document).getCurrency().getCurrencyCode());
 
         Element directDebitTransaction = addElement(doc, ddTransactionInformation, "DrctDbtTx");
         Element mandateRelatedInformation = addElement(doc, directDebitTransaction, "MndtRltdInf");

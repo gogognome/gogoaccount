@@ -5,10 +5,10 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.*;
@@ -32,6 +32,8 @@ public class AccountMutationsView extends View {
 
     private final Document document;
     private final BookkeepingService bookkeepingService;
+    private final ConfigurationService configurationService;
+    private final PartyService partyService;
 
     private JScrollPane tableScrollPane;
     private AccountOverviewTableModel tableModel;
@@ -44,10 +46,12 @@ public class AccountMutationsView extends View {
 
     private Report report;
 
-    public AccountMutationsView(Document document, BookkeepingService bookkeepingService) {
+    public AccountMutationsView(Document document, BookkeepingService bookkeepingService, ConfigurationService configurationService, PartyService partyService) {
         super();
         this.document = document;
         this.bookkeepingService = bookkeepingService;
+        this.configurationService = configurationService;
+        this.partyService = partyService;
     }
 
     @Override
@@ -73,7 +77,7 @@ public class AccountMutationsView extends View {
     }
 
     private void initModels() {
-        tableModel = new AccountOverviewTableModel();
+        tableModel = new AccountOverviewTableModel(partyService);
         setAccountsInListModel();
     }
 
@@ -158,7 +162,7 @@ public class AccountMutationsView extends View {
 
     private void setAccountsInListModel() {
         try {
-            accountListModel.setItems(ObjectFactory.create(ConfigurationService.class).findAllAccounts(document));
+            accountListModel.setItems(configurationService.findAllAccounts(document));
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
