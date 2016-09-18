@@ -1,0 +1,1 @@
+ALTER TABLE journal_entry_detail ADD FOREIGN KEY (account_id) REFERENCES account(id);

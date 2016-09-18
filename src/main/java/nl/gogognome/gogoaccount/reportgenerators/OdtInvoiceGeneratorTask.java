@@ -3,7 +3,6 @@ package nl.gogognome.gogoaccount.reportgenerators;
 import java.io.File;
 import java.util.Map;
 
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 
@@ -12,36 +11,31 @@ import nl.gogognome.lib.task.TaskProgressListener;
  */
 public class OdtInvoiceGeneratorTask implements Task {
 
-	private final OdtInvoiceParameters parameters;
+    private final InvoicesToModelConverter invoicesToModelConverter;
+    private final OdtInvoiceParameters parameters;
 
-	private final File reportFile;
-	private final File templateFile;
+    private final File reportFile;
+    private final File templateFile;
 
-    private Map<String, Object> model;
+    public OdtInvoiceGeneratorTask(InvoicesToModelConverter invoicesToModelConverter, OdtInvoiceParameters parameters,
+                                   File reportFile, File templateFile) {
+        this.invoicesToModelConverter = invoicesToModelConverter;
+        this.parameters = parameters;
+        this.reportFile = reportFile;
+        this.templateFile = templateFile;
+    }
 
-	public OdtInvoiceGeneratorTask(OdtInvoiceParameters parameters,
-			File reportFile, File templateFile) {
-		super();
-		this.parameters = parameters;
-		this.reportFile = reportFile;
-		this.templateFile = templateFile;
-	}
+    @Override
+    public Object execute(TaskProgressListener progressListener) throws Exception {
+        progressListener.onProgressUpdate(0);
 
-	@Override
-	public Object execute(TaskProgressListener progressListener) throws Exception {
-    	progressListener.onProgressUpdate(0);
+        Map<String, Object> model = invoicesToModelConverter.buildModel(parameters);
+        progressListener.onProgressUpdate(50);
 
-    	createModel();
-    	progressListener.onProgressUpdate(50);
+        JodReportsUtil.createDocument(templateFile, reportFile, model);
+        progressListener.onProgressUpdate(100);
 
-    	JodReportsUtil.createDocument(templateFile, reportFile, model);
-    	progressListener.onProgressUpdate(100);
+        return null;
+    }
 
-		return null;
-	}
-
-	private void createModel() throws ServiceException {
-		InvoicesToModelConverter converter = new InvoicesToModelConverter(parameters);
-		model = converter.getModel();
-	}
 }

@@ -16,7 +16,6 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
@@ -42,12 +41,15 @@ import static java.util.stream.Collectors.toMap;
  */
 public class ReportTask implements Task {
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final Document document;
+    private final AmountFormat amountFormat;
+    private final TextResource textResource;
+    private final BookkeepingService bookkeepingService;
+    private final ConfigurationService configurationService;
+    private final InvoiceService invoiceService;
+    private final LedgerService ledgerService;
+    private final PartyService partyService;
 
-    private Document document;
     private Bookkeeping bookkeeping;
     private Date date;
     private Report report;
@@ -60,19 +62,18 @@ public class ReportTask implements Task {
 
     private TaskProgressListener progressListener;
 
-    private TextResource textResource = Factory.getInstance(TextResource.class);
-    private AmountFormat amountFormat = Factory.getInstance(AmountFormat.class);
-
-    /**
-     * Constructor.
-     * @param document the document for which the report must be generated
-     * @param date the start date of the period for which the report must be generated
-     * @param file the file of the report to be created
-     * @param fileType the type of file to be created. Only PLAIN_TEXT is allowed
-     */
-    public ReportTask(Document document, Date date, File file, ReportType fileType) {
+    public ReportTask(Document document, AmountFormat amountFormat, TextResource textResource, BookkeepingService bookkeepingService,
+                      ConfigurationService configurationService, InvoiceService invoiceService, LedgerService ledgerService,
+                      PartyService partyService, Date endDate, File file, ReportType fileType) {
         this.document = document;
-        this.date = date;
+        this.amountFormat = amountFormat;
+        this.textResource = textResource;
+        this.bookkeepingService = bookkeepingService;
+        this.configurationService = configurationService;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
+        this.partyService = partyService;
+        this.date = endDate;
         this.file = file;
         this.fileType = fileType;
     }
@@ -95,7 +96,7 @@ public class ReportTask implements Task {
                 throw new IllegalArgumentException("Illegal file type: " + fileType);
         }
 
-        report = ObjectFactory.create(BookkeepingService.class).createReport(document, date);
+        report = bookkeepingService.createReport(document, date);
         progressListener.onProgressUpdate(10);
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(file))){

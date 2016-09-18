@@ -16,7 +16,6 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.StringUtil;
@@ -37,26 +36,28 @@ public class XMLFileReader {
 
     private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd");
 
-    private final ConfigurationService configurationService = ObjectFactory.create(ConfigurationService.class);
-    private final ImportBankStatementService importBankStatementService = ObjectFactory.create(ImportBankStatementService.class);
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
-    private final PartyService partyService = ObjectFactory.create(PartyService.class);
+    private final ConfigurationService configurationService;
+    private final DocumentService documentService;
+    private final ImportBankStatementService importBankStatementService;
+    private final InvoiceService invoiceService;
+    private final LedgerService ledgerService;
+    private final PartyService partyService;
 
     private Document document;
     private String fileVersion;
-    private final File file;
 
-    public XMLFileReader(File file) {
-        this.file = file;
+    public XMLFileReader(ConfigurationService configurationService, DocumentService documentService,
+                         ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
+                         LedgerService ledgerService, PartyService partyService) {
+        this.configurationService = configurationService;
+        this.documentService = documentService;
+        this.importBankStatementService = importBankStatementService;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
+        this.partyService = partyService;
     }
 
-    /**
-     * Creates a <tt>Database</tt> from a file.
-     * @return a <tt>Database</tt> with the contents of the file.
-     * @throws ServiceException if a problem occurs
-     */
-    public Document createDatabaseFromFile() throws ServiceException {
+    public Document createDatabaseFromFile(File file) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             int highestPaymentId = 0;
 
@@ -65,7 +66,6 @@ public class XMLFileReader {
             if (indexOfExtension != -1) {
                 path = path.substring(0, indexOfExtension);
             }
-            DocumentService documentService = ObjectFactory.create(DocumentService.class);
             document = documentService.createNewDocument(new File(path), "New bookkeeping");
             document.setFileName(file.getAbsolutePath());
 

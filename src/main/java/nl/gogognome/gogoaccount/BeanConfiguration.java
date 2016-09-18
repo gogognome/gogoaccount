@@ -22,8 +22,11 @@ import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
+import nl.gogognome.gogoaccount.reportgenerators.InvoicesToModelConverter;
+import nl.gogognome.gogoaccount.reportgenerators.ReportToModelConverter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import org.springframework.beans.factory.BeanFactory;
@@ -40,8 +43,10 @@ public class BeanConfiguration {
 
     @Bean
     public MainFrame mainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
-                               ViewFactory viewFactory, DocumentRegistry documentRegistry, ResourceLoader resourceLoader) {
-        return new MainFrame(bookkeepingService, documentService, configurationService, viewFactory, documentRegistry, resourceLoader);
+                               ViewFactory viewFactory, DocumentRegistry documentRegistry, GenerateReportController generateReportController,
+                               ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
+        return new MainFrame(bookkeepingService, documentService, configurationService, viewFactory, documentRegistry,
+                generateReportController, resourceLoader, xmlFileReader);
     }
 
     @Bean
@@ -233,8 +238,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoiceToOdtView invoiceToOdtView(DocumentWrapper documentWrapper, ViewFactory viewFactory) {
-        return new InvoiceToOdtView(documentWrapper.document, viewFactory);
+    public InvoiceToOdtView invoiceToOdtView(DocumentWrapper documentWrapper, ViewFactory viewFactory,
+                                             InvoicesToModelConverter invoicesToModelConverter) {
+        return new InvoiceToOdtView(documentWrapper.document, viewFactory, invoicesToModelConverter);
     }
 
     @Bean
@@ -267,8 +273,13 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public GenerateReportController generateReportController(DocumentWrapper documentWrapper, ViewFactory viewFactory) {
-        return new GenerateReportController(documentWrapper.document, viewFactory);
+    public GenerateReportController generateReportController(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper,
+                                                             TextResourceWrapper textResourceWrapper, BookkeepingService bookkeepingService,
+                                                             ConfigurationService configurationService, InvoiceService invoiceService,
+                                                             LedgerService ledgerService, PartyService partyService,
+                                                             ReportToModelConverter reportToModelConverter, ViewFactory viewFactory) {
+        return new GenerateReportController(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
+                bookkeepingService, configurationService, invoiceService, ledgerService, partyService, reportToModelConverter, viewFactory);
     }
 
     @Bean
@@ -287,10 +298,8 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public ConfigurationService configurationService(LedgerService ledgerService) {
-        ConfigurationService configurationService = new ConfigurationService();
-        configurationService.setLedgerService(ledgerService);
-        return configurationService;
+    public ConfigurationService configurationService() {
+        return new ConfigurationService();
     }
 
     @Bean
@@ -334,6 +343,32 @@ public class BeanConfiguration {
     @Scope("prototype")
     public AmountFormulaParser amountFormulaParser(AmountFormatWrapper amountFormatWrapper) {
         return new AmountFormulaParser(amountFormatWrapper.amountFormat);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public InvoicesToModelConverter invoicesToModelConverter(AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
+                                                             InvoiceService invoiceService, PartyService partyService,
+                                                             TextResourceWrapper textResourceWrapper) {
+        return new InvoicesToModelConverter(amountFormatWrapper.amountFormat, configurationService, invoiceService,
+                partyService, textResourceWrapper.textResource);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public ReportToModelConverter reportToModelConverter(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
+                                                             PartyService partyService, TextResourceWrapper textResourceWrapper) {
+        return new ReportToModelConverter(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
+                configurationService, partyService);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public XMLFileReader xmlFileReader(ConfigurationService configurationService, DocumentService documentService,
+                                       ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
+                                       LedgerService ledgerService, PartyService partyService) {
+        return new XMLFileReader(configurationService, documentService, importBankStatementService, invoiceService,
+                ledgerService, partyService);
     }
 
 }

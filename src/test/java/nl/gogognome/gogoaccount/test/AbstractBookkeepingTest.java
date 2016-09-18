@@ -78,7 +78,6 @@ public abstract class AbstractBookkeepingTest {
 
     @Before
     public void initBookkeeping() throws Exception {
-        configurationService.setLedgerService(ledgerService);
         initFactory();
 
         document = documentService.createNewDocumentInMemory("New bookkeeping");

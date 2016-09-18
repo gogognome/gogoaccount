@@ -65,16 +65,20 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final ConfigurationService configurationService;
     private final ViewFactory viewFactory;
     private final DocumentRegistry documentRegistry;
+    private final GenerateReportController generateReportController;
     private final ResourceLoader resourceLoader;
+    private final XMLFileReader xmlFileReader;
 
     public MainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
-                     ViewFactory viewFactory, DocumentRegistry documentRegistry, ResourceLoader resourceLoader) {
+                     ViewFactory viewFactory, DocumentRegistry documentRegistry, GenerateReportController generateReportController, ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
         this.bookkeepingService = bookkeepingService;
         this.documentService = documentService;
         this.configurationService = configurationService;
         this.viewFactory = viewFactory;
         this.documentRegistry = documentRegistry;
+        this.generateReportController = generateReportController;
         this.resourceLoader = resourceLoader;
+        this.xmlFileReader = xmlFileReader;
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -337,7 +341,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private Document doLoadFile(File file) throws ServiceException {
         Document newDocument;
         if (file.getName().toLowerCase().endsWith(".xml")) {
-            newDocument = new XMLFileReader(file).createDatabaseFromFile();
+            newDocument = xmlFileReader.createDatabaseFromFile(file);
             if (MessageDialog.YES_OPTION == MessageDialog.showYesNoQuestion(this, "mf.xmlChangedToDatabase.title", "mf.xmlChangedToDatabase")) {
                 if (!file.delete()) {
                     MessageDialog.showErrorMessage(this, "mf.failedToDeleteFile", file.getAbsoluteFile());
@@ -420,7 +424,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private void handleGenerateReport() {
         ensureAccountsPresent(() -> {
-            GenerateReportController generateReportController = new GenerateReportController(document, viewFactory);
             generateReportController.setParentWindow(this);
             generateReportController.execute();
         });

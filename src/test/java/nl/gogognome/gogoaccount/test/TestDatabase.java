@@ -1,13 +1,9 @@
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
@@ -50,13 +46,13 @@ public class TestDatabase extends AbstractBookkeepingTest {
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
         JournalEntryDetail d1 = new JournalEntryDetail();
         d1.setAmount(createAmount(20));
-        d1.setAccountId("100");
+        d1.setAccountId(cash.getId());
         d1.setDebet(true);
         journalEntryDetails.add(d1);
 
         JournalEntryDetail d2 = new JournalEntryDetail();
         d2.setAmount(createAmount(20));
-        d2.setAccountId("150");
+        d2.setAccountId(bankAccount.getId());
         d2.setDebet(false);
         journalEntryDetails.add(d2);
 

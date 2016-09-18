@@ -2,6 +2,7 @@ package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
+import nl.gogognome.gogoaccount.reportgenerators.InvoicesToModelConverter;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -24,6 +25,7 @@ public class InvoiceToOdtView extends View {
 
     private final Document document;
     private final ViewFactory viewFactory;
+    private final InvoicesToModelConverter invoicesToModelConverter;
 
     private FileModel templateFileModel = new FileModel();
     private FileModel odtFileModel = new FileModel();
@@ -32,9 +34,10 @@ public class InvoiceToOdtView extends View {
     private StringModel ourReferenceModel = new StringModel();
     private DateModel dueDateModel = new DateModel();
 
-    public InvoiceToOdtView(Document document, ViewFactory viewFactory) {
+    public InvoiceToOdtView(Document document, ViewFactory viewFactory, InvoicesToModelConverter invoicesToModelConverter) {
         this.document = document;
         this.viewFactory = viewFactory;
+        this.invoicesToModelConverter = invoicesToModelConverter;
     }
 
     /**
@@ -77,7 +80,7 @@ public class InvoiceToOdtView extends View {
                 parameters.setDate(date);
                 parameters.setDueDate(dueDate);
                 parameters.setOurReference(ourReferenceModel.getString());
-                OdtInvoiceGeneratorTask task = new OdtInvoiceGeneratorTask(parameters,
+                OdtInvoiceGeneratorTask task = new OdtInvoiceGeneratorTask(invoicesToModelConverter, parameters,
                         odtFileModel.getFile(), templateFileModel.getFile());
                 TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
                         textResource.getString("invoiceToOdtView.progressDialogTitle"));

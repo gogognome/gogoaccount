@@ -6,15 +6,10 @@ import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public class ConfigurationService {
-
-    private LedgerService ledgerService;
-
-    public void setLedgerService(LedgerService ledgerService) {
-        this.ledgerService = ledgerService;
-    }
 
     public boolean hasAccounts(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> new AccountDAO(document).hasAny());
@@ -61,11 +56,14 @@ public class ConfigurationService {
 
     public void deleteAccount(Document document, Account account) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
-            // TODO: Remove dependency on BookkeepingService. Will disappear when foreign keys are used
-            if (ledgerService.isAccountUsed(document, account.getId())) {
-                throw new DocumentModificationFailedException("The account " + account + " is in use and can therefore not be deleted!");
+            try {
+                new AccountDAO(document).delete(account.getId());
+            } catch (SQLException e) {
+                if (e.getErrorCode() == 23505) {
+                    throw new DocumentModificationFailedException("The account " + account + " is in use and can therefore not be deleted!");
+                }
+                throw e;
             }
-            new AccountDAO(document).delete(account.getId());
         });
     }
 
