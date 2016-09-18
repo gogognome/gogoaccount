@@ -9,7 +9,6 @@ import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
@@ -21,7 +20,6 @@ import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
-import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.DateUtil;
 
 import javax.swing.*;
@@ -34,7 +32,8 @@ import java.util.List;
 public class GenerateAutomaticCollectionFileView extends View {
 
     private final Document document;
-    private final AmountFormat amountFormat;
+    private final AutomaticCollectionService automaticCollectionService;
+    private final ConfigurationService configurationService;
     private final ViewFactory viewFactory;
 
     private FileModel sepaFileModel = new FileModel();
@@ -44,9 +43,11 @@ public class GenerateAutomaticCollectionFileView extends View {
     private nl.gogognome.lib.swing.models.ListModel<Account> bankAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
     private nl.gogognome.lib.swing.models.ListModel<Account> debtorAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
 
-    public GenerateAutomaticCollectionFileView(Document document, AmountFormat amountFormat, ViewFactory viewFactory) {
+    public GenerateAutomaticCollectionFileView(Document document, AutomaticCollectionService automaticCollectionService,
+                                               ConfigurationService configurationService, ViewFactory viewFactory) {
         this.document = document;
-        this.amountFormat = amountFormat;
+        this.automaticCollectionService = automaticCollectionService;
+        this.configurationService = configurationService;
         this.viewFactory = viewFactory;
     }
 
@@ -62,7 +63,7 @@ public class GenerateAutomaticCollectionFileView extends View {
     @Override
     public void onInit() {
         try {
-            List<Account> accounts = ObjectFactory.create(ConfigurationService.class).findAllAccounts(document);
+            List<Account> accounts = configurationService.findAllAccounts(document);
             bankAccountListModel.setItems(accounts);
             debtorAccountListModel.setItems(accounts);
             debtorAccountListModel.setSelectedItem(accounts.stream().filter(a -> a.getType() == AccountType.DEBTOR).findFirst().orElse(null), null);
@@ -124,7 +125,7 @@ public class GenerateAutomaticCollectionFileView extends View {
             ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {
-                SepaFileGeneratorTask task = new SepaFileGeneratorTask(document, sepaFileModel.getFile(),
+                SepaFileGeneratorTask task = new SepaFileGeneratorTask(document, automaticCollectionService, sepaFileModel.getFile(),
                         collectionDateModel.getDate(), invoicesView.getSelectedInvoices(), journalEntryDescriptionModel.getString(),
                         journalEntryIdModel.getString(), bankAccountListModel.getSelectedItem(), debtorAccountListModel.getSelectedItem());
 
@@ -145,6 +146,7 @@ public class GenerateAutomaticCollectionFileView extends View {
     private static class SepaFileGeneratorTask implements Task {
 
         private final Document document;
+        private final AutomaticCollectionService automaticCollectionService;
         private final File sepaFile;
         private final Date collectionDate;
         private final java.util.List<Invoice> invoices;
@@ -153,9 +155,10 @@ public class GenerateAutomaticCollectionFileView extends View {
         private final Account bankAccount;
         private final Account debtorAccount;
 
-        public SepaFileGeneratorTask(Document document, File sepaFile, Date collectionDate, List<Invoice> invoices,
+        public SepaFileGeneratorTask(Document document, AutomaticCollectionService automaticCollectionService, File sepaFile, Date collectionDate, List<Invoice> invoices,
                                      String journalEntryDescription, String journalEntryId, Account bankAccount, Account debtorAccount) {
             this.document = document;
+            this.automaticCollectionService = automaticCollectionService;
             this.sepaFile = sepaFile;
             this.collectionDate = collectionDate;
             this.invoices = invoices;
@@ -167,7 +170,6 @@ public class GenerateAutomaticCollectionFileView extends View {
 
         @Override
         public Object execute(TaskProgressListener progressListener) throws Exception {
-            AutomaticCollectionService automaticCollectionService = ObjectFactory.create(AutomaticCollectionService.class);
             automaticCollectionService.createSepaAutomaticCollectionFile(document, sepaFile, invoices, collectionDate, progressListener);
             automaticCollectionService.validateSepaAutomaticCollectionFile(sepaFile);
             automaticCollectionService.createJournalEntryForAutomaticCollection(document, collectionDate, journalEntryId,

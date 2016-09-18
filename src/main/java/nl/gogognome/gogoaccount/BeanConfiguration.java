@@ -17,6 +17,7 @@ import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceController;
+import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
@@ -25,8 +26,6 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -39,8 +38,6 @@ import java.util.Locale;
 
 @Configuration
 public class BeanConfiguration {
-
-    private final Logger logger = LoggerFactory.getLogger(BeanConfiguration.class);
 
     @Bean
     public MainFrame mainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
@@ -155,6 +152,13 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
+    public EditInvoiceView editInvoiceView(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
+                                           InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
+        return new EditInvoiceView(documentWrapper.document, amountFormatWrapper.amountFormat, configurationService, invoiceService, partyService, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
     public EditJournalView editJournalView(DocumentWrapper documentWrapper, ConfigurationService configurationService,
                                            InvoiceService invoiceService, LedgerService ledgerService, PartyService partyService,
                                            ViewFactory viewFactory) {
@@ -175,6 +179,15 @@ public class BeanConfiguration {
                                              ViewFactory viewFactory, DeleteJournalController deleteJournalController,  EditJournalController editJournalController) {
         return new EditJournalsView(documentWrapper.document, configurationService, invoiceService, ledgerService,
                 partyService, viewFactory, deleteJournalController, editJournalController);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public GenerateAutomaticCollectionFileView generateAutomaticCollectionFileView(DocumentWrapper documentWrapper,
+                                                                                   AutomaticCollectionService automaticCollectionService,
+                                                                                   ConfigurationService configurationService,
+                                                                                   ViewFactory viewFactory) {
+        return new GenerateAutomaticCollectionFileView(documentWrapper.document, automaticCollectionService, configurationService, viewFactory);
     }
 
     @Bean
@@ -239,14 +252,16 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public EditInvoiceController editInvoiceController(DocumentWrapper documentWrapper, ViewFactory viewFactory) {
-        return new EditInvoiceController(documentWrapper.document, viewFactory);
+    public EditInvoiceController editInvoiceController(DocumentWrapper documentWrapper, InvoiceService invoiceService,
+                                                       LedgerService ledgerService, ViewFactory viewFactory) {
+        return new EditInvoiceController(documentWrapper.document, invoiceService, ledgerService, viewFactory);
     }
 
     @Bean
     @Scope("prototype")
-    public AutomaticCollectionService automaticCollectionService(LedgerService ledgerService) {
-        return new AutomaticCollectionService(ledgerService);
+    public AutomaticCollectionService automaticCollectionService(ConfigurationService configurationService,
+                                                                 LedgerService ledgerService, PartyService partyService) {
+        return new AutomaticCollectionService(configurationService, ledgerService, partyService);
     }
 
     @Bean

@@ -13,7 +13,6 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.AmountFormat;
 
@@ -33,10 +32,14 @@ import static java.util.stream.Collectors.toList;
 
 public class AutomaticCollectionService {
 
+    private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
+    private final PartyService partyService;
 
-    public AutomaticCollectionService(LedgerService ledgerService) {
+    public AutomaticCollectionService(ConfigurationService configurationService, LedgerService ledgerService, PartyService partyService) {
+        this.configurationService = configurationService;
         this.ledgerService = ledgerService;
+        this.partyService = partyService;
     }
 
     public AutomaticCollectionSettings getSettings(Document document) throws ServiceException {
@@ -75,7 +78,6 @@ public class AutomaticCollectionService {
 
             // Get data needed for generating the SEPA file
             AutomaticCollectionSettings settings = getSettings(document);
-            PartyService partyService = ObjectFactory.create(PartyService.class);
             List<String> partyIds = invoices.stream().map(i -> i.getConcerningPartyId()).collect(toList());
             Map<String, Party> idToParty = partyService.getIdToParty(document, partyIds);
             Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings =
@@ -161,10 +163,9 @@ public class AutomaticCollectionService {
 
     public void createCsvForAutomaticCollectionFile(Document document, File csvFile, List<Invoice> invoices) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
-            Currency currency = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document).getCurrency();
+            Currency currency = configurationService.getBookkeeping(document).getCurrency();
             AmountFormat amountFormat = new AmountFormat(new Locale("nl", "NL"), currency);
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
             PartyAutomaticCollectionSettingsDAO partyAutomaticCollectionSettingsDAO = new PartyAutomaticCollectionSettingsDAO(document);
             try (CSVWriter csvWriter = new CSVWriter(new FileWriter(csvFile), ';')) {
                 for (Invoice invoice : invoices) {

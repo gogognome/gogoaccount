@@ -9,7 +9,6 @@ import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.views.EditJournalView;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
 
@@ -22,8 +21,8 @@ import java.awt.*;
  */
 public class EditInvoiceController {
 
-    private final InvoiceService invoiceService = ObjectFactory.create(InvoiceService.class);
-    private final LedgerService ledgerService = ObjectFactory.create(LedgerService.class);
+    private final InvoiceService invoiceService;
+    private final LedgerService ledgerService;
     private final ViewFactory viewFactory;
 
     private Component owner;
@@ -31,9 +30,10 @@ public class EditInvoiceController {
     private Invoice invoice;
     private Invoice updatedInvoice;
 
-    public EditInvoiceController(Document document, ViewFactory viewFactory) {
-        super();
+    public EditInvoiceController(Document document, InvoiceService invoiceService, LedgerService ledgerService, ViewFactory viewFactory) {
         this.document = document;
+        this.invoiceService = invoiceService;
+        this.ledgerService = ledgerService;
         this.viewFactory = viewFactory;
     }
 

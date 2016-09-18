@@ -13,7 +13,6 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.util.ObjectFactory;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
@@ -53,7 +52,7 @@ public class ReportBuilder {
         this.ledgerService = ledgerService;
         this.partyService = partyService;
         idToAccount = this.configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
-        bookkeeping = ObjectFactory.create(ConfigurationService.class).getBookkeeping(document);
+        bookkeeping = configurationService.getBookkeeping(document);
     }
 
     public ReportBuilder init() {
@@ -207,7 +206,7 @@ public class ReportBuilder {
     }
 
     private void addFootersToLedgerLines() throws ServiceException {
-        for (Account account : ObjectFactory.create(ConfigurationService.class).findAllAccounts(document)) {
+        for (Account account : configurationService.findAllAccounts(document)) {
             if (!hasStartBalanceLineBeenAdded(account)) {
                 addStartLedgerLineForAccount(account,
                         accountToTotalDebet.get(account), accountToTotalCredit.get(account));
