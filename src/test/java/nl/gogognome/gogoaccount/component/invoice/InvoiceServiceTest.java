@@ -263,7 +263,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     }
 
     private List<InvoiceTemplateLine> buildSomeLine() throws ServiceException {
-        return singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", configurationService.getAccount(document, "400")));
+        return singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
     }
 
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.text.Amount;
+import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This class represents an invoice. An invoice consists of an amount that has to be paid
@@ -120,4 +121,8 @@ public class Invoice implements Comparable<Invoice> {
         return id.hashCode();
     }
 
+    @Override
+    public String toString() {
+        return DateUtil.formatDateYYYYMMDD(issueDate) + ' ' + id + ' ' + description;
+    }
 }

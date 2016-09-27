@@ -5,7 +5,8 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
@@ -16,9 +17,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
 import static junit.framework.Assert.*;
+import static nl.gogognome.lib.util.DateUtil.createDate;
 
 
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
@@ -57,7 +61,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     @Test
     public void testReportAtEndOf2011() throws Exception {
         Report report = bookkeepingService.createReport(document,
-                DateUtil.createDate(2011, 12, 31));
+                createDate(2011, 12, 31));
 
         assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
                 "200 Eigen vermogen, 290 Crediteuren, " +
@@ -98,7 +102,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     @Test
     public void testReportApril30_2011() throws Exception {
         Report report = bookkeepingService.createReport(document,
-                DateUtil.createDate(2011, 4, 30));
+                createDate(2011, 4, 30));
 
         assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
                 "200 Eigen vermogen, 290 Crediteuren, " +
@@ -133,17 +137,16 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void testCloseBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            Document newDocument = bookkeepingService.closeBookkeeping(document, newBookkeepingFile, "new bookkeeping",
-                    DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
             Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
 
             assertEquals("new bookkeeping", newBookkeeping.getDescription());
             assertEquals(configurationService.findAllAccounts(document).toString(), configurationService.findAllAccounts(newDocument).toString());
-            assertEquals(0, DateUtil.compareDayOfYear(DateUtil.createDate(2012, 1, 1),
+            assertEquals(0, DateUtil.compareDayOfYear(createDate(2012, 1, 1),
                     newBookkeeping.getStartOfPeriod()));
 
             Report report = bookkeepingService.createReport(newDocument,
-                    DateUtil.createDate(2011, 12, 31));
+                    createDate(2011, 12, 31));
 
             assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
                             "200 Eigen vermogen, 290 Crediteuren, " +
@@ -183,17 +186,54 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             JournalEntry journalEntry = new JournalEntry();
             journalEntry.setId("ABC");
             journalEntry.setDescription("Test");
-            journalEntry.setDate(DateUtil.createDate(2012, 1, 10));
+            journalEntry.setDate(createDate(2012, 1, 10));
 
             ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
-            document.notifyChange();
-            Document newDocument = bookkeepingService.closeBookkeeping(document, newBookkeepingFile, "new bookkeeping",
-                    DateUtil.createDate(2012, 1, 1), configurationService.getAccount(document, "200"));
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
             assertEquals("[20111231 start start balance, 20120110 ABC Test]", ledgerService.findJournalEntries(newDocument).toString());
         } finally {
             assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
         }
+    }
+
+    @Test
+    public void testCloseBookkeepingWithInvoiceCreatedBeforeClosingDateCopiedToNewBookkeeping() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
+            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", createDate(2011, 8, 20), "Invoice for {name}", someLine);
+            ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            assertEquals("[20111231 start start balance]", ledgerService.findJournalEntries(newDocument).toString());
+            assertEquals("[20110820 auto Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    @Test
+    public void testCloseBookkeepingWithInvoiceCreatedAfterClosingDateCopiedToNewBookkeeping() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
+            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", createDate(2012, 1, 15), "Invoice for {name}", someLine);
+            ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            assertEquals("[20111231 start start balance, 20120115 auto Invoice for Pietje Puk]", ledgerService.findJournalEntries(newDocument).toString());
+            assertEquals("[20120115 auto Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    private Document closeBookkeeping(File newBookkeepingFile, Date closingDate) throws ServiceException {
+        return bookkeepingService.closeBookkeeping(document, newBookkeepingFile, "new bookkeeping", closingDate, equity);
     }
 
     @Test
@@ -205,30 +245,6 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     @Test
     public void checkInUseForUnusedAccount() throws ServiceException {
         assertFalse(ledgerService.isAccountUsed(document, "400"));
-    }
-
-    @Test
-    public void removeJournalThatCreatesInvoice() throws Exception {
-        assertNotNull(findJournalEntry("t1"));
-        assertTrue(invoiceService.existsInvoice(document, "inv1"));
-
-        ledgerService.removeJournal(document, findJournalEntry("t2")); // must remove journal with payment too to prevent foreign key violation
-        ledgerService.removeJournal(document, findJournalEntry("t1"));
-
-        assertNull(findJournalEntry("t1"));
-        assertFalse(invoiceService.existsInvoice(document, "inv1"));
-    }
-
-    @Test
-    public void removeJournalWithPayment() throws Exception {
-        assertNotNull(findJournalEntry("t2"));
-        Invoice invoice = invoiceService.getInvoice(document, "inv1");
-        assertFalse(invoiceService.findPayments(document, invoice).isEmpty());
-
-        ledgerService.removeJournal(document, findJournalEntry("t2"));
-
-        assertNull(findJournalEntry("t2"));
-        assertTrue(invoiceService.findPayments(document, invoice).isEmpty());
     }
 
     @Test

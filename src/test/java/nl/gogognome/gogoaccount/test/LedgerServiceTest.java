@@ -12,6 +12,8 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class LedgerServiceTest extends AbstractBookkeepingTest {
@@ -68,5 +70,30 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         whenAJournalEntryDetailWithPaymentIsUpdatedWithoutInvoiceThenPaymentMustBeRemoved(); // now t2 has no payment
         whenAJournalEntryDetailWithPaymentIsUpdatedThePaymentMustBeUpdatedToo(); // now t2 has a payment
     }
+
+    @Test
+    public void removeJournalThatCreatesInvoice() throws Exception {
+        assertNotNull(findJournalEntry("t1"));
+        assertTrue(invoiceService.existsInvoice(document, "inv1"));
+
+        ledgerService.removeJournal(document, findJournalEntry("t2")); // must remove journal with payment too to prevent foreign key violation
+        ledgerService.removeJournal(document, findJournalEntry("t1"));
+
+        assertNull(findJournalEntry("t1"));
+        assertFalse(invoiceService.existsInvoice(document, "inv1"));
+    }
+
+    @Test
+    public void removeJournalWithPayment() throws Exception {
+        assertNotNull(findJournalEntry("t2"));
+        Invoice invoice = invoiceService.getInvoice(document, "inv1");
+        assertFalse(invoiceService.findPayments(document, invoice).isEmpty());
+
+        ledgerService.removeJournal(document, findJournalEntry("t2"));
+
+        assertNull(findJournalEntry("t2"));
+        assertTrue(invoiceService.findPayments(document, invoice).isEmpty());
+    }
+
 
 }
