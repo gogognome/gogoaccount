@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 
+import static java.util.Arrays.asList;
+
 public class ConfigureBookkeepingView extends View {
 
     private static final long serialVersionUID = 1L;
@@ -96,8 +98,8 @@ public class ConfigureBookkeepingView extends View {
 
         organisationNameModel.setString(bookkeeping.getOrganizationName());
         organizationAddressModel.setString(bookkeeping.getOrganizationAddress());
-        organizationCityModel.setString(bookkeeping.getOrganizationZipCode());
-        organizationZipCodeModel.setString(bookkeeping.getOrganizationCity());
+        organizationCityModel.setString(bookkeeping.getOrganizationCity());
+        organizationZipCodeModel.setString(bookkeeping.getOrganizationZipCode());
         organizationCountryModel.setString(bookkeeping.getOrganizationCountry());
         enableAutomaticCollectionModel.setBoolean(bookkeeping.isEnableAutomaticCollection());
 
@@ -371,7 +373,7 @@ public class ConfigureBookkeepingView extends View {
     private static class AccountTableModel extends ListTableModel<AccountDefinition> {
 
         public AccountTableModel(List<AccountDefinition> accountDefinitions) {
-            super(
+            super(asList(
                     ColumnDefinition.<AccountDefinition>builder("ConfigureBookkeepingView.id", String.class, 50)
                         .add(row -> row.account.getId())
                         .build(),
@@ -384,7 +386,7 @@ public class ConfigureBookkeepingView extends View {
                     ColumnDefinition.<AccountDefinition>builder("ConfigureBookkeepingView.type", String.class, 150)
                         .add(row -> Factory.getInstance(TextResource.class).getString("gen.ACCOUNTTYPE_" + row.account.getType().name()))
                         .build()
-            );
+            ));
             setRows(accountDefinitions);
         }
     }
