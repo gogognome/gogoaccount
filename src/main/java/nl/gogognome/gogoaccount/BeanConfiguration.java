@@ -291,9 +291,10 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public BookkeepingService bookkeepingService(LedgerService ledgerService, ConfigurationService configurationService,
+    public BookkeepingService bookkeepingService(AutomaticCollectionService automaticCollectionService, LedgerService ledgerService,
+                                                 ConfigurationService configurationService,
                                                  DocumentService documentService, InvoiceService invoiceService, PartyService partyService) {
-        return new BookkeepingService(ledgerService, configurationService, documentService, invoiceService, partyService);
+        return new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);
     }
 
     @Bean

@@ -1,6 +1,9 @@
 package nl.gogognome.gogoaccount.services;
 
 import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -20,19 +23,19 @@ import java.io.File;
 import java.util.*;
 
 
-/**
- * This class offers methods to manipulate the bookkeeping.
- */
 public class BookkeepingService {
 
+    private final AutomaticCollectionService automaticCollectionService;
     private final ConfigurationService configurationService;
     private final DocumentService documentService;
     private final LedgerService ledgerService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
 
-    public BookkeepingService(LedgerService ledgerService, ConfigurationService configurationService, DocumentService documentService,
+    public BookkeepingService(AutomaticCollectionService automaticCollectionService, LedgerService ledgerService,
+                              ConfigurationService configurationService, DocumentService documentService,
                               InvoiceService invoiceService, PartyService partyService) {
+        this.automaticCollectionService = automaticCollectionService;
         this.ledgerService = ledgerService;
         this.configurationService = configurationService;
         this.documentService = documentService;
@@ -44,6 +47,7 @@ public class BookkeepingService {
         return ServiceTransaction.withResult(() -> {
             Date dayBeforeStart = DateUtil.addDays(date, -1);
             Document newDocument = CreateNewBookkeeping(document, newBookkeepingFile, description, date);
+            copyAutomaticCollectionSettings(document, newDocument);
             copyParties(document, newDocument);
             copyAccounts(document, newDocument);
             createStartBalance(document, newDocument, dayBeforeStart, equity);
@@ -55,6 +59,11 @@ public class BookkeepingService {
         });
     }
 
+    private void copyAutomaticCollectionSettings(Document document, Document newDocument) throws ServiceException {
+        AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
+        automaticCollectionService.setSettings(newDocument, settings);
+    }
+
     private Document CreateNewBookkeeping(Document document, File newBookkeepingFile, String description, Date date) throws ServiceException {
         Document newDocument = documentService.createNewDocument(newBookkeepingFile, "New bookkeeping");
         newDocument.setFileName(null);
@@ -62,6 +71,12 @@ public class BookkeepingService {
         Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
         newBookkeeping.setDescription(description);
         newBookkeeping.setCurrency(bookkeeping.getCurrency());
+        newBookkeeping.setEnableAutomaticCollection(bookkeeping.isEnableAutomaticCollection());
+        newBookkeeping.setOrganizationAddress(bookkeeping.getOrganizationAddress());
+        newBookkeeping.setOrganizationCity(bookkeeping.getOrganizationCity());
+        newBookkeeping.setOrganizationCountry(bookkeeping.getOrganizationCountry());
+        newBookkeeping.setOrganizationName(bookkeeping.getOrganizationName());
+        newBookkeeping.setOrganizationZipCode(bookkeeping.getOrganizationZipCode());
         newBookkeeping.setStartOfPeriod(date);
         configurationService.updateBookkeeping(newDocument, newBookkeeping);
         return newDocument;
@@ -71,6 +86,10 @@ public class BookkeepingService {
         Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
         for (Party party : partyService.findAllParties(document)) {
             partyService.createParty(newDocument, party, partyIdToTags.get(party.getId()));
+            PartyAutomaticCollectionSettings settings = automaticCollectionService.findSettings(document, party);
+            if (settings != null) {
+                automaticCollectionService.setAutomaticCollectionSettings(newDocument, settings);
+            }
         }
     }
 

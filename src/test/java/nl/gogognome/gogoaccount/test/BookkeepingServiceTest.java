@@ -1,6 +1,8 @@
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
@@ -227,6 +229,84 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             assertEquals("[20111231 start start balance, 20120115 auto Invoice for Pietje Puk]", ledgerService.findJournalEntries(newDocument).toString());
             assertEquals("[20120115 auto Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    @Test
+    public void closeBookkeepingShouldCopyOrganizationDetails() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+            bookkeeping.setEnableAutomaticCollection(true);
+            bookkeeping.setOrganizationAddress("Organization address");
+            bookkeeping.setOrganizationCity("Organization city");
+            bookkeeping.setOrganizationCountry("NL");
+            bookkeeping.setOrganizationName("Organization name");
+            bookkeeping.setOrganizationZipCode("Organization zip code");
+            configurationService.updateBookkeeping(document, bookkeeping);
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
+            assertEquals(bookkeeping.getOrganizationAddress(), newBookkeeping.getOrganizationAddress());
+            assertEquals(bookkeeping.getOrganizationCity(), newBookkeeping.getOrganizationCity());
+            assertEquals(bookkeeping.getOrganizationCountry(), newBookkeeping.getOrganizationCountry());
+            assertEquals(bookkeeping.getOrganizationName(), newBookkeeping.getOrganizationName());
+            assertEquals(bookkeeping.getOrganizationZipCode(), newBookkeeping.getOrganizationZipCode());
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    @Test
+    public void closeBookkeepingShouldCopyAutomaticCollectionDetails() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
+            settings.setAutomaticCollectionContractNumber("contract number");
+            settings.setBic("bic");
+            settings.setIban("iban");
+            settings.setSequenceNumber(123456L);
+            automaticCollectionService.setSettings(document, settings);
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            AutomaticCollectionSettings newSettings = automaticCollectionService.getSettings(newDocument);
+            assertEquals(settings.getAutomaticCollectionContractNumber(), newSettings.getAutomaticCollectionContractNumber());
+            assertEquals(settings.getBic(), newSettings.getBic());
+            assertEquals(settings.getIban(), newSettings.getIban());
+            assertEquals(settings.getSequenceNumber(), newSettings.getSequenceNumber());
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    @Test
+    public void closeBookkeepingShouldCopyAutomaticCollectionDetailsForParties() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            PartyAutomaticCollectionSettings settings = automaticCollectionService.findSettings(document, pietPuk);
+            settings.setAddress("address");
+            settings.setCity("city");
+            settings.setCountry("NL");
+            settings.setIban("iban");
+            settings.setMandateDate(createDate(2016, 10, 3));
+            settings.setName("name");
+            settings.setZipCode("zipCode");
+            automaticCollectionService.setAutomaticCollectionSettings(document, settings);
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            PartyAutomaticCollectionSettings newSettings = automaticCollectionService.findSettings(newDocument, pietPuk);
+            assertEquals(settings.getAddress(), newSettings.getAddress());
+            assertEquals(settings.getCity(), newSettings.getCity());
+            assertEquals(settings.getCountry(), newSettings.getCountry());
+            assertEquals(settings.getIban(), newSettings.getIban());
+            assertEquals(settings.getMandateDate(), newSettings.getMandateDate());
+            assertEquals(settings.getName(), newSettings.getName());
+            assertEquals(settings.getZipCode(), newSettings.getZipCode());
         } finally {
             assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
         }
