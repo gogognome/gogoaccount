@@ -47,10 +47,10 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     public AddJournalForTransactionView(Document document, ConfigurationService configurationService,
                                         ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
-                                        LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory, ConfigurationService configurationService1) {
+                                        LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory) {
         super(document, configurationService, invoiceService, ledgerService, partyService, viewFactory);
         this.importBankStatementService = importBankStatementService;
-        this.configurationService = configurationService1;
+        this.configurationService = configurationService;
         setTitle("ajd.title");
     }
 

@@ -124,6 +124,16 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
+    public AddJournalForTransactionView addJournalForTransactionView(DocumentWrapper documentWrapper,
+             ConfigurationService configurationService, ImportBankStatementService importBankStatementService,
+             InvoiceService invoiceService, LedgerService ledgerService,
+             PartyService partyService, ViewFactory viewFactory) {
+        return new AddJournalForTransactionView(documentWrapper.document, configurationService, importBankStatementService,
+                invoiceService, ledgerService, partyService, viewFactory);
+    }
+
+    @Bean
+    @Scope("prototype")
     public AccountMutationsView accountMutationsView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService,
                                                      ConfigurationService configurationService, PartyService partyService) {
         return new AccountMutationsView(documentWrapper.document, bookkeepingService, configurationService, partyService);
