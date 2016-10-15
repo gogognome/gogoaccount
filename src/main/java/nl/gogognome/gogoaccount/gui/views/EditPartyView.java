@@ -57,7 +57,8 @@ public class EditPartyView extends OkCancelView {
     private final DateModel birthDateModel = new DateModel();
     private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
     private final JTextArea taRemarks = new JTextArea(5, 40);
-    private JPanel tagsPanel = new JPanel(new GridBagLayout());
+    private JPanel labelsPanel = new JPanel(new GridBagLayout());
+    private final List<PartyTagBean> partyTagBeans = new ArrayList<>();
 
     private Party initialParty;
     private List<String> initialTags;
@@ -149,7 +150,7 @@ public class EditPartyView extends OkCancelView {
         ifc.addField("editPartyView.zipCode", zipCodeModel);
         ifc.addField("editPartyView.city", cityModel);
         ifc.addField("editPartyView.birthDate", birthDateModel);
-        ifc.addVariableSizeField("editPartyView.tags", tagsPanel);
+        ifc.addVariableSizeField("editPartyView.tags", labelsPanel);
         initTagsPanel();
 
         ifc.addVariableSizeField("editPartyView.remarks", taRemarks);
@@ -177,10 +178,12 @@ public class EditPartyView extends OkCancelView {
     }
 
     private void initTagsPanel() {
-        tagsPanel.removeAll();
+        labelsPanel.removeAll();
+        partyTagBeans.forEach(PartyTagBean::close);
+        partyTagBeans.clear();
         int index = 0;
         for (ListModel<String> tagListModel : tagListModels) {
-            PartyTagBean typesBean = new PartyTagBean(tagListModel);
+            PartyTagBean partyTagBean = new PartyTagBean(tagListModel);
 
             final int finalIndex = index;
             JButton deleteButton = widgetFactory.createIconButton("editPartyView.deleteTag", new AbstractAction() {
@@ -188,11 +191,15 @@ public class EditPartyView extends OkCancelView {
                 public void actionPerformed(ActionEvent e) {
                     tagListModels.remove(finalIndex);
                     initTagsPanel();
-                    validate();
+                    getParentWindow().pack();
+                    if (!partyTagBeans.isEmpty()) {
+                        SwingUtilities.invokeLater(() -> partyTagBeans.get(Math.min(finalIndex, partyTagBeans.size()-1)).requestFocus());
+                    }
                 }
             }, 20);
-            typesBean.add(deleteButton);
-            tagsPanel.add(typesBean, SwingUtils.createTextFieldGBConstraints(0, index));
+            partyTagBean.add(deleteButton);
+            labelsPanel.add(partyTagBean, SwingUtils.createTextFieldGBConstraints(0, index));
+            partyTagBeans.add(partyTagBean);
             index++;
         }
 
@@ -201,10 +208,11 @@ public class EditPartyView extends OkCancelView {
             public void actionPerformed(ActionEvent e) {
                 tagListModels.add(new ListModel<>(tags));
                 initTagsPanel();
-                validate();
+                getParentWindow().pack();
+                SwingUtilities.invokeLater(() -> partyTagBeans.get(partyTagBeans.size()-1).requestFocus());
             }
         }, 20);
-        tagsPanel.add(addButton, SwingUtils.createGBConstraints(0, index, 1, 1, 0, 0, GridBagConstraints.EAST, 0, 0, 0, 0, 0));
+        labelsPanel.add(addButton, SwingUtils.createGBConstraints(0, index, 1, 1, 0, 0, GridBagConstraints.EAST, 0, 0, 0, 0, 0));
     }
 
     private void addListeners() {
@@ -335,6 +343,7 @@ public class EditPartyView extends OkCancelView {
 
 	@Override
 	public void onClose() {
+        partyTagBeans.forEach(PartyTagBean::close);
         removeListeners();
     }
 
