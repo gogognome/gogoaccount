@@ -91,6 +91,9 @@ public class PartiesView extends View {
     public void onInit() {
     	addComponents();
     	addListeners();
+        if (!selectionEnabled) {
+            onSearch();
+        }
     }
 
     private void addComponents() {
@@ -222,7 +225,7 @@ public class PartiesView extends View {
             List<Party> matchingParties = partyService.findParties(document, criterion);
             partiesTableModel.setRows(matchingParties, partyService.findPartyIdToTags(document));
             Tables.selectFirstRow(table);
-            table.requestFocusInWindow();
+            SwingUtilities.invokeLater(() -> table.requestFocusInWindow());
 
             // Update the default button if the select button is present
             if (btSelect != null) {
