@@ -14,13 +14,13 @@ import nl.gogognome.gogoaccount.reportgenerators.ReportToModelConverter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.lib.swing.views.ViewOwner;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 
-import java.awt.*;
 import java.io.File;
 import java.util.Date;
 
@@ -37,7 +37,7 @@ public class GenerateReportController {
     private final ReportToModelConverter reportToModelConverter;
     private final ViewFactory viewFactory;
 
-    private Window parentWindow;
+    private ViewOwner viewOwner;
 
     public GenerateReportController(Document document, AmountFormat amountFormat, TextResource textResource,
                                     BookkeepingService bookkeepingService, ConfigurationService configurationService,
@@ -55,14 +55,14 @@ public class GenerateReportController {
         this.viewFactory = viewFactory;
     }
 
-    public void setParentWindow(Window parentWindow) {
-        this.parentWindow = parentWindow;
+    public void setViewOwner(ViewOwner viewOwner) {
+        this.viewOwner = viewOwner;
     }
 
     public void execute() {
-        HandleException.for_(parentWindow, () -> {
+        HandleException.for_(viewOwner.getWindow(), () -> {
             GenerateReportView view = (GenerateReportView) viewFactory.createView(GenerateReportView.class);
-            ViewDialog dialog = new ViewDialog(parentWindow, view);
+            ViewDialog dialog = new ViewDialog(viewOwner.getWindow(), view);
             dialog.showDialog();
 
             Date date = view.getDate();
@@ -80,7 +80,7 @@ public class GenerateReportController {
                         break;
 
                     default:
-                        MessageDialog.showErrorMessage(parentWindow,
+                        MessageDialog.showErrorMessage(viewOwner.getWindow(),
                                 new Exception("Unknown report type: " + view.getReportType()),
                                 "gen.internalError");
                         return;
@@ -95,7 +95,7 @@ public class GenerateReportController {
         String description = Factory.getInstance(TextResource.class)
             .getString("genreport.progress");
         TaskWithProgressDialog taskWithProgressDialog =
-            new TaskWithProgressDialog(parentWindow, description);
+            new TaskWithProgressDialog(viewOwner, description);
         taskWithProgressDialog.execute(task);
     }
 }

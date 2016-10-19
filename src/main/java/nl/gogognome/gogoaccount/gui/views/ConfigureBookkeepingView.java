@@ -278,7 +278,7 @@ public class ConfigureBookkeepingView extends View {
                 int index = Tables.getSelectedRowConvertedToModel(table);
                 tableModel.removeRow(index);
             } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(getParentWindow(), e, "ConfigureBookkeepingView.deleteAccountException");
+                MessageDialog.showErrorMessage(getViewOwner().getWindow(), e, "ConfigureBookkeepingView.deleteAccountException");
             }
         }
     }
@@ -286,7 +286,7 @@ public class ConfigureBookkeepingView extends View {
     private void onAddAccount() {
         HandleException.for_(this, () -> {
             EditAccountView eav = new EditAccountView(null);
-            ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
+            ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), eav);
             dialog.showDialog();
             Account account = eav.getEditedAccount();
             if (account != null) {
@@ -309,7 +309,7 @@ public class ConfigureBookkeepingView extends View {
                 AccountDefinition definition = tableModel.getRow(rows[0]);
                 EditAccountView eav = new EditAccountView(definition.account);
 
-                ViewDialog dialog = new ViewDialog(getParentWindow(), eav);
+                ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), eav);
                 dialog.showDialog();
                 Account account = eav.getEditedAccount();
                 if (account != null) {

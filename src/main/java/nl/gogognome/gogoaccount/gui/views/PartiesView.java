@@ -239,7 +239,7 @@ public class PartiesView extends View {
     private void onAddParty() {
         HandleException.for_(this, () -> {
             EditPartyView editPartyView = (EditPartyView) viewFactory.createView(EditPartyView.class);
-            ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
+            ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), editPartyView);
             dialog.showDialog();
 
             Party party = editPartyView.getEnteredParty();
@@ -265,7 +265,7 @@ public class PartiesView extends View {
             PartyAutomaticCollectionSettings oldSettings = automaticCollectionService.findSettings(document, oldParty);
             EditPartyView editPartyView = (EditPartyView) viewFactory.createView(EditPartyView.class);
             editPartyView.setInitialParty(oldParty, oldTags, oldSettings);
-            ViewDialog dialog = new ViewDialog(getParentWindow(), editPartyView);
+            ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), editPartyView);
             dialog.showDialog();
 
             Party party = editPartyView.getEnteredParty();

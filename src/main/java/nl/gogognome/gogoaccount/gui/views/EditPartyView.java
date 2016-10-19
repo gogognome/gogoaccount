@@ -191,7 +191,7 @@ public class EditPartyView extends OkCancelView {
                 public void actionPerformed(ActionEvent e) {
                     tagListModels.remove(finalIndex);
                     initTagsPanel();
-                    getParentWindow().pack();
+                    getViewOwner().invalidateLayout();
                     if (!partyTagBeans.isEmpty()) {
                         SwingUtilities.invokeLater(() -> partyTagBeans.get(Math.min(finalIndex, partyTagBeans.size()-1)).requestFocus());
                     }
@@ -208,7 +208,7 @@ public class EditPartyView extends OkCancelView {
             public void actionPerformed(ActionEvent e) {
                 tagListModels.add(new ListModel<>(tags));
                 initTagsPanel();
-                getParentWindow().pack();
+                getViewOwner().invalidateLayout();
                 SwingUtilities.invokeLater(() -> partyTagBeans.get(partyTagBeans.size()-1).requestFocus());
             }
         }, 20);

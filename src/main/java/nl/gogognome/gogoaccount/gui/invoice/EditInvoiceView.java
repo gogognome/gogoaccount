@@ -50,7 +50,7 @@ public class EditInvoiceView extends OkCancelView {
     private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
-    private final ViewFactory viewFacatory;
+    private final ViewFactory viewFactory;
 
     private Currency currency;
 
@@ -76,12 +76,12 @@ public class EditInvoiceView extends OkCancelView {
     private List<Amount> editedAmounts;
 
     public EditInvoiceView(Document document, AmountFormat amountFormat, ConfigurationService configurationService,
-                           InvoiceService invoiceService, PartyService partyService, ViewFactory viewFacatory) {
+                           InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
         this.amountFormat = amountFormat;
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.partyService = partyService;
-        this.viewFacatory = viewFacatory;
+        this.viewFactory = viewFactory;
         this.document = document;
     }
 
@@ -149,8 +149,8 @@ public class EditInvoiceView extends OkCancelView {
         ifc.addField("gen.id", idModel);
         ifc.addField("gen.issueDate", dateModel);
         ifc.addField("gen.description", descriptionModel);
-        ifc.addVariableSizeField("editInvoiceView.concerningParty", new PartyBean(document, concerningPartyModel, viewFacatory));
-        ifc.addVariableSizeField("editInvoiceView.payingParty", new PartyBean(document, payingPartyModel, viewFacatory));
+        ifc.addVariableSizeField("editInvoiceView.concerningParty", new PartyBean(document, concerningPartyModel, viewFactory));
+        ifc.addVariableSizeField("editInvoiceView.payingParty", new PartyBean(document, payingPartyModel, viewFactory));
         ifc.addField("gen.amount", amountModel);
 
     	return ifc;
@@ -212,7 +212,7 @@ public class EditInvoiceView extends OkCancelView {
         HandleException.for_(this, () -> {
             EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
                     "editInvoiceView.addRowTileId", currency);
-            ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
+            ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), editDescriptionAndAmountView);
             dialog.showDialog();
             if (editDescriptionAndAmountView.getEditedDescription() != null) {
                 tableModel.addRow(editDescriptionAndAmountView.getEditedDescription(),
@@ -238,7 +238,7 @@ public class EditInvoiceView extends OkCancelView {
                         tuple.getFirst(),
                         tuple.getSecond(),
                         currency);
-                ViewDialog dialog = new ViewDialog(getParentWindow(), editDescriptionAndAmountView);
+                ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), editDescriptionAndAmountView);
                 dialog.showDialog();
                 if (editDescriptionAndAmountView.getEditedDescription() != null) {
                     tableModel.updateRow(indices[0], editDescriptionAndAmountView.getEditedDescription(),

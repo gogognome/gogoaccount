@@ -15,10 +15,7 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
-import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.swing.views.ViewListener;
-import nl.gogognome.lib.swing.views.ViewTabbedPane;
+import nl.gogognome.lib.swing.views.*;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
@@ -82,7 +79,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-        viewTabbedPane = new ViewTabbedPane(this);
+        viewTabbedPane = new ViewTabbedPane(new JFrameViewOwner(this));
         getContentPane().add(viewTabbedPane);
 
         addWindowListener(new WindowAdapter() {
@@ -151,7 +148,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miEditParties = widgetFactory.createMenuItem("mi.editParties", this);
 
         // the view menu
-        JMenuItem miBalanceAndOpertaionalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
+        JMenuItem miBalanceAndOperationalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
         JMenuItem miAccountOverview = widgetFactory.createMenuItem("mi.viewAccountOverview", this);
         JMenuItem miInvoiceOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", e -> handleInvoiceOverview());
 
@@ -177,7 +174,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         editMenu.add(miAddInvoices);
         editMenu.add(miEditParties);
 
-        viewMenu.add(miBalanceAndOpertaionalResult);
+        viewMenu.add(miBalanceAndOperationalResult);
         viewMenu.add(miAccountOverview);
         viewMenu.add(miInvoiceOverview);
 
@@ -424,7 +421,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private void handleGenerateReport() {
         ensureAccountsPresent(() -> {
-            generateReportController.setParentWindow(this);
+            generateReportController.setViewOwner(new JFrameViewOwner(this));
             generateReportController.execute();
         });
     }

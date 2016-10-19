@@ -122,7 +122,7 @@ public class GenerateAutomaticCollectionFileView extends View {
             // Let the user select the invoices that should be added to the SEPA file.
             InvoiceEditAndSelectionView invoicesView = (InvoiceEditAndSelectionView) viewFactory.createView(InvoiceEditAndSelectionView.class);
             invoicesView.enableMultiSelect();
-            ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
+            ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {
                 SepaFileGeneratorTask task = new SepaFileGeneratorTask(document, automaticCollectionService, sepaFileModel.getFile(),

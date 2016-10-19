@@ -72,7 +72,7 @@ public class InvoiceToOdtView extends View {
             // Let the user select the invoices that should be added to the ODT file.
             InvoiceEditAndSelectionView invoicesView = (InvoiceEditAndSelectionView) viewFactory.createView(InvoiceEditAndSelectionView.class);
             invoicesView.enableMultiSelect();
-            ViewDialog dialog = new ViewDialog(getParentWindow(), invoicesView);
+            ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), invoicesView);
             dialog.showDialog();
             if (invoicesView.getSelectedInvoices() != null) {
                 OdtInvoiceParameters parameters = new OdtInvoiceParameters(document, invoicesView.getSelectedInvoices());
