@@ -104,13 +104,13 @@ public class ReportBuilder {
         report.setRevenues(revenues);
     }
 
-    public void addJournal(JournalEntry journalEntry) throws ServiceException {
-        for (JournalEntryDetail item : ledgerService.findJournalEntryDetails(document, journalEntry)) {
-            addJournalItem(journalEntry, item);
+    public void addJournal(JournalEntry journalEntry, List<JournalEntryDetail> details) throws ServiceException {
+        for (JournalEntryDetail detail : details) {
+            addJournalEntryDetail(journalEntry, detail);
         }
     }
 
-    private void addJournalItem(JournalEntry journalEntry, JournalEntryDetail item) throws ServiceException {
+    private void addJournalEntryDetail(JournalEntry journalEntry, JournalEntryDetail item) throws ServiceException {
         addAmountToTotalForAccount(item);
         addLedgerLineForAccount(journalEntry, item);
         addAmountToTotalDebetOrCredit(item); // must come after ledger line has been added

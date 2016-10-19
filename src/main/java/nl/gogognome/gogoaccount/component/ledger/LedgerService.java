@@ -9,6 +9,7 @@ import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
+import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
@@ -44,6 +45,23 @@ public class LedgerService {
 
     public List<JournalEntry> findJournalEntries(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findAll("date"));
+    }
+
+    public DefaultValueMap<Long, List<JournalEntryDetail>> getJournalEntryIdToDetailsMap(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            DefaultValueMap<Long, List<JournalEntryDetail>> result = new DefaultValueMap<>(new HashMap<>(), emptyList());
+            new JournalEntryDetailDAO(document).findAll().forEach(e -> {
+                List<JournalEntryDetail> list;
+                if (result.containsKey(e.getJournalEntryUniqueId())) {
+                    list = result.get(e.getJournalEntryUniqueId());
+                } else {
+                    list = new ArrayList<>();
+                    result.put(e.getJournalEntryUniqueId(), list);
+                }
+                list.add(e);
+            });
+            return result;
+        });
     }
 
     public List<FormattedJournalEntry> findFormattedJournalEntries(Document document, Criterion criterion) throws ServiceException {

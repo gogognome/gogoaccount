@@ -177,9 +177,10 @@ public class BookkeepingService {
             reportBuilder.setRevenues(configurationService.findRevenues(document));
 
             List<JournalEntry> journalEntries = ledgerService.findJournalEntries(document);
+            Map<Long, List<JournalEntryDetail>> journalEntryIdToDetailsMap = ledgerService.getJournalEntryIdToDetailsMap(document);
             for (JournalEntry journalEntry : journalEntries) {
                 if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
-                    reportBuilder.addJournal(journalEntry);
+                    reportBuilder.addJournal(journalEntry, journalEntryIdToDetailsMap.get(journalEntry));
                 }
             }
 
