@@ -26,9 +26,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -61,7 +58,6 @@ public class PartiesView extends View {
     private JButton btSelect;
 
     private ListSelectionListener listSelectionListener;
-    private FocusListener focusListener;
 
     private Party[] selectedParties;
 
@@ -184,20 +180,8 @@ public class PartiesView extends View {
     private void addListeners() {
         listSelectionListener = new RemarksUpdateSelectionListener();
         table.getSelectionModel().addListSelectionListener(listSelectionListener);
-
-        focusListener = new DefaultButtonFocusListener();
-        addListeners(ifc);
+        searchCriterionModel.addModelChangeListener(m -> setDefaultButton(btSearch));
     }
-
-    private void addListeners(Container container) {
-        for (Component c : container.getComponents()) {
-        	if ((c instanceof JTextField) || (c instanceof JComboBox)) {
-        		c.addFocusListener(focusListener);
-        	} else if (c instanceof Container) {
-        		addListeners((Container) c);
-        	}
-        }
-	}
 
 	@Override
     public void onClose() {
@@ -206,18 +190,7 @@ public class PartiesView extends View {
 
     private void removeListeners() {
     	table.getSelectionModel().removeListSelectionListener(listSelectionListener);
-    	removeListeners(ifc);
     }
-
-    private void removeListeners(Container container) {
-        for (Component c : container.getComponents()) {
-        	if ((c instanceof JTextField) || (c instanceof JComboBox)) {
-        		c.removeFocusListener(focusListener);
-        	} else if (c instanceof Container) {
-        		removeListeners((Container) c);
-        	}
-        }
-	}
 
     private void onSearch() {
         try {
@@ -231,7 +204,7 @@ public class PartiesView extends View {
             if (btSelect != null) {
                 setDefaultButton(btSelect);
             }
-        } catch (ServiceException e) {
+        } catch (IllegalArgumentException | ServiceException e) {
             MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
     }
@@ -247,7 +220,6 @@ public class PartiesView extends View {
             if (party != null && tags != null) {
                 partyService.createParty(document, party, tags);
                 automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
-
             }
             onSearch();
         });
@@ -329,13 +301,6 @@ public class PartiesView extends View {
 		    } else {
 		        taRemarks.setText("");
 		    }
-		}
-	}
-
-	private final class DefaultButtonFocusListener extends FocusAdapter {
-		@Override
-		public void focusGained(FocusEvent e) {
-		    setDefaultButton(btSearch);
 		}
 	}
 
