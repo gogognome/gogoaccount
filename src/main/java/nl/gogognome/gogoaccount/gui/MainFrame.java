@@ -372,6 +372,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             document.addListener(this);
         }
 
+        document.setLocale(Locale.getDefault());
         documentRegistry.register(document);
 
         documentChanged(document);
