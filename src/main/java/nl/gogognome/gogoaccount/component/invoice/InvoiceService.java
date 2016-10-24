@@ -1,12 +1,12 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
+import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -251,6 +251,23 @@ public class InvoiceService {
 
     public List<Payment> findPayments(Document document, Invoice invoice) throws ServiceException {
         return ServiceTransaction.withResult(() -> new PaymentDAO(document).findForInvoice(invoice.getId()));
+    }
+
+    public DefaultValueMap<String, List<Payment>> getInvoiceIdToPaymentsMap(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            DefaultValueMap<String, List<Payment>> result = new DefaultValueMap<>(new HashMap<>(), emptyList());
+            new PaymentDAO(document).findAll().forEach(p -> {
+                List<Payment> list;
+                if (result.containsKey(p.getInvoiceId())) {
+                    list = result.get(p.getInvoiceId());
+                } else {
+                    list = new ArrayList<>();
+                    result.put(p.getInvoiceId(), list);
+                }
+                list.add(p);
+            });
+            return result;
+        });
     }
 
     public void createPayments(Document document, List<Payment> payments) throws ServiceException {

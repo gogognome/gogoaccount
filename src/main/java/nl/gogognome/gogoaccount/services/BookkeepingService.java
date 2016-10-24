@@ -10,12 +10,14 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
@@ -177,16 +179,17 @@ public class BookkeepingService {
             reportBuilder.setRevenues(configurationService.findRevenues(document));
 
             List<JournalEntry> journalEntries = ledgerService.findJournalEntries(document);
-            Map<Long, List<JournalEntryDetail>> journalEntryIdToDetailsMap = ledgerService.getJournalEntryIdToDetailsMap(document);
+            DefaultValueMap<Long, List<JournalEntryDetail>> journalEntryIdToDetailsMap = ledgerService.getJournalEntryIdToDetailsMap(document);
             for (JournalEntry journalEntry : journalEntries) {
                 if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {
-                    reportBuilder.addJournal(journalEntry, journalEntryIdToDetailsMap.get(journalEntry));
+                    reportBuilder.addJournal(journalEntry, journalEntryIdToDetailsMap.get(journalEntry.getUniqueId()));
                 }
             }
 
+            DefaultValueMap<String, List<Payment>> invoiceIdToPaymentsMap = invoiceService.getInvoiceIdToPaymentsMap(document);
             for (Invoice invoice : invoiceService.findAllInvoices(document)) {
                 if (DateUtil.compareDayOfYear(invoice.getIssueDate(), date) <= 0) {
-                    reportBuilder.addInvoice(invoice);
+                    reportBuilder.addInvoice(invoice, invoiceIdToPaymentsMap.get(invoice.getId()));
                 }
             }
 
