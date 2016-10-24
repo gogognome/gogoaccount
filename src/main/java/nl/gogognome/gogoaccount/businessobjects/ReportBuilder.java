@@ -7,6 +7,7 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
@@ -190,10 +191,10 @@ public class ReportBuilder {
         return !report.getLedgerLinesForAccount(account).isEmpty();
     }
 
-    public void addInvoice(Invoice invoice) throws ServiceException {
+    public void addInvoice(Invoice invoice, List<Payment> payments) throws ServiceException {
         report.addInvoice(invoice);
 
-        invoiceService.findPayments(document, invoice).stream()
+        payments.stream()
                 .filter(p -> DateUtil.compareDayOfYear(p.getDate(), report.getEndDate()) <= 0)
                 .forEach(p -> report.addPayment(invoice, p.getAmount()));
     }
