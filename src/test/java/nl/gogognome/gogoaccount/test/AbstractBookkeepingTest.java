@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.test;
 
 import junit.framework.Assert;
+import nl.gogognome.dataaccess.transaction.CurrentTransaction;
 import nl.gogognome.gogoaccount.businessobjects.*;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
@@ -9,6 +10,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.DocumentAwareTransaction;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
@@ -78,6 +80,7 @@ public abstract class AbstractBookkeepingTest {
 
     @Before
     public void initBookkeeping() throws Exception {
+        CurrentTransaction.transactionCreator = DocumentAwareTransaction::new;
         initFactory();
 
         document = documentService.createNewDocumentInMemory("New bookkeeping");

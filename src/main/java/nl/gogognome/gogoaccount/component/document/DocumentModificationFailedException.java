@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
 */
-package nl.gogognome.gogoaccount.database;
+package nl.gogognome.gogoaccount.component.document;
 
 /**
  * This exception is thrown when document modification failed.

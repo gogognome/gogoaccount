@@ -1,30 +1,24 @@
 package nl.gogognome.gogoaccount.component.document;
 
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.text.AmountFormat;
+import nl.gogognome.dataaccess.transaction.CurrentTransaction;
+import nl.gogognome.dataaccess.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.UUID;
 
 public class Document {
 
-    protected Connection connectionToKeepInMemoryDatabaseAlive;
+    private final static Logger logger = LoggerFactory.getLogger(Document.class);
 
-    /** The name of the file from which the database was loaded. */
-    private String fileName;
-
-    private Locale locale = Locale.US;
-
-    /**
-     * Contains the <tt>DatabaseListeners</tt>.
-     */
     private final ArrayList<DocumentListener> listeners = new ArrayList<>();
-
     private final String bookkeepingId = UUID.randomUUID().toString();
+    private String fileName;
+    private Locale locale = Locale.US;
+    protected Connection connectionToKeepInMemoryDatabaseAlive;
 
     protected Document() {
     }
@@ -33,25 +27,17 @@ public class Document {
         return bookkeepingId;
     }
 
-    /**
-     * Adds a database listener.
-     * @param l the database listener.
-     */
     public void addListener( DocumentListener l ) {
         listeners.add(l);
     }
 
-    /**
-     * Removes a database listener.
-     * @param l the database listener.
-     */
     public void removeListener( DocumentListener l ) {
         listeners.remove(l);
     }
 
-    /** Notifies the listeners. */
-    private void notifyListeners()
+    void notifyListeners()
     {
+        logger.debug("Notify listeners");
         for (DocumentListener l : listeners) {
             l.documentChanged(this);
         }
@@ -63,7 +49,19 @@ public class Document {
      * at the proper moment only if this database is the current database.
      */
     public void notifyChange() {
-        notifyListeners();
+        DocumentAwareTransaction documentAwareTransaction = null;
+        if (CurrentTransaction.hasTransaction()) {
+            Transaction transaction = CurrentTransaction.get();
+            if (transaction instanceof DocumentAwareTransaction) {
+                documentAwareTransaction = (DocumentAwareTransaction) transaction;
+            }
+        }
+        if (documentAwareTransaction != null) {
+            logger.debug("Postponed notifying listeners until current transaction is closed");
+            documentAwareTransaction.notifyListenersWhenTransactionCloses(this);
+        } else {
+            notifyListeners();
+        }
     }
 
     public Locale getLocale() {

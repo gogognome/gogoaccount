@@ -1,5 +1,7 @@
 package nl.gogognome.gogoaccount;
 
+import nl.gogognome.dataaccess.transaction.CurrentTransaction;
+import nl.gogognome.gogoaccount.component.document.DocumentAwareTransaction;
 import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
 import nl.gogognome.lib.gui.beans.BeanFactory;
@@ -49,6 +51,7 @@ public class Start {
     }
 
     private void startApplication(String[] args) {
+        CurrentTransaction.transactionCreator = DocumentAwareTransaction::new;
         initFactory(Locale.getDefault());
         CommandLinePropertySource clps = new SimpleCommandLinePropertySource(args);
         parseArguments(clps);

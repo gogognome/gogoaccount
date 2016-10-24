@@ -1,8 +1,7 @@
 package nl.gogognome.gogoaccount.component.configuration;
 
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
-import nl.gogognome.gogoaccount.database.DocumentModificationFailedException;
+import nl.gogognome.gogoaccount.component.document.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 
