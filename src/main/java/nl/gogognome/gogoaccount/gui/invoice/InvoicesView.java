@@ -3,7 +3,6 @@ package nl.gogognome.gogoaccount.gui.invoice;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.invoice.*;
-import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -13,7 +12,6 @@ import nl.gogognome.lib.swing.models.BooleanModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.textsearch.criteria.Criterion;
@@ -24,7 +22,6 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -37,12 +34,10 @@ public class InvoicesView extends View {
 
     private final InvoiceService invoiceService;
     private final EditInvoiceController editInvoiceController;
-    private final ViewFactory viewFactory;
 
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
     private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesSinglePartyView.edit", this::onEditSelectedInvoice);
-    private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("InvoicesSinglePartyView.print", this::onPrintSelectedInvoices);
     private DocumentListener documentListener;
 
     private JTable table;
@@ -50,12 +45,11 @@ public class InvoicesView extends View {
     private JButton btSearch;
     private CloseableJPanel invoiceDetailsPanel;
 
-    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
+    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, EditInvoiceController editInvoiceController) {
         this.document = document;
         this.amountFormat = amountFormat;
         this.invoiceService = invoiceService;
         this.editInvoiceController = editInvoiceController;
-        this.viewFactory = viewFactory;
     }
 
     @Override
@@ -126,7 +120,6 @@ public class InvoicesView extends View {
     private Component createButtonPanel() {
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         buttonPanel.addButton(editSelectedInvoiceAction);
-        buttonPanel.addButton(printSelectedInvoicesAction);
         return buttonPanel;
     }
 
@@ -174,7 +167,6 @@ public class InvoicesView extends View {
     }
 
     private void onSelectionChanged() {
-        printSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         boolean exactlyOneInvoiceSelected = Tables.getSelectedRowsConvertedToModel(table).length == 1;
         editSelectedInvoiceAction.setEnabled(exactlyOneInvoiceSelected);
         hideDetailsResultPanel();
@@ -227,23 +219,6 @@ public class InvoicesView extends View {
         editInvoiceController.setOwner(this);
         editInvoiceController.setInvoiceToBeEdited(selectedInvoice);
         editInvoiceController.execute();
-    }
-
-    private void onPrintSelectedInvoices() {
-        PrintInvoicesView printInvoicesView = (PrintInvoicesView) viewFactory.createView(PrintInvoicesView.class);
-        List<Invoice> selectedInvoices = getSelectedInvoices();
-        printInvoicesView.setInvoicesToPrint(selectedInvoices);
-        Dimension viewOwnerSize = getViewOwner().getWindow().getSize();
-        printInvoicesView.setMinimumSize(new Dimension((int) viewOwnerSize.getWidth() * 90 / 100, (int) viewOwnerSize.getHeight() * 90 / 100));
-        new ViewDialog(getViewOwner().getWindow(), printInvoicesView).showDialog();
-    }
-
-    private List<Invoice> getSelectedInvoices() {
-        List<Invoice> selectedInvoices = new ArrayList<>();
-        for (int rowIndex : Tables.getSelectedRowsConvertedToModel(table)) {
-            selectedInvoices.add(invoicesTableModel.getRow(rowIndex));
-        }
-        return selectedInvoices;
     }
 
     private ListTableModel<InvoiceDetail> buildDetailTableModel(List<InvoiceDetail> details) {
