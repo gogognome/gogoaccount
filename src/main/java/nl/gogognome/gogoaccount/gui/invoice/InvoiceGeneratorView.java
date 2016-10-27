@@ -33,9 +33,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -86,12 +84,35 @@ public class InvoiceGeneratorView extends View {
             accountListModel.addModelChangeListener(
                     model -> descriptionModel.setString(accountListModel.getSelectedItem() != null ? accountListModel.getSelectedItem().getName() : null));
             amountModel.addModelChangeListener(model -> {
+                if (amountModel.getString().indexOf('|') != amountModel.getString().lastIndexOf('|')) {
+                    // Use invokeLater because this code is called while a mutation notification is handled.
+                    // It is not allowed to change the model right now.
+                    SwingUtilities.invokeLater(() -> {
+                        updateTemplateLine(amountModel.getString());
+                    });
+                }
                 try {
                     amountFormula = amountFormulaParser.parse(amountModel.getString());
                 } catch (ParseException e) {
                     amountFormula = null;
                 }
             });
+        }
+
+        private void updateTemplateLine(String line) {
+            String[] parts = line.split("[|]");
+            if (parts.length != 3) {
+                return;
+            }
+
+            Optional<Account> account = accountListModel.getItems().stream().filter(a -> a.getId().equals(parts[0].trim())).findFirst();
+            if (!account.isPresent()) {
+                return;
+            }
+
+            accountListModel.setSelectedItem(account.get(), null);
+            descriptionModel.setString(parts[1].trim());
+            amountModel.setString(parts[2].trim());
         }
     }
 
@@ -292,6 +313,7 @@ public class InvoiceGeneratorView extends View {
         JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", () -> {
                 templateLines.add(new TemplateLine(accounts));
                 updateTemplateLinesPanelAndRepaint();
+                SwingUtilities.invokeLater(() -> templateLinesPanel.getComponent(templateLinesPanel.getComponentCount() - 5).requestFocus());
             }
         );
         templateLinesPanel.add(newButton, SwingUtils.createLabelGBConstraints(4, row));
