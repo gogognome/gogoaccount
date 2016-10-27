@@ -87,9 +87,7 @@ public class InvoiceGeneratorView extends View {
                 if (amountModel.getString().indexOf('|') != amountModel.getString().lastIndexOf('|')) {
                     // Use invokeLater because this code is called while a mutation notification is handled.
                     // It is not allowed to change the model right now.
-                    SwingUtilities.invokeLater(() -> {
-                        updateTemplateLine(amountModel.getString());
-                    });
+                    SwingUtilities.invokeLater(() -> updateTemplateLine(amountModel.getString()));
                 }
                 try {
                     amountFormula = amountFormulaParser.parse(amountModel.getString());
