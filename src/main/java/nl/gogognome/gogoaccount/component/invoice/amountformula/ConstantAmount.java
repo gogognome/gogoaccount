@@ -13,7 +13,7 @@ public class ConstantAmount implements AmountFormula {
     }
 
     @Override
-    public Amount getAmount(List<String> amounts) {
+    public Amount getAmount(List<String> partyTags) {
         return amount;
     }
 
