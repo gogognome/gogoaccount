@@ -10,6 +10,7 @@ import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaPar
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.settings.SettingsService;
+import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
@@ -213,8 +214,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, InvoiceService invoiceService,
-                                     EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
-        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, editInvoiceController, viewFactory);
+                                     PartyService partyService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
+        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, partyService, editInvoiceController, viewFactory);
     }
 
     @Bean
@@ -259,8 +260,8 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public PrintInvoicesView printInvoicesView() {
-        return new PrintInvoicesView();
+    public PrintInvoicesView printInvoicesView(InvoiceService invoiceService) {
+        return new PrintInvoicesView(invoiceService);
     }
 
     @Bean
@@ -330,8 +331,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService) {
-        return new InvoiceService(amountFormat, partyService);
+    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService,
+                                         TextResourceWrapper textResourceWrapper, KeyValueReplacer keyValueReplacer) {
+        return new InvoiceService(amountFormat, partyService, textResourceWrapper.textResource, keyValueReplacer);
     }
 
     @Bean
@@ -374,6 +376,11 @@ public class BeanConfiguration {
                                                              PartyService partyService, TextResourceWrapper textResourceWrapper) {
         return new ReportToModelConverter(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
                 configurationService, partyService);
+    }
+
+    @Bean
+    public KeyValueReplacer variableReplacer() {
+        return new KeyValueReplacer();
     }
 
     @Bean

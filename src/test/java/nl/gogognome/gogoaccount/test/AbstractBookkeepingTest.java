@@ -22,6 +22,7 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
@@ -53,7 +54,7 @@ public abstract class AbstractBookkeepingTest {
     protected final ConfigurationService configurationService = new ConfigurationService();
     protected final DocumentService documentService = new DocumentService(configurationService);
     protected final ImportBankStatementService importBankStatementService = new ImportBankStatementService(configurationService);
-    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService);
+    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, new TestTextResource(), new KeyValueReplacer());
     protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), configurationService, invoiceService, partyService);
     protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(amountFormat, configurationService, ledgerService, partyService);
     protected final BookkeepingService bookkeepingService = new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);

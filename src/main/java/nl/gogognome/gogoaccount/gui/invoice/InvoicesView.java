@@ -3,6 +3,8 @@ package nl.gogognome.gogoaccount.gui.invoice;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.invoice.*;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -26,8 +28,11 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 
 public class InvoicesView extends View {
@@ -36,6 +41,7 @@ public class InvoicesView extends View {
     private final AmountFormat amountFormat;
 
     private final InvoiceService invoiceService;
+    private final PartyService partyService;
     private final EditInvoiceController editInvoiceController;
     private final ViewFactory viewFactory;
 
@@ -50,10 +56,11 @@ public class InvoicesView extends View {
     private JButton btSearch;
     private CloseableJPanel invoiceDetailsPanel;
 
-    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
+    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
         this.document = document;
         this.amountFormat = amountFormat;
         this.invoiceService = invoiceService;
+        this.partyService = partyService;
         this.editInvoiceController = editInvoiceController;
         this.viewFactory = viewFactory;
     }
@@ -229,10 +236,12 @@ public class InvoicesView extends View {
         editInvoiceController.execute();
     }
 
-    private void onPrintSelectedInvoices() {
+    private void onPrintSelectedInvoices() throws ServiceException {
         PrintInvoicesView printInvoicesView = (PrintInvoicesView) viewFactory.createView(PrintInvoicesView.class);
         List<Invoice> selectedInvoices = getSelectedInvoices();
-        printInvoicesView.setInvoicesToPrint(selectedInvoices);
+        Map<String, Party> idToParty = partyService.getIdToParty(document, selectedInvoices.stream().map(Invoice::getConcerningPartyId).collect(toList()));
+        Map<Invoice, Party> invoiceToParty = selectedInvoices.stream().collect(toMap(i -> i, i -> idToParty.get(i.getConcerningPartyId())));
+        printInvoicesView.setInvoicesToPrint(selectedInvoices, invoiceToParty);
         Dimension viewOwnerSize = getViewOwner().getWindow().getSize();
         printInvoicesView.setMinimumSize(new Dimension((int) viewOwnerSize.getWidth() * 90 / 100, (int) viewOwnerSize.getHeight() * 90 / 100));
         new ViewDialog(getViewOwner().getWindow(), printInvoicesView).showDialog();

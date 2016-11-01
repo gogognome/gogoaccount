@@ -1,6 +1,9 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -17,29 +20,41 @@ import java.awt.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 
 import static java.awt.BorderLayout.*;
 
 public class PrintInvoicesView extends View {
+
+    private final InvoiceService invoiceService;
 
     private final XHTMLPanel xhtmlPanel = new XHTMLPanel();
     private final FileModel templateFileModel = new FileModel();
     private final StringModel templateModel = new StringModel();
 
     private List<Invoice> invoicesToPrint;
+    private Map<Invoice, Party> invoiceToParty;
+
+    public PrintInvoicesView(InvoiceService invoiceService) {
+        this.invoiceService = invoiceService;
+    }
 
     @Override
     public String getTitle() {
         return textResource.getString("PrintInvoicesView.title");
     }
 
-    public void setInvoicesToPrint(List<Invoice> invoicesToPrint) {
+    public void setInvoicesToPrint(List<Invoice> invoicesToPrint, Map<Invoice, Party> invoiceToParty) {
         this.invoicesToPrint = invoicesToPrint;
+        this.invoiceToParty = invoiceToParty;
     }
 
     @Override
     public void onInit() {
         try {
+            if (invoicesToPrint == null || invoiceToParty == null) {
+                throw new IllegalStateException("Call setInvoicesToPrint() before calling onInit()!");
+            }
             addComponents();
             addListeners();
         } catch (Exception e) {
@@ -58,7 +73,7 @@ public class PrintInvoicesView extends View {
                 try {
                     String fileContents = new String(Files.readAllBytes(templateFileModel.getFile().toPath()), Charset.forName("UTF-8"));
                     templateModel.setString(fileContents);
-                    xhtmlPanel.setDocumentFromString(fileContents, templateFileModel.getFile().toURI().toString(), new XhtmlNamespaceHandler());
+                    updatePreview(fileContents);
                 } catch (Exception e) {
                     MessageDialog.showErrorMessage(this, "PrintInvoicesView.templateFileSyntaxError", e);
                 }
@@ -107,7 +122,13 @@ public class PrintInvoicesView extends View {
     }
 
     private void onUpdatePreview() {
-        xhtmlPanel.setDocumentFromString(templateModel.getString(), templateFileModel.getFile().toURI().toString(), new XhtmlNamespaceHandler());
+        updatePreview(templateModel.getString());
+    }
+
+    private void updatePreview(String fileContents) {
+        Invoice invoice = invoicesToPrint.get(0);
+        String fileContentsWithValuesFilledIn = invoiceService.fillInParametersInTemplate(fileContents, invoice, invoiceToParty.get(invoice));
+        xhtmlPanel.setDocumentFromString(fileContentsWithValuesFilledIn, templateFileModel.getFile().toURI().toString(), new XhtmlNamespaceHandler());
     }
 
     @Override

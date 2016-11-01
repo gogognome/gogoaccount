@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.collections.DefaultValueMap;
@@ -16,6 +17,7 @@ import nl.gogognome.textsearch.criteria.Criterion;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.*;
@@ -27,10 +29,14 @@ public class InvoiceService {
 
     private final AmountFormat amountFormat;
     private final PartyService partyService;
+    private final TextResource textResource;
+    private final KeyValueReplacer keyValueReplacer;
 
-    public InvoiceService(AmountFormat amountFormat, PartyService partyService) {
+    public InvoiceService(AmountFormat amountFormat, PartyService partyService, TextResource textResource, KeyValueReplacer keyValueReplacer) {
         this.amountFormat = amountFormat;
         this.partyService = partyService;
+        this.textResource = textResource;
+        this.keyValueReplacer = keyValueReplacer;
     }
 
     public Invoice getInvoice(Document document, String invoiceId) throws ServiceException {
@@ -62,8 +68,8 @@ public class InvoiceService {
             invoice.setIssueDate(invoiceDefinition.getIssueDate());
 
             invoice = invoiceDAO.create(invoice);
-            List<String> descriptions = invoiceDefinition.getLines().stream().map(l -> l.getDescription()).collect(toList());
-            List<Amount> amounts = invoiceDefinition.getLines().stream().map(l -> l.getAmount()).collect(toList());
+            List<String> descriptions = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getDescription).collect(toList());
+            List<Amount> amounts = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getAmount).collect(toList());
             invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
 
             document.notifyChange();
@@ -343,6 +349,21 @@ public class InvoiceService {
                 invoiceOverview.getIssueDate(),
                 invoiceOverview.getPayingPartyId(),
                 invoiceOverview.getPayingPartyName());
+    }
+
+    public String fillInParametersInTemplate(String templateContents, Invoice invoice, Party party) {
+        Map<String, Supplier<String>> replacements = new HashMap<>();
+        replacements.put("${invoice.id}", invoice::getId);
+        replacements.put("${invoice.description}", invoice::getDescription);
+        replacements.put("${invoice.amount}", () -> amountFormat.formatAmount(invoice.getAmountToBePaid().toBigInteger()));
+        replacements.put("${invoice.issueDate}", () ->  textResource.formatDate("gen.dateFormatFull", invoice.getIssueDate()));
+        replacements.put("${party.id}", party::getId);
+        replacements.put("${party.name}", party::getName);
+        replacements.put("${party.address}", party::getAddress);
+        replacements.put("${party.zipCode}", party::getZipCode);
+        replacements.put("${party.city}", party::getCity);
+
+        return keyValueReplacer.applyReplacements(templateContents, replacements);
     }
 
 }
