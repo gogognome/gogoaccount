@@ -9,17 +9,12 @@ import java.util.List;
 
 public class IfThenElseAmount implements AmountFormula {
 
-    private final CriterionMatcher matcher;
+    private final CriterionMatcher matcher = new StringSearchFactory().caseInsensitiveCriterionMatcher();
     private final Criterion criterion;
     private final AmountFormula thenAmountFormula;
     private final AmountFormula elseAmountFormula;
 
     public IfThenElseAmount(Criterion criterion, AmountFormula thenAmountFormula, AmountFormula elseAmountFormula) {
-        this(new StringSearchFactory().caseInsensitiveStringEqualsCriterionMatcher(), criterion, thenAmountFormula, elseAmountFormula);
-    }
-
-    /* for unit tests */ IfThenElseAmount(CriterionMatcher matcher, Criterion criterion, AmountFormula thenAmountFormula, AmountFormula elseAmountFormula) {
-        this.matcher = matcher;
         this.criterion = criterion;
         this.thenAmountFormula = thenAmountFormula;
         this.elseAmountFormula = elseAmountFormula;
@@ -53,10 +48,5 @@ public class IfThenElseAmount implements AmountFormula {
                     || (this.elseAmountFormula != null && this.elseAmountFormula.equals(that.elseAmountFormula)));
         }
         return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return 83 * thenAmountFormula.hashCode() + 37 * (elseAmountFormula == null ? 0 : elseAmountFormula.hashCode());
     }
 }
