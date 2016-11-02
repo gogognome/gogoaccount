@@ -19,6 +19,7 @@ import nl.gogognome.textsearch.criteria.Criterion;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.Collections.emptyList;
@@ -363,10 +364,11 @@ public class InvoiceService {
 
     public String fillInParametersInTemplate(String templateContents, Invoice invoice, List<InvoiceDetail> invoiceDetails,
                                              List<Payment> payments, Party party, Date dueDate) {
+        Amount amountToBePaid = getAmountToBePaid(invoiceDetails, payments);
         Map<String, Supplier<String>> replacements = new HashMap<>();
         replacements.put("${invoice.id}", invoice::getId);
         replacements.put("${invoice.description}", invoice::getDescription);
-        replacements.put("${invoice.amount}", () -> amountFormat.formatAmount(invoice.getAmountToBePaid().toBigInteger()));
+        replacements.put("${invoice.amount}", () -> amountFormat.formatAmount(amountToBePaid.toBigInteger()));
         replacements.put("${invoice.issueDate}", () ->  textResource.formatDate("gen.dateFormatFull", invoice.getIssueDate()));
         replacements.put("${invoice.dueDate}", () ->  textResource.formatDate("gen.dateFormatFull", dueDate));
         replacements.put("${party.id}", party::getId);
@@ -382,19 +384,35 @@ public class InvoiceService {
         if (lineStartIndex != -1 && lineEndIndex != -1) {
             String lineTemplate = result.substring(lineStartIndex + "${lineStart}".length(), lineEndIndex);
             StringBuilder lines = new StringBuilder();
-            appendInvoiceDetails(lines, lineTemplate, invoiceDetails.stream().map(d -> new Tuple<>(d.getDescription(), d.getAmount())).collect(toList()));
-            appendInvoiceDetails(lines, lineTemplate, payments.stream().map(d -> new Tuple<>(d.getDescription(), d.getAmount())).collect(toList()));
+            appendInvoiceDetails(lines, lineTemplate, invoiceDetails, d -> invoice.getIssueDate(), d -> d.getDescription(), d -> d.getAmount());
+            appendInvoiceDetails(lines, lineTemplate, payments, p -> p.getDate(), p -> p.getDescription(), p -> p.getAmount().negate());
             result = result.substring(0, lineStartIndex) + lines + result.substring(lineEndIndex + "${lineEnd}".length());
         }
         return result;
     }
 
-    private void appendInvoiceDetails(StringBuilder lines, String lineTemplate, List<Tuple<String, Amount>> descriptionsAndAmounts) {
-        for (Tuple<String, Amount> descriptionAndAmount : descriptionsAndAmounts) {
+    private Amount getAmountToBePaid(List<InvoiceDetail> invoiceDetails, List<Payment> payments) {
+        Amount amountToBePaid = new Amount(BigInteger.ZERO);
+        for (InvoiceDetail invoiceDetail : invoiceDetails) {
+            amountToBePaid = amountToBePaid.add(invoiceDetail.getAmount());
+        }
+        for (Payment payment : payments) {
+            amountToBePaid = amountToBePaid.subtract(payment.getAmount());
+        }
+        return amountToBePaid;
+    }
+
+    private <T> void appendInvoiceDetails(StringBuilder formattedLines,
+                                          String lineTemplate, List<T> objects,
+                                          Function<T, Date> date,
+                                          Function<T, String> description,
+                                          Function<T, Amount> amount) {
+        for (T object : objects) {
             ImmutableMap<String, Supplier<String>> lineReplacement = ImmutableMap.of(
-                    "${line.description}", () -> descriptionAndAmount.getFirst(),
-                    "${line.amount}", () -> amountFormat.formatAmount(descriptionAndAmount.getSecond().toBigInteger()));
-            lines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement));
+                    "${line.date}", () -> textResource.formatDate("gen.dateFormat", date.apply(object)),
+                    "${line.description}", () -> description.apply(object),
+                    "${line.amount}", () -> amountFormat.formatAmount(amount.apply(object).toBigInteger()));
+            formattedLines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement));
         }
     }
 }
