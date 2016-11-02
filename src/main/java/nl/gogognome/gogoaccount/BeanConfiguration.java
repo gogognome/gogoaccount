@@ -51,7 +51,9 @@ public class BeanConfiguration {
     public ViewFactory viewFactory(BeanFactory beanFactory) {
         return viewClass -> {
             try {
-                return beanFactory.getBean(viewClass);
+                String beanName = viewClass.getSimpleName();
+                beanName = Character.toLowerCase(beanName.charAt(0)) + beanName.substring(1);
+                return beanFactory.getBean(beanName, viewClass);
             } catch (Exception e) {
                 throw new RuntimeException("Could not create instance of view " + viewClass.getName(), e);
             }
