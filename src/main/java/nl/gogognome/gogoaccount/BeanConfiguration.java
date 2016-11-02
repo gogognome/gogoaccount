@@ -5,6 +5,7 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
+import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
@@ -262,8 +263,8 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public PrintInvoicesView printInvoicesView(InvoiceService invoiceService) {
-        return new PrintInvoicesView(invoiceService);
+    public PrintInvoicesView printInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
+        return new PrintInvoicesView(invoicePreviewTemplate);
     }
 
     @Bean
@@ -334,8 +335,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService,
-                                         TextResourceWrapper textResourceWrapper, KeyValueReplacer keyValueReplacer) {
-        return new InvoiceService(amountFormat, partyService, textResourceWrapper.textResource, keyValueReplacer);
+                                         TextResourceWrapper textResourceWrapper) {
+        return new InvoiceService(amountFormat, partyService, textResourceWrapper.textResource);
     }
 
     @Bean
@@ -370,6 +371,13 @@ public class BeanConfiguration {
                                                              TextResourceWrapper textResourceWrapper) {
         return new InvoicesToModelConverter(amountFormatWrapper.amountFormat, configurationService, invoiceService,
                 partyService, textResourceWrapper.textResource);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public InvoicePreviewTemplate invoicePreviewTemplate(AmountFormatWrapper amountFormatWrapper, KeyValueReplacer keyValueReplacer,
+                                                         TextResourceWrapper textResourceWrapper) {
+        return new InvoicePreviewTemplate(amountFormatWrapper.amountFormat, keyValueReplacer, textResourceWrapper.textResource);
     }
 
     @Bean

@@ -1,11 +1,9 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
-import com.google.common.collect.ImmutableMap;
 import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.collections.DefaultValueMap;
@@ -13,14 +11,10 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
-import nl.gogognome.lib.util.Factory;
-import nl.gogognome.lib.util.Tuple;
 import nl.gogognome.textsearch.criteria.Criterion;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.*;
@@ -33,13 +27,11 @@ public class InvoiceService {
     private final AmountFormat amountFormat;
     private final PartyService partyService;
     private final TextResource textResource;
-    private final KeyValueReplacer keyValueReplacer;
 
-    public InvoiceService(AmountFormat amountFormat, PartyService partyService, TextResource textResource, KeyValueReplacer keyValueReplacer) {
+    public InvoiceService(AmountFormat amountFormat, PartyService partyService, TextResource textResource) {
         this.amountFormat = amountFormat;
         this.partyService = partyService;
         this.textResource = textResource;
-        this.keyValueReplacer = keyValueReplacer;
     }
 
     public Invoice getInvoice(Document document, String invoiceId) throws ServiceException {
@@ -81,19 +73,18 @@ public class InvoiceService {
     }
 
     private void validateInvoice(InvoiceDefinition invoiceDefinition) throws ServiceException {
-        TextResource tr = Factory.getInstance(TextResource.class);
         if (invoiceDefinition.getIssueDate() == null) {
-            throw new ServiceException(tr.getString("InvoiceService.issueDateNull"));
+            throw new ServiceException(textResource.getString("InvoiceService.issueDateNull"));
         }
         if (invoiceDefinition.getId() == null) {
-            throw new ServiceException(tr.getString("InvoiceService.idIsNull"));
+            throw new ServiceException(textResource.getString("InvoiceService.idIsNull"));
         }
         if (invoiceDefinition.getLines().isEmpty()) {
-            throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));
+            throw new ServiceException(textResource.getString("InvoiceService.invoiceWithZeroLines"));
         }
         for (InvoiceDefinitionLine line : invoiceDefinition.getLines()) {
             if (line.getAccount() == null) {
-                throw new ServiceException(tr.getString("InvoiceService.lineWithoutAccount"));
+                throw new ServiceException(textResource.getString("InvoiceService.lineWithoutAccount"));
             }
             if (line.getAmount() == null) {
                 throw new ServiceException("Amount must be filled in for all lines.");
@@ -362,57 +353,4 @@ public class InvoiceService {
         return ServiceTransaction.withResult(() -> new PaymentDAO(document).getIdToPayments(invoiceIds));
     }
 
-    public String fillInParametersInTemplate(String templateContents, Invoice invoice, List<InvoiceDetail> invoiceDetails,
-                                             List<Payment> payments, Party party, Date dueDate) {
-        Amount amountToBePaid = getAmountToBePaid(invoiceDetails, payments);
-        Map<String, Supplier<String>> replacements = new HashMap<>();
-        replacements.put("${invoice.id}", invoice::getId);
-        replacements.put("${invoice.description}", invoice::getDescription);
-        replacements.put("${invoice.amount}", () -> amountFormat.formatAmount(amountToBePaid.toBigInteger()));
-        replacements.put("${invoice.issueDate}", () ->  textResource.formatDate("gen.dateFormatFull", invoice.getIssueDate()));
-        replacements.put("${invoice.dueDate}", () ->  textResource.formatDate("gen.dateFormatFull", dueDate));
-        replacements.put("${party.id}", party::getId);
-        replacements.put("${party.name}", party::getName);
-        replacements.put("${party.address}", party::getAddress);
-        replacements.put("${party.zipCode}", party::getZipCode);
-        replacements.put("${party.city}", party::getCity);
-
-        String result = keyValueReplacer.applyReplacements(templateContents, replacements);
-
-        int lineStartIndex = result.indexOf("${lineStart}");
-        int lineEndIndex = result.indexOf("${lineEnd}");
-        if (lineStartIndex != -1 && lineEndIndex != -1) {
-            String lineTemplate = result.substring(lineStartIndex + "${lineStart}".length(), lineEndIndex);
-            StringBuilder lines = new StringBuilder();
-            appendInvoiceDetails(lines, lineTemplate, invoiceDetails, d -> invoice.getIssueDate(), d -> d.getDescription(), d -> d.getAmount());
-            appendInvoiceDetails(lines, lineTemplate, payments, p -> p.getDate(), p -> p.getDescription(), p -> p.getAmount().negate());
-            result = result.substring(0, lineStartIndex) + lines + result.substring(lineEndIndex + "${lineEnd}".length());
-        }
-        return result;
-    }
-
-    private Amount getAmountToBePaid(List<InvoiceDetail> invoiceDetails, List<Payment> payments) {
-        Amount amountToBePaid = new Amount(BigInteger.ZERO);
-        for (InvoiceDetail invoiceDetail : invoiceDetails) {
-            amountToBePaid = amountToBePaid.add(invoiceDetail.getAmount());
-        }
-        for (Payment payment : payments) {
-            amountToBePaid = amountToBePaid.subtract(payment.getAmount());
-        }
-        return amountToBePaid;
-    }
-
-    private <T> void appendInvoiceDetails(StringBuilder formattedLines,
-                                          String lineTemplate, List<T> objects,
-                                          Function<T, Date> date,
-                                          Function<T, String> description,
-                                          Function<T, Amount> amount) {
-        for (T object : objects) {
-            ImmutableMap<String, Supplier<String>> lineReplacement = ImmutableMap.of(
-                    "${line.date}", () -> textResource.formatDate("gen.dateFormat", date.apply(object)),
-                    "${line.description}", () -> description.apply(object),
-                    "${line.amount}", () -> amountFormat.formatAmount(amount.apply(object).toBigInteger()));
-            formattedLines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement));
-        }
-    }
 }

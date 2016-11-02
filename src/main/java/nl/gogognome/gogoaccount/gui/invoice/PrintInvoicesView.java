@@ -1,9 +1,6 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
@@ -29,7 +26,7 @@ import static java.awt.BorderLayout.*;
 
 public class PrintInvoicesView extends View {
 
-    private final InvoiceService invoiceService;
+    private final InvoicePreviewTemplate invoicePreviewTemplate;
 
     private final XHTMLPanel xhtmlPanel = new XHTMLPanel();
     private final FileModel templateFileModel = new FileModel();
@@ -40,8 +37,8 @@ public class PrintInvoicesView extends View {
     private DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
     private Map<String, Party> invoiceIdToParty;
 
-    public PrintInvoicesView(InvoiceService invoiceService) {
-        this.invoiceService = invoiceService;
+    public PrintInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
+        this.invoicePreviewTemplate = invoicePreviewTemplate;
     }
 
     @Override
@@ -135,7 +132,7 @@ public class PrintInvoicesView extends View {
 
     private void updatePreview(String fileContents) {
         Invoice invoice = invoicesToPrint.get(0);
-        String fileContentsWithValuesFilledIn = invoiceService.fillInParametersInTemplate(fileContents, invoice,
+        String fileContentsWithValuesFilledIn = invoicePreviewTemplate.fillInParametersInTemplate(fileContents, invoice,
                 invoiceIdToDetails.get(invoice.getId()), invoiceIdToPayments.get(invoice.getId()),
                 invoiceIdToParty.get(invoice.getId()), DateUtil.addMonths(invoice.getIssueDate(), 1));
         xhtmlPanel.setDocumentFromString(fileContentsWithValuesFilledIn, templateFileModel.getFile().toURI().toString(), new XhtmlNamespaceHandler());
