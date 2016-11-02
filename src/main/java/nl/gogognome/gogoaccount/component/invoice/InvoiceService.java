@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
+import com.google.common.collect.ImmutableMap;
 import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
@@ -13,6 +14,7 @@ import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
+import nl.gogognome.lib.util.Tuple;
 import nl.gogognome.textsearch.criteria.Criterion;
 
 import java.math.BigInteger;
@@ -351,19 +353,48 @@ public class InvoiceService {
                 invoiceOverview.getPayingPartyName());
     }
 
-    public String fillInParametersInTemplate(String templateContents, Invoice invoice, Party party) {
+    public DefaultValueMap<String,List<InvoiceDetail>> getIdToInvoiceDetails(Document document, List<String> invoiceIds) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new InvoiceDetailDAO(document).getIdToInvoiceDetails(invoiceIds));
+    }
+
+    public DefaultValueMap<String,List<Payment>> getIdToPayments(Document document, List<String> invoiceIds) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new PaymentDAO(document).getIdToPayments(invoiceIds));
+    }
+
+    public String fillInParametersInTemplate(String templateContents, Invoice invoice, List<InvoiceDetail> invoiceDetails,
+                                             List<Payment> payments, Party party, Date dueDate) {
         Map<String, Supplier<String>> replacements = new HashMap<>();
         replacements.put("${invoice.id}", invoice::getId);
         replacements.put("${invoice.description}", invoice::getDescription);
         replacements.put("${invoice.amount}", () -> amountFormat.formatAmount(invoice.getAmountToBePaid().toBigInteger()));
         replacements.put("${invoice.issueDate}", () ->  textResource.formatDate("gen.dateFormatFull", invoice.getIssueDate()));
+        replacements.put("${invoice.dueDate}", () ->  textResource.formatDate("gen.dateFormatFull", dueDate));
         replacements.put("${party.id}", party::getId);
         replacements.put("${party.name}", party::getName);
         replacements.put("${party.address}", party::getAddress);
         replacements.put("${party.zipCode}", party::getZipCode);
         replacements.put("${party.city}", party::getCity);
 
-        return keyValueReplacer.applyReplacements(templateContents, replacements);
+        String result = keyValueReplacer.applyReplacements(templateContents, replacements);
+
+        int lineStartIndex = result.indexOf("${lineStart}");
+        int lineEndIndex = result.indexOf("${lineEnd}");
+        if (lineStartIndex != -1 && lineEndIndex != -1) {
+            String lineTemplate = result.substring(lineStartIndex + "${lineStart}".length(), lineEndIndex);
+            StringBuilder lines = new StringBuilder();
+            appendInvoiceDetails(lines, lineTemplate, invoiceDetails.stream().map(d -> new Tuple<>(d.getDescription(), d.getAmount())).collect(toList()));
+            appendInvoiceDetails(lines, lineTemplate, payments.stream().map(d -> new Tuple<>(d.getDescription(), d.getAmount())).collect(toList()));
+            result = result.substring(0, lineStartIndex) + lines + result.substring(lineEndIndex + "${lineEnd}".length());
+        }
+        return result;
     }
 
+    private void appendInvoiceDetails(StringBuilder lines, String lineTemplate, List<Tuple<String, Amount>> descriptionsAndAmounts) {
+        for (Tuple<String, Amount> descriptionAndAmount : descriptionsAndAmounts) {
+            ImmutableMap<String, Supplier<String>> lineReplacement = ImmutableMap.of(
+                    "${line.description}", () -> descriptionAndAmount.getFirst(),
+                    "${line.amount}", () -> amountFormat.formatAmount(descriptionAndAmount.getSecond().toBigInteger()));
+            lines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement));
+        }
+    }
 }

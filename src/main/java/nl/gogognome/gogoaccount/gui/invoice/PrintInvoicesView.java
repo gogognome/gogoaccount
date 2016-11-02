@@ -1,9 +1,11 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -11,6 +13,7 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.util.DateUtil;
 import org.xhtmlrenderer.simple.FSScrollPane;
 import org.xhtmlrenderer.simple.XHTMLPanel;
 import org.xhtmlrenderer.simple.xhtml.XhtmlNamespaceHandler;
@@ -33,7 +36,9 @@ public class PrintInvoicesView extends View {
     private final StringModel templateModel = new StringModel();
 
     private List<Invoice> invoicesToPrint;
-    private Map<Invoice, Party> invoiceToParty;
+    private DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails;
+    private DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
+    private Map<String, Party> invoiceIdToParty;
 
     public PrintInvoicesView(InvoiceService invoiceService) {
         this.invoiceService = invoiceService;
@@ -44,15 +49,18 @@ public class PrintInvoicesView extends View {
         return textResource.getString("PrintInvoicesView.title");
     }
 
-    public void setInvoicesToPrint(List<Invoice> invoicesToPrint, Map<Invoice, Party> invoiceToParty) {
+    public void setInvoicesToPrint(List<Invoice> invoicesToPrint, DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails,
+                                   DefaultValueMap<String, List<Payment>> invoiceIdToPayments, Map<String, Party> invoiceIdToParty) {
         this.invoicesToPrint = invoicesToPrint;
-        this.invoiceToParty = invoiceToParty;
+        this.invoiceIdToDetails = invoiceIdToDetails;
+        this.invoiceIdToPayments = invoiceIdToPayments;
+        this.invoiceIdToParty = invoiceIdToParty;
     }
 
     @Override
     public void onInit() {
         try {
-            if (invoicesToPrint == null || invoiceToParty == null) {
+            if (invoicesToPrint == null || invoiceIdToParty == null) {
                 throw new IllegalStateException("Call setInvoicesToPrint() before calling onInit()!");
             }
             addComponents();
@@ -127,7 +135,9 @@ public class PrintInvoicesView extends View {
 
     private void updatePreview(String fileContents) {
         Invoice invoice = invoicesToPrint.get(0);
-        String fileContentsWithValuesFilledIn = invoiceService.fillInParametersInTemplate(fileContents, invoice, invoiceToParty.get(invoice));
+        String fileContentsWithValuesFilledIn = invoiceService.fillInParametersInTemplate(fileContents, invoice,
+                invoiceIdToDetails.get(invoice.getId()), invoiceIdToPayments.get(invoice.getId()),
+                invoiceIdToParty.get(invoice.getId()), DateUtil.addMonths(invoice.getIssueDate(), 1));
         xhtmlPanel.setDocumentFromString(fileContentsWithValuesFilledIn, templateFileModel.getFile().toURI().toString(), new XhtmlNamespaceHandler());
     }
 
