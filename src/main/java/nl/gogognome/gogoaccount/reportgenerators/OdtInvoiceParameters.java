@@ -1,3 +1,19 @@
+/*
+    This file is part of gogo account.
+
+    gogo account is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    gogo account is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with gogo account.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package nl.gogognome.gogoaccount.reportgenerators;
 
 import java.util.Date;
@@ -10,6 +26,8 @@ import nl.gogognome.gogoaccount.component.document.Document;
 /**
  * This class contains the parameters needed for generating
  * and ODT file containing invoices.
+ *
+ * @author Sander Kooijmans
  */
 public class OdtInvoiceParameters {
 
@@ -21,6 +39,7 @@ public class OdtInvoiceParameters {
     private String ourReference;
 
 	public OdtInvoiceParameters(Document document, List<Invoice> invoices) {
+		super();
 		this.document = document;
 		this.invoices = invoices;
 		this.date = new Date();

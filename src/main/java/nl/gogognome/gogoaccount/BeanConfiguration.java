@@ -5,13 +5,11 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
-import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.settings.SettingsService;
-import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
@@ -19,7 +17,10 @@ import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
-import nl.gogognome.gogoaccount.gui.invoice.*;
+import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceController;
+import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceView;
+import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
+import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.reportgenerators.InvoicesToModelConverter;
 import nl.gogognome.gogoaccount.reportgenerators.ReportToModelConverter;
@@ -217,8 +218,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, InvoiceService invoiceService,
-                                     PartyService partyService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
-        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, partyService, editInvoiceController, viewFactory);
+                                     EditInvoiceController editInvoiceController) {
+        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, editInvoiceController);
     }
 
     @Bean
@@ -259,12 +260,6 @@ public class BeanConfiguration {
     public PartiesView partiesView(DocumentWrapper documentWrapper, AutomaticCollectionService automaticCollectionService,
                                    PartyService partyService, ViewFactory viewFactory) {
         return new PartiesView(documentWrapper.document, automaticCollectionService, partyService, viewFactory);
-    }
-
-    @Bean
-    @Scope("prototype")
-    public PrintInvoicesView printInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new PrintInvoicesView(invoicePreviewTemplate);
     }
 
     @Bean
@@ -334,9 +329,8 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService,
-                                         TextResourceWrapper textResourceWrapper) {
-        return new InvoiceService(amountFormat, partyService, textResourceWrapper.textResource);
+    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService) {
+        return new InvoiceService(amountFormat, partyService);
     }
 
     @Bean
@@ -375,22 +369,10 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoicePreviewTemplate invoicePreviewTemplate(AmountFormatWrapper amountFormatWrapper, KeyValueReplacer keyValueReplacer,
-                                                         TextResourceWrapper textResourceWrapper) {
-        return new InvoicePreviewTemplate(amountFormatWrapper.amountFormat, keyValueReplacer, textResourceWrapper.textResource);
-    }
-
-    @Bean
-    @Scope("prototype")
     public ReportToModelConverter reportToModelConverter(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
                                                              PartyService partyService, TextResourceWrapper textResourceWrapper) {
         return new ReportToModelConverter(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
                 configurationService, partyService);
-    }
-
-    @Bean
-    public KeyValueReplacer variableReplacer() {
-        return new KeyValueReplacer();
     }
 
     @Bean

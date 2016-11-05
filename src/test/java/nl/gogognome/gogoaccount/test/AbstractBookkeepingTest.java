@@ -53,7 +53,7 @@ public abstract class AbstractBookkeepingTest {
     protected final ConfigurationService configurationService = new ConfigurationService();
     protected final DocumentService documentService = new DocumentService(configurationService);
     protected final ImportBankStatementService importBankStatementService = new ImportBankStatementService(configurationService);
-    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, new TestTextResource());
+    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService);
     protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), configurationService, invoiceService, partyService);
     protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(amountFormat, configurationService, ledgerService, partyService);
     protected final BookkeepingService bookkeepingService = new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);
