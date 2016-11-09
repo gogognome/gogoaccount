@@ -35,8 +35,4 @@ public class InvoiceOverview extends Invoice {
     public void setPayingPartyName(String payingPartyName) {
         this.payingPartyName = payingPartyName;
     }
-
-    public boolean isSalesInvoice() {
-        return !amountToBePaid.isNegative();
-    }
 }

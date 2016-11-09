@@ -284,10 +284,8 @@ public class LedgerService {
      * Updates a journal entry. Payments that are modified by the update of the journal entry
      * are updated in the corresponding invoice.
      */
-    public void updateJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
+    public void updateJournal(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
-            validateDebetAndCreditSumsAreEqual(journalEntry, journalEntryDetails);
-
             // Update payments. Remove payments from old journal and add payments of the new journal.
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
             List<JournalEntryDetail> oldJournalEntryDetails = journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId());

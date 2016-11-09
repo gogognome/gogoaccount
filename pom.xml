@@ -169,6 +169,11 @@
             <artifactId>gogotextsearch</artifactId>
             <version>1.0.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-core</artifactId>
+            <version>9.0.9</version>
+        </dependency>
     </dependencies>
 
 </project>

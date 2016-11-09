@@ -5,10 +5,16 @@ import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.util.AmountInDatabase;
+import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.text.Amount;
 
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
 
@@ -37,6 +43,12 @@ class InvoiceDetailDAO extends AbstractDomainClassDAO<InvoiceDetail> {
 
     public List<InvoiceDetail> findForInvoice(String invoiceId) throws SQLException {
         return findAll(new NameValuePairs().add("invoice_id", invoiceId));
+    }
+
+    public DefaultValueMap<String, List<InvoiceDetail>> getIdToInvoiceDetails(List<String> invoiceIds) throws SQLException {
+        Map<String, List<InvoiceDetail>> invoiceIdToDetails = execute("SELECT * FROM " + tableName + " WHERE invoice_id IN (?)", invoiceIds)
+                .toHashMapOfLists(r -> r.getString("invoice_id"), r -> getObjectFromResultSet(r));
+        return new DefaultValueMap<>(invoiceIdToDetails, emptyList());
     }
 
     @Override
