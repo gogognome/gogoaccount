@@ -263,8 +263,8 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public PrintInvoicesView printInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new PrintInvoicesView(invoicePreviewTemplate);
+    public SendInvoicesView sendInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
+        return new SendInvoicesView(invoicePreviewTemplate);
     }
 
     @Bean

@@ -48,8 +48,8 @@ public class InvoicesView extends View {
 
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
-    private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesSinglePartyView.edit", this::onEditSelectedInvoice);
-    private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("InvoicesSinglePartyView.print", this::onPrintSelectedInvoices);
+    private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesView.edit", this::onEditSelectedInvoice);
+    private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("InvoicesView.sendInvoices", this::onPrintSelectedInvoices);
     private DocumentListener documentListener;
 
     private JTable table;
@@ -238,16 +238,16 @@ public class InvoicesView extends View {
     }
 
     private void onPrintSelectedInvoices() throws ServiceException {
-        PrintInvoicesView printInvoicesView = (PrintInvoicesView) viewFactory.createView(PrintInvoicesView.class);
+        SendInvoicesView sendInvoicesView = (SendInvoicesView) viewFactory.createView(SendInvoicesView.class);
         List<Invoice> selectedInvoices = getSelectedInvoices();
         Map<String, Party> idToParty = partyService.getIdToParty(document, selectedInvoices.stream().map(Invoice::getConcerningPartyId).collect(toList()));
         Map<String, Party> invoiceIdToParty = selectedInvoices.stream().collect(toMap(i -> i.getId(), i -> idToParty.get(i.getConcerningPartyId())));
         DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails = invoiceService.getIdToInvoiceDetails(document, selectedInvoices.stream().map(i -> i.getId()).collect(toList()));
         DefaultValueMap<String, List<Payment>> invoiceIdToPayments = invoiceService.getIdToPayments(document, selectedInvoices.stream().map(i -> i.getId()).collect(toList()));
-        printInvoicesView.setInvoicesToPrint(selectedInvoices, invoiceIdToDetails, invoiceIdToPayments, invoiceIdToParty);
+        sendInvoicesView.setInvoicesToPrint(selectedInvoices, invoiceIdToDetails, invoiceIdToPayments, invoiceIdToParty);
         Dimension viewOwnerSize = getViewOwner().getWindow().getSize();
-        printInvoicesView.setMinimumSize(new Dimension((int) viewOwnerSize.getWidth() * 90 / 100, (int) viewOwnerSize.getHeight() * 90 / 100));
-        new ViewDialog(getViewOwner().getWindow(), printInvoicesView).showDialog();
+        sendInvoicesView.setMinimumSize(new Dimension((int) viewOwnerSize.getWidth() * 90 / 100, (int) viewOwnerSize.getHeight() * 90 / 100));
+        new ViewDialog(getViewOwner().getWindow(), sendInvoicesView).showDialog();
     }
 
     private List<Invoice> getSelectedInvoices() {
