@@ -1,6 +1,10 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
-import nl.gogognome.gogoaccount.component.invoice.*;
+import com.itextpdf.text.DocumentException;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
+import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
@@ -11,23 +15,31 @@ import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.util.DateUtil;
+import org.w3c.dom.Document;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 import org.xhtmlrenderer.simple.FSScrollPane;
 import org.xhtmlrenderer.simple.XHTMLPanel;
 import org.xhtmlrenderer.simple.XHTMLPrintable;
 import org.xhtmlrenderer.simple.xhtml.XhtmlNamespaceHandler;
+import org.xml.sax.SAXException;
 
 import javax.swing.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
-import static java.awt.BorderLayout.*;
+import static java.awt.BorderLayout.CENTER;
+import static java.awt.BorderLayout.NORTH;
 
 public class SendInvoicesView extends View {
 
@@ -37,7 +49,7 @@ public class SendInvoicesView extends View {
     private final FileModel templateFileModel = new FileModel();
     private final StringModel templateModel = new StringModel();
 
-    private List<Invoice> invoicesToPrint;
+    private List<Invoice> invoicesToSend;
     private DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails;
     private DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
     private Map<String, Party> invoiceIdToParty;
@@ -51,9 +63,9 @@ public class SendInvoicesView extends View {
         return textResource.getString("SendInvoicesView.title");
     }
 
-    public void setInvoicesToPrint(List<Invoice> invoicesToPrint, DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails,
-                                   DefaultValueMap<String, List<Payment>> invoiceIdToPayments, Map<String, Party> invoiceIdToParty) {
-        this.invoicesToPrint = invoicesToPrint;
+    public void setInvoicesToSend(List<Invoice> invoicesToSend, DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails,
+                                  DefaultValueMap<String, List<Payment>> invoiceIdToPayments, Map<String, Party> invoiceIdToParty) {
+        this.invoicesToSend = invoicesToSend;
         this.invoiceIdToDetails = invoiceIdToDetails;
         this.invoiceIdToPayments = invoiceIdToPayments;
         this.invoiceIdToParty = invoiceIdToParty;
@@ -62,8 +74,8 @@ public class SendInvoicesView extends View {
     @Override
     public void onInit() {
         try {
-            if (invoicesToPrint == null || invoiceIdToParty == null) {
-                throw new IllegalStateException("Call setInvoicesToPrint() before calling onInit()!");
+            if (invoicesToSend == null || invoiceIdToParty == null) {
+                throw new IllegalStateException("Call setInvoicesToSend() before calling onInit()!");
             }
             addComponents();
             addListeners();
@@ -158,7 +170,7 @@ public class SendInvoicesView extends View {
 
         @Override
         public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
-            if (pageIndex >= invoicesToPrint.size()) {
+            if (pageIndex >= invoicesToSend.size()) {
                 return Printable.NO_SUCH_PAGE;
             }
             XHTMLPanel pagePanel = new XHTMLPanel();
@@ -168,15 +180,58 @@ public class SendInvoicesView extends View {
     }
 
     private void onExportPdf() {
+        try {
+            File directory = selectDirectory();
+            if (directory == null) {
+                return;
+            }
 
+            exportInvoicesToPdf(directory);
+
+            MessageDialog.showInfoMessage(this, "SendInvoicesView.pdfsCreated", invoicesToSend.size());
+        } catch (Exception  e) {
+            MessageDialog.showErrorMessage(this, e, "SendInvoicesView.exportPdfError");
+        }
+    }
+
+    private void exportInvoicesToPdf(File directory) throws ParserConfigurationException, SAXException, IOException, DocumentException {
+        for (Invoice invoice : invoicesToSend) {
+            OutputStream os = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"));
+
+            try {
+                ITextRenderer renderer = new ITextRenderer();
+                String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
+                DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
+                renderer.setDocument(doc, templateFileModel.getFile().toURI().toString());
+                renderer.layout();
+                renderer.createPDF(os);
+            } finally {
+                os.close();
+            }
+        }
+    }
+
+    private File selectDirectory() {
+        JFileChooser fc = new JFileChooser(templateFileModel.getFile().getParentFile());
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int choice = fc.showDialog(this, textResource.getString("SendInvoicesView.titleExportDirectoryDialog"));
+        if (choice == JFileChooser.APPROVE_OPTION) {
+            return fc.getSelectedFile();
+        }
+        return null;
     }
 
     private void updatePreview(String fileContents, int invoiceIndex, XHTMLPanel xhtmlPanel) {
-        Invoice invoice = invoicesToPrint.get(invoiceIndex);
-        String fileContentsWithValuesFilledIn = invoicePreviewTemplate.fillInParametersInTemplate(fileContents, invoice,
-                invoiceIdToDetails.get(invoice.getId()), invoiceIdToPayments.get(invoice.getId()),
-                invoiceIdToParty.get(invoice.getId()), DateUtil.addMonths(invoice.getIssueDate(), 1));
+        Invoice invoice = invoicesToSend.get(invoiceIndex);
+        String fileContentsWithValuesFilledIn = fillInParametersInTemplate(fileContents, invoice);
         xhtmlPanel.setDocumentFromString(fileContentsWithValuesFilledIn, templateFileModel.getFile().toURI().toString(), new XhtmlNamespaceHandler());
+    }
+
+    private String fillInParametersInTemplate(String fileContents, Invoice invoice) {
+        return invoicePreviewTemplate.fillInParametersInTemplate(fileContents, invoice,
+                    invoiceIdToDetails.get(invoice.getId()), invoiceIdToPayments.get(invoice.getId()),
+                    invoiceIdToParty.get(invoice.getId()), DateUtil.addMonths(invoice.getIssueDate(), 1));
     }
 
     @Override
