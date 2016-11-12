@@ -8,28 +8,16 @@ import java.util.List;
  * This class represents a party. A party can be either a debtor or a creditor.
  */
 public class Party implements Comparable<Party> {
-    /**  The id of the party. The id must be unique for all parties. */
+
     private final String id;
-
-    /** The name of this party. */
     private String name;
-
-    /** The address of this party. */
     private String address;
-
-    /** The zip code of this party. */
     private String zipCode;
-
-    /** The city of this party. */
     private String city;
-
-    /** The birth date of this party. */
+    private String emailAddress;
     private Date birthDate;
-
-    private List<String> tags;
-
-    /** Contains remarks about this party. */
     private String remarks;
+    private List<String> tags;
 
     public Party(String id) {
         this.id = id;
@@ -69,6 +57,14 @@ public class Party implements Comparable<Party> {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getEmailAddress() {
+        return emailAddress;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
     }
 
     public Date getBirthDate() {

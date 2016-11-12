@@ -4,3 +4,4 @@
 30: add-invoice-description.sql
 40: add-settings.sql
 50: add-foreign-key-to-journal-entry-detail.sql
+60: add-email-address-to-party.sql

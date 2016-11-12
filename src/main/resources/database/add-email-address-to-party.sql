@@ -1,0 +1,1 @@
+ALTER TABLE party ADD email_address VARCHAR2(1000);

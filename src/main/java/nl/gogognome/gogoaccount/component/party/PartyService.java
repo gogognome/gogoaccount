@@ -76,13 +76,14 @@ public class PartyService {
             return true;
         }
 
-        Object[] criteria = new Object[7 + tags.size()];
+        Object[] criteria = new Object[8 + tags.size()];
         int index = 0;
         criteria[index++] = party.getId();
         criteria[index++] = party.getName();
         criteria[index++] = party.getAddress();
         criteria[index++] = party.getZipCode();
         criteria[index++] = party.getCity();
+        criteria[index++] = party.getEmailAddress();
         criteria[index++] = party.getRemarks();
         criteria[index++] = party.getBirthDate();
 

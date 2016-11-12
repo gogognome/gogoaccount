@@ -25,6 +25,7 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
         party.setName(result.getString("name"));
         party.setAddress(result.getString("address"));
         party.setCity(result.getString("city"));
+        party.setEmailAddress(result.getString("email_address"));
         party.setZipCode(result.getString("zip_code"));
         party.setBirthDate(result.getDate("birth_date"));
         party.setRemarks(result.getString("remarks"));
@@ -38,6 +39,7 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
                 .add("name", party.getName())
                 .add("address", party.getAddress())
                 .add("city", party.getCity())
+                .add("email_address", party.getEmailAddress())
                 .add("zip_code", party.getZipCode())
                 .add("birth_date", party.getBirthDate())
                 .add("remarks", party.getRemarks());
