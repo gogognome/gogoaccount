@@ -237,17 +237,21 @@ public class InvoicesView extends View {
         editInvoiceController.execute();
     }
 
-    private void onPrintSelectedInvoices() throws ServiceException {
-        SendInvoicesView sendInvoicesView = (SendInvoicesView) viewFactory.createView(SendInvoicesView.class);
-        List<Invoice> selectedInvoices = getSelectedInvoices();
-        Map<String, Party> idToParty = partyService.getIdToParty(document, selectedInvoices.stream().map(Invoice::getConcerningPartyId).collect(toList()));
-        Map<String, Party> invoiceIdToParty = selectedInvoices.stream().collect(toMap(Invoice::getId, i -> idToParty.get(i.getConcerningPartyId())));
-        DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails = invoiceService.getIdToInvoiceDetails(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
-        DefaultValueMap<String, List<Payment>> invoiceIdToPayments = invoiceService.getIdToPayments(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
-        sendInvoicesView.setInvoicesToSend(selectedInvoices, invoiceIdToDetails, invoiceIdToPayments, invoiceIdToParty);
-        Dimension viewOwnerSize = getViewOwner().getWindow().getSize();
-        sendInvoicesView.setMinimumSize(new Dimension((int) viewOwnerSize.getWidth() * 90 / 100, (int) viewOwnerSize.getHeight() * 90 / 100));
-        new ViewDialog(getViewOwner().getWindow(), sendInvoicesView).showDialog();
+    private void onPrintSelectedInvoices() {
+        try {
+            SendInvoicesView sendInvoicesView = (SendInvoicesView) viewFactory.createView(SendInvoicesView.class);
+            List<Invoice> selectedInvoices = getSelectedInvoices();
+            Map<String, Party> idToParty = partyService.getIdToParty(document, selectedInvoices.stream().map(Invoice::getConcerningPartyId).collect(toList()));
+            Map<String, Party> invoiceIdToParty = selectedInvoices.stream().collect(toMap(Invoice::getId, i -> idToParty.get(i.getConcerningPartyId())));
+            DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails = invoiceService.getIdToInvoiceDetails(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
+            DefaultValueMap<String, List<Payment>> invoiceIdToPayments = invoiceService.getIdToPayments(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
+            sendInvoicesView.setInvoicesToSend(selectedInvoices, invoiceIdToDetails, invoiceIdToPayments, invoiceIdToParty);
+            Dimension viewOwnerSize = getViewOwner().getWindow().getSize();
+            sendInvoicesView.setMinimumSize(new Dimension((int) viewOwnerSize.getWidth() * 90 / 100, (int) viewOwnerSize.getHeight() * 90 / 100));
+            new ViewDialog(getViewOwner().getWindow(), sendInvoicesView).showDialog();
+        } catch (Exception e) {
+            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+        }
     }
 
     private List<Invoice> getSelectedInvoices() {
