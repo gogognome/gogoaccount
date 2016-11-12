@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectio
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
+import nl.gogognome.gogoaccount.component.email.EmailService;
 import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
@@ -16,6 +17,7 @@ import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
+import nl.gogognome.gogoaccount.gui.configuration.EmailConfigurationView;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
@@ -163,6 +165,13 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
+    public EmailConfigurationView emailConfigurationView(DocumentWrapper documentWrapper, TextResourceWrapper textResourceWrapper,
+                                                         EmailService emailService) {
+        return new EmailConfigurationView(documentWrapper.document, textResourceWrapper.textResource, emailService);
+    }
+
+    @Bean
+    @Scope("prototype")
     public EditInvoiceView editInvoiceView(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
                                            InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
         return new EditInvoiceView(documentWrapper.document, amountFormatWrapper.amountFormat, configurationService, invoiceService, partyService, viewFactory);
@@ -263,8 +272,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public SendInvoicesView sendInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new SendInvoicesView(invoicePreviewTemplate);
+    public SendInvoicesView sendInvoicesView(DocumentWrapper documentWrapper, EmailService emailService,
+                                             InvoicePreviewTemplate invoicePreviewTemplate) {
+        return new SendInvoicesView(documentWrapper.document, emailService, invoicePreviewTemplate);
     }
 
     @Bean
@@ -324,6 +334,12 @@ public class BeanConfiguration {
     @Scope("prototype")
     public DocumentService documentService(ConfigurationService configurationService) {
         return new DocumentService(configurationService);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public EmailService emailService(SettingsService settingsService, TextResourceWrapper textResourceWrapper) {
+        return new EmailService(settingsService, textResourceWrapper.textResource);
     }
 
     @Bean

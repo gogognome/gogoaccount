@@ -1,11 +1,14 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
 import com.itextpdf.text.DocumentException;
+import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.email.EmailService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
 import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -15,7 +18,6 @@ import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.util.DateUtil;
-import org.w3c.dom.Document;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 import org.xhtmlrenderer.simple.FSScrollPane;
 import org.xhtmlrenderer.simple.XHTMLPanel;
@@ -43,6 +45,8 @@ import static java.awt.BorderLayout.NORTH;
 
 public class SendInvoicesView extends View {
 
+    private final Document document;
+    private final EmailService emailService;
     private final InvoicePreviewTemplate invoicePreviewTemplate;
 
     private final XHTMLPanel xhtmlPanel = new XHTMLPanel();
@@ -54,7 +58,9 @@ public class SendInvoicesView extends View {
     private DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
     private Map<String, Party> invoiceIdToParty;
 
-    public SendInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
+    public SendInvoicesView(Document document, EmailService emailService, InvoicePreviewTemplate invoicePreviewTemplate) {
+        this.document = document;
+        this.emailService = emailService;
         this.invoicePreviewTemplate = invoicePreviewTemplate;
     }
 
@@ -145,6 +151,7 @@ public class SendInvoicesView extends View {
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonPanel.add(widgetFactory.createButton("gen.print", this::onPrint));
         buttonPanel.add(widgetFactory.createButton("SendInvoicesView.exportPdf", this::onExportPdf));
+        buttonPanel.add(widgetFactory.createButton("SendInvoicesView.sendEmail", this::onSendEmail));
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
@@ -196,18 +203,15 @@ public class SendInvoicesView extends View {
 
     private void exportInvoicesToPdf(File directory) throws ParserConfigurationException, SAXException, IOException, DocumentException {
         for (Invoice invoice : invoicesToSend) {
-            OutputStream os = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"));
 
-            try {
+            try (OutputStream os = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"))) {
                 ITextRenderer renderer = new ITextRenderer();
                 String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
                 DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
+                org.w3c.dom.Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
                 renderer.setDocument(doc, templateFileModel.getFile().toURI().toString());
                 renderer.layout();
                 renderer.createPDF(os);
-            } finally {
-                os.close();
             }
         }
     }
@@ -220,6 +224,23 @@ public class SendInvoicesView extends View {
             return fc.getSelectedFile();
         }
         return null;
+    }
+
+    private void onSendEmail() {
+        int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "SendInvoicesView.areYouSureToSendEmails");
+        if (choice != MessageDialog.YES_OPTION) {
+            return;
+        }
+
+        try {
+            for (Invoice invoice : invoicesToSend) {
+                String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
+                emailService.sendEmail(document, invoiceIdToParty.get(invoice.getId()).getEmailAddress(), invoice.getDescription(), xml,
+                        "utf-8", "html");
+            }
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "SendInvoicesView.sendEmailError");
+        }
     }
 
     private void updatePreview(String fileContents, int invoiceIndex, XHTMLPanel xhtmlPanel) {
