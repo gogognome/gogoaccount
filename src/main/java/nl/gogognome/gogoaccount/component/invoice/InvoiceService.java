@@ -304,18 +304,28 @@ public class InvoiceService {
             Map<String, List<Payment>> invoiceIdToPayments = new PaymentDAO(document).findAll()
                     .stream()
                     .collect(groupingBy(Payment::getInvoiceId));
+            Map<String, InvoiceSending> invoiceIdToLastSending = new HashMap<>();
+            new InvoiceSendingDAO(document).findAll()
+                    .forEach(s -> {
+                        if (!invoiceIdToLastSending.containsKey(s.getInvoiceId())
+                                || DateUtil.compareDayOfYear(invoiceIdToLastSending.get(s.getInvoiceId()).getDate(), s.getDate()) < 0) {
+                            invoiceIdToLastSending.put(s.getInvoiceId(), s);
+                        }
+                    });
+
             Map<String, Party> partyIdToParty = new PartyService().findAllParties(document)
                     .stream()
                     .collect(toMap(Party::getId, party -> party));
             return invoices.stream()
-                    .map(invoice -> buildInvoiceOverview(invoice, invoiceIdToPayments, partyIdToParty))
+                    .map(invoice -> buildInvoiceOverview(invoice, invoiceIdToPayments, invoiceIdToLastSending, partyIdToParty))
                     .filter(overview -> includeClosedInvoices || !overview.getAmountToBePaid().equals(overview.getAmountPaid()))
                     .filter(overview -> matches(criterion, overview, amountFormat))
                     .collect(toList());
         });
     }
 
-    private InvoiceOverview buildInvoiceOverview(Invoice invoice, Map<String, List<Payment>> invoiceIdToPayments, Map<String, Party> partyIdToParty) {
+    private InvoiceOverview buildInvoiceOverview(Invoice invoice, Map<String, List<Payment>> invoiceIdToPayments,
+            Map<String, InvoiceSending> invoiceIdToLastInvoiceSending, Map<String, Party> partyIdToParty) {
         InvoiceOverview overview = new InvoiceOverview(invoice.getId());
         overview.setDescription(invoice.getDescription());
         overview.setIssueDate(invoice.getIssueDate());
@@ -327,6 +337,8 @@ public class InvoiceService {
                 .map(Payment::getAmount)
                 .reduce(new Amount(BigInteger.ZERO), (a, b) -> a.add(b)));
         overview.setPayingPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
+        overview.setPayingPartyEmailAddress(partyIdToParty.get(invoice.getConcerningPartyId()).getEmailAddress());
+        overview.setLastSending(invoiceIdToLastInvoiceSending.get(invoice.getId()));
         return overview;
     }
 
@@ -351,6 +363,17 @@ public class InvoiceService {
 
     public DefaultValueMap<String,List<Payment>> getIdToPayments(Document document, List<String> invoiceIds) throws ServiceException {
         return ServiceTransaction.withResult(() -> new PaymentDAO(document).getIdToPayments(invoiceIds));
+    }
+
+    public void createInvoiceSending(Document document, Invoice invoice, InvoiceSending.Type type) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> {
+            InvoiceSending invoiceSending = new InvoiceSending();
+            invoiceSending.setDate(new Date());
+            invoiceSending.setInvoiceId(invoice.getId());
+            invoiceSending.setType(type);
+            new InvoiceSendingDAO(document).create(invoiceSending);
+            document.notifyChange();
+        });
     }
 
 }

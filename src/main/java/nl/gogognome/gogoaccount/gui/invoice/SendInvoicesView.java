@@ -3,10 +3,7 @@ package nl.gogognome.gogoaccount.gui.invoice;
 import com.itextpdf.text.DocumentException;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.email.EmailService;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
-import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.collections.DefaultValueMap;
@@ -17,6 +14,7 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
 import nl.gogognome.lib.util.DateUtil;
 import org.xhtmlrenderer.pdf.ITextRenderer;
 import org.xhtmlrenderer.simple.FSScrollPane;
@@ -42,11 +40,13 @@ import java.util.Map;
 
 import static java.awt.BorderLayout.CENTER;
 import static java.awt.BorderLayout.NORTH;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.*;
 
 public class SendInvoicesView extends View {
 
     private final Document document;
     private final EmailService emailService;
+    private final InvoiceService invoiceService;
     private final InvoicePreviewTemplate invoicePreviewTemplate;
 
     private final XHTMLPanel xhtmlPanel = new XHTMLPanel();
@@ -58,9 +58,10 @@ public class SendInvoicesView extends View {
     private DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
     private Map<String, Party> invoiceIdToParty;
 
-    public SendInvoicesView(Document document, EmailService emailService, InvoicePreviewTemplate invoicePreviewTemplate) {
+    public SendInvoicesView(Document document, EmailService emailService, InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
         this.document = document;
         this.emailService = emailService;
+        this.invoiceService = invoiceService;
         this.invoicePreviewTemplate = invoicePreviewTemplate;
     }
 
@@ -182,7 +183,13 @@ public class SendInvoicesView extends View {
             }
             XHTMLPanel pagePanel = new XHTMLPanel();
             updatePreview(templateModel.getString(), pageIndex, pagePanel);
-            return new XHTMLPrintable(pagePanel).print(graphics, pageFormat, 0);
+            int result = new XHTMLPrintable(pagePanel).print(graphics, pageFormat, 0);
+            try {
+                invoiceService.createInvoiceSending(document, invoicesToSend.get(pageIndex), PRINT);
+            } catch (ServiceException e) {
+                throw new PrinterException("Failed to create invoice sending: " + e.getMessage());
+            }
+            return result;
         }
     }
 
@@ -194,26 +201,32 @@ public class SendInvoicesView extends View {
             }
 
             exportInvoicesToPdf(directory);
-
-            MessageDialog.showInfoMessage(this, "SendInvoicesView.pdfsCreated", invoicesToSend.size());
         } catch (Exception  e) {
             MessageDialog.showErrorMessage(this, e, "SendInvoicesView.exportPdfError");
         }
     }
 
     private void exportInvoicesToPdf(File directory) throws ParserConfigurationException, SAXException, IOException, DocumentException {
-        for (Invoice invoice : invoicesToSend) {
-
-            try (OutputStream os = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"))) {
-                ITextRenderer renderer = new ITextRenderer();
-                String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
-                DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                org.w3c.dom.Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
-                renderer.setDocument(doc, templateFileModel.getFile().toURI().toString());
-                renderer.layout();
-                renderer.createPDF(os);
+        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource.getString("SendInvoicesView.sendingEmails"));
+        progressDialog.execute(taskProgressListener -> {
+            int progress = 0;
+            for (Invoice invoice : invoicesToSend) {
+                progress += 100 / invoicesToSend.size();
+                taskProgressListener.onProgressUpdate(progress);
+                try (OutputStream os = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"))) {
+                    ITextRenderer renderer = new ITextRenderer();
+                    String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
+                    DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                    org.w3c.dom.Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
+                    renderer.setDocument(doc, templateFileModel.getFile().toURI().toString());
+                    renderer.layout();
+                    renderer.createPDF(os);
+                    invoiceService.createInvoiceSending(document, invoice, PDF);
+                }
             }
-        }
+            taskProgressListener.onProgressUpdate(100);
+            return null;
+        });
     }
 
     private File selectDirectory() {
@@ -232,15 +245,19 @@ public class SendInvoicesView extends View {
             return;
         }
 
-        try {
+        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource.getString("SendInvoicesView.sendingEmails"));
+        progressDialog.execute(taskProgressListener -> {
+            int progress = 0;
             for (Invoice invoice : invoicesToSend) {
+                progress += 100 / invoicesToSend.size();
+                taskProgressListener.onProgressUpdate(progress);
                 String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
-                emailService.sendEmail(document, invoiceIdToParty.get(invoice.getId()).getEmailAddress(), invoice.getDescription(), xml,
-                        "utf-8", "html");
+                emailService.sendEmail(document, invoiceIdToParty.get(invoice.getId()).getEmailAddress(), invoice.getDescription(), xml, "utf-8", "html");
+                invoiceService.createInvoiceSending(document, invoice, EMAIL);
             }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "SendInvoicesView.sendEmailError");
-        }
+            taskProgressListener.onProgressUpdate(100);
+            return null;
+        });
     }
 
     private void updatePreview(String fileContents, int invoiceIndex, XHTMLPanel xhtmlPanel) {

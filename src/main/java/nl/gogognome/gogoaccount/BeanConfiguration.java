@@ -273,8 +273,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public SendInvoicesView sendInvoicesView(DocumentWrapper documentWrapper, EmailService emailService,
-                                             InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new SendInvoicesView(documentWrapper.document, emailService, invoicePreviewTemplate);
+                                             InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
+        return new SendInvoicesView(documentWrapper.document, emailService, invoiceService, invoicePreviewTemplate);
     }
 
     @Bean

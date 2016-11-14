@@ -28,6 +28,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public class InvoicesView extends View {
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
     private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesView.edit", this::onEditSelectedInvoice);
-    private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("InvoicesView.sendInvoices", this::onPrintSelectedInvoices);
+    private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("InvoicesView.sendInvoices", this::onSendSelectedInvoices);
     private DocumentListener documentListener;
 
     private JTable table;
@@ -213,11 +214,14 @@ public class InvoicesView extends View {
                 ColumnDefinition.<InvoiceOverview>builder("gen.description", String.class, 200)
                         .add(Invoice::getDescription)
                         .build(),
-                ColumnDefinition.<InvoiceOverview>builder("gen.issueDate", String.class, 100)
+                ColumnDefinition.<InvoiceOverview>builder("gen.issueDate", Date.class, 80)
                         .add(Invoice::getIssueDate)
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.party", String.class, 200)
                         .add(row -> row.getPayingPartyId() + " - " + row.getPayingPartyName())
+                        .build(),
+                ColumnDefinition.<InvoiceOverview>builder("gen.emailAddress", String.class, 100)
+                        .add(InvoiceOverview::getPayingPartyEmailAddress)
                         .build(),
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountToBePaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
@@ -226,6 +230,12 @@ public class InvoicesView extends View {
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountPaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
                         .add(InvoiceOverview::getAmountPaid)
+                        .build(),
+                ColumnDefinition.<InvoiceOverview>builder("InvoicesView.lastSendingDate", Date.class, 80)
+                        .add(invoiceOverview -> invoiceOverview.getLastSending() != null ? invoiceOverview.getLastSending().getDate() : null)
+                        .build(),
+                ColumnDefinition.<InvoiceOverview>builder("InvoicesView.lastSendingType", String.class, 80)
+                        .add(invoiceOverview -> invoiceOverview.getLastSending() != null ? textResource.getString(invoiceOverview.getLastSending().getType()) : null)
                         .build()));
     }
 
@@ -237,7 +247,7 @@ public class InvoicesView extends View {
         editInvoiceController.execute();
     }
 
-    private void onPrintSelectedInvoices() {
+    private void onSendSelectedInvoices() {
         try {
             SendInvoicesView sendInvoicesView = (SendInvoicesView) viewFactory.createView(SendInvoicesView.class);
             List<Invoice> selectedInvoices = getSelectedInvoices();

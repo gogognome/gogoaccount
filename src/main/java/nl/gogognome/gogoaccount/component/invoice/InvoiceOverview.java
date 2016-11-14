@@ -7,6 +7,8 @@ public class InvoiceOverview extends Invoice {
     private Amount amountToBePaid;
     private Amount amountPaid;
     private String payingPartyName;
+    private String payingPartyEmailAddress;
+    private InvoiceSending lastSending;
 
     public InvoiceOverview(String id) {
         super(id);
@@ -34,5 +36,21 @@ public class InvoiceOverview extends Invoice {
 
     public void setPayingPartyName(String payingPartyName) {
         this.payingPartyName = payingPartyName;
+    }
+
+    public String getPayingPartyEmailAddress() {
+        return payingPartyEmailAddress;
+    }
+
+    public void setPayingPartyEmailAddress(String payingPartyEmailAddress) {
+        this.payingPartyEmailAddress = payingPartyEmailAddress;
+    }
+
+    public void setLastSending(InvoiceSending lastSending) {
+        this.lastSending = lastSending;
+    }
+
+    public InvoiceSending getLastSending() {
+        return lastSending;
     }
 }
