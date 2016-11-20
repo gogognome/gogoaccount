@@ -1,11 +1,7 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
-import com.itextpdf.text.DocumentException;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.email.EmailService;
 import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -14,60 +10,35 @@ import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
 import nl.gogognome.lib.util.DateUtil;
-import org.xhtmlrenderer.pdf.ITextRenderer;
 import org.xhtmlrenderer.simple.FSScrollPane;
 import org.xhtmlrenderer.simple.XHTMLPanel;
-import org.xhtmlrenderer.simple.XHTMLPrintable;
 import org.xhtmlrenderer.simple.xhtml.XhtmlNamespaceHandler;
-import org.xml.sax.SAXException;
 
 import javax.swing.*;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
-import java.awt.print.PageFormat;
-import java.awt.print.Printable;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
-import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
-import static java.awt.BorderLayout.CENTER;
-import static java.awt.BorderLayout.NORTH;
-import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.*;
+import static java.awt.BorderLayout.*;
 
-public class SendInvoicesView extends View {
+public abstract class SendInvoicesView extends View {
 
-    private final Document document;
-    private final EmailService emailService;
-    private final InvoiceService invoiceService;
     private final InvoicePreviewTemplate invoicePreviewTemplate;
 
     private final XHTMLPanel xhtmlPanel = new XHTMLPanel();
-    private final FileModel templateFileModel = new FileModel();
-    private final StringModel templateModel = new StringModel();
+    protected final FileModel templateFileModel = new FileModel();
+    protected final StringModel templateModel = new StringModel();
 
-    private List<Invoice> invoicesToSend;
-    private DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails;
-    private DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
-    private Map<String, Party> invoiceIdToParty;
+    protected List<Invoice> invoicesToSend;
+    protected DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails;
+    protected DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
+    protected Map<String, Party> invoiceIdToParty;
 
-    public SendInvoicesView(Document document, EmailService emailService, InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
-        this.document = document;
-        this.emailService = emailService;
-        this.invoiceService = invoiceService;
+    public SendInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
         this.invoicePreviewTemplate = invoicePreviewTemplate;
-    }
-
-    @Override
-    public String getTitle() {
-        return textResource.getString("SendInvoicesView.title");
     }
 
     public void setInvoicesToSend(List<Invoice> invoicesToSend, DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails,
@@ -76,6 +47,11 @@ public class SendInvoicesView extends View {
         this.invoiceIdToDetails = invoiceIdToDetails;
         this.invoiceIdToPayments = invoiceIdToPayments;
         this.invoiceIdToParty = invoiceIdToParty;
+    }
+
+    @Override
+    public String getTitle() {
+        return textResource.getString(getClass().getSimpleName() + ".title");
     }
 
     @Override
@@ -150,123 +126,38 @@ public class SendInvoicesView extends View {
         panel.add(new FSScrollPane(xhtmlPanel), BorderLayout.CENTER);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
-        buttonPanel.add(widgetFactory.createButton("gen.print", this::onPrint));
-        buttonPanel.add(widgetFactory.createButton("SendInvoicesView.exportPdf", this::onExportPdf));
-        buttonPanel.add(widgetFactory.createButton("SendInvoicesView.sendEmail", this::onSendEmail));
+        buttonPanel.add(widgetFactory.createButton(getButtonResourceId(), this::onSend));
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
     }
 
+    protected abstract String getButtonResourceId();
+
+    private void onSend() {
+        try {
+            if (send()) {
+                close();
+            }
+        } catch (Exception e) {
+            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+        }
+    }
+
+    protected abstract boolean send() throws Exception;
+
     private void onUpdatePreview() {
         updatePreview(templateModel.getString(), 0, xhtmlPanel);
     }
 
-    private void onPrint() {
-        PrinterJob printJob = PrinterJob.getPrinterJob();
-        printJob.setPrintable(new SelectedInvoicesPrintable());
-        if (printJob.printDialog()) {
-            try {
-                printJob.print();
-            } catch (PrinterException e) {
-                MessageDialog.showErrorMessage(this, "gen.internalError", e);
-            }
-        }
-    }
 
-    private class SelectedInvoicesPrintable implements Printable {
-
-        @Override
-        public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
-            if (pageIndex >= invoicesToSend.size()) {
-                return Printable.NO_SUCH_PAGE;
-            }
-            XHTMLPanel pagePanel = new XHTMLPanel();
-            updatePreview(templateModel.getString(), pageIndex, pagePanel);
-            int result = new XHTMLPrintable(pagePanel).print(graphics, pageFormat, 0);
-            try {
-                invoiceService.createInvoiceSending(document, invoicesToSend.get(pageIndex), PRINT);
-            } catch (ServiceException e) {
-                throw new PrinterException("Failed to create invoice sending: " + e.getMessage());
-            }
-            return result;
-        }
-    }
-
-    private void onExportPdf() {
-        try {
-            File directory = selectDirectory();
-            if (directory == null) {
-                return;
-            }
-
-            exportInvoicesToPdf(directory);
-        } catch (Exception  e) {
-            MessageDialog.showErrorMessage(this, e, "SendInvoicesView.exportPdfError");
-        }
-    }
-
-    private void exportInvoicesToPdf(File directory) throws ParserConfigurationException, SAXException, IOException, DocumentException {
-        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource.getString("SendInvoicesView.sendingEmails"));
-        progressDialog.execute(taskProgressListener -> {
-            int progress = 0;
-            for (Invoice invoice : invoicesToSend) {
-                progress += 100 / invoicesToSend.size();
-                taskProgressListener.onProgressUpdate(progress);
-                try (OutputStream os = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"))) {
-                    ITextRenderer renderer = new ITextRenderer();
-                    String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
-                    DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                    org.w3c.dom.Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
-                    renderer.setDocument(doc, templateFileModel.getFile().toURI().toString());
-                    renderer.layout();
-                    renderer.createPDF(os);
-                    invoiceService.createInvoiceSending(document, invoice, PDF);
-                }
-            }
-            taskProgressListener.onProgressUpdate(100);
-            return null;
-        });
-    }
-
-    private File selectDirectory() {
-        JFileChooser fc = new JFileChooser(templateFileModel.getFile().getParentFile());
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int choice = fc.showDialog(this, textResource.getString("SendInvoicesView.titleExportDirectoryDialog"));
-        if (choice == JFileChooser.APPROVE_OPTION) {
-            return fc.getSelectedFile();
-        }
-        return null;
-    }
-
-    private void onSendEmail() {
-        int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "SendInvoicesView.areYouSureToSendEmails");
-        if (choice != MessageDialog.YES_OPTION) {
-            return;
-        }
-
-        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource.getString("SendInvoicesView.sendingEmails"));
-        progressDialog.execute(taskProgressListener -> {
-            int progress = 0;
-            for (Invoice invoice : invoicesToSend) {
-                progress += 100 / invoicesToSend.size();
-                taskProgressListener.onProgressUpdate(progress);
-                String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
-                emailService.sendEmail(document, invoiceIdToParty.get(invoice.getId()).getEmailAddress(), invoice.getDescription(), xml, "utf-8", "html");
-                invoiceService.createInvoiceSending(document, invoice, EMAIL);
-            }
-            taskProgressListener.onProgressUpdate(100);
-            return null;
-        });
-    }
-
-    private void updatePreview(String fileContents, int invoiceIndex, XHTMLPanel xhtmlPanel) {
+    protected void updatePreview(String fileContents, int invoiceIndex, XHTMLPanel xhtmlPanel) {
         Invoice invoice = invoicesToSend.get(invoiceIndex);
         String fileContentsWithValuesFilledIn = fillInParametersInTemplate(fileContents, invoice);
         xhtmlPanel.setDocumentFromString(fileContentsWithValuesFilledIn, templateFileModel.getFile().toURI().toString(), new XhtmlNamespaceHandler());
     }
 
-    private String fillInParametersInTemplate(String fileContents, Invoice invoice) {
+    protected String fillInParametersInTemplate(String fileContents, Invoice invoice) {
         return invoicePreviewTemplate.fillInParametersInTemplate(fileContents, invoice,
                     invoiceIdToDetails.get(invoice.getId()), invoiceIdToPayments.get(invoice.getId()),
                     invoiceIdToParty.get(invoice.getId()), DateUtil.addMonths(invoice.getIssueDate(), 1));
@@ -274,7 +165,6 @@ public class SendInvoicesView extends View {
 
     @Override
     public void onClose() {
-
     }
 
 }

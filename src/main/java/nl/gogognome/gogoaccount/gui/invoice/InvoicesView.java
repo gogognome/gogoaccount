@@ -50,7 +50,9 @@ public class InvoicesView extends View {
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
     private ActionWrapper editSelectedInvoiceAction = widgetFactory.createActionWrapper("InvoicesView.edit", this::onEditSelectedInvoice);
-    private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("InvoicesView.sendInvoices", this::onSendSelectedInvoices);
+    private ActionWrapper emailSelectedInvoicesAction = widgetFactory.createActionWrapper("EmailInvoicesView.sendEmail", this::onEmail);
+    private ActionWrapper exportPdfsSelectedInvoicesAction = widgetFactory.createActionWrapper("ExportPdfsInvoicesView.exportPdf", this::onExportPdfs);
+    private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("gen.print", this::onPrint);
     private DocumentListener documentListener;
 
     private JTable table;
@@ -58,7 +60,8 @@ public class InvoicesView extends View {
     private JButton btSearch;
     private CloseableJPanel invoiceDetailsPanel;
 
-    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
+    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService,
+                        EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
         this.document = document;
         this.amountFormat = amountFormat;
         this.invoiceService = invoiceService;
@@ -135,6 +138,8 @@ public class InvoicesView extends View {
     private Component createButtonPanel() {
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
         buttonPanel.addButton(editSelectedInvoiceAction);
+        buttonPanel.addButton(emailSelectedInvoicesAction);
+        buttonPanel.addButton(exportPdfsSelectedInvoicesAction);
         buttonPanel.addButton(printSelectedInvoicesAction);
         return buttonPanel;
     }
@@ -183,6 +188,8 @@ public class InvoicesView extends View {
     }
 
     private void onSelectionChanged() {
+        emailSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
+        exportPdfsSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         printSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         boolean exactlyOneInvoiceSelected = Tables.getSelectedRowsConvertedToModel(table).length == 1;
         editSelectedInvoiceAction.setEnabled(exactlyOneInvoiceSelected);
@@ -247,9 +254,20 @@ public class InvoicesView extends View {
         editInvoiceController.execute();
     }
 
-    private void onSendSelectedInvoices() {
+    private void onExportPdfs() {
+        sendSelectedInvoices((ExportPdfsInvoicesView) viewFactory.createView(ExportPdfsInvoicesView.class));
+    }
+
+    private void onEmail() {
+        sendSelectedInvoices((EmailInvoicesView) viewFactory.createView(EmailInvoicesView.class));
+    }
+
+    private void onPrint() {
+        sendSelectedInvoices((PrintInvoicesView) viewFactory.createView(PrintInvoicesView.class));
+    }
+
+    private void sendSelectedInvoices(SendInvoicesView sendInvoicesView) {
         try {
-            SendInvoicesView sendInvoicesView = (SendInvoicesView) viewFactory.createView(SendInvoicesView.class);
             List<Invoice> selectedInvoices = getSelectedInvoices();
             Map<String, Party> idToParty = partyService.getIdToParty(document, selectedInvoices.stream().map(Invoice::getConcerningPartyId).collect(toList()));
             Map<String, Party> invoiceIdToParty = selectedInvoices.stream().collect(toMap(Invoice::getId, i -> idToParty.get(i.getConcerningPartyId())));

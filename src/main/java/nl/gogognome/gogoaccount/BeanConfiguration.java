@@ -210,6 +210,20 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
+    public EmailInvoicesView emailInvoicesView(DocumentWrapper documentWrapper, EmailService emailService,
+                                               InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
+        return new EmailInvoicesView(documentWrapper.document, emailService, invoiceService, invoicePreviewTemplate);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public ExportPdfsInvoicesView exportPdfsInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
+                                                         InvoicePreviewTemplate invoicePreviewTemplate) {
+        return new ExportPdfsInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate);
+    }
+
+    @Bean
+    @Scope("prototype")
     public GenerateAutomaticCollectionFileView generateAutomaticCollectionFileView(DocumentWrapper documentWrapper,
                                                                                    AutomaticCollectionService automaticCollectionService,
                                                                                    ConfigurationService configurationService,
@@ -272,9 +286,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public SendInvoicesView sendInvoicesView(DocumentWrapper documentWrapper, EmailService emailService,
-                                             InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new SendInvoicesView(documentWrapper.document, emailService, invoiceService, invoicePreviewTemplate);
+    public PrintInvoicesView printInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
+                                               InvoicePreviewTemplate invoicePreviewTemplate) {
+        return new PrintInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate);
     }
 
     @Bean
