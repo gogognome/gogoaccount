@@ -1,18 +1,13 @@
 package nl.gogognome.gogoaccount.component.automaticcollection;
 
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.gogoaccount.test.AbstractBookkeepingTest;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -23,20 +18,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import static java.util.stream.Collectors.toList;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.*;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import static org.junit.Assert.*;
 
 public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
     private final List<Integer> reportedProgress = new ArrayList<>();
-    private final TaskProgressListener progressListener = p -> reportedProgress.add(p);
+    private final TaskProgressListener progressListener = reportedProgress::add;
 
     File file;
 
