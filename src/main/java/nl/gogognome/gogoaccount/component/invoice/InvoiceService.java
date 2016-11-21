@@ -11,6 +11,7 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
+import nl.gogognome.lib.util.Factory;
 import nl.gogognome.textsearch.criteria.Criterion;
 
 import java.math.BigInteger;
@@ -26,12 +27,10 @@ public class InvoiceService {
 
     private final AmountFormat amountFormat;
     private final PartyService partyService;
-    private final TextResource textResource;
 
-    public InvoiceService(AmountFormat amountFormat, PartyService partyService, TextResource textResource) {
+    public InvoiceService(AmountFormat amountFormat, PartyService partyService) {
         this.amountFormat = amountFormat;
         this.partyService = partyService;
-        this.textResource = textResource;
     }
 
     public Invoice getInvoice(Document document, String invoiceId) throws ServiceException {
@@ -63,8 +62,8 @@ public class InvoiceService {
             invoice.setIssueDate(invoiceDefinition.getIssueDate());
 
             invoice = invoiceDAO.create(invoice);
-            List<String> descriptions = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getDescription).collect(toList());
-            List<Amount> amounts = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getAmount).collect(toList());
+            List<String> descriptions = invoiceDefinition.getLines().stream().map(l -> l.getDescription()).collect(toList());
+            List<Amount> amounts = invoiceDefinition.getLines().stream().map(l -> l.getAmount()).collect(toList());
             invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
 
             document.notifyChange();
@@ -73,18 +72,19 @@ public class InvoiceService {
     }
 
     private void validateInvoice(InvoiceDefinition invoiceDefinition) throws ServiceException {
+        TextResource tr = Factory.getInstance(TextResource.class);
         if (invoiceDefinition.getIssueDate() == null) {
-            throw new ServiceException(textResource.getString("InvoiceService.issueDateNull"));
+            throw new ServiceException(tr.getString("InvoiceService.issueDateNull"));
         }
         if (invoiceDefinition.getId() == null) {
-            throw new ServiceException(textResource.getString("InvoiceService.idIsNull"));
+            throw new ServiceException(tr.getString("InvoiceService.idIsNull"));
         }
         if (invoiceDefinition.getLines().isEmpty()) {
-            throw new ServiceException(textResource.getString("InvoiceService.invoiceWithZeroLines"));
+            throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));
         }
         for (InvoiceDefinitionLine line : invoiceDefinition.getLines()) {
             if (line.getAccount() == null) {
-                throw new ServiceException(textResource.getString("InvoiceService.lineWithoutAccount"));
+                throw new ServiceException(tr.getString("InvoiceService.lineWithoutAccount"));
             }
             if (line.getAmount() == null) {
                 throw new ServiceException("Amount must be filled in for all lines.");
@@ -304,28 +304,18 @@ public class InvoiceService {
             Map<String, List<Payment>> invoiceIdToPayments = new PaymentDAO(document).findAll()
                     .stream()
                     .collect(groupingBy(Payment::getInvoiceId));
-            Map<String, InvoiceSending> invoiceIdToLastSending = new HashMap<>();
-            new InvoiceSendingDAO(document).findAll()
-                    .forEach(s -> {
-                        if (!invoiceIdToLastSending.containsKey(s.getInvoiceId())
-                                || DateUtil.compareDayOfYear(invoiceIdToLastSending.get(s.getInvoiceId()).getDate(), s.getDate()) < 0) {
-                            invoiceIdToLastSending.put(s.getInvoiceId(), s);
-                        }
-                    });
-
             Map<String, Party> partyIdToParty = new PartyService().findAllParties(document)
                     .stream()
                     .collect(toMap(Party::getId, party -> party));
             return invoices.stream()
-                    .map(invoice -> buildInvoiceOverview(invoice, invoiceIdToPayments, invoiceIdToLastSending, partyIdToParty))
+                    .map(invoice -> buildInvoiceOverview(invoice, invoiceIdToPayments, partyIdToParty))
                     .filter(overview -> includeClosedInvoices || !overview.getAmountToBePaid().equals(overview.getAmountPaid()))
                     .filter(overview -> matches(criterion, overview, amountFormat))
                     .collect(toList());
         });
     }
 
-    private InvoiceOverview buildInvoiceOverview(Invoice invoice, Map<String, List<Payment>> invoiceIdToPayments,
-            Map<String, InvoiceSending> invoiceIdToLastInvoiceSending, Map<String, Party> partyIdToParty) {
+    private InvoiceOverview buildInvoiceOverview(Invoice invoice, Map<String, List<Payment>> invoiceIdToPayments, Map<String, Party> partyIdToParty) {
         InvoiceOverview overview = new InvoiceOverview(invoice.getId());
         overview.setDescription(invoice.getDescription());
         overview.setIssueDate(invoice.getIssueDate());
@@ -337,8 +327,6 @@ public class InvoiceService {
                 .map(Payment::getAmount)
                 .reduce(new Amount(BigInteger.ZERO), (a, b) -> a.add(b)));
         overview.setPayingPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
-        overview.setPayingPartyEmailAddress(partyIdToParty.get(invoice.getConcerningPartyId()).getEmailAddress());
-        overview.setLastSending(invoiceIdToLastInvoiceSending.get(invoice.getId()));
         return overview;
     }
 
@@ -355,25 +343,6 @@ public class InvoiceService {
                 invoiceOverview.getIssueDate(),
                 invoiceOverview.getPayingPartyId(),
                 invoiceOverview.getPayingPartyName());
-    }
-
-    public DefaultValueMap<String,List<InvoiceDetail>> getIdToInvoiceDetails(Document document, List<String> invoiceIds) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new InvoiceDetailDAO(document).getIdToInvoiceDetails(invoiceIds));
-    }
-
-    public DefaultValueMap<String,List<Payment>> getIdToPayments(Document document, List<String> invoiceIds) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new PaymentDAO(document).getIdToPayments(invoiceIds));
-    }
-
-    public void createInvoiceSending(Document document, Invoice invoice, InvoiceSending.Type type) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> {
-            InvoiceSending invoiceSending = new InvoiceSending();
-            invoiceSending.setDate(new Date());
-            invoiceSending.setInvoiceId(invoice.getId());
-            invoiceSending.setType(type);
-            new InvoiceSendingDAO(document).create(invoiceSending);
-            document.notifyChange();
-        });
     }
 
 }

@@ -4,24 +4,23 @@ import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectio
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
-import nl.gogognome.gogoaccount.component.email.EmailService;
 import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
-import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.settings.SettingsService;
-import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.gogoaccount.gui.DocumentRegistry;
 import nl.gogognome.gogoaccount.gui.MainFrame;
 import nl.gogognome.gogoaccount.gui.TextResourceRegistry;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
-import nl.gogognome.gogoaccount.gui.configuration.EmailConfigurationView;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
-import nl.gogognome.gogoaccount.gui.invoice.*;
+import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceController;
+import nl.gogognome.gogoaccount.gui.invoice.EditInvoiceView;
+import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
+import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.reportgenerators.InvoicesToModelConverter;
 import nl.gogognome.gogoaccount.reportgenerators.ReportToModelConverter;
@@ -165,13 +164,6 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public EmailConfigurationView emailConfigurationView(DocumentWrapper documentWrapper, TextResourceWrapper textResourceWrapper,
-                                                         EmailService emailService) {
-        return new EmailConfigurationView(documentWrapper.document, textResourceWrapper.textResource, emailService);
-    }
-
-    @Bean
-    @Scope("prototype")
     public EditInvoiceView editInvoiceView(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
                                            InvoiceService invoiceService, PartyService partyService, ViewFactory viewFactory) {
         return new EditInvoiceView(documentWrapper.document, amountFormatWrapper.amountFormat, configurationService, invoiceService, partyService, viewFactory);
@@ -210,20 +202,6 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public EmailInvoicesView emailInvoicesView(DocumentWrapper documentWrapper, EmailService emailService,
-                                               InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new EmailInvoicesView(documentWrapper.document, emailService, invoiceService, invoicePreviewTemplate);
-    }
-
-    @Bean
-    @Scope("prototype")
-    public ExportPdfsInvoicesView exportPdfsInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                                         InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new ExportPdfsInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate);
-    }
-
-    @Bean
-    @Scope("prototype")
     public GenerateAutomaticCollectionFileView generateAutomaticCollectionFileView(DocumentWrapper documentWrapper,
                                                                                    AutomaticCollectionService automaticCollectionService,
                                                                                    ConfigurationService configurationService,
@@ -240,8 +218,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, InvoiceService invoiceService,
-                                     PartyService partyService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
-        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, partyService, editInvoiceController, viewFactory);
+                                     EditInvoiceController editInvoiceController) {
+        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, editInvoiceController);
     }
 
     @Bean
@@ -282,13 +260,6 @@ public class BeanConfiguration {
     public PartiesView partiesView(DocumentWrapper documentWrapper, AutomaticCollectionService automaticCollectionService,
                                    PartyService partyService, ViewFactory viewFactory) {
         return new PartiesView(documentWrapper.document, automaticCollectionService, partyService, viewFactory);
-    }
-
-    @Bean
-    @Scope("prototype")
-    public PrintInvoicesView printInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                               InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new PrintInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate);
     }
 
     @Bean
@@ -352,21 +323,14 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public EmailService emailService(SettingsService settingsService, TextResourceWrapper textResourceWrapper) {
-        return new EmailService(settingsService, textResourceWrapper.textResource);
-    }
-
-    @Bean
-    @Scope("prototype")
     public ImportBankStatementService importBankStatementService(ConfigurationService configurationService) {
         return new ImportBankStatementService(configurationService);
     }
 
     @Bean
     @Scope("prototype")
-    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService,
-                                         TextResourceWrapper textResourceWrapper) {
-        return new InvoiceService(amountFormat, partyService, textResourceWrapper.textResource);
+    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService) {
+        return new InvoiceService(amountFormat, partyService);
     }
 
     @Bean
@@ -405,22 +369,10 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoicePreviewTemplate invoicePreviewTemplate(AmountFormatWrapper amountFormatWrapper, KeyValueReplacer keyValueReplacer,
-                                                         TextResourceWrapper textResourceWrapper) {
-        return new InvoicePreviewTemplate(amountFormatWrapper.amountFormat, keyValueReplacer, textResourceWrapper.textResource);
-    }
-
-    @Bean
-    @Scope("prototype")
     public ReportToModelConverter reportToModelConverter(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
                                                              PartyService partyService, TextResourceWrapper textResourceWrapper) {
         return new ReportToModelConverter(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
                 configurationService, partyService);
-    }
-
-    @Bean
-    public KeyValueReplacer variableReplacer() {
-        return new KeyValueReplacer();
     }
 
     @Bean

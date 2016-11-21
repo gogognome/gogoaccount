@@ -38,7 +38,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
                 JournalEntryDetailBuilder.debet().amount("15").account("100").invoiceId(invoice.getId()).build(),
                 JournalEntryDetailBuilder.credit().amount("15").account("101").build());
-        ledgerService.updateJournal(document, journalEntry, journalEntryDetails);
+        ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails);
 
         List<Payment> payments = invoiceService.findPayments(document, invoice);
         assertEquals(1, payments.size());
@@ -59,7 +59,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
                 JournalEntryDetailBuilder.debet().amount("15").account("100").build(),
                 JournalEntryDetailBuilder.credit().amount("15").account("101").build());
-        ledgerService.updateJournal(document, journalEntry, journalEntryDetails);
+        ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails);
 
         List<Payment> payments = invoiceService.findPayments(document, invoice);
         assertEquals("[]", payments.toString());
@@ -95,5 +95,14 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         assertTrue(invoiceService.findPayments(document, invoice).isEmpty());
     }
 
+    @Test
+    public void updateJournalEntry_journalEntryNotInBalance_shouldFail() throws ServiceException {
+        JournalEntry journalEntry = ledgerService.findJournalEntry(document, "t2");
+        List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
+                JournalEntryDetailBuilder.debet().amount("10").account("100").build(),
+                JournalEntryDetailBuilder.credit().amount("20").account("101").build());
+
+        assertThrows(ServiceException.class, () -> ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails));
+    }
 
 }

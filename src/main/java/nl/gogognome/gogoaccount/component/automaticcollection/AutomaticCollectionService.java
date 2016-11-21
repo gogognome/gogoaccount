@@ -86,7 +86,7 @@ public class AutomaticCollectionService {
                     new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds);
 
             // Determine which invoices that lead to validation errors in the SEPA file
-            SepaFileGenerator sepaFileGenerator = new SepaFileGenerator(document, amountFormat, configurationService);
+            SepaFileGenerator sepaFileGenerator = new SepaFileGenerator(document, configurationService);
             List<String> invalidInvoices = determineInvalidInvoices(fileToCreate, invoices, collectionDate,
                     settings, idToParty, idToPartyAutomaticCollectionSettings, sepaFileGenerator, progressListener);
 

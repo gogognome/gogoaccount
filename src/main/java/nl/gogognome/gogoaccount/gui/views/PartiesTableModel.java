@@ -35,9 +35,6 @@ public class PartiesTableModel extends ListTableModel<Party> {
                 ColumnDefinition.<Party>builder("gen.city", String.class, 100)
                     .add(row -> row.getCity())
                     .build(),
-                ColumnDefinition.<Party>builder("gen.emailAddress", String.class, 100)
-                    .add(row -> row.getEmailAddress())
-                    .build(),
                 ColumnDefinition.<Party>builder("gen.birthDate", Date.class, 100)
                     .add(new DayOfYearComparator())
                     .add(row -> row.getBirthDate())
