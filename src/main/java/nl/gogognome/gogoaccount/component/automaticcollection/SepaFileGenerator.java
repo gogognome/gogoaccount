@@ -24,7 +24,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 class SepaFileGenerator {
@@ -34,12 +33,12 @@ class SepaFileGenerator {
     private final IbanValidator ibanValidator = new IbanValidator();
 
     private final Document document;
+    private final AmountFormat amountFormat;
     private final ConfigurationService configurationService;
 
-    private AmountFormat amountFormat;
-
-    SepaFileGenerator(Document document, ConfigurationService configurationService) {
+    SepaFileGenerator(Document document, AmountFormat amountFormat, ConfigurationService configurationService) {
         this.document = document;
+        this.amountFormat = amountFormat;
         this.configurationService = configurationService;
     }
 
@@ -48,7 +47,6 @@ class SepaFileGenerator {
                          Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings)
             throws Exception {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-        amountFormat = new AmountFormat(Locale.US, bookkeeping.getCurrency()); // must use US locale. Therefore, amount format cannot be injected
 
         DocumentBuilderFactory docBuilderFac = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docBuilderFac.newDocumentBuilder();
@@ -62,7 +60,7 @@ class SepaFileGenerator {
         addElement(doc, groupHeader, "MsgId", settings.getSequenceNumber());
         addElement(doc, groupHeader, "CreDtTm", dateTimeFormat.format(new Date()));
         addElement(doc, groupHeader, "NbOfTxs", Integer.toString(invoices.size()));
-        Amount totalAmount = invoices.stream().map(Invoice::getAmountToBePaid).reduce(new Amount("0"), (a, b) -> a.add(b));
+        Amount totalAmount = invoices.stream().map(i -> i.getAmountToBePaid()).reduce(new Amount("0"), (a, b) -> a.add(b));
         String formattedAmount = amountFormat.formatAmountWithoutCurrency(totalAmount.toBigInteger());
         addElement(doc, groupHeader, "CtrlSum", formattedAmount);
         addElement(doc, groupHeader, "InitgPty/Nm", bookkeeping.getOrganizationName());

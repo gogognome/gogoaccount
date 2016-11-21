@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
+import nl.gogognome.gogoaccount.gui.configuration.EmailConfigurationView;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
@@ -137,6 +138,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miNewEdition = widgetFactory.createMenuItem("mi.newBookkeeping", e -> handleNewEdition());
         JMenuItem miOpenEdition = widgetFactory.createMenuItem("mi.openBookkeeping", e -> handleOpenBookkeeping());
         JMenuItem miConfigureBookkeeping = widgetFactory.createMenuItem("mi.configureBookkeeping", this);
+        JMenuItem miConfigureEmail = widgetFactory.createMenuItem("mi.configureEmail", e -> onConfigureEmail());
         JMenuItem miCloseBookkeeping = widgetFactory.createMenuItem("mi.closeBookkeeping", this);
         JMenuItem miImportBankStatement = widgetFactory.createMenuItem("mi.importBankStatement", this);
         JMenuItem miExit = widgetFactory.createMenuItem("mi.exit", this);
@@ -165,6 +167,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         fileMenu.add(miCloseBookkeeping);
         fileMenu.addSeparator();
         fileMenu.add(miConfigureBookkeeping);
+        fileMenu.add(miConfigureEmail);
         fileMenu.add(miImportBankStatement);
         fileMenu.addSeparator();
         fileMenu.add(miExit);
@@ -287,7 +290,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         requestFocus();
     }
 
-    /** Handles the configure bookkeeping event. */
     private void handleConfigureBookkeeping() {
         HandleException.for_(this, () -> {
             if (document == null ) {
@@ -298,7 +300,16 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         });
     }
 
-    /** Handles closing the bookkeeping. */
+    private void onConfigureEmail() {
+        HandleException.for_(this, () -> {
+            if (document == null ) {
+                MessageDialog.showInfoMessage(this, "mf.noBookkeepingPresent");
+            } else {
+                openViewInDialog(EmailConfigurationView.class);
+            }
+        });
+    }
+
     private void handleCloseBookkeeping() {
         ensureAccountsPresent(() -> {
             CloseBookkeepingView cbv = new CloseBookkeepingView(document, configurationService);
@@ -462,6 +473,19 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 openViews.put(viewClass, view);
             } else {
                 viewTabbedPane.selectView(view);
+            }
+        });
+    }
+
+    private void openViewInDialog(Class<? extends View> viewClass) {
+        HandleException.for_(this, () -> {
+            try {
+                View view = viewFactory.createView(viewClass);
+                ViewDialog viewDialog = new ViewDialog(this, view);
+                viewDialog.showDialog();
+            } catch (Exception e) {
+                MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
+                return;
             }
         });
     }

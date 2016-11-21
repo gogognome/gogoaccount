@@ -5,9 +5,15 @@ import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.util.AmountInDatabase;
+import nl.gogognome.lib.collections.DefaultValueMap;
 
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 class PaymentDAO extends AbstractDomainClassDAO<Payment> {
 
@@ -31,6 +37,12 @@ class PaymentDAO extends AbstractDomainClassDAO<Payment> {
 
     public boolean hasPayments(String invoiceId) throws SQLException {
         return existsAtLeastOne(new NameValuePairs().add("invoice_id", invoiceId));
+    }
+
+    public DefaultValueMap<String, List<Payment>> getIdToPayments(List<String> invoiceIds) throws SQLException {
+        Map<String, List<Payment>> invoiceIdToPayments = execute("SELECT * FROM " + tableName + " WHERE invoice_id IN (?)", invoiceIds)
+                .toHashMapOfLists(r -> r.getString("invoice_id"), r -> getObjectFromResultSet(r));
+        return new DefaultValueMap<>(invoiceIdToPayments, emptyList());
     }
 
     @Override

@@ -60,7 +60,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
         newJournalEntry.setId("t7");
         newJournalEntry.setDescription("test");
         newJournalEntry.setDate(DateUtil.createDate(2011, 9, 3));
-        ledgerService.updateJournalEntry(document, newJournalEntry, journalEntryDetails);
+        ledgerService.updateJournal(document, newJournalEntry, journalEntryDetails);
 
         assertEqualJournalEntry(newJournalEntry, findJournalEntry(newJournalEntry.getId()));
         assertEqualJournalEntryDetails(journalEntryDetails, findJournalEntryDetails(newJournalEntry.getId()));
@@ -87,6 +87,6 @@ public class TestDatabase extends AbstractBookkeepingTest {
         newJournalEntry.setDate(DateUtil.createDate(2011, 9, 3));
 
         assertNull(findJournalEntry(newJournalEntry.getId()));
-        ledgerService.updateJournalEntry(document, newJournalEntry, newJournalEntryDetails);
+        ledgerService.updateJournal(document, newJournalEntry, newJournalEntryDetails);
     }
 }

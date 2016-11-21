@@ -46,6 +46,7 @@ public class EditPartyView extends OkCancelView {
     private final StringModel addressModel = new StringModel();
     private final StringModel zipCodeModel = new StringModel();
     private final StringModel cityModel = new StringModel();
+    private final StringModel emailAddressModel = new StringModel();
     private final StringModel automaticCollectionNameModel = new StringModel();
     private final StringModel automaticCollectionAddressModel = new StringModel();
     private final StringModel automaticCollectionZipCodeModel = new StringModel();
@@ -107,6 +108,7 @@ public class EditPartyView extends OkCancelView {
             addressModel.setString(initialParty.getAddress());
             zipCodeModel.setString(initialParty.getZipCode());
             cityModel.setString(initialParty.getCity());
+            emailAddressModel.setString(initialParty.getEmailAddress());
             taRemarks.setText(initialParty.getRemarks());
             birthDateModel.setDate(initialParty.getBirthDate(), null);
 
@@ -149,6 +151,7 @@ public class EditPartyView extends OkCancelView {
         ifc.addField("editPartyView.address", addressModel);
         ifc.addField("editPartyView.zipCode", zipCodeModel);
         ifc.addField("editPartyView.city", cityModel);
+        ifc.addField("editPartyView.emailAddress", emailAddressModel);
         ifc.addField("editPartyView.birthDate", birthDateModel);
         ifc.addVariableSizeField("editPartyView.tags", labelsPanel);
         initTagsPanel();
@@ -227,6 +230,7 @@ public class EditPartyView extends OkCancelView {
         resultParty.setAddress(addressModel.getString());
         resultParty.setZipCode(zipCodeModel.getString());
         resultParty.setCity(cityModel.getString());
+        resultParty.setEmailAddress(emailAddressModel.getString());
         resultParty.setBirthDate(birthDateModel.getDate());
         resultParty.setRemarks(taRemarks.getText());
 

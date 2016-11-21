@@ -79,7 +79,7 @@ public class EditInvoiceController {
             dialog.showDialog();
             JournalEntry updatedJournalEntry = view.getEditedJournalEntry();
             if (updatedJournalEntry != null) {
-                ledgerService.updateJournalEntry(document, updatedJournalEntry, view.getEditedJournalEntryDetails());
+                ledgerService.updateJournal(document, updatedJournalEntry, view.getEditedJournalEntryDetails());
             }
         });
     }
