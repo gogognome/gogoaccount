@@ -19,13 +19,13 @@ import java.nio.charset.Charset;
 
 import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.PDF;
 
-public class ExportPdfsInvoicesView2 extends SendInvoicesView {
+public class ExportPdfsInvoicesView extends SendInvoicesView {
 
     private final Document document;
     private final InvoiceService invoiceService;
 
-    public ExportPdfsInvoicesView2(Document document, InvoiceService invoiceService,
-                                   InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
+    public ExportPdfsInvoicesView(Document document, InvoiceService invoiceService,
+                                  InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
         super(document, invoicePreviewTemplate, settingsService);
         this.document = document;
         this.invoiceService = invoiceService;
