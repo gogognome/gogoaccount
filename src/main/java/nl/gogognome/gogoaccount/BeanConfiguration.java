@@ -211,15 +211,16 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public EmailInvoicesView emailInvoicesView(DocumentWrapper documentWrapper, EmailService emailService,
-                                               InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new EmailInvoicesView(documentWrapper.document, emailService, invoiceService, invoicePreviewTemplate);
+                                               InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate,
+                                               SettingsService settingsService) {
+        return new EmailInvoicesView(documentWrapper.document, emailService, invoiceService, invoicePreviewTemplate, settingsService);
     }
 
     @Bean
     @Scope("prototype")
     public ExportPdfsInvoicesView exportPdfsInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                                         InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new ExportPdfsInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate);
+                                                         InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
+        return new ExportPdfsInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate, settingsService);
     }
 
     @Bean
@@ -287,8 +288,8 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public PrintInvoicesView printInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                               InvoicePreviewTemplate invoicePreviewTemplate) {
-        return new PrintInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate);
+                                               InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
+        return new PrintInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate, settingsService);
     }
 
     @Bean

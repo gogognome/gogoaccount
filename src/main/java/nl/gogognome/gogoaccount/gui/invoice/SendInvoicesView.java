@@ -1,11 +1,14 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
 import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
+import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -17,6 +20,8 @@ import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.util.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xhtmlrenderer.simple.FSScrollPane;
 import org.xhtmlrenderer.simple.XHTMLPanel;
 import org.xhtmlrenderer.simple.xhtml.XhtmlNamespaceHandler;
@@ -36,7 +41,12 @@ import static java.awt.BorderLayout.NORTH;
 
 public abstract class SendInvoicesView extends View {
 
+    private final static String TEMPLATE_FILE_KEY = "SendInvoicesView.templateFile";
+    private final static Logger LOGGER = LoggerFactory.getLogger(SendInvoicesView.class);
+
+    private final Document document;
     private final InvoicePreviewTemplate invoicePreviewTemplate;
+    private final SettingsService settingsService;
 
     private final XHTMLPanel xhtmlPanel = new XHTMLPanel();
     protected final FileModel templateFileModel = new FileModel();
@@ -53,8 +63,10 @@ public abstract class SendInvoicesView extends View {
     private JPanel twoColumns;
     private Action saveAction;
 
-    public SendInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
+    public SendInvoicesView(Document document, InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
+        this.document = document;
         this.invoicePreviewTemplate = invoicePreviewTemplate;
+        this.settingsService = settingsService;
     }
 
     public void setInvoicesToSend(List<Invoice> invoicesToSend, DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails,
@@ -78,9 +90,21 @@ public abstract class SendInvoicesView extends View {
             }
             addComponents();
             addListeners();
+            loadLastOpenedTemplateFile();
         } catch (Exception e) {
             MessageDialog.showErrorMessage(this, e, "gen.internalError");
             close();
+        }
+    }
+
+    private void loadLastOpenedTemplateFile() {
+        try {
+            String templateFile = settingsService.findValueForSetting(document, TEMPLATE_FILE_KEY);
+            if (templateFile != null) {
+                templateFileModel.setFile(new File(templateFile), null);
+            }
+        } catch (ServiceException e) {
+            LOGGER.warn("Ignored exception while getting setting " + e.getMessage(), e);
         }
     }
 
@@ -91,6 +115,11 @@ public abstract class SendInvoicesView extends View {
 
     private void onFileSelectionChanged() {
         if (templateFileModel.getFile() != null && templateFileModel.getFile().isFile()) {
+            try {
+                settingsService.save(document, TEMPLATE_FILE_KEY, templateFileModel.getFile().getAbsolutePath());
+            } catch (ServiceException e) {
+                LOGGER.warn("Ignored exception while saving setting " + TEMPLATE_FILE_KEY, e);
+            }
             saveAction.setEnabled(true);
             SwingUtilities.invokeLater(() -> {
                 try {

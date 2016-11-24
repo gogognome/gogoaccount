@@ -5,6 +5,7 @@ import nl.gogognome.gogoaccount.component.email.EmailService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
 
@@ -16,8 +17,9 @@ public class EmailInvoicesView extends SendInvoicesView {
     private final EmailService emailService;
     private final InvoiceService invoiceService;
 
-    public EmailInvoicesView(Document document, EmailService emailService, InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
-        super(invoicePreviewTemplate);
+    public EmailInvoicesView(Document document, EmailService emailService, InvoiceService invoiceService,
+                             InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
+        super(document, invoicePreviewTemplate, settingsService);
         this.document = document;
         this.emailService = emailService;
         this.invoiceService = invoiceService;

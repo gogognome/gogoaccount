@@ -3,6 +3,7 @@ package nl.gogognome.gogoaccount.gui.invoice;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import org.xhtmlrenderer.simple.XHTMLPanel;
 import org.xhtmlrenderer.simple.XHTMLPrintable;
@@ -20,8 +21,9 @@ public class PrintInvoicesView extends SendInvoicesView {
     private final Document document;
     private final InvoiceService invoiceService;
 
-    public PrintInvoicesView(Document document, InvoiceService invoiceService, InvoicePreviewTemplate invoicePreviewTemplate) {
-        super(invoicePreviewTemplate);
+    public PrintInvoicesView(Document document, InvoiceService invoiceService,
+                             InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
+        super(document, invoicePreviewTemplate, settingsService);
         this.document = document;
         this.invoiceService = invoiceService;
     }
