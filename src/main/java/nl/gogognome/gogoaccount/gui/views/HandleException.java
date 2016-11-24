@@ -7,7 +7,7 @@ import java.awt.*;
 public class HandleException {
 
     public static void for_(Component parentComponent, RunnableWithException runnable) {
-        for_(parentComponent, "gen.internalError", runnable);
+        for_(parentComponent, "gen.problemOccurred", runnable);
     }
 
     public static void for_(Component parentComponent, String messageId, RunnableWithException runnable) {

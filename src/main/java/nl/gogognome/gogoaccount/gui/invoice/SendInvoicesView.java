@@ -1,12 +1,17 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
-import nl.gogognome.gogoaccount.component.invoice.*;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceDetail;
+import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
+import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.party.Party;
+import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.action.Actions;
 import nl.gogognome.lib.swing.models.BooleanModel;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
@@ -18,12 +23,16 @@ import org.xhtmlrenderer.simple.xhtml.XhtmlNamespaceHandler;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 
-import static java.awt.BorderLayout.*;
+import static java.awt.BorderLayout.CENTER;
+import static java.awt.BorderLayout.NORTH;
 
 public abstract class SendInvoicesView extends View {
 
@@ -39,9 +48,10 @@ public abstract class SendInvoicesView extends View {
     protected DefaultValueMap<String, List<Payment>> invoiceIdToPayments;
     protected Map<String, Party> invoiceIdToParty;
 
-    private JPanel templatePanel;
+    private JPanel editTemplatePanel;
     private JPanel previewPanel;
     private JPanel twoColumns;
+    private Action saveAction;
 
     public SendInvoicesView(InvoicePreviewTemplate invoicePreviewTemplate) {
         this.invoicePreviewTemplate = invoicePreviewTemplate;
@@ -81,6 +91,7 @@ public abstract class SendInvoicesView extends View {
 
     private void onFileSelectionChanged() {
         if (templateFileModel.getFile() != null && templateFileModel.getFile().isFile()) {
+            saveAction.setEnabled(true);
             SwingUtilities.invokeLater(() -> {
                 try {
                     String fileContents = new String(Files.readAllBytes(templateFileModel.getFile().toPath()), Charset.forName("UTF-8"));
@@ -90,6 +101,8 @@ public abstract class SendInvoicesView extends View {
                     MessageDialog.showErrorMessage(this, e, "SendInvoicesView.templateFileSyntaxError");
                 }
             });
+        } else {
+            saveAction.setEnabled(false);
         }
     }
 
@@ -103,7 +116,7 @@ public abstract class SendInvoicesView extends View {
         add(createSettingsPanel(), NORTH);
 
         twoColumns = new JPanel(new GridLayout());
-        templatePanel = createTemplatePanel();
+        editTemplatePanel = createEditTemplatePanel();
         previewPanel = createPreviewPanel();
         updateTemplateAndPreview();
         add(twoColumns, CENTER);
@@ -112,7 +125,7 @@ public abstract class SendInvoicesView extends View {
     private void updateTemplateAndPreview() {
         twoColumns.removeAll();
         if (editTemplateModel.getBoolean()) {
-            twoColumns.add(templatePanel);
+            twoColumns.add(editTemplatePanel);
         }
         twoColumns.add(previewPanel);
     }
@@ -126,7 +139,7 @@ public abstract class SendInvoicesView extends View {
         return ifc;
     }
 
-    private JPanel createTemplatePanel() {
+    private JPanel createEditTemplatePanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(widgetFactory.createTitleBorderWithPadding("SendInvoicesView.template"));
 
@@ -136,6 +149,10 @@ public abstract class SendInvoicesView extends View {
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonPanel.add(widgetFactory.createButton("SendInvoicesView.updatePreview", this::onUpdatePreview));
+        saveAction = Actions.build(this, this::onSave);
+        saveAction.setEnabled(false);
+        buttonPanel.add(widgetFactory.createButton("SendInvoicesView.save", saveAction));
+        buttonPanel.add(widgetFactory.createButton("SendInvoicesView.saveAs", this::onSaveAs));
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         panel.setMinimumSize(getPanelSize());
@@ -164,13 +181,11 @@ public abstract class SendInvoicesView extends View {
     protected abstract String getButtonResourceId();
 
     private void onSend() {
-        try {
+        HandleException.for_(this, () -> {
             if (send()) {
                 close();
             }
-        } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, e, "gen.internalError");
-        }
+        });
     }
 
     protected abstract boolean send() throws Exception;
@@ -179,6 +194,25 @@ public abstract class SendInvoicesView extends View {
         updatePreview(templateModel.getString(), 0, xhtmlPanel);
     }
 
+    private void onSave() {
+        HandleException.for_(this, () -> save(templateFileModel.getFile()));
+    }
+
+    private void onSaveAs() {
+        HandleException.for_(this, () -> {
+            JFileChooser fileChooser = new JFileChooser(templateFileModel.getFile());
+            fileChooser.setDialogType(JFileChooser.FILES_ONLY);
+            int choice = fileChooser.showSaveDialog(this);
+            if (choice == JFileChooser.APPROVE_OPTION) {
+                save(fileChooser.getSelectedFile());
+                templateFileModel.setFile(fileChooser.getSelectedFile(), null);
+            }
+        });
+    }
+
+    private void save(File file) throws IOException {
+        Files.write(file.toPath(), templateModel.getString().getBytes(Charset.forName("UTF-8")), StandardOpenOption.CREATE);
+    }
 
     protected void updatePreview(String fileContents, int invoiceIndex, XHTMLPanel xhtmlPanel) {
         Invoice invoice = invoicesToSend.get(invoiceIndex);

@@ -207,7 +207,7 @@ public class EditJournalsView extends View {
                 updateJournalItemTable(row);
             }
         } catch (ServiceException e) {
-            logger.warn("Ignored exception: " + e.getMessage(), e);
+            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
         }
     }
 
