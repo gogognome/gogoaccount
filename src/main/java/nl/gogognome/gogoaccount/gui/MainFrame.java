@@ -8,6 +8,7 @@ import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.gui.configuration.EmailConfigurationView;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
+import nl.gogognome.gogoaccount.gui.invoice.GenerateAutomaticCollectionFileView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
@@ -381,9 +382,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         document = newDocument;
         if (document != null) {
             document.addListener(this);
+            document.setLocale(Locale.getDefault());
         }
 
-        document.setLocale(Locale.getDefault());
         documentRegistry.register(document);
 
         documentChanged(document);
@@ -485,7 +486,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 viewDialog.showDialog();
             } catch (Exception e) {
                 MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
-                return;
             }
         });
     }
