@@ -8,7 +8,6 @@ import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.gui.configuration.EmailConfigurationView;
 import nl.gogognome.gogoaccount.gui.controllers.GenerateReportController;
-import nl.gogognome.gogoaccount.gui.invoice.GenerateAutomaticCollectionFileView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoiceGeneratorView;
 import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
@@ -158,7 +157,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         // the reporting menu
         JMenuItem miGenerateInvoices = widgetFactory.createMenuItem("mi.generateInvoices", e -> handleGenerateInvoices());
         JMenuItem miGenerateReport = widgetFactory.createMenuItem("mi.generateReport", e -> handleGenerateReport());
-        JMenuItem miGenerateAutoCollectionFile = widgetFactory.createMenuItem("mi.generateAutoCollectionFile", e -> handleGenerateAutomaticCollectionFile());
 
         // the help menu
         JMenuItem miAbout = widgetFactory.createMenuItem("mi.about", this);
@@ -184,9 +182,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
         reportingMenu.add(miGenerateInvoices);
         reportingMenu.add(miGenerateReport);
-        reportingMenu.add(miGenerateAutoCollectionFile);
-        // TODO: Improve printing of address labels before enabling this menu item
-//		reportingMenu.add(miPrintAddressLabels);
 
         helpMenu.add(miAbout);
 
@@ -436,16 +431,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         ensureAccountsPresent(() -> {
             generateReportController.setViewOwner(new JFrameViewOwner(this));
             generateReportController.execute();
-        });
-    }
-
-    private void handleGenerateAutomaticCollectionFile() {
-        ensureAccountsPresent(() -> {
-            if (!configurationService.getBookkeeping(document).isEnableAutomaticCollection()) {
-                MessageDialog.showInfoMessage(this, "generateAutomaticCollectionFileView.automaticCollectionIsDisabled");
-            } else {
-                ensureAccountsPresent(() -> openView(GenerateAutomaticCollectionFileView.class));
-            }
         });
     }
 

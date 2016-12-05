@@ -313,7 +313,7 @@ public class InvoiceService {
                         }
                     });
 
-            Map<String, Party> partyIdToParty = new PartyService().findAllParties(document)
+            Map<String, Party> partyIdToParty = partyService.findAllParties(document)
                     .stream()
                     .collect(toMap(Party::getId, party -> party));
             return invoices.stream()

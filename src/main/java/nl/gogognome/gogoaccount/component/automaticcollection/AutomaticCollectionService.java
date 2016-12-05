@@ -68,6 +68,10 @@ public class AutomaticCollectionService {
         });
     }
 
+    public List<PartyAutomaticCollectionSettings> findSettingsForAllParties(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new PartyAutomaticCollectionSettingsDAO(document).findAll());
+    }
+
     public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate, TaskProgressListener progressListener)
             throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
@@ -80,7 +84,7 @@ public class AutomaticCollectionService {
 
             // Get data needed for generating the SEPA file
             AutomaticCollectionSettings settings = getSettings(document);
-            List<String> partyIds = invoices.stream().map(i -> i.getConcerningPartyId()).collect(toList());
+            List<String> partyIds = invoices.stream().map(Invoice::getConcerningPartyId).collect(toList());
             Map<String, Party> idToParty = partyService.getIdToParty(document, partyIds);
             Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings =
                     new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds);

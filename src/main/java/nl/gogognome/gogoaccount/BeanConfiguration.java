@@ -227,9 +227,8 @@ public class BeanConfiguration {
     @Scope("prototype")
     public GenerateAutomaticCollectionFileView generateAutomaticCollectionFileView(DocumentWrapper documentWrapper,
                                                                                    AutomaticCollectionService automaticCollectionService,
-                                                                                   ConfigurationService configurationService,
-                                                                                   ViewFactory viewFactory) {
-        return new GenerateAutomaticCollectionFileView(documentWrapper.document, automaticCollectionService, configurationService, viewFactory);
+                                                                                   ConfigurationService configurationService) {
+        return new GenerateAutomaticCollectionFileView(documentWrapper.document, automaticCollectionService, configurationService);
     }
 
     @Bean
@@ -240,9 +239,11 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, InvoiceService invoiceService,
-                                     PartyService partyService, EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
-        return new InvoicesView(documentWrapper.document, amountFormat, invoiceService, partyService, editInvoiceController, viewFactory);
+    public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, AutomaticCollectionService automaticCollectionService,
+                                     ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService,
+                                     EditInvoiceController editInvoiceController,
+                                     ViewFactory viewFactory) {
+        return new InvoicesView(documentWrapper.document, amountFormat, automaticCollectionService, configurationService, invoiceService, partyService, editInvoiceController, viewFactory);
     }
 
     @Bean

@@ -6,10 +6,8 @@ import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
-import nl.gogognome.gogoaccount.gui.views.InvoiceEditAndSelectionView;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
@@ -18,7 +16,6 @@ import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.task.Task;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
@@ -26,7 +23,6 @@ import nl.gogognome.lib.util.DateUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
@@ -36,8 +32,8 @@ public class GenerateAutomaticCollectionFileView extends View {
     private final Document document;
     private final AutomaticCollectionService automaticCollectionService;
     private final ConfigurationService configurationService;
-    private final ViewFactory viewFactory;
 
+    private List<Invoice> selectedInvoices;
     private FileModel sepaFileModel = new FileModel();
     private DateModel collectionDateModel = new DateModel(new Date());
     private StringModel journalEntryIdModel = new StringModel();
@@ -46,11 +42,10 @@ public class GenerateAutomaticCollectionFileView extends View {
     private nl.gogognome.lib.swing.models.ListModel<Account> debtorAccountListModel = new nl.gogognome.lib.swing.models.ListModel<>();
 
     public GenerateAutomaticCollectionFileView(Document document, AutomaticCollectionService automaticCollectionService,
-                                               ConfigurationService configurationService, ViewFactory viewFactory) {
+                                               ConfigurationService configurationService) {
         this.document = document;
         this.automaticCollectionService = automaticCollectionService;
         this.configurationService = configurationService;
-        this.viewFactory = viewFactory;
     }
 
     @Override
@@ -81,14 +76,12 @@ public class GenerateAutomaticCollectionFileView extends View {
             vep.addComboBoxField("generateAutomaticCollectionFileView.debtorAccount", debtorAccountListModel, new AccountFormatter());
             collectionDateModel.setDate(DateUtil.addDays(new Date(), 1), null);
 
-            // Create button panel
             ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
-            buttonPanel.addButton("generateAutomaticCollectionFileView.generate", new GenerateAction());
+            buttonPanel.addButton("generateAutomaticCollectionFileView.generate", this::onGenerateFile);
 
-            // Add panels to view
             setLayout(new BorderLayout());
             add(widgetFactory.createLabel("generateAutomaticCollectionFileView.helpText.html"), BorderLayout.NORTH);
-            add(vep, BorderLayout.CENTER);
+            add(vep, BorderLayout.NORTH);
             add(buttonPanel, BorderLayout.SOUTH);
 
             setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("generateAutomaticCollectionFileView.title"));
@@ -98,51 +91,50 @@ public class GenerateAutomaticCollectionFileView extends View {
         }
     }
 
-    private void generateFile() {
+    private void onGenerateFile() {
         HandleException.for_(this, () -> {
-            Date date = collectionDateModel.getDate();
-            if (date == null) {
-                MessageDialog.showErrorMessage(this, "gen.invalidDate");
+            boolean valid = validateInput();
+            if (!valid) {
                 return;
             }
 
-            if (sepaFileModel.getFile() == null) {
-                MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noSepaFileNameSpecified");
-                return;
-            }
+            SepaFileGeneratorTask task = new SepaFileGeneratorTask(document, automaticCollectionService, sepaFileModel.getFile(),
+                    collectionDateModel.getDate(), selectedInvoices, journalEntryDescriptionModel.getString(),
+                    journalEntryIdModel.getString(), bankAccountListModel.getSelectedItem(), debtorAccountListModel.getSelectedItem());
 
-            if (bankAccountListModel.getSelectedItem() == null) {
-                MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noBankAccountSelected");
-                return;
-            }
-
-            if (debtorAccountListModel.getSelectedItem() == null) {
-                MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noDebtorAccountSelected");
-                return;
-            }
-
-            // Let the user select the invoices that should be added to the SEPA file.
-            InvoiceEditAndSelectionView invoicesView = (InvoiceEditAndSelectionView) viewFactory.createView(InvoiceEditAndSelectionView.class);
-            invoicesView.enableMultiSelect();
-            ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), invoicesView);
-            dialog.showDialog();
-            if (invoicesView.getSelectedInvoices() != null) {
-                SepaFileGeneratorTask task = new SepaFileGeneratorTask(document, automaticCollectionService, sepaFileModel.getFile(),
-                        collectionDateModel.getDate(), invoicesView.getSelectedInvoices(), journalEntryDescriptionModel.getString(),
-                        journalEntryIdModel.getString(), bankAccountListModel.getSelectedItem(), debtorAccountListModel.getSelectedItem());
-
-                TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
-                        textResource.getString("generateAutomaticCollectionFileView.progressDialogTitle"));
-                progressDialog.execute(task);
-            }
+            TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
+                    textResource.getString("generateAutomaticCollectionFileView.progressDialogTitle"));
+            progressDialog.execute(task);
         });
     }
 
-    private final class GenerateAction extends AbstractAction {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            generateFile();
+    private boolean validateInput() {
+        boolean valid = true;
+        Date date = collectionDateModel.getDate();
+        if (date == null) {
+            MessageDialog.showErrorMessage(this, "gen.invalidDate");
+            valid = false;
         }
+
+        if (sepaFileModel.getFile() == null) {
+            MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noSepaFileNameSpecified");
+            valid = false;
+        }
+
+        if (bankAccountListModel.getSelectedItem() == null) {
+            MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noBankAccountSelected");
+            valid = false;
+        }
+
+        if (debtorAccountListModel.getSelectedItem() == null) {
+            MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noDebtorAccountSelected");
+            valid = false;
+        }
+        return valid;
+    }
+
+    public void setSelectedInvoices(List<Invoice> selectedInvoices) {
+        this.selectedInvoices = selectedInvoices;
     }
 
     private static class SepaFileGeneratorTask implements Task {

@@ -1,5 +1,8 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
+import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
+import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
 import nl.gogognome.gogoaccount.component.invoice.*;
@@ -42,6 +45,8 @@ public class InvoicesView extends View {
     private final Document document;
     private final AmountFormat amountFormat;
 
+    private final AutomaticCollectionService automaticCollectionService;
+    private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
     private final EditInvoiceController editInvoiceController;
@@ -53,6 +58,8 @@ public class InvoicesView extends View {
     private ActionWrapper emailSelectedInvoicesAction = widgetFactory.createActionWrapper("EmailInvoicesView.sendEmail", this::onEmail);
     private ActionWrapper exportPdfsSelectedInvoicesAction = widgetFactory.createActionWrapper("ExportPdfsInvoicesView.exportPdf", this::onExportPdfs);
     private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("gen.print", this::onPrint);
+    private ActionWrapper generateAutomaticCollectionFileAction = widgetFactory.createActionWrapper("InvoicesView.generateAutomaticCollectionFile", this::onGenerateAutomaticCollectionFile);
+
     private DocumentListener documentListener;
 
     private JTable table;
@@ -60,10 +67,12 @@ public class InvoicesView extends View {
     private JButton btSearch;
     private CloseableJPanel invoiceDetailsPanel;
 
-    public InvoicesView(Document document, AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService,
+    public InvoicesView(Document document, AmountFormat amountFormat, AutomaticCollectionService automaticCollectionService, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService,
                         EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
         this.document = document;
         this.amountFormat = amountFormat;
+        this.automaticCollectionService = automaticCollectionService;
+        this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.partyService = partyService;
         this.editInvoiceController = editInvoiceController;
@@ -77,9 +86,14 @@ public class InvoicesView extends View {
 
     @Override
     public void onInit() {
-        addComponents();
-        onSearch();
-        addListeners();
+        try {
+            addComponents();
+            onSearch();
+            addListeners();
+        } catch (Exception e) {
+            MessageDialog.showErrorMessage(this, e, "gen.internalError");
+            close();
+        }
     }
 
     @Override
@@ -96,7 +110,7 @@ public class InvoicesView extends View {
         document.removeListener(documentListener);
     }
 
-    private void addComponents() {
+    private void addComponents() throws ServiceException {
         setLayout(new BorderLayout());
         add(createSearchCriteriaPanel(), BorderLayout.NORTH);
         add(createSearchResultPanel(), BorderLayout.CENTER);
@@ -121,7 +135,7 @@ public class InvoicesView extends View {
         return ifc;
     }
 
-    private JPanel createSearchResultPanel() {
+    private JPanel createSearchResultPanel() throws ServiceException {
         JPanel resultPanel = new JPanel(new BorderLayout());
         resultPanel.setBorder(new CompoundBorder(new TitledBorder(textResource.getString("invoicesView.foundInvoices")),
                 new EmptyBorder(5, 12, 5, 12)));
@@ -141,6 +155,14 @@ public class InvoicesView extends View {
         buttonPanel.addButton(emailSelectedInvoicesAction);
         buttonPanel.addButton(exportPdfsSelectedInvoicesAction);
         buttonPanel.addButton(printSelectedInvoicesAction);
+
+        try {
+            if (configurationService.getBookkeeping(document).isEnableAutomaticCollection()) {
+                buttonPanel.addButton(generateAutomaticCollectionFileAction);
+            }
+        } catch (ServiceException e) {
+            MessageDialog.showErrorMessage(this, e, "gen.internalError");
+        }
         return buttonPanel;
     }
 
@@ -191,6 +213,7 @@ public class InvoicesView extends View {
         emailSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         exportPdfsSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         printSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
+        generateAutomaticCollectionFileAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         boolean exactlyOneInvoiceSelected = Tables.getSelectedRowsConvertedToModel(table).length == 1;
         editSelectedInvoiceAction.setEnabled(exactlyOneInvoiceSelected);
         hideDetailsResultPanel();
@@ -213,37 +236,58 @@ public class InvoicesView extends View {
         }
     }
 
-    private ListTableModel<InvoiceOverview> buildInvoiceOverviewTableModel() {
-        return new ListTableModel<>(asList(
+    private ListTableModel<InvoiceOverview> buildInvoiceOverviewTableModel() throws ServiceException {
+        boolean automaticCollectionEnabled = configurationService.getBookkeeping(document).isEnableAutomaticCollection();
+        Map<String, PartyAutomaticCollectionSettings> partyIdToPartyAutomaticCollectionsSettings = !automaticCollectionEnabled ? null :
+            automaticCollectionService.findSettingsForAllParties(document).stream()
+                    .collect(toMap(PartyAutomaticCollectionSettings::getPartyId, settings -> settings));
+
+        List<ColumnDefinition<InvoiceOverview>> columnDefinitions = new ArrayList<>();
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.id", String.class, 40)
-                        .add(Invoice::getId)
-                        .build(),
+                        .add(Invoice::getId).build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.description", String.class, 200)
                         .add(Invoice::getDescription)
-                        .build(),
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.issueDate", Date.class, 80)
                         .add(Invoice::getIssueDate)
-                        .build(),
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.party", String.class, 200)
                         .add(row -> row.getPayingPartyId() + " - " + row.getPayingPartyName())
-                        .build(),
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.emailAddress", String.class, 100)
                         .add(InvoiceOverview::getPayingPartyEmailAddress)
-                        .build(),
+                        .build());
+        if (automaticCollectionEnabled) {
+            columnDefinitions.add(
+                    ColumnDefinition.<InvoiceOverview>builder("gen.Iban", String.class, 100)
+                            .add(invoice -> partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPayingPartyId()) != null ?
+                                    partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPayingPartyId()).getIban() : null)
+                            .build());
+        }
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountToBePaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
                         .add(InvoiceOverview::getAmountToBePaid)
-                        .build(),
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountPaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
                         .add(InvoiceOverview::getAmountPaid)
-                        .build(),
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("InvoicesView.lastSendingDate", Date.class, 80)
                         .add(invoiceOverview -> invoiceOverview.getLastSending() != null ? invoiceOverview.getLastSending().getDate() : null)
-                        .build(),
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("InvoicesView.lastSendingType", String.class, 80)
                         .add(invoiceOverview -> invoiceOverview.getLastSending() != null ? textResource.getString(invoiceOverview.getLastSending().getType()) : null)
-                        .build()));
+                        .build());
+        return  new ListTableModel<>(columnDefinitions);
     }
 
     private void onEditSelectedInvoice() {
@@ -274,8 +318,18 @@ public class InvoicesView extends View {
             DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails = invoiceService.getIdToInvoiceDetails(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
             DefaultValueMap<String, List<Payment>> invoiceIdToPayments = invoiceService.getIdToPayments(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
             sendInvoicesView.setInvoicesToSend(selectedInvoices, invoiceIdToDetails, invoiceIdToPayments, invoiceIdToParty);
-            Dimension viewOwnerSize = getViewOwner().getWindow().getSize();
             new ViewDialog(getViewOwner().getWindow(), sendInvoicesView).showDialog();
+        } catch (Exception e) {
+            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+        }
+    }
+
+    private void onGenerateAutomaticCollectionFile() {
+        try {
+            GenerateAutomaticCollectionFileView view = (GenerateAutomaticCollectionFileView) viewFactory.createView(GenerateAutomaticCollectionFileView.class);
+            List<Invoice> selectedInvoices = getSelectedInvoices();
+            view.setSelectedInvoices(selectedInvoices);
+            new ViewDialog(getViewOwner().getWindow(), view).showDialog();
         } catch (Exception e) {
             MessageDialog.showErrorMessage(this, "gen.internalError", e);
         }
