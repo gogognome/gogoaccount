@@ -68,9 +68,9 @@ public class EmailConfigurationView extends View {
         addCloseable(ifc);
         ifc.addField("EmailConfigurationView.senderEmailAddress", senderEmailAddressModel);
         ifc.addField("EmailConfigurationView.smtpHost", smtpHostModel);
-        ifc.addField("EmailConfigurationView.smtpHost", smtpPortModel);
+        ifc.addField("EmailConfigurationView.smtpPortNumber", smtpPortModel);
         ifc.addField("EmailConfigurationView.smtpUsername", smtpUsernameModel);
-        ifc.addField("EmailConfigurationView.smtpPassword", smtpPasswordModel);
+        ifc.addPasswordField("EmailConfigurationView.smtpPassword", smtpPasswordModel, 20);
         add(ifc, BorderLayout.CENTER);
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.CENTER);
