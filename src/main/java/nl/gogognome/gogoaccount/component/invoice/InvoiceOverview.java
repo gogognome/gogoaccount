@@ -38,6 +38,10 @@ public class InvoiceOverview extends Invoice {
         this.payingPartyName = payingPartyName;
     }
 
+    public boolean isSalesInvoice() {
+        return !amountToBePaid.isNegative();
+    }
+
     public String getPayingPartyEmailAddress() {
         return payingPartyEmailAddress;
     }

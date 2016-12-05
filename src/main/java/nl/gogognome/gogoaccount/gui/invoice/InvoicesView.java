@@ -175,25 +175,48 @@ public class InvoicesView extends View {
         ifc.addReadonlyField("gen.description", new StringModel(selectedInvoice.getDescription()));
         ifc.addReadonlyField("gen.issueDate", new StringModel(textResource.formatDate("gen.dateFormat", selectedInvoice.getIssueDate())));
         ifc.addReadonlyField("gen.party", new StringModel(selectedInvoice.getPayingPartyId() + " - " + selectedInvoice.getPayingPartyName()));
-        ifc.addReadonlyField("gen.amountToBePaid", new StringModel(amountFormat.formatAmountWithoutCurrency(selectedInvoice.getAmountToBePaid().toBigInteger())));
+
+        Amount amountToBePaidOrReceived;
+        Amount amountPaidOrReceived;
+        Amount saldo;
+        String amountToBePaidOrReceivedId;
+        String amountPaidOrReceivedId;
+        if (selectedInvoice.getAmountToBePaid().isNegative()) {
+            amountToBePaidOrReceived = selectedInvoice.getAmountToBePaid().negate();
+            amountPaidOrReceived = selectedInvoice.getAmountPaid().negate();
+            saldo = amountToBePaidOrReceived.subtract(amountPaidOrReceived);
+            amountToBePaidOrReceivedId = "gen.amountToBePaid";
+            amountPaidOrReceivedId = "gen.amountPaid";
+        } else {
+            amountToBePaidOrReceived = selectedInvoice.getAmountToBePaid();
+            amountPaidOrReceived = selectedInvoice.getAmountPaid();
+            saldo = amountToBePaidOrReceived.subtract(amountPaidOrReceived);
+            amountToBePaidOrReceivedId = "gen.amountToBeReceived";
+            amountPaidOrReceivedId = "gen.amountReceived";
+        }
+
+        ifc.addReadonlyField(amountToBePaidOrReceivedId, new StringModel(amountFormat.formatAmountWithoutCurrency(amountToBePaidOrReceived.toBigInteger())));
+        ifc.addReadonlyField(amountPaidOrReceivedId, new StringModel(amountFormat.formatAmountWithoutCurrency(amountPaidOrReceived.toBigInteger())));
+        ifc.addReadonlyField("gen.saldo", new StringModel(amountFormat.formatAmountWithoutCurrency(saldo.toBigInteger())));
+
         invoiceDetailsPanel.add(ifc, SwingUtils.createGBConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
 
         try {
-            JTable detailsTable = Tables.createSortedTable(buildDetailTableModel(invoiceService.findDetails(document, selectedInvoice)));
+            JTable detailsTable = Tables.createSortedTable(buildDetailTableModel(selectedInvoice, invoiceService.findDetails(document, selectedInvoice)));
             JPanel detailsWithHeaderTable = Tables.createNonScrollableTablePanel(detailsTable);
             detailsWithHeaderTable.setBorder(widgetFactory.createTitleBorder("invoicesView.invoiceLines"));
             invoiceDetailsPanel.add(detailsWithHeaderTable,
-                    SwingUtils.createGBConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, 10, 0, 0, 0));
+                    SwingUtils.createGBConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 10, 0, 0, 0));
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, "gen.internalError", e);
         }
 
         try {
-            JTable paymentsTable = Tables.createSortedTable(buildPaymentsTableModel(invoiceService.findPayments(document, selectedInvoice)));
+            JTable paymentsTable = Tables.createSortedTable(buildPaymentsTableModel(selectedInvoice, invoiceService.findPayments(document, selectedInvoice)));
             JPanel detailsWithHeaderTable = Tables.createNonScrollableTablePanel(paymentsTable);
             detailsWithHeaderTable.setBorder(widgetFactory.createTitleBorder("invoicesView.payments"));
             invoiceDetailsPanel.add(detailsWithHeaderTable,
-                    SwingUtils.createGBConstraints(0, 2, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, 10, 0, 0, 0));
+                    SwingUtils.createGBConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 10, 0, 0, 0));
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(this, "gen.internalError", e);
         }
@@ -270,14 +293,24 @@ public class InvoicesView extends View {
                             .build());
         }
         columnDefinitions.add(
+                ColumnDefinition.<InvoiceOverview>builder("gen.amountToBeReceived", Amount.class, 100)
+                        .add(new AmountCellRenderer(amountFormat))
+                        .add((invoiceOverview) -> invoiceOverview.isSalesInvoice() ? invoiceOverview.getAmountToBePaid() : null)
+                        .build());
+        columnDefinitions.add(
+                ColumnDefinition.<InvoiceOverview>builder("gen.amountReceived", Amount.class, 100)
+                        .add(new AmountCellRenderer(amountFormat))
+                        .add((invoiceOverview) -> invoiceOverview.isSalesInvoice() ? invoiceOverview.getAmountPaid() : null)
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountToBePaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
-                        .add(InvoiceOverview::getAmountToBePaid)
+                        .add((invoiceOverview) -> !invoiceOverview.isSalesInvoice() ? invoiceOverview.getAmountToBePaid().negate() : null)
                         .build());
         columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountPaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
-                        .add(InvoiceOverview::getAmountPaid)
+                        .add((invoiceOverview) -> !invoiceOverview.isSalesInvoice() ? invoiceOverview.getAmountPaid().negate() : null)
                         .build());
         columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("InvoicesView.lastSendingDate", Date.class, 80)
@@ -343,28 +376,34 @@ public class InvoicesView extends View {
         return selectedInvoices;
     }
 
-    private ListTableModel<InvoiceDetail> buildDetailTableModel(List<InvoiceDetail> details) {
+    private ListTableModel<InvoiceDetail> buildDetailTableModel(InvoiceOverview invoice, List<InvoiceDetail> details) {
         ListTableModel<InvoiceDetail> tableModel = new ListTableModel<>(asList(
+                ColumnDefinition.<InvoiceDetail>builder("gen.date", Date.class, 200)
+                        .add(invoiceDetail -> invoice.getIssueDate())
+                        .build(),
                 ColumnDefinition.<InvoiceDetail>builder("gen.description", String.class, 200)
                         .add(InvoiceDetail::getDescription)
                         .build(),
                 ColumnDefinition.<InvoiceDetail>builder("gen.amountToBePaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
-                        .add(InvoiceDetail::getAmount)
+                        .add(invoiceDetail -> invoice.isSalesInvoice() ? invoiceDetail.getAmount() : invoiceDetail.getAmount().negate())
                         .build()
         ));
         tableModel.setRows(details);
         return tableModel;
     }
 
-    private ListTableModel<Payment> buildPaymentsTableModel(List<Payment> payments) {
+    private ListTableModel<Payment> buildPaymentsTableModel(InvoiceOverview invoice, List<Payment> payments) {
         ListTableModel<Payment> tableModel = new ListTableModel<>(asList(
+                ColumnDefinition.<Payment>builder("gen.date", Date.class, 200)
+                        .add(Payment::getDate)
+                        .build(),
                 ColumnDefinition.<Payment>builder("gen.description", String.class, 200)
                         .add(Payment::getDescription)
                         .build(),
                 ColumnDefinition.<Payment>builder("gen.amountPaid", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
-                        .add(Payment::getAmount)
+                        .add(payment -> invoice.isSalesInvoice() ? payment.getAmount() : payment.getAmount().negate())
                         .build()
         ));
         tableModel.setRows(payments);

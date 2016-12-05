@@ -57,7 +57,7 @@ public class EditJournalController {
                 if (journalEntry.createsInvoice()) {
                     updateInvoiceCreatedByJournal();
                 }
-                ledgerService.updateJournal(document, updatedJournalEntry, view.getEditedJournalEntryDetails());
+                ledgerService.updateJournalEntry(document, updatedJournalEntry, view.getEditedJournalEntryDetails());
             }
 		});
     }
