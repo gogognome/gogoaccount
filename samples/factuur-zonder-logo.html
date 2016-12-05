@@ -1,0 +1,91 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
+    <title>Factuur ${invoice.id}: ${invoice.description}</title>
+    <style>
+      table.tableWithBorder {
+        border-collapse: collapse;
+      }
+
+      table.tableWithBorder th, table.tableWithBorder td {
+        border: 1px solid #808080;
+      }	
+
+      table.quarterBlock {
+        width: 100%;
+        border: none;
+      }
+
+      table.quarterBlock th, table.quarterBlock tr {
+        border: none;
+      }
+		
+      table.quarterBlock th {
+	    text-align: left;
+        font-weight: normal; 
+        font-size: 9px;
+      }
+    </style>
+</head>
+
+<body>
+
+<div class="content" style="font-size: 11px;">
+<div style="border-bottom: 1px solid; width: 100%;">Zet 'm op</div>
+<table style="width: 100%; table-layout: fixed; border-collapse: collapse" cellspacing="0">
+  <tr>
+    <td style="width: 100px;"></td>
+    <td style="width: 100%;">&#160;</td>
+    <td style="width: 200px;">
+	<div style="width: 200px;  font-size: 9px;">
+Penningmeester<br/>
+Naam penningmeester<br/>
+Adres penningmeester<br/>
+Postcode en woonplaats<br/>
+telefoon: telefoonnummer<br/>
+mobiel: mobiel nummer<br/>
+email: emailadres
+</div>
+    </td>
+  </tr>
+</table>
+
+
+<table style="width: 100%; table-layout: fixed; border-collapse: collapse" cellspacing="0">
+  <tr>
+    <td style="width: 55%;">&#160;</td>
+    <td>
+${party.name}<br/>
+${party.address}<br/>
+${party.zipCode}  ${party.city}
+    </td>
+  </tr>
+</table>
+
+
+<div style="height: 50px;"></div>
+<table class="quarterBlock">
+<tr><th>Uw brief van</th><th>Uw referentie</th><th>Onze referentie</th><th>Datum</th></tr>
+<tr><td></td><td></td><td>${invoice.id}</td><td>${date}</td></tr>
+</table>
+
+<p>Beste ${party.name},</p>
+<p>Hierbij ontvang je een factuur betreffende: ${invoice.description}</p>
+
+<table class="tableWithBorder" style="width: 90%; margin-left: 5%;">
+  ${lineStart}
+    <tr><td>${line.date}</td><td>${line.description}</td><td style="text-align: right;">${line.amount}</td></tr>
+  ${lineEnd}
+    <tr><td></td><td><b>Totaal te voldoen</b></td><td style="text-align: right;"><b>${invoice.amount}</b></td></tr>
+</table>
+
+<p>Ik verzoek je de factuur te betalen voor ${invoice.dueDate} op bankrekening NLxxXXXX012345678
+onder vermelding van het factuurnummer ${invoice.id}.</p>
+
+<p>Met vriendelijke groeten,</p>
+
+<p>Naam penningmeester</p>
+</div>
+</body>
+</html>
