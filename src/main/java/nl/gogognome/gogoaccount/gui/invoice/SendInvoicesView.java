@@ -240,7 +240,7 @@ public abstract class SendInvoicesView extends View {
     }
 
     private void save(File file) throws IOException {
-        Files.write(file.toPath(), templateModel.getString().getBytes(Charset.forName("UTF-8")), StandardOpenOption.CREATE);
+        Files.write(file.toPath(), templateModel.getString().getBytes(Charset.forName("UTF-8")));
     }
 
     protected void updatePreview(String fileContents, int invoiceIndex, XHTMLPanel xhtmlPanel) {
