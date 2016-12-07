@@ -2,8 +2,6 @@ package nl.gogognome.gogoaccount.component.document;
 
 import nl.gogognome.dataaccess.transaction.CurrentTransaction;
 import nl.gogognome.dataaccess.transaction.Transaction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -11,8 +9,6 @@ import java.util.Locale;
 import java.util.UUID;
 
 public class Document {
-
-    private final static Logger logger = LoggerFactory.getLogger(Document.class);
 
     private final ArrayList<DocumentListener> listeners = new ArrayList<>();
     private final String bookkeepingId = UUID.randomUUID().toString();
@@ -37,7 +33,6 @@ public class Document {
 
     void notifyListeners()
     {
-        logger.debug("Notify listeners");
         for (DocumentListener l : listeners) {
             l.documentChanged(this);
         }
@@ -57,7 +52,6 @@ public class Document {
             }
         }
         if (documentAwareTransaction != null) {
-            logger.debug("Postponed notifying listeners until current transaction is closed");
             documentAwareTransaction.notifyListenersWhenTransactionCloses(this);
         } else {
             notifyListeners();
