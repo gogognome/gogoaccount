@@ -8,6 +8,7 @@ public class InvoiceOverview extends Invoice {
     private Amount amountPaid;
     private String payingPartyName;
     private String payingPartyEmailAddress;
+    private String payingPartyRemarks;
     private InvoiceSending lastSending;
 
     public InvoiceOverview(String id) {
@@ -48,6 +49,14 @@ public class InvoiceOverview extends Invoice {
 
     public void setPayingPartyEmailAddress(String payingPartyEmailAddress) {
         this.payingPartyEmailAddress = payingPartyEmailAddress;
+    }
+
+    public String getPayingPartyRemarks() {
+        return payingPartyRemarks;
+    }
+
+    public void setPayingPartyRemarks(String payingPartyRemarks) {
+        this.payingPartyRemarks = payingPartyRemarks;
     }
 
     public void setLastSending(InvoiceSending lastSending) {

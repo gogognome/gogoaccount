@@ -293,6 +293,11 @@ public class InvoicesView extends View {
                             .build());
         }
         columnDefinitions.add(
+                ColumnDefinition.<InvoiceOverview>builder("gen.remarks", String.class, 100)
+                        .add(InvoiceOverview::getPayingPartyRemarks)
+                        .add(new TooltipCellRenderer())
+                        .build());
+        columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.amountToBeReceived", Amount.class, 100)
                         .add(new AmountCellRenderer(amountFormat))
                         .add((invoiceOverview) -> invoiceOverview.isSalesInvoice() ? invoiceOverview.getAmountToBePaid() : null)

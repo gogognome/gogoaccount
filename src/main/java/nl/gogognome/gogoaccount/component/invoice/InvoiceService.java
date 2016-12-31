@@ -338,6 +338,7 @@ public class InvoiceService {
                 .reduce(new Amount(BigInteger.ZERO), (a, b) -> a.add(b)));
         overview.setPayingPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
         overview.setPayingPartyEmailAddress(partyIdToParty.get(invoice.getConcerningPartyId()).getEmailAddress());
+        overview.setPayingPartyRemarks(partyIdToParty.get(invoice.getConcerningPartyId()).getRemarks());
         overview.setLastSending(invoiceIdToLastInvoiceSending.get(invoice.getId()));
         return overview;
     }
