@@ -95,9 +95,9 @@ public class XMLFileReader {
 
             parseAndAddParties(rootElement.getElementsByTagName("parties"));
 
-            parseAndAddInvoices(rootElement.getElementsByTagName("invoices"), amountFormat);
+            parseAndAddInvoices(rootElement.getElementsByTagName("invoices"), amountFormat, bookkeeping.getCurrency());
 
-            parseAndAddJournals(highestPaymentId, rootElement, amountFormat);
+            parseAndAddJournals(highestPaymentId, rootElement, amountFormat, bookkeeping.getCurrency());
 
             parseAndAddImportedAccounts(rootElement.getElementsByTagName("importedaccounts"));
 
@@ -144,7 +144,7 @@ public class XMLFileReader {
         }
     }
 
-    private void parseAndAddJournals(int highestPaymentId, Element rootElement, AmountFormat amountFormat)
+    private void parseAndAddJournals(int highestPaymentId, Element rootElement, AmountFormat amountFormat, Currency currency)
             throws ParseException, DocumentModificationFailedException, ServiceException {
         NodeList journalsNodes = rootElement.getElementsByTagName("journals");
         for (int i=0; i<journalsNodes.getLength(); i++) {
@@ -169,7 +169,7 @@ public class XMLFileReader {
                     Element itemElem = (Element)itemNodes.item(k);
                     String accountId = itemElem.getAttribute("id");
                     String amountString = itemElem.getAttribute("amount");
-                    Amount amount = new Amount(amountFormat.parse(amountString));
+                    Amount amount = new Amount(amountFormat.parse(amountString, currency));
                     String side = itemElem.getAttribute("side");
                     String invoiceId = itemElem.getAttribute("invoice");
                     if (invoiceId.length() == 0) {
@@ -253,7 +253,7 @@ public class XMLFileReader {
         }
     }
 
-    private void parseAndAddInvoices(NodeList nodes, AmountFormat amountFormat) throws XMLParseException, ServiceException {
+    private void parseAndAddInvoices(NodeList nodes, AmountFormat amountFormat, Currency currency) throws XMLParseException, ServiceException {
         for (int i=0; i<nodes.getLength(); i++) {
             Element elem = (Element)nodes.item(i);
             NodeList invoiceNodes = elem.getElementsByTagName("invoice");
@@ -262,7 +262,7 @@ public class XMLFileReader {
                 String id = invoiceElem.getAttribute("id");
                 Amount amountToBePaid;
                 try {
-                    amountToBePaid = new Amount(amountFormat.parse(invoiceElem.getAttribute("amountToBePaid")));
+                    amountToBePaid = new Amount(amountFormat.parse(invoiceElem.getAttribute("amountToBePaid"), currency));
                 } catch (ParseException e) {
                     throw new XMLParseException("Invalid amount: " + invoiceElem.getAttribute("amountToBePaid"));
                 }
@@ -287,7 +287,7 @@ public class XMLFileReader {
                     String amountString = lineElem.getAttribute("amount");
                     if (amountString != null && amountString.length() > 0) {
                         try {
-                            amounts.add(new Amount(amountFormat.parse(amountString)));
+                            amounts.add(new Amount(amountFormat.parse(amountString, currency)));
                         } catch (ParseException e) {
                             throw new XMLParseException("Invalid amount: " + amountString);
                         }
@@ -322,7 +322,7 @@ public class XMLFileReader {
                         throw new XMLParseException("Invalid date: " + paymentElem.getAttribute("date"));
                     }
                     try {
-                        payment.setAmount(new Amount(amountFormat.parse(paymentElem.getAttribute("amount"))));
+                        payment.setAmount(new Amount(amountFormat.parse(paymentElem.getAttribute("amount"), currency)));
                     } catch (ParseException e) {
                         throw new XMLParseException("Invalid amount: " + paymentElem.getAttribute("amount"));
                     }
