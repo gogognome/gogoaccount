@@ -83,47 +83,50 @@ public class LedgerService {
      */
     public void createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, InvoiceTemplate invoiceTemplate,
                                                   List<Party> parties) throws ServiceException {
-        if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
-            throw new ServiceException(textResource.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
-        }
-        if (debtorOrCreditorAccount.getType() == DEBTOR && invoiceTemplate.getType() != SALE) {
-            throw new ServiceException(textResource.getString("InvoiceService.salesInvoiceMustHaveDebtor"));
-        }
-        if (debtorOrCreditorAccount.getType() == CREDITOR && invoiceTemplate.getType() != PURCHASE) {
-            throw new ServiceException(textResource.getString("InvoiceService.purchaseInvoiceMustHaveCreditor"));
-        }
-
-        validateInvoice(invoiceTemplate);
-
         ServiceTransaction.withoutResult(() -> {
-            List<Party> partiesForWhichCreationFailed = new LinkedList<>();
-            Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
-            for (Party party : parties) {
-                List<String> tags = partyIdToTags.getOrDefault(party.getId(), emptyList());
-                InvoiceDefinition invoiceDefinition = invoiceTemplate.getInvoiceDefinitionFor(party, tags);
-
-                try {
-                    Invoice invoice = invoiceService.create(document, invoiceDefinition);
-                    JournalEntry journalEntry = buildJournalEntry(invoice);
-                    List<JournalEntryDetail> journalEntryDetails = buildJournalEntryDetails(debtorOrCreditorAccount, invoiceDefinition);
-                    addJournalEntry(document, journalEntry, journalEntryDetails);
-                } catch (ServiceException e) {
-                    partiesForWhichCreationFailed.add(party);
-                }
+            document.ensureDocumentIsWriteable();
+            if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
+                throw new ServiceException(textResource.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
+            }
+            if (debtorOrCreditorAccount.getType() == DEBTOR && invoiceTemplate.getType() != SALE) {
+                throw new ServiceException(textResource.getString("InvoiceService.salesInvoiceMustHaveDebtor"));
+            }
+            if (debtorOrCreditorAccount.getType() == CREDITOR && invoiceTemplate.getType() != PURCHASE) {
+                throw new ServiceException(textResource.getString("InvoiceService.purchaseInvoiceMustHaveCreditor"));
             }
 
-            if (!partiesForWhichCreationFailed.isEmpty()) {
-                if (partiesForWhichCreationFailed.size() == 1) {
-                    Party party = partiesForWhichCreationFailed.get(0);
-                    throw new ServiceException("Failed to create journal for " + party.getId() + " - " + party.getName());
-                } else {
-                    StringBuilder sb = new StringBuilder(1000);
-                    for (Party party : partiesForWhichCreationFailed) {
-                        sb.append('\n').append(party.getId()).append(" - ").append(party.getName());
+            validateInvoice(invoiceTemplate);
+
+            ServiceTransaction.withoutResult(() -> {
+                List<Party> partiesForWhichCreationFailed = new LinkedList<>();
+                Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
+                for (Party party : parties) {
+                    List<String> tags = partyIdToTags.getOrDefault(party.getId(), emptyList());
+                    InvoiceDefinition invoiceDefinition = invoiceTemplate.getInvoiceDefinitionFor(party, tags);
+
+                    try {
+                        Invoice invoice = invoiceService.create(document, invoiceDefinition);
+                        JournalEntry journalEntry = buildJournalEntry(invoice);
+                        List<JournalEntryDetail> journalEntryDetails = buildJournalEntryDetails(debtorOrCreditorAccount, invoiceDefinition);
+                        addJournalEntry(document, journalEntry, journalEntryDetails);
+                    } catch (ServiceException e) {
+                        partiesForWhichCreationFailed.add(party);
                     }
-                    throw new ServiceException("Failed to create journal for the parties:" + sb.toString());
                 }
-            }
+
+                if (!partiesForWhichCreationFailed.isEmpty()) {
+                    if (partiesForWhichCreationFailed.size() == 1) {
+                        Party party = partiesForWhichCreationFailed.get(0);
+                        throw new ServiceException("Failed to create journal for " + party.getId() + " - " + party.getName());
+                    } else {
+                        StringBuilder sb = new StringBuilder(1000);
+                        for (Party party : partiesForWhichCreationFailed) {
+                            sb.append('\n').append(party.getId()).append(" - ").append(party.getName());
+                        }
+                        throw new ServiceException("Failed to create journal for the parties:" + sb.toString());
+                    }
+                }
+            });
         });
     }
 
@@ -215,6 +218,7 @@ public class LedgerService {
     public JournalEntry addJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails, boolean createPayments)
             throws ServiceException {
         return ServiceTransaction.withResult(() -> {
+            document.ensureDocumentIsWriteable();
             validateDebetAndCreditSumsAreEqual(journalEntry, journalEntryDetails);
 
             if (createPayments) {
@@ -286,6 +290,7 @@ public class LedgerService {
      */
     public void updateJournalEntry(Document document, JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             validateDebetAndCreditSumsAreEqual(journalEntry, journalEntryDetails);
 
             // Update payments. Remove payments from old journal and add payments of the new journal.
@@ -318,8 +323,9 @@ public class LedgerService {
     /**
      * Removes a journal entry from the database. Payments booked in the journal entry are also removed.
      */
-    public void removeJournal(Document document, JournalEntry journalEntry) throws ServiceException {
+    public void removeJournalEntry(Document document, JournalEntry journalEntry) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
             List<JournalEntryDetail> journalEntryDetails = journalEntryDetailDAO.findByJournalEntry(journalEntry.getUniqueId());
             for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {

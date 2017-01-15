@@ -44,6 +44,7 @@ public class InvoiceService {
 
     public Invoice create(Document document, InvoiceDefinition invoiceDefinition) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
+            document.ensureDocumentIsWriteable();
             validateInvoice(invoiceDefinition);
 
             InvoiceDAO invoiceDAO = new InvoiceDAO(document);
@@ -146,7 +147,10 @@ public class InvoiceService {
     }
 
     public Invoice createInvoice(Document document, Invoice invoice) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new InvoiceDAO(document).create(invoice));
+        return ServiceTransaction.withResult(() -> {
+            document.ensureDocumentIsWriteable();
+            return new InvoiceDAO(document).create(invoice);
+        });
     }
 
     public boolean existsInvoice(Document document, String invoiceId) throws ServiceException {
@@ -175,6 +179,7 @@ public class InvoiceService {
 
     public void createDetails(Document document, Invoice invoice, List<String> descriptions, List<Amount> amounts) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             if (descriptions.size() != amounts.size()) {
                 throw new IllegalArgumentException("Descriptions and amounts must have the same size");
             }
@@ -191,6 +196,7 @@ public class InvoiceService {
 
     public void updateInvoice(Document document, Invoice invoice, List<String> newDescriptions, List<Amount> newAmounts) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             new InvoiceDAO(document).update(invoice);
             new InvoiceDetailDAO(document).updateDetails(invoice.getId(), newDescriptions, newAmounts);
             document.notifyChange();
@@ -199,6 +205,7 @@ public class InvoiceService {
 
     public void deleteInvoice(Document document, String invoiceId) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             new InvoiceDAO(document).delete(invoiceId);
             document.notifyChange();
         });
@@ -272,6 +279,7 @@ public class InvoiceService {
 
     public void createPayments(Document document, List<Payment> payments) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             PaymentDAO paymentDAO = new PaymentDAO(document);
             for (Payment payment : payments) {
                 paymentDAO.create(payment);
@@ -281,6 +289,7 @@ public class InvoiceService {
 
     public Payment createPayment(Document document, Payment payment) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
+            document.ensureDocumentIsWriteable();
             Payment createdPayment = new PaymentDAO(document).create(payment);
             document.notifyChange();
             return createdPayment;
@@ -289,6 +298,7 @@ public class InvoiceService {
 
     public void removePayment(Document document, String paymentId) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             new PaymentDAO(document).delete(paymentId);
             document.notifyChange();
         });
@@ -368,6 +378,7 @@ public class InvoiceService {
 
     public void createInvoiceSending(Document document, Invoice invoice, InvoiceSending.Type type) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             InvoiceSending invoiceSending = new InvoiceSending();
             invoiceSending.setDate(new Date());
             invoiceSending.setInvoiceId(invoice.getId());

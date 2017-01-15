@@ -15,7 +15,6 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.DocumentModificationFailedException;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.StringUtil;
@@ -145,7 +144,7 @@ public class XMLFileReader {
     }
 
     private void parseAndAddJournals(int highestPaymentId, Element rootElement, AmountFormat amountFormat, Currency currency)
-            throws ParseException, DocumentModificationFailedException, ServiceException {
+            throws ParseException, ServiceException {
         NodeList journalsNodes = rootElement.getElementsByTagName("journals");
         for (int i=0; i<journalsNodes.getLength(); i++) {
             Element elem = (Element)journalsNodes.item(i);

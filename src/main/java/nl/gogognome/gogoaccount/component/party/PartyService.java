@@ -19,6 +19,7 @@ public class PartyService {
 
     public Party createParty(Document document, Party party, List<String> tags) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
+            document.ensureDocumentIsWriteable();
             Party createdParty = new PartyDAO(document).create(party);
             new TagDAO(document).saveTags(createdParty.getId(), tags);
             document.notifyChange();
@@ -32,6 +33,7 @@ public class PartyService {
 
     public void updateParty(Document document, Party party, List<String> tags) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             new PartyDAO(document).update(party);
             new TagDAO(document).saveTags(party.getId(), tags);
             document.notifyChange();
@@ -40,6 +42,7 @@ public class PartyService {
 
     public void deleteParty(Document document, Party party) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             new PartyDAO(document).delete(party.getId());
             document.notifyChange();
         });
@@ -91,10 +94,6 @@ public class PartyService {
             criteria[index++] = tag;
         }
         return objectCriterionMatcher.matches(criterion, criteria);
-    }
-
-    private String formatDate(String dateFormat, Date date) {
-        return date == null ? null : new SimpleDateFormat(dateFormat).format(date);
     }
 
     public boolean existsParty(Document document, String partyId) throws ServiceException {

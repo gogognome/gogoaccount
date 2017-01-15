@@ -54,6 +54,7 @@ public class ImportBankStatementService {
 
     public void setAccountForImportedAccount(Document document, String importedAccount, String name, String accountId) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             String key = getKey(importedAccount, name);
             new ImportedAccountDAO(document).setImportedAccount(key, accountId);
             document.notifyChange();

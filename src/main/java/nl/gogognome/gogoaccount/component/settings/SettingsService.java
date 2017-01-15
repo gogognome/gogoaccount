@@ -8,6 +8,7 @@ public class SettingsService {
 
     public void save(Document document, String key, String value) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             Setting setting = new Setting(key);
             setting.setValue(value);
             SettingsDAO settingsDAO = new SettingsDAO(document);

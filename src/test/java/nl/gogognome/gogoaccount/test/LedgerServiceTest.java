@@ -77,8 +77,8 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         assertNotNull(findJournalEntry("t1"));
         assertTrue(invoiceService.existsInvoice(document, "inv1"));
 
-        ledgerService.removeJournal(document, findJournalEntry("t2")); // must remove journal with payment too to prevent foreign key violation
-        ledgerService.removeJournal(document, findJournalEntry("t1"));
+        ledgerService.removeJournalEntry(document, findJournalEntry("t2")); // must remove journal with payment too to prevent foreign key violation
+        ledgerService.removeJournalEntry(document, findJournalEntry("t1"));
 
         assertNull(findJournalEntry("t1"));
         assertFalse(invoiceService.existsInvoice(document, "inv1"));
@@ -90,7 +90,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         Invoice invoice = invoiceService.getInvoice(document, "inv1");
         assertFalse(invoiceService.findPayments(document, invoice).isEmpty());
 
-        ledgerService.removeJournal(document, findJournalEntry("t2"));
+        ledgerService.removeJournalEntry(document, findJournalEntry("t2"));
 
         assertNull(findJournalEntry("t2"));
         assertTrue(invoiceService.findPayments(document, invoice).isEmpty());

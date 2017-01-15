@@ -47,6 +47,8 @@ public class BookkeepingService {
 
     public Document closeBookkeeping(Document document, File newBookkeepingFile, String description, Date date, Account equity) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
+            document.ensureDocumentIsWriteable();
+
             markBookkeepingAsClosed(document);
             Date dayBeforeStart = DateUtil.addDays(date, -1);
             Document newDocument = CreateNewBookkeeping(document, newBookkeepingFile, description, date);
@@ -66,6 +68,7 @@ public class BookkeepingService {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         bookkeeping.setClosed(true);
         configurationService.updateBookkeeping(document, bookkeeping);
+        document.setReadonly(true);
     }
 
     private void copyAutomaticCollectionSettings(Document document, Document newDocument) throws ServiceException {

@@ -10,7 +10,10 @@ public class ServiceTransaction {
         try {
             RequireTransaction.runs(runnable);
         } catch (Exception e) {
-            throw new ServiceException(e);
+            if (e instanceof ServiceException) {
+                throw e;
+            }
+            throw new ServiceException(e.getMessage(), e);
         }
     }
 
@@ -18,7 +21,10 @@ public class ServiceTransaction {
         try {
             return RequireTransaction.returns(runnable);
         } catch (Exception e) {
-            throw new ServiceException(e);
+            if (e instanceof ServiceException) {
+                throw e;
+            }
+            throw new ServiceException(e.getMessage(), e);
         }
     }
 

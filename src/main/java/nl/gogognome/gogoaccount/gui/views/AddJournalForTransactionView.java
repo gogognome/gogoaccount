@@ -10,7 +10,6 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.DocumentModificationFailedException;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -92,7 +91,7 @@ public class AddJournalForTransactionView extends EditJournalView {
     }
 
     @Override
-    protected JournalEntry createNewJournal(JournalEntry journalEntry, java.util.List<JournalEntryDetail> journalEntryDetails) throws DocumentModificationFailedException, ServiceException {
+    protected JournalEntry createNewJournal(JournalEntry journalEntry, java.util.List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
         journalEntry = super.createNewJournal(journalEntry, journalEntryDetails);
         plugin.journalAdded(journalEntry);
         return journalEntry;

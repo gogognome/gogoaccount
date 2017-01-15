@@ -15,6 +15,7 @@ public class Document {
     private String fileName;
     private Locale locale = Locale.US;
     protected Connection connectionToKeepInMemoryDatabaseAlive;
+    private boolean readonly;
 
     protected Document() {
     }
@@ -75,5 +76,19 @@ public class Document {
     {
         this.fileName = fileName;
         notifyChange();
+    }
+
+    public boolean isReadonly() {
+        return readonly;
+    }
+
+    public void setReadonly(boolean readonly) {
+        this.readonly = readonly;
+    }
+
+    public void ensureDocumentIsWriteable() {
+        if (readonly) {
+            throw new AttemptToModifyReadonlyDocumentException();
+        }
     }
 }

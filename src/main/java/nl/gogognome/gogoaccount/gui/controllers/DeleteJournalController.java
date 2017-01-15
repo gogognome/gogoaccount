@@ -50,7 +50,7 @@ public class DeleteJournalController {
         }
 
         try {
-            ledgerService.removeJournal(document, journalEntry);
+            ledgerService.removeJournalEntry(document, journalEntry);
             journalDeleted = true;
         } catch (ServiceException e) {
             MessageDialog.showErrorMessage(owner, e, "DeleteJournalController.serviceException");

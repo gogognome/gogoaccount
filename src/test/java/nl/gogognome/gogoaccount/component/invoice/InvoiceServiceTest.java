@@ -198,13 +198,13 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         for (JournalEntry entry : ledgerService.findJournalEntries(document)) {
             for (JournalEntryDetail detail : ledgerService.findJournalEntryDetails(document, entry)) {
                 if (detail.getPaymentId() != null) {
-                    ledgerService.removeJournal(document, entry);
+                    ledgerService.removeJournalEntry(document, entry);
                 }
             }
         }
         for (JournalEntry entry : ledgerService.findJournalEntries(document)) {
             if (entry.getIdOfCreatedInvoice() != null) {
-                ledgerService.removeJournal(document, entry);
+                ledgerService.removeJournalEntry(document, entry);
             }
         }
     }

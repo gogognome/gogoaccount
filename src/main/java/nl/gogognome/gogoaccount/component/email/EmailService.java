@@ -45,6 +45,7 @@ public class EmailService {
 
     public void saveConfiguration(Document document, EmailConfiguration configuration) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             settingsService.save(document, MAIL_FROM, configuration.getSenderEmailAddress());
             settingsService.save(document, MAIL_SMTP_HOST, configuration.getSmtpHost());
             settingsService.save(document, MAIL_SMTP_PORT, Integer.toString(configuration.getSmtpPort()));
@@ -56,6 +57,7 @@ public class EmailService {
     public void sendEmail(Document document, String recipient, String subject, String contents,
                           String charset, String subtype) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
+            document.ensureDocumentIsWriteable();
             EmailConfiguration configuration = getConfiguration(document);
             if (configuration.getSenderEmailAddress() == null || configuration.getSmtpHost() == null
                     || configuration.getSmtpUsername() == null || configuration.getSmtpPassword() == null) {
