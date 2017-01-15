@@ -10,6 +10,7 @@ public class Bookkeeping {
     private String description;
     private Date startOfPeriod;
     private Currency currency = Currency.getInstance("EUR");
+    private boolean closed;
 
     private String organizationName;
     private String organizationAddress;
@@ -88,5 +89,13 @@ public class Bookkeeping {
 
     public void setEnableAutomaticCollection(boolean enableAutomaticCollection) {
         this.enableAutomaticCollection = enableAutomaticCollection;
+    }
+
+    public boolean isClosed() {
+        return closed;
+    }
+
+    public void setClosed(boolean closed) {
+        this.closed = closed;
     }
 }

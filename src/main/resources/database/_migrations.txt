@@ -6,3 +6,4 @@
 50: add-foreign-key-to-journal-entry-detail.sql
 60: add-email-address-to-party.sql
 70: create-invoice-sendings.sql
+80: add-bookkeeping-closed.sql

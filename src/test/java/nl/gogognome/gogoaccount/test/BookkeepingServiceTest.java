@@ -13,6 +13,7 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
@@ -62,8 +63,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testReportAtEndOf2011() throws Exception {
-        Report report = bookkeepingService.createReport(document,
-                createDate(2011, 12, 31));
+        Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
 
         assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
                 "200 Eigen vermogen, 290 Crediteuren, " +
@@ -136,7 +136,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void testCloseBookkeeping() throws Exception {
+    public void closeBookkeeping_copiesAccountsAndDebtorsAndTotalAmounts() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
@@ -147,8 +147,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEquals(0, DateUtil.compareDayOfYear(createDate(2012, 1, 1),
                     newBookkeeping.getStartOfPeriod()));
 
-            Report report = bookkeepingService.createReport(newDocument,
-                    createDate(2011, 12, 31));
+            Report report = bookkeepingService.createReport(newDocument, createDate(2011, 12, 31));
 
             assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
                             "200 Eigen vermogen, 290 Crediteuren, " +
@@ -179,7 +178,64 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void testCloseBookkeepingWithJournalsCopiedToNewBookkeeping() throws Exception {
+    public void closeBookkeeping_bookkeepingIsOpen_closesTheOldBookkeepingAndOpensTheNewBookkeeping() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+            Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
+
+            assertTrue(configurationService.getBookkeeping(document).isClosed());
+            assertFalse(newBookkeeping.isClosed());
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+   @Test
+    public void closeBookkeeping_bookkeepingHasProfit_profitIsAddedToEquityInNewBookkeeping() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
+            Amount oldEquityAmount = report.getAmount(equity);
+            Amount resultOfOperations = report.getResultOfOperations();
+            assertTrue(resultOfOperations.isPositive());
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+            configurationService.getBookkeeping(newDocument);
+
+            Amount newEquityAmount = bookkeepingService.createReport(newDocument, createDate(2012, 1, 1)).getAmount(equity);
+            assertEquals(oldEquityAmount.add(resultOfOperations), newEquityAmount);
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    @Test
+    public void closeBookkeeping_bookkeepingHasLoss_lossIsSubtractedFromEquityInNewBookkeeping() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
+                    JournalEntryBuilder.debet(300, sportsHallRent),
+                    JournalEntryBuilder.credit(300, creditors));
+            JournalEntry journalEntry = JournalEntryBuilder.build(createDate(2011, 6, 1), "Test");
+
+            ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
+            Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
+            Amount oldEquityAmount = report.getAmount(equity);
+            Amount resultOfOperations = report.getResultOfOperations();
+            assertTrue(resultOfOperations.isNegative());
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+            configurationService.getBookkeeping(newDocument);
+
+            Amount newEquityAmount = bookkeepingService.createReport(newDocument, createDate(2012, 1, 1)).getAmount(equity);
+            assertEquals(oldEquityAmount.add(resultOfOperations), newEquityAmount);
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    @Test
+    public void closeBookkeeping_oldBookkeepingHasJournalEntryAfterClosingDate_journalEntryIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -201,7 +257,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void testCloseBookkeepingWithInvoiceCreatedBeforeClosingDateCopiedToNewBookkeeping() throws Exception {
+    public void closeBookkeeping_invoiceCreatedBeforeClosingDateButHasNotBeenPaid_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
@@ -218,7 +274,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void testCloseBookkeepingWithInvoiceCreatedAfterClosingDateCopiedToNewBookkeeping() throws Exception {
+    public void closeBookkeeping_invoiceCreatedAfterClosingDate_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
@@ -235,7 +291,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void closeBookkeepingShouldCopyOrganizationDetails() throws Exception {
+    public void closeBookkeeping_organizationDetailsFilledIn_organizationDetailsAreCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);

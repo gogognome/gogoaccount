@@ -24,7 +24,7 @@ import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.ServiceTransaction;
+import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
 import nl.gogognome.helpers.TestTextResource;
 import nl.gogognome.lib.swing.RunnableWithException;
 import nl.gogognome.lib.text.Amount;
@@ -224,27 +224,11 @@ public abstract class AbstractBookkeepingTest {
     }
 
     protected JournalEntryDetail buildJournalEntryDetail(int amountInt, String accountId, boolean debet) throws ServiceException {
-        return ServiceTransaction.withResult(() -> {
-            Amount amount = createAmount(amountInt);
-            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(amount);
-            journalEntryDetail.setAccountId(accountId);
-            journalEntryDetail.setDebet(debet);
-            return journalEntryDetail;
-        });
+        return JournalEntryBuilder.buildDetail(amountInt, accountId, debet);
     }
 
     protected JournalEntryDetail buildJournalEntryDetail(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
-        return ServiceTransaction.withResult(() -> {
-            Amount amount = createAmount(amountInt);
-            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(amount);
-            journalEntryDetail.setAccountId(accountId);
-            journalEntryDetail.setDebet(debet);
-            journalEntryDetail.setInvoiceId(invoiceId);
-            journalEntryDetail.setPaymentId(paymentId);
-            return journalEntryDetail;
-        });
+        return JournalEntryBuilder.buildDetail(amountInt, accountId, debet, invoiceId, paymentId);
     }
 
     protected Amount createAmount(int value) {

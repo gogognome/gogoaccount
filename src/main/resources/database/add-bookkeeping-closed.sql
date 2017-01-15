@@ -1,0 +1,1 @@
+ALTER TABLE bookkeeping ADD closed BOOLEAN DEFAULT FALSE;
