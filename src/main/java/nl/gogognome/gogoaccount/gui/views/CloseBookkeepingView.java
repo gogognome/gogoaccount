@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -15,6 +16,7 @@ import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.util.DateUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -62,16 +64,22 @@ public class CloseBookkeepingView extends OkCancelView {
 
     @Override
     protected JComponent createCenterComponent() {
-		InputFieldsColumn ifc = new InputFieldsColumn();
+        JPanel panel = new JPanel(new BorderLayout());
+        JLabel label = widgetFactory.createLabel("closeBookkeepingView.helpText.html");
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        panel.add(label, BorderLayout.NORTH);
+
+        InputFieldsColumn ifc = new InputFieldsColumn();
         addCloseable(ifc);
 
         ifc.addField("closeBookkeepingView.date", dateModel);
-        ifc.addComboBoxField("closeBookkeepingView.equityAccount", accountListModel,
-        		new AccountFormatter());
+        ifc.addComboBoxField("closeBookkeepingView.equityAccount", accountListModel, new AccountFormatter());
 
         ifc.addField("closeBookkeepingView.description", descriptionModel);
 
-    	return ifc;
+        panel.add(ifc, BorderLayout.CENTER);
+
+    	return panel;
     }
 
     @Override
@@ -125,7 +133,10 @@ public class CloseBookkeepingView extends OkCancelView {
     private void initModels() throws ServiceException {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         dateModel.setDate(DateUtil.addYears(bookkeeping.getStartOfPeriod(), 1), null);
-		accountListModel.setItems(configurationService.findAllAccounts(document));
+		accountListModel.setItems(configurationService.findAccountsOfType(document, AccountType.EQUITY));
+        if (!accountListModel.getItems().isEmpty()) {
+            accountListModel.setSelectedIndex(0, null);
+        }
 
         String description = bookkeeping.getDescription();
         int year = DateUtil.getField(bookkeeping.getStartOfPeriod(), Calendar.YEAR);

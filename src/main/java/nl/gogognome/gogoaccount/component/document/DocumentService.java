@@ -19,23 +19,24 @@ import static java.util.stream.Collectors.*;
 
 public class DocumentService {
 
-    private ConfigurationService configurationService;
+    private final ConfigurationService configurationService;
 
     public DocumentService(ConfigurationService configurationService) {
         this.configurationService = configurationService;
     }
 
-    public Document openDocument(String fileName) throws ServiceException {
+    public Document openDocument(String filePath) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            String fileNameWithouExtension = fileName;
-            if (fileName.endsWith(".h2.db")) {
-                fileNameWithouExtension = fileName.substring(0, fileName.length() - 6);
-            }
+            String fileNameWithouExtension = getFilePathWithoutExtension(filePath);
             String jdbcUrl = "jdbc:h2:file:" + fileNameWithouExtension;
             Document document = new Document();
+            document.setFileName(filePath);
 
             registerDataSource(document, jdbcUrl);
             applyDatabaseMigrations(document, Long.MAX_VALUE);
+
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+            document.setReadonly(bookkeeping.isClosed());
 
             return document;
         });
@@ -47,8 +48,17 @@ public class DocumentService {
     }
 
     public Document createNewDocument(File file, String description) throws ServiceException {
-        String jdbcUrl = "jdbc:h2:file:" + file.getAbsolutePath();
+        String jdbcUrl = "jdbc:h2:file:" + getFilePathWithoutExtension(file.getAbsolutePath());
         return createDocument(jdbcUrl, description);
+    }
+
+    private String getFilePathWithoutExtension(String path) {
+        String fileNameWithouExtension = path;
+        String extension = ".h2.db";
+        if (path.toLowerCase().endsWith(extension)) {
+            fileNameWithouExtension = path.substring(0, path.length() - extension.length());
+        }
+        return fileNameWithouExtension;
     }
 
     private Document createDocument(String jdbcUrl, String description) throws ServiceException {

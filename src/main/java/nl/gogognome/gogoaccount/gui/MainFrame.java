@@ -110,18 +110,21 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
      */
     private String createTitle() {
         String result = textResource.getString("mf.title");
-        Bookkeeping bookkeeping;
-        String description;
-        try {
-            bookkeeping = configurationService.getBookkeeping(document);
-            description = bookkeeping.getDescription();
-        } catch (ServiceException e) {
-            description = null;
+        String description = null;
+        if (document != null) {
+            try {
+                Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+                description = bookkeeping.getDescription();
+                if (document.isReadonly()) {
+                    description += " (" + textResource.getString("mf.readonly") + ")";
+                }
+            } catch (ServiceException e) {
+                logger.warn("Failed to get bookkeeping: " + e.getMessage(), e);
+            }
         }
         if (description != null) {
             result += " - " + description;
         }
-
         return result;
     }
 
@@ -139,7 +142,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miOpenEdition = widgetFactory.createMenuItem("mi.openBookkeeping", e -> handleOpenBookkeeping());
         JMenuItem miConfigureBookkeeping = widgetFactory.createMenuItem("mi.configureBookkeeping", this);
         JMenuItem miConfigureEmail = widgetFactory.createMenuItem("mi.configureEmail", e -> onConfigureEmail());
-        JMenuItem miCloseBookkeeping = widgetFactory.createMenuItem("mi.closeBookkeeping", this);
+        JMenuItem miCloseBookkeeping = widgetFactory.createMenuItem("mi.closeBookkeeping", e -> handleCloseBookkeeping());
         JMenuItem miImportBankStatement = widgetFactory.createMenuItem("mi.importBankStatement", this);
         JMenuItem miExit = widgetFactory.createMenuItem("mi.exit", this);
 
@@ -203,7 +206,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     {
         String command = e.getActionCommand();
         if ("mi.configureBookkeeping".equals(command)) { handleConfigureBookkeeping(); }
-        if ("mi.closeBookkeeping".equals(command)) { handleCloseBookkeeping(); }
         if ("mi.importBankStatement".equals(command)) { handleImportBankStatement(); }
         if ("mi.exit".equals(command)) { handleExit(); }
         if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
@@ -242,12 +244,13 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private File askUserForFileOfNewBookkeeping() {
-        JFileChooser fc = new JFileChooser();
+        String extension = ".h2.db";
+        JFileChooser fc = new JFileChooser(new File(document.getFileName()).getParentFile());
         fc.setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File f) {
                 String filename = f.getName().toLowerCase();
-                return f.isDirectory() || filename.endsWith(".h2.db");
+                return f.isDirectory() || filename.endsWith(extension);
             }
 
             @Override
@@ -257,7 +260,14 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         });
 
         int choice = fc.showDialog(this, textResource.getString("mf.titleNewBookkeeping"));
-        return choice == JFileChooser.APPROVE_OPTION ? fc.getSelectedFile() : null;
+        if (choice != JFileChooser.APPROVE_OPTION) {
+            return null;
+        }
+        File newFile = fc.getSelectedFile();
+        if (newFile.getName().endsWith(extension + extension)) {
+            newFile = new File(newFile.getParent(), newFile.getName().substring(0, newFile.getName().length() - extension.length()));
+        }
+        return newFile;
     }
 
     private void handleOpenBookkeeping()

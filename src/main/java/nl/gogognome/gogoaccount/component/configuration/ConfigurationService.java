@@ -21,6 +21,10 @@ public class ConfigurationService {
         return ServiceTransaction.withResult(() -> new AccountDAO(document).findAll("id"));
     }
 
+    public List<Account> findAccountsOfType(Document document, AccountType accountType) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new AccountDAO(document).findAccountsOfType(accountType));
+    }
+
     public List<Account> findAssets(Document document) throws ServiceException {
         return ServiceTransaction.withResult(() -> new AccountDAO(document).findAssets());
     }
