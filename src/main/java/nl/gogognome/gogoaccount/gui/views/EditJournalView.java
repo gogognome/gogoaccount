@@ -12,9 +12,9 @@ import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.action.Actions;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.models.Tables;
@@ -42,6 +42,7 @@ public class EditJournalView extends View {
     private final LedgerService ledgerService;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
+    private final MessageDialog messageDialog;
 
     private String titleId;
 
@@ -79,6 +80,7 @@ public class EditJournalView extends View {
         this.ledgerService = ledgerService;
         this.partyService = partyService;
         this.viewFactory = viewFactory;
+        messageDialog = new MessageDialog(textResource, this);
     }
 
     public void setJournalEntryToBeEdited(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
@@ -102,7 +104,7 @@ public class EditJournalView extends View {
 
             initModelsForJournal(journalEntryToBeEdited, journalEntryDetailsToBeEdited);
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            messageDialog.showErrorMessage(e, "gen.problemOccurred");
             close();
         }
 	}
@@ -208,7 +210,7 @@ public class EditJournalView extends View {
         		createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
                 requestClose();
         	} catch (Exception e) {
-                MessageDialog.showErrorMessage(this,e, "ajd.addJournalException");
+                messageDialog.showErrorMessage(e, "ajd.addJournalException");
         	}
         }
     }
@@ -222,7 +224,7 @@ public class EditJournalView extends View {
                 valuesEditPanel.requestFocus();
                 initValuesForNextJournal();
             } catch (Exception e) {
-                MessageDialog.showErrorMessage(this, e, "ajd.addJournalException");
+                messageDialog.showErrorMessage(e, "ajd.addJournalException");
             }
         }
     }

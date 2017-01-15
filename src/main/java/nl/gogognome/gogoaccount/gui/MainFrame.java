@@ -14,8 +14,8 @@ import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.XMLFileReader;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.views.*;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
@@ -42,7 +42,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private static final long serialVersionUID = 1L;
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /** The current database of the application. */
     private Document document;
@@ -66,9 +66,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final GenerateReportController generateReportController;
     private final ResourceLoader resourceLoader;
     private final XMLFileReader xmlFileReader;
+    private final MessageDialog messageDialog;
 
     public MainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
-                     ViewFactory viewFactory, DocumentRegistry documentRegistry, GenerateReportController generateReportController, ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
+                     ViewFactory viewFactory, DocumentRegistry documentRegistry, GenerateReportController generateReportController,
+                     ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
         this.bookkeepingService = bookkeepingService;
         this.documentService = documentService;
         this.configurationService = configurationService;
@@ -77,6 +79,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         this.generateReportController = generateReportController;
         this.resourceLoader = resourceLoader;
         this.xmlFileReader = xmlFileReader;
+        this.messageDialog = new MessageDialog(textResource, this);
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -299,7 +302,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void handleConfigureBookkeeping() {
         HandleException.for_(this, () -> {
             if (document == null ) {
-                MessageDialog.showInfoMessage(this, "mf.noBookkeepingPresent");
+                messageDialog.showInfoMessage("mf.noBookkeepingPresent");
             } else {
                 openView(ConfigureBookkeepingView.class);
             }
@@ -309,7 +312,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void onConfigureEmail() {
         HandleException.for_(this, () -> {
             if (document == null ) {
-                MessageDialog.showInfoMessage(this, "mf.noBookkeepingPresent");
+                messageDialog.showInfoMessage("mf.noBookkeepingPresent");
             } else {
                 openViewInDialog(EmailConfigurationView.class);
             }
@@ -332,7 +335,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                     Document newDocument = bookkeepingService.closeBookkeeping(document, file, description, date, accountToAddResultTo);
                     setDocument(newDocument);
                 } catch (ServiceException e) {
-                    MessageDialog.showErrorMessage(this, e, "mf.closeBookkeepingException");
+                    messageDialog.showErrorMessage(e, "mf.closeBookkeepingException");
                 }
             }
         });
@@ -348,7 +351,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             newDocument.notifyChange();
             setDocument(newDocument);
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "mf.errorOpeningFile");
+            messageDialog.showErrorMessage(e, "mf.errorOpeningFile");
         }
     }
 
@@ -356,9 +359,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         Document newDocument;
         if (file.getName().toLowerCase().endsWith(".xml")) {
             newDocument = xmlFileReader.createDatabaseFromFile(file);
-            if (MessageDialog.YES_OPTION == MessageDialog.showYesNoQuestion(this, "mf.xmlChangedToDatabase.title", "mf.xmlChangedToDatabase")) {
+            if (MessageDialog.YES_OPTION == messageDialog.showYesNoQuestion("mf.xmlChangedToDatabase.title", "mf.xmlChangedToDatabase")) {
                 if (!file.delete()) {
-                    MessageDialog.showErrorMessage(this, "mf.failedToDeleteFile", file.getAbsoluteFile());
+                    messageDialog.showErrorMessage("mf.failedToDeleteFile", file.getAbsoluteFile());
                 }
             }
         } else {
@@ -459,7 +462,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 try {
                     view = viewFactory.createView(viewClass);
                 } catch (Exception e) {
-                    MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
+                    messageDialog.showErrorMessage(e, "mf.problemCreatingView");
                     return;
                 }
                 view.addViewListener(new ViewCloseListener());
@@ -480,7 +483,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 ViewDialog viewDialog = new ViewDialog(this, view);
                 viewDialog.showDialog();
             } catch (Exception e) {
-                MessageDialog.showErrorMessage(this, e, "mf.problemCreatingView");
+                messageDialog.showErrorMessage(e, "mf.problemCreatingView");
             }
         });
     }
@@ -505,9 +508,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void ensureAccountsPresent(HandleException.RunnableWithException runnable) {
         HandleException.for_(this, () -> {
             if (document == null) {
-                MessageDialog.showInfoMessage(this, "mf.noBookkeepingPresent");
+                messageDialog.showInfoMessage("mf.noBookkeepingPresent");
             } else if (!configurationService.hasAccounts(document)) {
-                MessageDialog.showInfoMessage(this, "mf.noAccountsPresent");
+                messageDialog.showInfoMessage("mf.noAccountsPresent");
             } else {
                 runnable.run();
             }
