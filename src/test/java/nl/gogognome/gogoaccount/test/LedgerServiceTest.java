@@ -7,6 +7,7 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetailBuilder;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -43,7 +44,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         List<Payment> payments = invoiceService.findPayments(document, invoice);
         assertEquals(1, payments.size());
         Payment payment = payments.get(0);
-        assertEquals(createAmount(15), payment.getAmount());
+        assertEquals(AmountBuilder.build(15), payment.getAmount());
         Account account = configurationService.getAccount(document, journalEntryDetails.get(0).getAccountId());
         assertEquals(account.getName(), payment.getDescription());
         assertEquals(journalEntry.getDate(), payment.getDate());

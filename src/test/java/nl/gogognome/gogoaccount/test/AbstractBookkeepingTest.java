@@ -24,6 +24,7 @@ import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
 import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
 import nl.gogognome.helpers.TestTextResource;
 import nl.gogognome.lib.swing.RunnableWithException;
@@ -142,8 +143,8 @@ public abstract class AbstractBookkeepingTest {
 
     private void addJournals() throws Exception {
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(buildJournalEntryDetail(20, "190", true));
-        journalEntryDetails.add(buildJournalEntryDetail(20, "300", false));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(20, "190", true));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(20, "300", false));
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("t1");
         journalEntry.setDescription("Payment");
@@ -151,21 +152,21 @@ public abstract class AbstractBookkeepingTest {
         journalEntry.setIdOfCreatedInvoice("inv1");
 
         List<String> descriptions = singletonList("Contributie");
-        List<Amount> amounts = singletonList(createAmount(20));
+        List<Amount> amounts = singletonList(AmountBuilder.build(20));
         Party party = new PartyService().getParty(document, "1101");
         Invoice invoice = new Invoice(journalEntry.getIdOfCreatedInvoice());
         invoice.setDescription("Contributie 2011");
         invoice.setConcerningPartyId(party.getId());
         invoice.setPayingPartyId(party.getId());
-        invoice.setAmountToBePaid(createAmount(20));
+        invoice.setAmountToBePaid(AmountBuilder.build(20));
         invoice.setIssueDate(journalEntry.getDate());
         invoiceService.createInvoice(document, invoice);
         invoiceService.createDetails(document, invoice, descriptions, amounts);
         ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
 
         journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(buildJournalEntryDetail(10, "101", true, "inv1", "pay1"));
-        journalEntryDetails.add(buildJournalEntryDetail(10, "190", false));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(10, "101", true, "inv1", "pay1"));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(10, "190", false));
         journalEntry = new JournalEntry();
         journalEntry.setId("t2");
         journalEntry.setDescription("Payment");
@@ -213,9 +214,9 @@ public abstract class AbstractBookkeepingTest {
 
     private void addStartBalance() throws Exception {
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(buildJournalEntryDetail(100, "100", true));
-        journalEntryDetails.add(buildJournalEntryDetail(300, "101", true));
-        journalEntryDetails.add(buildJournalEntryDetail(400, "200", false));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(100, "100", true));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(300, "101", true));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(400, "200", false));
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setId("start");
         journalEntry.setDescription("Start balance");
@@ -223,24 +224,8 @@ public abstract class AbstractBookkeepingTest {
         ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
     }
 
-    protected JournalEntryDetail buildJournalEntryDetail(int amountInt, String accountId, boolean debet) throws ServiceException {
-        return JournalEntryBuilder.buildDetail(amountInt, accountId, debet);
-    }
-
-    protected JournalEntryDetail buildJournalEntryDetail(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) throws ServiceException {
-        return JournalEntryBuilder.buildDetail(amountInt, accountId, debet, invoiceId, paymentId);
-    }
-
-    protected Amount createAmount(int value) {
-        try {
-            return new Amount(amountFormat.parse(Integer.toString(value)));
-        } catch (ParseException e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
-
     protected void checkAmount(int expectedAmountInt, Amount actualAmount) throws ParseException {
-        Amount expectedAmount = createAmount(expectedAmountInt);
+        Amount expectedAmount = AmountBuilder.build(expectedAmountInt);
         assertEquals(amountFormat.formatAmount(expectedAmount.toBigInteger()),
                 amountFormat.formatAmount(actualAmount.toBigInteger()));
     }

@@ -13,6 +13,7 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
 import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
@@ -239,8 +240,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                    buildJournalEntryDetail(20, "100", true),
-                    buildJournalEntryDetail(20, "101", false));
+                    JournalEntryBuilder.buildDetail(20, "100", true),
+                    JournalEntryBuilder.buildDetail(20, "101", false));
             JournalEntry journalEntry = new JournalEntry();
             journalEntry.setId("ABC");
             journalEntry.setDescription("Test");
@@ -260,7 +261,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_invoiceCreatedBeforeClosingDateButHasNotBeenPaid_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
+            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(AmountBuilder.build(20), "Zaalhuur", sportsHallRent));
             InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", createDate(2011, 8, 20), "Invoice for {name}", someLine);
             ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
 
@@ -277,7 +278,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_invoiceCreatedAfterClosingDate_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
+            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(AmountBuilder.build(20), "Zaalhuur", sportsHallRent));
             InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", createDate(2012, 1, 15), "Invoice for {name}", someLine);
             ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
 

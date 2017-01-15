@@ -7,6 +7,8 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.test.AbstractBookkeepingTest;
+import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
+import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.textsearch.criteria.StringLiteral;
@@ -25,7 +27,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     public void whenCreatingInvoiceIdAndNameShouldBeFilledInInvoicesIdAndDescription() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        Amount amount = createAmount(20);
+        Amount amount = AmountBuilder.build(20);
         Account debtor = configurationService.getAccount(document, "190");
         InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "inv-{id}", issueDate, "Invoice for {name}", buildSomeLine());
         ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
@@ -113,12 +115,12 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     @Test
     public void updateExistingInvoice() throws Exception {
         List<String> descriptions = asList("Sponsoring 2011", "Sponsoring");
-        List<Amount> amounts = asList(null, createAmount(30));
+        List<Amount> amounts = asList(null, AmountBuilder.build(30));
         Party party = partyService.getParty(document, "1102");
         Invoice invoice = new Invoice("inv1");
         invoice.setConcerningPartyId(party.getId());
         invoice.setPayingPartyId(party.getId());
-        invoice.setAmountToBePaid(createAmount(30));
+        invoice.setAmountToBePaid(AmountBuilder.build(30));
         invoice.setIssueDate(DateUtil.createDate(2011, 5, 6));
 
         invoiceService.updateInvoice(document, invoice, descriptions, amounts);
@@ -131,12 +133,12 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     @Test(expected = ServiceException.class)
     public void updateNonExistingInvoiceFails() throws Exception {
         List<String> descriptions = asList("Sponsoring 2011", "Sponsoring");
-        List<Amount> amounts = asList(null, createAmount(30));
+        List<Amount> amounts = asList(null, AmountBuilder.build(30));
         Party party = partyService.getParty(document, "1102");
         Invoice invoice = new Invoice("inv421");
         invoice.setConcerningPartyId(party.getId());
         invoice.setPayingPartyId(party.getId());
-        invoice.setAmountToBePaid(createAmount(30));
+        invoice.setAmountToBePaid(AmountBuilder.build(30));
         invoice.setIssueDate(DateUtil.createDate(2011, 5, 6));
 
         invoiceService.updateInvoice(document, invoice, descriptions, amounts);
@@ -210,7 +212,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     private void createInvoiceWithPayment(String invoiceId, int amountToBePaid, int amountPaid, Party party) throws ServiceException {
         InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, invoiceId, DateUtil.createDate(2011, 8, 7),
                 "Invoice " + invoiceId + " to be paid: " + amountToBePaid + ", paid: " + amountPaid,
-                singletonList(new InvoiceTemplateLine(createAmount(amountToBePaid), "Contribution", contribution)));
+                singletonList(new InvoiceTemplateLine(AmountBuilder.build(amountToBePaid), "Contribution", contribution)));
         ledgerService.createInvoiceAndJournalForParties(document,
                 debtor,
                 invoiceTemplate,
@@ -221,8 +223,8 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         journalEntry.setDescription("Payment");
         journalEntry.setDate(DateUtil.createDate(2011, 8, 30));
         List<JournalEntryDetail> details = Arrays.asList(
-                buildJournalEntryDetail(amountPaid, cash.getId(), true, invoiceId, null),
-                buildJournalEntryDetail(amountPaid, debtor.getId(), false)
+                JournalEntryBuilder.buildDetail(amountPaid, cash.getId(), true, invoiceId, null),
+                JournalEntryBuilder.buildDetail(amountPaid, debtor.getId(), false)
         );
         ledgerService.addJournalEntry(document, journalEntry, details, true);
     }
@@ -236,8 +238,8 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     @Test
     public void testMatches() {
         InvoiceOverview overview = new InvoiceOverview("Invoice id");
-        overview.setAmountPaid(createAmount(123));
-        overview.setAmountToBePaid(createAmount(456));
+        overview.setAmountPaid(AmountBuilder.build(123));
+        overview.setAmountToBePaid(AmountBuilder.build(456));
         overview.setDescription("Description");
         overview.setIssueDate(DateUtil.createDate(2011, 5, 6));
         overview.setPayingPartyId("Party id");
@@ -263,7 +265,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     }
 
     private List<InvoiceTemplateLine> buildSomeLine() throws ServiceException {
-        return singletonList(new InvoiceTemplateLine(createAmount(20), "Zaalhuur", sportsHallRent));
+        return singletonList(new InvoiceTemplateLine(AmountBuilder.build(20), "Zaalhuur", sportsHallRent));
     }
 
 }

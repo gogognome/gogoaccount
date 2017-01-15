@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
@@ -45,13 +46,13 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
         JournalEntryDetail d1 = new JournalEntryDetail();
-        d1.setAmount(createAmount(20));
+        d1.setAmount(AmountBuilder.build(20));
         d1.setAccountId(cash.getId());
         d1.setDebet(true);
         journalEntryDetails.add(d1);
 
         JournalEntryDetail d2 = new JournalEntryDetail();
-        d2.setAmount(createAmount(20));
+        d2.setAmount(AmountBuilder.build(20));
         d2.setAccountId(bankAccount.getId());
         d2.setDebet(false);
         journalEntryDetails.add(d2);
@@ -70,13 +71,13 @@ public class TestDatabase extends AbstractBookkeepingTest {
     public void updateNonExistingJournalFails() throws Exception {
         List<JournalEntryDetail> newJournalEntryDetails = new ArrayList<>();
         JournalEntryDetail d1 = new JournalEntryDetail();
-        d1.setAmount(createAmount(20));
+        d1.setAmount(AmountBuilder.build(20));
         d1.setAccountId("100");
         d1.setDebet(true);
         newJournalEntryDetails.add(d1);
 
         JournalEntryDetail d2 = new JournalEntryDetail();
-        d2.setAmount(createAmount(20));
+        d2.setAmount(AmountBuilder.build(20));
         d2.setAccountId("190");
         d2.setDebet(false);
         newJournalEntryDetails.add(d2);

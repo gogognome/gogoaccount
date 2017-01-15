@@ -1,11 +1,10 @@
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
 import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
 import nl.gogognome.gogoaccount.component.importer.RabobankCSVImporter;
 import nl.gogognome.gogoaccount.component.importer.TransactionImporter;
+import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
@@ -25,7 +24,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 				"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
 		ImportedTransaction it = transactions.get(0);
 
-		assertEquals(createAmount(450), it.getAmount());
+		assertEquals(AmountBuilder.build(450), it.getAmount());
 		assertEqualDayOfYear(DateUtil.createDate(2003, 1, 11), it.getDate());
 		assertEquals("0170059286", it.getToAccount());
 		assertNull(it.getToName());
