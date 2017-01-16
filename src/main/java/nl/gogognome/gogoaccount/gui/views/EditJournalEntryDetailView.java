@@ -13,7 +13,7 @@ import nl.gogognome.gogoaccount.gui.beans.InvoiceBean;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.OkCancelView;
@@ -34,6 +34,8 @@ public class EditJournalEntryDetailView extends OkCancelView {
     private final InvoiceService invoiceService;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private Document document;
     private InvoiceBean invoiceBean;
@@ -53,6 +55,8 @@ public class EditJournalEntryDetailView extends OkCancelView {
         this.invoiceService = invoiceService;
         this.partyService = partyService;
         this.viewFactory = viewFactory;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     public void setItemToBeEdited(JournalEntryDetail itemToBeEdited) {
@@ -67,20 +71,17 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     @Override
     public void onInit() {
-        try {
+        handleException.of(() -> {
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             amountFormat = new AmountFormat(Locale.getDefault(), bookkeeping.getCurrency());
 
             initModels();
             addComponents();
-        } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
-            requestClose();
-        }
+        });
     }
 
     private void initModels() {
-        try {
+        handleException.of(() -> {
             accountListModel.setItems(configurationService.findAllAccounts(document));
 
             List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
@@ -88,7 +89,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
             sideListModel.setItems(sides);
             sideListModel.setSelectedIndex(0, null);
 
-            invoiceBean = new InvoiceBean(document, partyService, viewFactory);
+            invoiceBean = new InvoiceBean(document, partyService, viewFactory, handleException);
 
             if (itemToBeEdited != null) {
                 initModelsForItemToBeEdited();
@@ -97,10 +98,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
                 amountModel.setString(null);
                 sideListModel.setSelectedIndex(0, null);
             }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            close();
-        }
+        });
     }
 
     private void initModelsForItemToBeEdited() throws ServiceException {
@@ -138,7 +136,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     @Override
     protected void onOk() {
-        try {
+        handleException.of(() -> {
             Amount amount;
             try {
                 amount = new Amount(amountFormat.parse(amountModel.getString()));
@@ -160,19 +158,17 @@ public class EditJournalEntryDetailView extends OkCancelView {
             enteredJournalEntryDetail.setDebet(debet);
             enteredJournalEntryDetail.setInvoiceId(invoice != null ? invoice.getId() : null);
             requestClose();
-        } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private boolean validateInput(Amount amount, Account account) {
         if (amount == null) {
-            MessageDialog.showWarningMessage(this, "gen.invalidAmount");
+            messageDialog.showWarningMessage("gen.invalidAmount");
             return false;
         }
 
         if (account == null) {
-            MessageDialog.showWarningMessage(this, "EditJournalItemView.noAccountSelected");
+            messageDialog.showWarningMessage("EditJournalItemView.noAccountSelected");
         }
 
         return true;

@@ -21,8 +21,8 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.views.View;
@@ -64,6 +64,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final ViewFactory viewFactory;
     private final DeleteJournalController deleteJournalController;
     private final EditJournalController editJournalController;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private FileModel fileSelectionModel = new FileModel();
 
@@ -95,6 +97,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         this.viewFactory = viewFactory;
         this.deleteJournalController = deleteJournalController;
         this.editJournalController = editJournalController;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     @Override
@@ -201,7 +205,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
      * specified journal.
      */
     private void updateJournalItemTable() {
-        try {
+        handleException.of(() -> {
             int row = getSelectedRowIndexInTableModel();
             List<JournalEntryDetail> journalEntryDetails;
             if (row != -1) {
@@ -211,9 +215,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
                 journalEntryDetails = Collections.emptyList();
             }
             itemsTableModel.setJournalEntryDetails(journalEntryDetails);
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private void handleImport() {
@@ -235,14 +237,12 @@ public class ImportBankStatementView extends View implements ModelChangeListener
                 addTransactionsToTable(transactions);
                 Tables.selectFirstRow(transactionsJournalsTable);
             } else {
-                MessageDialog.showWarningMessage(this, "importBankStatementView.noTransactionsFound", file.getAbsolutePath());
+                messageDialog.showWarningMessage("importBankStatementView.noTransactionsFound", file.getAbsolutePath());
             }
         } catch (FileNotFoundException e) {
-            MessageDialog.showErrorMessage(this,
-                    "importBankStatementView.fileNotFound", file.getAbsoluteFile());
+            messageDialog.showErrorMessage("importBankStatementView.fileNotFound", file.getAbsoluteFile());
         } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, e,
-                    "importBankStatementView.problemWhileImportingTransactions");
+            messageDialog.showErrorMessage(e, "importBankStatementView.problemWhileImportingTransactions");
         } finally {
             if (reader != null) {
                 try {
@@ -274,7 +274,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     }
 
     private void addJournalForSelectedTransaction() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             AddJournalForTransactionView view = (AddJournalForTransactionView) viewFactory.createView(AddJournalForTransactionView.class);
             view.setInitialValuesPlugin(this);
             ViewDialog dialog = new ViewDialog(this, view);
@@ -283,7 +283,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     }
 
     private void deleteJournalFromSelectedTransaction() {
-        try {
+        handleException.of(() -> {
             int row = getSelectedRowIndexInTableModel();
             if (row != -1) {
                 JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
@@ -296,9 +296,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
                     updateButtonsStatus();
                 }
             }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private void updateTransactionJournal(int row, JournalEntry journalEntry) {
@@ -343,18 +341,16 @@ public class ImportBankStatementView extends View implements ModelChangeListener
 
     @Override
     public void journalAdded(JournalEntry journalEntry) {
-        try {
+        handleException.of(() -> {
             int row = getSelectedRowIndexInTableModel();
             if (row != -1) {
                 updateTransactionJournal(row, journalEntry);
                 setLinkBetweenImportedTransactionAccountAndAccount(
                         transactionJournalsTableModel.getRow(row).getImportedTransaction(), journalEntry);
             } else {
-                MessageDialog.showErrorMessage(this, "ImportBankStatementView.JournalCreatedButNoTransactionSelected");
+                messageDialog.showErrorMessage("ImportBankStatementView.JournalCreatedButNoTransactionSelected");
             }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private void setLinkBetweenImportedTransactionAccountAndAccount(ImportedTransaction transaction, JournalEntry journalEntry) throws ServiceException {

@@ -13,8 +13,8 @@ import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.action.Actions;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.BooleanModel;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +46,8 @@ public abstract class SendInvoicesView extends View {
     private final Document document;
     private final InvoicePreviewTemplate invoicePreviewTemplate;
     private final SettingsService settingsService;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private final XHTMLPanel xhtmlPanel = new XHTMLPanel();
     protected final FileModel templateFileModel = new FileModel();
@@ -67,6 +68,8 @@ public abstract class SendInvoicesView extends View {
         this.document = document;
         this.invoicePreviewTemplate = invoicePreviewTemplate;
         this.settingsService = settingsService;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     public void setInvoicesToSend(List<Invoice> invoicesToSend, DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails,
@@ -84,17 +87,14 @@ public abstract class SendInvoicesView extends View {
 
     @Override
     public void onInit() {
-        try {
+        handleException.of(() -> {
             if (invoicesToSend == null || invoiceIdToParty == null) {
                 throw new IllegalStateException("Call setInvoicesToSend() before calling onInit()!");
             }
             addComponents();
             addListeners();
             loadLastOpenedTemplateFile();
-        } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, e, "gen.internalError");
-            close();
-        }
+        });
     }
 
     private void loadLastOpenedTemplateFile() {
@@ -122,13 +122,11 @@ public abstract class SendInvoicesView extends View {
             }
             saveAction.setEnabled(true);
             SwingUtilities.invokeLater(() -> {
-                try {
+                handleException.of(() -> {
                     String fileContents = new String(Files.readAllBytes(templateFileModel.getFile().toPath()), Charset.forName("UTF-8"));
                     templateModel.setString(fileContents);
                     updatePreview(fileContents, 0, xhtmlPanel);
-                } catch (Exception e) {
-                    MessageDialog.showErrorMessage(this, e, "SendInvoicesView.templateFileSyntaxError");
-                }
+                });
             });
         } else {
             saveAction.setEnabled(false);
@@ -210,7 +208,7 @@ public abstract class SendInvoicesView extends View {
     protected abstract String getButtonResourceId();
 
     private void onSend() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             if (send()) {
                 close();
             }
@@ -224,11 +222,11 @@ public abstract class SendInvoicesView extends View {
     }
 
     private void onSave() {
-        HandleException.for_(this, () -> save(templateFileModel.getFile()));
+        handleException.of(() -> save(templateFileModel.getFile()));
     }
 
     private void onSaveAs() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             JFileChooser fileChooser = new JFileChooser(templateFileModel.getFile());
             fileChooser.setDialogType(JFileChooser.FILES_ONLY);
             int choice = fileChooser.showSaveDialog(this);

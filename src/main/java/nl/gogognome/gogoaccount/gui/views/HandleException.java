@@ -1,24 +1,40 @@
 package nl.gogognome.gogoaccount.gui.views;
 
+import nl.gogognome.gogoaccount.component.ledger.DebetAndCreditAmountsDifferException;
 import nl.gogognome.lib.swing.MessageDialog;
 
 import java.awt.*;
 
 public class HandleException {
 
-    public static void for_(Component parentComponent, RunnableWithException runnable) {
-        for_(parentComponent, "gen.problemOccurred", runnable);
+    private final nl.gogognome.lib.swing.dialogs.MessageDialog messageDialog;
+
+    public HandleException(nl.gogognome.lib.swing.dialogs.MessageDialog messageDialog) {
+        this.messageDialog = messageDialog;
     }
 
-    public static void for_(Component parentComponent, String messageId, RunnableWithException runnable) {
+    public void of(RunnableWithException runnable) {
         try {
             runnable.run();
+        } catch (DebetAndCreditAmountsDifferException e) {
+            messageDialog.showErrorMessage("ajd.debetAndCreditAmountsDiffer");
         } catch (Exception e) {
-            MessageDialog.showErrorMessage(parentComponent, e, messageId);
+            messageDialog.showErrorMessage(e, "gen.problemOccurred");
+        }
+    }
+
+    public void of(String messageId, RunnableWithException runnable) {
+        try {
+            runnable.run();
+        } catch (DebetAndCreditAmountsDifferException e) {
+            messageDialog.showErrorMessage("ajd.debetAndCreditAmountsDiffer");
+        } catch (Exception e) {
+            messageDialog.showErrorMessage(e, messageId);
         }
     }
 
     public interface RunnableWithException {
         void run() throws Exception;
     }
+
 }

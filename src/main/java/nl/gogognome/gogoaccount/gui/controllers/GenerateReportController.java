@@ -12,7 +12,7 @@ import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.ReportTask;
 import nl.gogognome.gogoaccount.reportgenerators.ReportToModelConverter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
 import nl.gogognome.lib.swing.views.ViewOwner;
 import nl.gogognome.lib.task.Task;
@@ -36,6 +36,7 @@ public class GenerateReportController {
     private final PartyService partyService;
     private final ReportToModelConverter reportToModelConverter;
     private final ViewFactory viewFactory;
+    private HandleException handleException;
 
     private ViewOwner viewOwner;
 
@@ -57,10 +58,11 @@ public class GenerateReportController {
 
     public void setViewOwner(ViewOwner viewOwner) {
         this.viewOwner = viewOwner;
+        handleException = new HandleException(new MessageDialog(textResource, viewOwner.getWindow()));
     }
 
     public void execute() {
-        HandleException.for_(viewOwner.getWindow(), () -> {
+        handleException.of(() -> {
             GenerateReportView view = (GenerateReportView) viewFactory.createView(GenerateReportView.class);
             ViewDialog dialog = new ViewDialog(viewOwner.getWindow(), view);
             dialog.showDialog();
@@ -80,10 +82,7 @@ public class GenerateReportController {
                         break;
 
                     default:
-                        MessageDialog.showErrorMessage(viewOwner.getWindow(),
-                                new Exception("Unknown report type: " + view.getReportType()),
-                                "gen.internalError");
-                        return;
+                        throw new Exception("Unknown report type: " + view.getReportType());
                 }
 
                 startTask(task);

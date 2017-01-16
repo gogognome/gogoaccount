@@ -8,10 +8,9 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
@@ -32,6 +31,8 @@ public class GenerateAutomaticCollectionFileView extends View {
     private final Document document;
     private final AutomaticCollectionService automaticCollectionService;
     private final ConfigurationService configurationService;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private List<Invoice> selectedInvoices;
     private FileModel sepaFileModel = new FileModel();
@@ -46,6 +47,8 @@ public class GenerateAutomaticCollectionFileView extends View {
         this.document = document;
         this.automaticCollectionService = automaticCollectionService;
         this.configurationService = configurationService;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     @Override
@@ -59,7 +62,7 @@ public class GenerateAutomaticCollectionFileView extends View {
 
     @Override
     public void onInit() {
-        try {
+        handleException.of(() -> {
             List<Account> accounts = configurationService.findAllAccounts(document);
             bankAccountListModel.setItems(accounts);
             debtorAccountListModel.setItems(accounts);
@@ -85,14 +88,11 @@ public class GenerateAutomaticCollectionFileView extends View {
             add(buttonPanel, BorderLayout.SOUTH);
 
             setBorder(widgetFactory.createTitleBorderWithMarginAndPadding("generateAutomaticCollectionFileView.title"));
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
-            requestClose();
-        }
+        });
     }
 
     private void onGenerateFile() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             boolean valid = validateInput();
             if (!valid) {
                 return;
@@ -112,22 +112,22 @@ public class GenerateAutomaticCollectionFileView extends View {
         boolean valid = true;
         Date date = collectionDateModel.getDate();
         if (date == null) {
-            MessageDialog.showErrorMessage(this, "gen.invalidDate");
+            messageDialog.showWarningMessage("gen.invalidDate");
             valid = false;
         }
 
         if (sepaFileModel.getFile() == null) {
-            MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noSepaFileNameSpecified");
+            messageDialog.showWarningMessage("generateAutomaticCollectionFileView.noSepaFileNameSpecified");
             valid = false;
         }
 
         if (bankAccountListModel.getSelectedItem() == null) {
-            MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noBankAccountSelected");
+            messageDialog.showWarningMessage("generateAutomaticCollectionFileView.noBankAccountSelected");
             valid = false;
         }
 
         if (debtorAccountListModel.getSelectedItem() == null) {
-            MessageDialog.showErrorMessage(this, "generateAutomaticCollectionFileView.noDebtorAccountSelected");
+            messageDialog.showWarningMessage("generateAutomaticCollectionFileView.noDebtorAccountSelected");
             valid = false;
         }
         return valid;

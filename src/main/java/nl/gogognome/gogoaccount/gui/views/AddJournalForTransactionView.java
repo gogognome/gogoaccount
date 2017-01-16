@@ -91,8 +91,8 @@ public class AddJournalForTransactionView extends EditJournalView {
     }
 
     @Override
-    protected JournalEntry createNewJournal(JournalEntry journalEntry, java.util.List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
-        journalEntry = super.createNewJournal(journalEntry, journalEntryDetails);
+    protected JournalEntry createNewJournalEntry(JournalEntry journalEntry, java.util.List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
+        journalEntry = super.createNewJournalEntry(journalEntry, journalEntryDetails);
         plugin.journalAdded(journalEntry);
         return journalEntry;
     }

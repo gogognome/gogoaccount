@@ -7,7 +7,7 @@ import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceGeneratorTask;
 import nl.gogognome.gogoaccount.reportgenerators.OdtInvoiceParameters;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.FileModel;
 import nl.gogognome.lib.swing.models.StringModel;
@@ -26,6 +26,8 @@ public class InvoiceToOdtView extends View {
     private final Document document;
     private final ViewFactory viewFactory;
     private final InvoicesToModelConverter invoicesToModelConverter;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private FileModel templateFileModel = new FileModel();
     private FileModel odtFileModel = new FileModel();
@@ -38,6 +40,8 @@ public class InvoiceToOdtView extends View {
         this.document = document;
         this.viewFactory = viewFactory;
         this.invoicesToModelConverter = invoicesToModelConverter;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     /**
@@ -46,26 +50,26 @@ public class InvoiceToOdtView extends View {
      * error message is shown to the user.
      */
     protected void generateInvoices() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             Date date = dateModel.getDate();
             if (date == null) {
-                MessageDialog.showErrorMessage(this, "gen.invalidDate");
+                messageDialog.showWarningMessage("gen.invalidDate");
                 return;
             }
 
             Date dueDate = dueDateModel.getDate();
             if (dueDate == null) {
-                MessageDialog.showErrorMessage(this, "gen.invalidDate");
+                messageDialog.showWarningMessage("gen.invalidDate");
                 return;
             }
 
             if (odtFileModel.getFile() == null) {
-                MessageDialog.showErrorMessage(this, "invoiceToOdtView.noOdtFileNameSpecified");
+                messageDialog.showWarningMessage("invoiceToOdtView.noOdtFileNameSpecified");
                 return;
             }
 
             if (templateFileModel.getFile() == null) {
-                MessageDialog.showErrorMessage(this, "invoiceToOdtView.noTemplateFileNameSpecified");
+                messageDialog.showWarningMessage("invoiceToOdtView.noTemplateFileNameSpecified");
                 return;
             }
 

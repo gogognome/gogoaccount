@@ -25,11 +25,13 @@ public class PartyTagBean extends JPanel implements Bean {
 
     private static final long serialVersionUID = 1L;
 
-    private ListModel<String> types;
+    private final HandleException handleException;
+    private final ListModel<String> types;
     private Bean comboboxBean;
 
-    public PartyTagBean(ListModel<String> types) {
+    public PartyTagBean(ListModel<String> types, HandleException handleException) {
         this.types = types;
+        this.handleException = handleException;
         initBean();
     }
 
@@ -70,7 +72,7 @@ public class PartyTagBean extends JPanel implements Bean {
     }
 
     private void showNewPartyTypeDialog() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             NewPartyView view = new NewPartyView();
             ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();

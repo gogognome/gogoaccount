@@ -303,15 +303,17 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public EditJournalController editJournalController(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                                       LedgerService ledgerService, ViewFactory viewFactory) {
-        return new EditJournalController(documentWrapper.document, invoiceService, ledgerService, viewFactory);
+                                                       LedgerService ledgerService, ViewFactory viewFactory,
+                                                       TextResourceWrapper textResourceWrappere) {
+        return new EditJournalController(documentWrapper.document, invoiceService, ledgerService, viewFactory, textResourceWrappere.textResource);
     }
 
     @Bean
     @Scope("prototype")
     public EditInvoiceController editInvoiceController(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                                       LedgerService ledgerService, ViewFactory viewFactory) {
-        return new EditInvoiceController(documentWrapper.document, invoiceService, ledgerService, viewFactory);
+                                                       LedgerService ledgerService, ViewFactory viewFactory,
+                                                       TextResourceWrapper textResourceWrapper) {
+        return new EditInvoiceController(documentWrapper.document, invoiceService, ledgerService, viewFactory, textResourceWrapper.textResource);
     }
 
     @Bean

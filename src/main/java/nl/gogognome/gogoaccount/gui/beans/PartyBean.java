@@ -48,6 +48,7 @@ public class PartyBean extends JPanel implements Closeable {
 	private final Document document;
     private final PartyModel model;
     private final ViewFactory viewFacatory;
+    private final HandleException handleException;
 
     private JTextField tfDescription;
     private JButton btSelect;
@@ -55,10 +56,11 @@ public class PartyBean extends JPanel implements Closeable {
 
     private ModelChangeListener listener;
 
-    public PartyBean(Document document, PartyModel model, ViewFactory viewFacatory) {
+    public PartyBean(Document document, PartyModel model, ViewFactory viewFacatory, HandleException handleException) {
         this.document = document;
         this.model = model;
         this.viewFacatory = viewFacatory;
+        this.handleException = handleException;
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
@@ -102,7 +104,7 @@ public class PartyBean extends JPanel implements Closeable {
      */
     public void selectParty() {
         Container parent = SwingUtils.getTopLevelContainer(this);
-        HandleException.for_(parent, () -> {
+        handleException.of(() -> {
             PartiesView partiesView = (PartiesView) viewFacatory.createView(PartiesView.class);
             partiesView.setSelectionEnabled(true);
             ViewDialog dialog = new ViewDialog(parent, partiesView);

@@ -15,10 +15,10 @@ import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.action.ActionWrapper;
 import nl.gogognome.lib.swing.action.Actions;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
@@ -44,15 +44,7 @@ public class EditJournalsView extends View {
 
     private Logger logger = LoggerFactory.getLogger(EditJournalsView.class);
 
-    private Document document;
-
-    private JTable journalEntryDetailsTable;
-    private JournalEntryDetailsTableModel journalEntryDetailsTableModel;
-
-    private FormattedJournalEntriesTableModel journalEntriesTableModel;
-    private JTable journalEntriesTable;
-    private StringModel searchCriterionModel = new StringModel();
-
+    private final Document document;
     private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
     private final LedgerService ledgerService;
@@ -60,6 +52,15 @@ public class EditJournalsView extends View {
     private final ViewFactory viewFactory;
     private final DeleteJournalController deleteJournalController;
     private final EditJournalController editJournalController;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
+
+    private JTable journalEntryDetailsTable;
+    private JournalEntryDetailsTableModel journalEntryDetailsTableModel;
+
+    private FormattedJournalEntriesTableModel journalEntriesTableModel;
+    private JTable journalEntriesTable;
+    private StringModel searchCriterionModel = new StringModel();
 
     private DocumentListener documentListener;
 
@@ -74,6 +75,8 @@ public class EditJournalsView extends View {
         this.deleteJournalController = deleteJournalController;
         this.editJournalController = editJournalController;
         this.viewFactory = viewFactory;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     @Override
@@ -151,11 +154,9 @@ public class EditJournalsView extends View {
     }
 
     private void onSearch() {
-        try {
+        handleException.of(() -> {
             journalEntriesTableModel.setRows(getFilteredRows());
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private ButtonPanel createButtonPanel() {
@@ -197,7 +198,7 @@ public class EditJournalsView extends View {
      * This method lets the user edit the selected journal.
      */
     private void editJournal() {
-        try {
+        handleException.of(() -> {
             int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
             if (row != -1) {
                 JournalEntry journalEntry = journalEntriesTableModel.getRow(row).journalEntry;
@@ -206,16 +207,14 @@ public class EditJournalsView extends View {
                 editJournalController.execute();
                 updateJournalItemTable(row);
             }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     /**
      * This method lets the user add new journals.
      */
     private void addJournal() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             EditJournalView view = (EditJournalView) viewFactory.createView(EditJournalView.class);
             view.setTitle("ajd.title");
             ViewDialog dialog = new ViewDialog(this, view);
@@ -227,16 +226,14 @@ public class EditJournalsView extends View {
      * This method lets the user delete the selected journal.
      */
     private void deleteJournal() {
-        int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
-        if (row != -1) {
-            deleteJournalController.setOwner(this);
-            deleteJournalController.setJournalEntryToBeDeleted(journalEntriesTableModel.getRow(row).journalEntry);
-            try {
+        handleException.of(() -> {
+            int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
+            if (row != -1) {
+                deleteJournalController.setOwner(this);
+                deleteJournalController.setJournalEntryToBeDeleted(journalEntriesTableModel.getRow(row).journalEntry);
                 deleteJournalController.execute();
-            } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
             }
-        }
+        });
     }
 
     public List<FormattedJournalEntry> getFilteredRows() throws ServiceException {

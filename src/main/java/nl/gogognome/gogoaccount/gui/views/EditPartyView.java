@@ -9,8 +9,8 @@ import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.components.PartyTagBean;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
@@ -38,7 +38,8 @@ public class EditPartyView extends OkCancelView {
     private final Document document;
     private final ConfigurationService configurationService;
     private final PartyService partyService;
-
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
     private List<String> tags;
 
     private final StringModel idModel = new StringModel();
@@ -74,6 +75,8 @@ public class EditPartyView extends OkCancelView {
         this.document = document;
         this.configurationService = configurationService;
         this.partyService = partyService;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     public void setInitialParty(Party party, List<String> initialTags,
@@ -91,7 +94,7 @@ public class EditPartyView extends OkCancelView {
             addListeners();
             updateIdMessage();
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            messageDialog.showErrorMessage(e, "gen.problemOccurred");
             close();
         }
     }
@@ -174,7 +177,7 @@ public class EditPartyView extends OkCancelView {
                 panel.add(automaticCollectionFields, BorderLayout.SOUTH);
             }
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+            messageDialog.showErrorMessage("gen.internalError", e);
         }
 
         return panel;
@@ -186,7 +189,7 @@ public class EditPartyView extends OkCancelView {
         partyTagBeans.clear();
         int index = 0;
         for (ListModel<String> tagListModel : tagListModels) {
-            PartyTagBean partyTagBean = new PartyTagBean(tagListModel);
+            PartyTagBean partyTagBean = new PartyTagBean(tagListModel, handleException);
 
             final int finalIndex = index;
             JButton deleteButton = widgetFactory.createIconButton("editPartyView.deleteTag", new AbstractAction() {

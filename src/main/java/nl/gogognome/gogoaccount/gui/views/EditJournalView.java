@@ -43,6 +43,7 @@ public class EditJournalView extends View {
     private final PartyService partyService;
     private final ViewFactory viewFactory;
     private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private String titleId;
 
@@ -81,6 +82,7 @@ public class EditJournalView extends View {
         this.partyService = partyService;
         this.viewFactory = viewFactory;
         messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     public void setJournalEntryToBeEdited(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
@@ -204,34 +206,30 @@ public class EditJournalView extends View {
     }
 
     private void handleOkButtonPressed() {
-        JournalEntry journalEntry = getJournalEntryFromDialog();
-        if (journalEntry != null) {
-        	try {
-        		createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
+        handleException.of(() -> {
+            JournalEntry journalEntry = getJournalEntryFromDialog();
+            if (journalEntry != null) {
+                createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
                 requestClose();
-        	} catch (Exception e) {
-                messageDialog.showErrorMessage(e, "ajd.addJournalException");
-        	}
-        }
+            }
+        });
     }
 
     private void handleOkAndNextButtonPressed() {
-        JournalEntry journalEntry = getJournalEntryFromDialog();
-        if (journalEntry != null) {
-            try {
+        handleException.of(() -> {
+            JournalEntry journalEntry = getJournalEntryFromDialog();
+            if (journalEntry != null) {
                 createNewOrStoreUpdatedJournal(journalEntry, getJournalEntryDetailsFromDialog());
                 journalEntryDetailsTableModel.clear();
                 valuesEditPanel.requestFocus();
                 initValuesForNextJournal();
-            } catch (Exception e) {
-                messageDialog.showErrorMessage(e, "ajd.addJournalException");
             }
-        }
+        });
     }
 
 	private void createNewOrStoreUpdatedJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws Exception {
         if (journalEntryToBeEdited == null) {
-            createNewJournal(journalEntry, journalEntryDetails);
+            createNewJournalEntry(journalEntry, journalEntryDetails);
         } else {
             // Set the edited journal
             editedJournalEntry = journalEntry;
@@ -239,7 +237,7 @@ public class EditJournalView extends View {
         }
 	}
 
-	protected JournalEntry createNewJournal(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
+	protected JournalEntry createNewJournalEntry(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
 		return ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, true);
 	}
 
@@ -262,7 +260,7 @@ public class EditJournalView extends View {
 
     /** Handles the add button. Lets the user add a journal item. */
     private void handleAddButtonPressed() throws ServiceException {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             EditJournalEntryDetailView editJournalEntryDetailView = (EditJournalEntryDetailView) viewFactory.createView(EditJournalEntryDetailView.class);
             editJournalEntryDetailView.setItemToBeEdited(createDefaultItemToBeAdded());
             ViewDialog dialog = new ViewDialog(this, editJournalEntryDetailView);
@@ -287,7 +285,7 @@ public class EditJournalView extends View {
 
 	/** Handles the edit button. Lets the user edit a journal item. */
     private void handleEditButtonPressed() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             int row = journalEntryDetailsTable.getSelectedRow();
             if (row != -1) {
                 JournalEntryDetail item = journalEntryDetailsTableModel.getRow(row);

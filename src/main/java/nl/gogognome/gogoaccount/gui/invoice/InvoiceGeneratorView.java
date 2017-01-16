@@ -14,11 +14,12 @@ import nl.gogognome.gogoaccount.gui.views.HandleException;
 import nl.gogognome.gogoaccount.gui.views.PartiesView;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.awt.layout.VerticalLayout;
+import nl.gogognome.lib.gui.Closeable;
 import nl.gogognome.lib.gui.beans.Bean;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
@@ -52,6 +53,8 @@ public class InvoiceGeneratorView extends View {
 
     private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private final Document document;
     private final AmountFormulaParser amountFormulaParser;
@@ -122,6 +125,9 @@ public class InvoiceGeneratorView extends View {
         this.document = document;
         this.amountFormulaParser = amountFormulaParser;
         this.viewFactory = viewFactory;
+
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     @Override
@@ -146,7 +152,7 @@ public class InvoiceGeneratorView extends View {
                 creditorAccountModel.setSelectedIndex(0, null);
             }
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.error");
+            messageDialog.showErrorMessage(e, "gen.error");
             close();
             return;
         }
@@ -292,7 +298,7 @@ public class InvoiceGeneratorView extends View {
 
     private void clearTemplateLinesPanel() {
         templateLinesPanel.removeAll();
-        templateLineBeans.forEach(b -> b.close());
+        templateLineBeans.forEach(Closeable::close);
         templateLineBeans.clear();
     }
 
@@ -340,7 +346,7 @@ public class InvoiceGeneratorView extends View {
     }
 
     private void onAddInvoicesToBookkeeping() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             Date date = invoiceGenerationDateModel.getDate();
             List<nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine> invoiceLines = invoiceTemplateLines.stream()
                     .map(line -> new nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine(line.amountFormula, line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
@@ -355,13 +361,13 @@ public class InvoiceGeneratorView extends View {
                 return;
             }
 
-            int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning", "invoiceGeneratorView.areYouSure");
+            int choice = messageDialog.showYesNoQuestion("gen.titleWarning", "invoiceGeneratorView.areYouSure");
             if (choice != MessageDialog.YES_OPTION) {
                 return;
             }
 
             generateInvoices(date, invoiceLines, parties);
-            MessageDialog.showMessage(this, "gen.titleMessage", "invoiceGeneratorView.messageSuccess");
+            messageDialog.showInfoMessage("gen.titleMessage", "invoiceGeneratorView.messageSuccess");
         });
     }
 
@@ -383,19 +389,18 @@ public class InvoiceGeneratorView extends View {
 
     private boolean validateInput(Date date, List<nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine> invoiceLines) {
         if (date == null) {
-            MessageDialog.showMessage(this, "gen.titleError", "gen.invalidDate");
+            messageDialog.showWarningMessage("gen.invalidDate");
             return false;
         }
 
         for (nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine line : invoiceLines) {
             if (line.getAmountFormula() == null) {
-                MessageDialog.showMessage(this, "gen.titleError",
-                        "invoiceGeneratorView.emptyAmountsFound");
+                messageDialog.showWarningMessage("invoiceGeneratorView.emptyAmountsFound");
                 return false;
             }
 
             if (line.getAccount() == null) {
-                MessageDialog.showMessage(this, "gen.titleError", "invoiceGeneratorView.emptyAccountFound");
+                messageDialog.showWarningMessage("invoiceGeneratorView.emptyAccountFound");
                 return false;
             }
         }

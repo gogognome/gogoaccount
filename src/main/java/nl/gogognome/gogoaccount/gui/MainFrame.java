@@ -67,6 +67,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final ResourceLoader resourceLoader;
     private final XMLFileReader xmlFileReader;
     private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     public MainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
                      ViewFactory viewFactory, DocumentRegistry documentRegistry, GenerateReportController generateReportController,
@@ -79,7 +80,9 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         this.generateReportController = generateReportController;
         this.resourceLoader = resourceLoader;
         this.xmlFileReader = xmlFileReader;
-        this.messageDialog = new MessageDialog(textResource, this);
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
+
         createMenuBar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -221,7 +224,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     public void handleNewEdition() {
-        HandleException.for_(this, "mf.failedToCreateNewBookkeeping", () -> {
+        handleException.of("mf.failedToCreateNewBookkeeping", () -> {
             File file = askUserForFileOfNewBookkeeping();
             if (file == null) {
                 return;
@@ -300,7 +303,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleConfigureBookkeeping() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             if (document == null ) {
                 messageDialog.showInfoMessage("mf.noBookkeepingPresent");
             } else {
@@ -310,7 +313,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void onConfigureEmail() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             if (document == null ) {
                 messageDialog.showInfoMessage("mf.noBookkeepingPresent");
             } else {
@@ -452,11 +455,11 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleAbout() {
-        HandleException.for_(this, () -> new ViewDialog(this, new AboutView()).showDialog());
+        handleException.of(() -> new ViewDialog(this, new AboutView()).showDialog());
     }
 
     private void openView(Class<? extends View> viewClass) {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             View view = openViews.get(viewClass);
             if (view == null) {
                 try {
@@ -477,7 +480,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void openViewInDialog(Class<? extends View> viewClass) {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             try {
                 View view = viewFactory.createView(viewClass);
                 ViewDialog viewDialog = new ViewDialog(this, view);
@@ -506,7 +509,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void ensureAccountsPresent(HandleException.RunnableWithException runnable) {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             if (document == null) {
                 messageDialog.showInfoMessage("mf.noBookkeepingPresent");
             } else if (!configurationService.hasAccounts(document)) {

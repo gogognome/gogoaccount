@@ -235,7 +235,7 @@ public class LedgerService {
         });
     }
 
-    private void validateDebetAndCreditSumsAreEqual(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) {
+    private void validateDebetAndCreditSumsAreEqual(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws DebetAndCreditAmountsDifferException {
         Amount totalDebet = null;
         Amount totalCredit = null;
         for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
@@ -247,7 +247,7 @@ public class LedgerService {
         }
 
         if (!Amount.areEqual(totalDebet, totalCredit)) {
-            throw new IllegalArgumentException("The sum of debet and credit amounts differ for journal " + journalEntry.getId() + "!");
+            throw new DebetAndCreditAmountsDifferException("The sum of debet and credit amounts differ for journal " + journalEntry.getId() + "!");
         }
     }
 

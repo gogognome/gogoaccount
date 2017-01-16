@@ -10,7 +10,11 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.gui.beans.ObjectFormatter;
-import nl.gogognome.lib.swing.*;
+import nl.gogognome.lib.swing.ButtonPanel;
+import nl.gogognome.lib.swing.ColumnDefinition;
+import nl.gogognome.lib.swing.ListTableModel;
+import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.views.View;
@@ -37,6 +41,8 @@ public class ConfigureBookkeepingView extends View {
     private final AutomaticCollectionService automaticCollectionService;
     private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private final StringModel descriptionModel = new StringModel();
     private final ListModel<Currency> currencyModel = new ListModel<>();
@@ -68,6 +74,8 @@ public class ConfigureBookkeepingView extends View {
         this.automaticCollectionService = automaticCollectionService;
         this.configurationService = configurationService;
         this.ledgerService = ledgerService;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     @Override
@@ -77,15 +85,12 @@ public class ConfigureBookkeepingView extends View {
 
     @Override
     public void onInit() {
-        try {
+        handleException.of(() -> {
             initModels();
             addComponents();
             updateButtonState();
             addListeners();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            close();
-        }
+        });
     }
 
     private void initModels() throws ServiceException {
@@ -203,7 +208,7 @@ public class ConfigureBookkeepingView extends View {
     }
 
     private void updateDatabaseWithEnteredValues() {
-        try {
+        handleException.of(() -> {
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             bookkeeping.setDescription(descriptionModel.getString());
             if (startDateModel.getDate() != null) {
@@ -236,15 +241,13 @@ public class ConfigureBookkeepingView extends View {
                         settings.setSequenceNumber(Long.parseLong(sequenceNumberModel.getString()));
                     }
                 } catch (Exception e) {
-                    MessageDialog.showErrorMessage(this, "gen.invalidNumber", textResource.getString("ConfigureBookkeepingView.sequenceNumber"));
+                    messageDialog.showWarningMessage("gen.invalidNumber", textResource.getString("ConfigureBookkeepingView.sequenceNumber"));
                     settings.setSequenceNumber(0);
                     // probably incorrect syntax
                 }
                 automaticCollectionService.setSettings(document, settings);
             }
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private void updateButtonState() {
@@ -270,7 +273,7 @@ public class ConfigureBookkeepingView extends View {
     private void onDeleteAccount() {
         AccountDefinition accountDefinition = getSelectedAccountDefinition();
         Account account = accountDefinition.account;
-        int choice = MessageDialog.showYesNoQuestion(this, "ConfigureBookkeepingView.deleteAccountTitle",
+        int choice = messageDialog.showYesNoQuestion("ConfigureBookkeepingView.deleteAccountTitle",
                 "ConfigureBookkeepingView.deleteAccountAreYouSure",	account.getId() + " - " + account.getName());
         if (choice == MessageDialog.YES_OPTION) {
             try {
@@ -278,13 +281,13 @@ public class ConfigureBookkeepingView extends View {
                 int index = Tables.getSelectedRowConvertedToModel(table);
                 tableModel.removeRow(index);
             } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(getViewOwner().getWindow(), e, "ConfigureBookkeepingView.deleteAccountException");
+                messageDialog.showErrorMessage(e, "ConfigureBookkeepingView.deleteAccountException");
             }
         }
     }
 
     private void onAddAccount() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             EditAccountView eav = new EditAccountView(null);
             ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), eav);
             dialog.showDialog();
@@ -296,14 +299,14 @@ public class ConfigureBookkeepingView extends View {
                     definition.account = account;
                     tableModel.addRow(definition);
                 } catch (ServiceException e) {
-                    MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.addAccountException");
+                    messageDialog.showErrorMessage(e, "ConfigureBookkeepingView.addAccountException");
                 }
             }
         });
     }
 
     private void onEditAccount() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             int[] rows = Tables.getSelectedRowsConvertedToModel(table);
             if (rows.length == 1) {
                 AccountDefinition definition = tableModel.getRow(rows[0]);
@@ -318,7 +321,7 @@ public class ConfigureBookkeepingView extends View {
                         definition.account = account;
                         tableModel.updateRow(rows[0], definition);
                     } catch (ServiceException e) {
-                        MessageDialog.showErrorMessage(this, e, "ConfigureBookkeepingView.updateAccountException");
+                        messageDialog.showErrorMessage(e, "ConfigureBookkeepingView.updateAccountException");
                     }
                 }
             }

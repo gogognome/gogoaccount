@@ -8,9 +8,9 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.views.EditJournalView;
 import nl.gogognome.gogoaccount.gui.views.HandleException;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.views.ViewDialog;
+import nl.gogognome.lib.text.TextResource;
 
 import java.awt.*;
 
@@ -24,21 +24,25 @@ public class EditInvoiceController {
     private final InvoiceService invoiceService;
     private final LedgerService ledgerService;
     private final ViewFactory viewFactory;
+    private final TextResource textResource;
 
     private Component owner;
+    private HandleException handleException;
     private Document document;
     private Invoice invoice;
     private Invoice updatedInvoice;
 
-    public EditInvoiceController(Document document, InvoiceService invoiceService, LedgerService ledgerService, ViewFactory viewFactory) {
+    public EditInvoiceController(Document document, InvoiceService invoiceService, LedgerService ledgerService, ViewFactory viewFactory, TextResource textResource) {
         this.document = document;
         this.invoiceService = invoiceService;
         this.ledgerService = ledgerService;
         this.viewFactory = viewFactory;
+        this.textResource = textResource;
     }
 
     public void setOwner(Component owner) {
         this.owner = owner;
+        handleException = new HandleException(new MessageDialog(textResource, owner));
     }
 
     public void setInvoiceToBeEdited(Invoice invoice) {
@@ -46,7 +50,7 @@ public class EditInvoiceController {
     }
 
     public void execute() {
-        HandleException.for_(owner, () -> {
+        handleException.of(() -> {
             EditInvoiceView view = (EditInvoiceView) viewFactory.createView(EditInvoiceView.class);
             view.setTitleId("EditInvoiceController.editInvoiceTitle");
             view.setInvoiceToBeEdited(invoice);
@@ -57,21 +61,18 @@ public class EditInvoiceController {
             if (updatedInvoice == null) {
                 return;
             }
-            try {
-                JournalEntry journalEntry = ledgerService.findJournalThatCreatesInvoice(document, invoice.getId());
-                if (journalEntry != null) {
-                    updateJournalCreatingInvoice(journalEntry);
-                }
-
-                invoiceService.updateInvoice(document, updatedInvoice, view.getEditedDescriptions(), view.getEditedAmounts());
-            } catch (ServiceException e) {
-                MessageDialog.showErrorMessage(owner, e, "EditJournalController.updateInvoiceException");
+            JournalEntry journalEntry = ledgerService.findJournalThatCreatesInvoice(document, invoice.getId());
+            if (journalEntry != null) {
+                updateJournalCreatingInvoice(journalEntry);
             }
+
+            invoiceService.updateInvoice(document, updatedInvoice, view.getEditedDescriptions(), view.getEditedAmounts());
+
         });
     }
 
     private void updateJournalCreatingInvoice(JournalEntry journalEntry) {
-        HandleException.for_(owner, () -> {
+        handleException.of(() -> {
             EditJournalView view = (EditJournalView) viewFactory.createView(EditJournalView.class);
             view.setJournalEntryToBeEdited(journalEntry, ledgerService.findJournalEntryDetails(document, journalEntry));
             view.setTitle("EditInvoiceController.editJournalTitle");
@@ -84,11 +85,4 @@ public class EditInvoiceController {
         });
     }
 
-    public boolean isInvoiceUpdated() {
-        return updatedInvoice != null;
-    }
-
-    public Invoice getUpdatedInvoice() {
-        return updatedInvoice;
-    }
 }

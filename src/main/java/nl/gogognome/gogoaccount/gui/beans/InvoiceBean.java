@@ -10,7 +10,6 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,15 +28,17 @@ public class InvoiceBean extends JPanel {
     private final Document document;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
+    private final HandleException handleException;
 
     private JTextField tfDescription;
 
     private Invoice selectedInvoice;
 
-    public InvoiceBean(Document document, PartyService partyService, ViewFactory viewFactory) {
+    public InvoiceBean(Document document, PartyService partyService, ViewFactory viewFactory, HandleException handleException) {
         this.document = document;
         this.partyService = partyService;
         this.viewFactory = viewFactory;
+        this.handleException = handleException;
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
         setLayout(new GridBagLayout());
 
@@ -91,7 +92,7 @@ public class InvoiceBean extends JPanel {
         }
         Container finalParent = parent;
 
-        HandleException.for_(parent, () -> {
+        handleException.of(() -> {
             InvoiceEditAndSelectionView invoicesView = (InvoiceEditAndSelectionView) viewFactory.createView(InvoiceEditAndSelectionView.class);
             invoicesView.enableSingleSelect();
             ViewDialog dialog = new ViewDialog(finalParent, invoicesView);

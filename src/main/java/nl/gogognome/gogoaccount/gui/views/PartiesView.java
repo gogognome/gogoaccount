@@ -6,11 +6,10 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
-import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.models.Tables;
 import nl.gogognome.lib.swing.views.View;
@@ -43,6 +42,8 @@ public class PartiesView extends View {
     private final AutomaticCollectionService automaticCollectionService;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private JTable table;
 	private PartiesTableModel partiesTableModel;
@@ -61,13 +62,13 @@ public class PartiesView extends View {
 
     private Party[] selectedParties;
 
-    private InputFieldsColumn ifc;
-
     public PartiesView(Document document, AutomaticCollectionService automaticCollectionService, PartyService partyService, ViewFactory viewFactory) {
         this.automaticCollectionService = automaticCollectionService;
         this.partyService = partyService;
         this.document = document;
         this.viewFactory = viewFactory;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     public void setSelectionEnabled(boolean selectionEnabled) {
@@ -126,7 +127,7 @@ public class PartiesView extends View {
     }
 
     private JPanel createSearchCriteriaPanel() {
-        ifc = new InputFieldsColumn();
+        InputFieldsColumn ifc = new InputFieldsColumn();
         addCloseable(ifc);
         ifc.setBorder(widgetFactory.createTitleBorderWithPadding("partiesView.filter"));
 
@@ -193,7 +194,7 @@ public class PartiesView extends View {
     }
 
     private void onSearch() {
-        try {
+        handleException.of(() -> {
             Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
             List<Party> matchingParties = partyService.findParties(document, criterion);
             partiesTableModel.setRows(matchingParties, partyService.findPartyIdToTags(document));
@@ -204,13 +205,11 @@ public class PartiesView extends View {
             if (btSelect != null) {
                 setDefaultButton(btSelect);
             }
-        } catch (IllegalArgumentException | ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private void onAddParty() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             EditPartyView editPartyView = (EditPartyView) viewFactory.createView(EditPartyView.class);
             ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), editPartyView);
             dialog.showDialog();
@@ -226,7 +225,7 @@ public class PartiesView extends View {
     }
 
     private void onEditParty() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             int row = Tables.getSelectedRowConvertedToModel(table);
             if (row == -1) {
                 return;
@@ -257,22 +256,20 @@ public class PartiesView extends View {
     }
 
     private void onDeleteParty() {
-        try {
+        handleException.of(() -> {
             int row = Tables.getSelectedRowConvertedToModel(table);
             if (row == -1) {
                 return;
             }
 
             Party party = partiesTableModel.getRow(row);
-            int choice = MessageDialog.showYesNoQuestion(this, "gen.titleWarning",
+            int choice = messageDialog.showYesNoQuestion("gen.titleWarning",
                     "partiesView.areYouSurePartyIsDeleted", party.getName());
             if (choice == MessageDialog.YES_OPTION) {
                 partyService.deleteParty(document, party);
             }
             onSearch();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-        }
+        });
     }
 
     private void onSelectParty() {

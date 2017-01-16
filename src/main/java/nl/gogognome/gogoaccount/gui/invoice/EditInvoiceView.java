@@ -18,7 +18,7 @@ import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.ListTableModel;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.*;
 import nl.gogognome.lib.swing.views.OkCancelView;
 import nl.gogognome.lib.swing.views.ViewDialog;
@@ -51,6 +51,8 @@ public class EditInvoiceView extends OkCancelView {
     private final InvoiceService invoiceService;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
+    private final MessageDialog messageDialog;
+    private final HandleException handleException;
 
     private Currency currency;
 
@@ -83,6 +85,8 @@ public class EditInvoiceView extends OkCancelView {
         this.partyService = partyService;
         this.viewFactory = viewFactory;
         this.document = document;
+        messageDialog = new MessageDialog(textResource, this);
+        handleException = new HandleException(messageDialog);
     }
 
     public void setTitleId(String titleId) {
@@ -105,14 +109,11 @@ public class EditInvoiceView extends OkCancelView {
 
     @Override
     public void onInit() {
-        try {
+        handleException.of(() -> {
             initModels();
             addComponents();
             addListeners();
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            close();
-        }
+        });
     }
 
 	private void initModels() throws ServiceException {
@@ -149,8 +150,8 @@ public class EditInvoiceView extends OkCancelView {
         ifc.addField("gen.id", idModel);
         ifc.addField("gen.issueDate", dateModel);
         ifc.addField("gen.description", descriptionModel);
-        ifc.addVariableSizeField("editInvoiceView.concerningParty", new PartyBean(document, concerningPartyModel, viewFactory));
-        ifc.addVariableSizeField("editInvoiceView.payingParty", new PartyBean(document, payingPartyModel, viewFactory));
+        ifc.addVariableSizeField("editInvoiceView.concerningParty", new PartyBean(document, concerningPartyModel, viewFactory, handleException));
+        ifc.addVariableSizeField("editInvoiceView.payingParty", new PartyBean(document, payingPartyModel, viewFactory, handleException));
         ifc.addField("gen.amount", amountModel);
 
     	return ifc;
@@ -158,35 +159,34 @@ public class EditInvoiceView extends OkCancelView {
 
     @Override
 	protected JComponent createCenterComponent() {
-        try {
-            // Create panel with descriptions and amounts table.
-            JPanel middlePanel = new JPanel(new BorderLayout());
-            // TODO: replace by InvoiceDetail
-            List<Tuple<String, Amount>> tuples = new ArrayList<>();
-            if (invoiceToBeEdited != null) {
+        // Create panel with descriptions and amounts table.
+        JPanel middlePanel = new JPanel(new BorderLayout());
+        // TODO: replace by InvoiceDetail
+        List<Tuple<String, Amount>> tuples = new ArrayList<>();
+        if (invoiceToBeEdited != null) {
+            try {
                 List<String> descriptions = invoiceService.findDescriptions(document, invoiceToBeEdited);
                 List<Amount> amounts = invoiceService.findAmounts(document, invoiceToBeEdited);
                 for (int i = 0; i < descriptions.size(); i++) {
                     tuples.add(new Tuple<>(descriptions.get(i), amounts.get(i)));
                 }
+            } catch (ServiceException e) {
+                throw new RuntimeException(e);
             }
-            tableModel = new DescriptionAndAmountTableModel(amountFormat, tuples);
-            table = Tables.createTable(tableModel);
-            JScrollPane scrollPane = widgetFactory.createScrollPane(table);
-            middlePanel.add(scrollPane, BorderLayout.CENTER);
-
-            ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
-            buttonPanel.addButton("editInvoiceView.addRow", new AddAction());
-            buttonPanel.addButton("editInvoiceView.editRow", new EditAction());
-            buttonPanel.addButton("editInvoiceView.deleteRow", new DeleteAction());
-
-            middlePanel.add(buttonPanel, BorderLayout.EAST);
-
-            return middlePanel;
-        } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
-            throw new RuntimeException(e);
         }
+        tableModel = new DescriptionAndAmountTableModel(amountFormat, tuples);
+        table = Tables.createTable(tableModel);
+        JScrollPane scrollPane = widgetFactory.createScrollPane(table);
+        middlePanel.add(scrollPane, BorderLayout.CENTER);
+
+        ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.TOP, SwingConstants.VERTICAL);
+        buttonPanel.addButton("editInvoiceView.addRow", new AddAction());
+        buttonPanel.addButton("editInvoiceView.editRow", new EditAction());
+        buttonPanel.addButton("editInvoiceView.deleteRow", new DeleteAction());
+
+        middlePanel.add(buttonPanel, BorderLayout.EAST);
+
+        return middlePanel;
     }
 
     /**
@@ -209,7 +209,7 @@ public class EditInvoiceView extends OkCancelView {
      * This method is called when the user wants to add a new row.
      */
     private void onAddRow() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
                     "editInvoiceView.addRowTileId", currency);
             ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), editDescriptionAndAmountView);
@@ -225,12 +225,12 @@ public class EditInvoiceView extends OkCancelView {
      * This method is called when the user wants to edit an existing row.
      */
     private void onEditRow() {
-        HandleException.for_(this, () -> {
+        handleException.of(() -> {
             int[] indices = table.getSelectedRows();
             if (indices.length == 0) {
-                MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedToEdit");
+                messageDialog.showInfoMessage("editInvoiceView.noRowsSelectedToEdit");
             } else if (indices.length > 1) {
-                MessageDialog.showInfoMessage(this, "editInvoiceView.multipleRowsSelectedToEdit");
+                messageDialog.showInfoMessage("editInvoiceView.multipleRowsSelectedToEdit");
             } else {
                 Tuple<String, Amount> tuple = tableModel.getRow(indices[0]);
                 EditDescriptionAndAmountView editDescriptionAndAmountView = new EditDescriptionAndAmountView(
@@ -254,7 +254,7 @@ public class EditInvoiceView extends OkCancelView {
     private void onDeleteRow() {
         int[] indices = table.getSelectedRows();
         if (indices.length == 0) {
-            MessageDialog.showInfoMessage(this, "editInvoiceView.noRowsSelectedForDeletion");
+            messageDialog.showInfoMessage("editInvoiceView.noRowsSelectedForDeletion");
         } else {
             tableModel.removeRows(indices);
         }
@@ -264,30 +264,30 @@ public class EditInvoiceView extends OkCancelView {
 	protected void onOk() {
         String id = idModel.getString();
         if (id.length() == 0) {
-            MessageDialog.showWarningMessage(this, "editInvoiceView.noIdEntered");
+            messageDialog.showWarningMessage("editInvoiceView.noIdEntered");
             return;
         }
         Date issueDate = dateModel.getDate();
         if (issueDate == null) {
-            MessageDialog.showWarningMessage(this, "editInvoiceView.noDateEntered");
+            messageDialog.showWarningMessage("editInvoiceView.noDateEntered");
             return;
         }
 
         String description = descriptionModel.getString();
         if (StringUtil.isNullOrEmpty(description)) {
-            MessageDialog.showWarningMessage(this, "editInvoiceView.noDescriptionEntered");
+            messageDialog.showWarningMessage("editInvoiceView.noDescriptionEntered");
             return;
         }
 
         Party concerningParty = concerningPartyModel.getParty();
         if (concerningParty == null) {
-            MessageDialog.showWarningMessage(this, "editInvoiceView.noConcerningPartyEntered");
+            messageDialog.showWarningMessage("editInvoiceView.noConcerningPartyEntered");
             return;
         }
 
         Party payingParty = payingPartyModel.getParty();
         if (payingParty == null) {
-            MessageDialog.showWarningMessage(this, "editInvoiceView.noPayingPartyEntered");
+            messageDialog.showWarningMessage("editInvoiceView.noPayingPartyEntered");
             return;
         }
 
@@ -295,7 +295,7 @@ public class EditInvoiceView extends OkCancelView {
         try {
              amount = new Amount(amountFormat.parse(amountModel.getString()));
         } catch (ParseException e) {
-            MessageDialog.showWarningMessage(this, "gen.invalidAmount");
+            messageDialog.showWarningMessage("gen.invalidAmount");
             return;
         }
 
@@ -337,8 +337,7 @@ public class EditInvoiceView extends OkCancelView {
 		}
 	}
 
-	private final class CopyConceringPartyToPayingPartyListener implements
-			ModelChangeListener {
+	private final class CopyConceringPartyToPayingPartyListener implements ModelChangeListener {
 		@Override
 		public void modelChanged(AbstractModel model) {
 		    if (payingPartyModel.getParty() == null) {
