@@ -168,10 +168,8 @@ public class InvoiceEditAndSelectionView extends View {
 
         // Create a panel containing the search criteria and result panels
         JPanel result = new JPanel(new GridBagLayout());
-        result.add(criteriaPanel,
-                SwingUtils.createTextFieldGBConstraints(0, 0));
-        result.add(resultPanel,
-                SwingUtils.createPanelGBConstraints(0, 1));
+        result.add(criteriaPanel, SwingUtils.createTextFieldGBConstraints(0, 0));
+        result.add(resultPanel, SwingUtils.createPanelGBConstraints(0, 1));
 
         return result;
     }
