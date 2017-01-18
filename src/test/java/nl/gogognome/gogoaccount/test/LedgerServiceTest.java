@@ -3,6 +3,7 @@ package nl.gogognome.gogoaccount.test;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.ledger.DebetAndCreditAmountsDifferException;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetailBuilder;
@@ -103,7 +104,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
                 JournalEntryDetailBuilder.debet().amount("10").account("100").build(),
                 JournalEntryDetailBuilder.credit().amount("20").account("101").build());
 
-        assertThrows(ServiceException.class, () -> ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails));
+        assertThrows(DebetAndCreditAmountsDifferException.class, () -> ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails));
     }
 
 }
