@@ -58,7 +58,7 @@ public class ExportPdfsInvoicesView extends SendInvoicesView {
     }
 
     private void exportInvoicesToPdf(File directory) throws ParserConfigurationException, SAXException, IOException, DocumentException {
-        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource.getString("SendInvoicesView.sendingEmails"));
+        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource, "SendInvoicesView.sendingEmails");
         progressDialog.execute(taskProgressListener -> {
             int progress = 0;
             for (Invoice invoice : invoicesToSend) {

@@ -86,8 +86,7 @@ public class InvoiceToOdtView extends View {
                 parameters.setOurReference(ourReferenceModel.getString());
                 OdtInvoiceGeneratorTask task = new OdtInvoiceGeneratorTask(invoicesToModelConverter, parameters,
                         odtFileModel.getFile(), templateFileModel.getFile());
-                TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
-                        textResource.getString("invoiceToOdtView.progressDialogTitle"));
+                TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource, "invoiceToOdtView.progressDialogTitle");
                 progressDialog.execute(task);
             }
         });

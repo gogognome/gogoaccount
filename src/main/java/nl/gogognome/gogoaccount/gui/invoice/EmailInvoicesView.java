@@ -37,7 +37,7 @@ public class EmailInvoicesView extends SendInvoicesView {
             return false;
         }
 
-        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource.getString("SendInvoicesView.sendingEmails"));
+        TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource, "SendInvoicesView.sendingEmails");
         progressDialog.execute(taskProgressListener -> {
             int progress = 0;
             for (Invoice invoice : invoicesToSend) {

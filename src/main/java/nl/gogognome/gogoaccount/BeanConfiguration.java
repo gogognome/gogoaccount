@@ -44,10 +44,10 @@ public class BeanConfiguration {
 
     @Bean
     public MainFrame mainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
-                               ViewFactory viewFactory, DocumentRegistry documentRegistry, GenerateReportController generateReportController,
+                               ViewFactory viewFactory, ControllerFactory controllerFactory, DocumentRegistry documentRegistry,
                                ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
-        return new MainFrame(bookkeepingService, documentService, configurationService, viewFactory, documentRegistry,
-                generateReportController, resourceLoader, xmlFileReader);
+        return new MainFrame(bookkeepingService, documentService, configurationService, viewFactory, controllerFactory, documentRegistry,
+                resourceLoader, xmlFileReader);
     }
 
     @Bean
@@ -59,6 +59,19 @@ public class BeanConfiguration {
                 return beanFactory.getBean(beanName, viewClass);
             } catch (Exception e) {
                 throw new RuntimeException("Could not create instance of view " + viewClass.getName(), e);
+            }
+        };
+    }
+
+    @Bean
+    public ControllerFactory controllerFactory(BeanFactory beanFactory) {
+        return controllerClass -> {
+            try {
+                String beanName = controllerClass.getSimpleName();
+                beanName = Character.toLowerCase(beanName.charAt(0)) + beanName.substring(1);
+                return beanFactory.getBean(beanName, controllerClass);
+            } catch (Exception e) {
+                throw new RuntimeException("Could not create instance of controller " + controllerClass.getName(), e);
             }
         };
     }

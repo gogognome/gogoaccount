@@ -102,8 +102,7 @@ public class GenerateAutomaticCollectionFileView extends View {
                     collectionDateModel.getDate(), selectedInvoices, journalEntryDescriptionModel.getString(),
                     journalEntryIdModel.getString(), bankAccountListModel.getSelectedItem(), debtorAccountListModel.getSelectedItem());
 
-            TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this,
-                    textResource.getString("generateAutomaticCollectionFileView.progressDialogTitle"));
+            TaskWithProgressDialog progressDialog = new TaskWithProgressDialog(this, textResource, "generateAutomaticCollectionFileView.progressDialogTitle");
             progressDialog.execute(task);
         });
     }

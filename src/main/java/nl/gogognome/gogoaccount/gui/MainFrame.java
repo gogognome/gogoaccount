@@ -62,22 +62,22 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final DocumentService documentService;
     private final ConfigurationService configurationService;
     private final ViewFactory viewFactory;
+    private final ControllerFactory controllerFactory;
     private final DocumentRegistry documentRegistry;
-    private final GenerateReportController generateReportController;
     private final ResourceLoader resourceLoader;
     private final XMLFileReader xmlFileReader;
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
     public MainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
-                     ViewFactory viewFactory, DocumentRegistry documentRegistry, GenerateReportController generateReportController,
+                     ViewFactory viewFactory, ControllerFactory controllerFactory, DocumentRegistry documentRegistry,
                      ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
         this.bookkeepingService = bookkeepingService;
         this.documentService = documentService;
         this.configurationService = configurationService;
         this.viewFactory = viewFactory;
+        this.controllerFactory = controllerFactory;
         this.documentRegistry = documentRegistry;
-        this.generateReportController = generateReportController;
         this.resourceLoader = resourceLoader;
         this.xmlFileReader = xmlFileReader;
         messageDialog = new MessageDialog(textResource, this);
@@ -445,6 +445,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private void handleGenerateReport() {
         ensureAccountsPresent(() -> {
+            GenerateReportController generateReportController = (GenerateReportController) controllerFactory.createController(GenerateReportController.class);
             generateReportController.setViewOwner(new JFrameViewOwner(this));
             generateReportController.execute();
         });

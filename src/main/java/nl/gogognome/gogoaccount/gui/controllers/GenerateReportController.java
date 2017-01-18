@@ -91,10 +91,8 @@ public class GenerateReportController {
     }
 
     private void startTask(Task task) {
-        String description = Factory.getInstance(TextResource.class)
-            .getString("genreport.progress");
-        TaskWithProgressDialog taskWithProgressDialog =
-            new TaskWithProgressDialog(viewOwner, description);
+        String description = Factory.getInstance(TextResource.class).getString("genreport.progress");
+        TaskWithProgressDialog taskWithProgressDialog = new TaskWithProgressDialog(viewOwner, textResource, description);
         taskWithProgressDialog.execute(task);
     }
 }
