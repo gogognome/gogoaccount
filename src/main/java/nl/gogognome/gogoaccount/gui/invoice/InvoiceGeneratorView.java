@@ -367,7 +367,7 @@ public class InvoiceGeneratorView extends View {
             }
 
             generateInvoices(date, invoiceLines, parties);
-            messageDialog.showInfoMessage("gen.titleMessage", "invoiceGeneratorView.messageSuccess");
+            messageDialog.showInfoMessage("invoiceGeneratorView.messageSuccess");
         });
     }
 
