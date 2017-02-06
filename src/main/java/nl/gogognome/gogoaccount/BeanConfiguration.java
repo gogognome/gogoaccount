@@ -232,8 +232,9 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public ExportPdfsInvoicesView exportPdfsInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                                         InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
-        return new ExportPdfsInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate, settingsService);
+                                                         InvoicePreviewTemplate invoicePreviewTemplate,
+                                                         SettingsService settingsService, PdfGenerator pdfGenerator) {
+        return new ExportPdfsInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate, settingsService, pdfGenerator);
     }
 
     @Bean
@@ -302,8 +303,9 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public PrintInvoicesView printInvoicesView(DocumentWrapper documentWrapper, InvoiceService invoiceService,
-                                               InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
-        return new PrintInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate, settingsService);
+                                               InvoicePreviewTemplate invoicePreviewTemplate,
+                                               SettingsService settingsService, PdfGenerator pdfGenerator) {
+        return new PrintInvoicesView(documentWrapper.document, invoiceService, invoicePreviewTemplate, settingsService, pdfGenerator);
     }
 
     @Bean
@@ -449,4 +451,8 @@ public class BeanConfiguration {
                 ledgerService, partyService);
     }
 
+    @Bean
+    public PdfGenerator pdfGenerator() {
+        return new PdfGenerator();
+    }
 }

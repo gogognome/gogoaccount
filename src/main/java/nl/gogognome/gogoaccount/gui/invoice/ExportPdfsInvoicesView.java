@@ -7,15 +7,11 @@ import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
-import org.xhtmlrenderer.pdf.ITextRenderer;
 import org.xml.sax.SAXException;
 
 import javax.swing.*;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.nio.charset.Charset;
 
 import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.PDF;
 
@@ -23,12 +19,15 @@ public class ExportPdfsInvoicesView extends SendInvoicesView {
 
     private final Document document;
     private final InvoiceService invoiceService;
+    private final PdfGenerator pdfGenerator;
 
     public ExportPdfsInvoicesView(Document document, InvoiceService invoiceService,
-                                  InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService) {
+                                  InvoicePreviewTemplate invoicePreviewTemplate, SettingsService settingsService,
+                                  PdfGenerator pdfGenerator) {
         super(document, invoicePreviewTemplate, settingsService);
         this.document = document;
         this.invoiceService = invoiceService;
+        this.pdfGenerator = pdfGenerator;
     }
 
     @Override
@@ -64,16 +63,12 @@ public class ExportPdfsInvoicesView extends SendInvoicesView {
             for (Invoice invoice : invoicesToSend) {
                 progress += 100 / invoicesToSend.size();
                 taskProgressListener.onProgressUpdate(progress);
-                try (OutputStream os = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"))) {
-                    ITextRenderer renderer = new ITextRenderer();
-                    String xml = fillInParametersInTemplate(templateModel.getString(), invoice);
-                    DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-                    org.w3c.dom.Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF-8"))));
-                    renderer.setDocument(doc, templateFileModel.getFile().toURI().toString());
-                    renderer.layout();
-                    renderer.createPDF(os);
-                    invoiceService.createInvoiceSending(document, invoice, PDF);
+                String html = fillInParametersInTemplate(templateModel.getString(), invoice);
+                try (FileOutputStream outputStream = new FileOutputStream(new File(directory, invoice.getId() + "_" + invoiceIdToParty.get(invoice.getId()).getName() + ".pdf"))) {
+                    pdfGenerator.writePdfToStream(html, templateFileModel.getFile().toURI().toString(), outputStream);
                 }
+
+                invoiceService.createInvoiceSending(document, invoice, PDF);
             }
             taskProgressListener.onProgressUpdate(100);
             return null;
