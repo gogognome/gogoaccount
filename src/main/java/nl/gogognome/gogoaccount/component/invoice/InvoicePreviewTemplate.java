@@ -6,6 +6,7 @@ import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -43,7 +44,7 @@ public class InvoicePreviewTemplate {
         replacements.put("${party.zipCode}", party.getZipCode());
         replacements.put("${party.city}", party.getCity());
 
-        String result = keyValueReplacer.applyReplacements(templateContents, replacements);
+        String result = keyValueReplacer.applyReplacements(templateContents, replacements, StringEscapeUtils::escapeHtml);
 
         int lineStartIndex = result.indexOf("${lineStart}");
         int lineEndIndex = result.indexOf("${lineEnd}");
@@ -78,7 +79,7 @@ public class InvoicePreviewTemplate {
                     "${line.date}", textResource.formatDate("gen.dateFormat", date.apply(object)),
                     "${line.description}", description.apply(object),
                     "${line.amount}", amountFormat.formatAmount(amount.apply(object).toBigInteger()));
-            formattedLines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement));
+            formattedLines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement, StringEscapeUtils::escapeHtml));
         }
     }
 
