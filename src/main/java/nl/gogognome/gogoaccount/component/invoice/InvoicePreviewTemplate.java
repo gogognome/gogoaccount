@@ -6,7 +6,6 @@ import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
-import org.apache.commons.lang.StringEscapeUtils;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -44,7 +43,7 @@ public class InvoicePreviewTemplate {
         replacements.put("${party.zipCode}", party.getZipCode());
         replacements.put("${party.city}", party.getCity());
 
-        String result = keyValueReplacer.applyReplacements(templateContents, replacements, StringEscapeUtils::escapeHtml);
+        String result = keyValueReplacer.applyReplacements(templateContents, replacements, this::escapeSpecialCharacters);
 
         int lineStartIndex = result.indexOf("${lineStart}");
         int lineEndIndex = result.indexOf("${lineEnd}");
@@ -79,8 +78,19 @@ public class InvoicePreviewTemplate {
                     "${line.date}", textResource.formatDate("gen.dateFormat", date.apply(object)),
                     "${line.description}", description.apply(object),
                     "${line.amount}", amountFormat.formatAmount(amount.apply(object).toBigInteger()));
-            formattedLines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement, StringEscapeUtils::escapeHtml));
+            formattedLines.append(keyValueReplacer.applyReplacements(lineTemplate, lineReplacement, this::escapeSpecialCharacters));
         }
     }
 
+    private String escapeSpecialCharacters(String input) {
+        StringBuilder output = new StringBuilder(input.length());
+        for (char c : input.toCharArray()) {
+            if (c < 32 || c > 127 || "&\"'<>".indexOf(c) != -1) {
+                output.append("&#" + ((int)c) + ";");
+            } else {
+                output.append(c);
+            }
+        }
+        return output.toString();
+    }
 }

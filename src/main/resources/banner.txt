@@ -2,5 +2,5 @@ Gogo Account 2.6
 Copyright 2011-2017 Sander Kooijmans
 http://www.gogognome.nl
 
-This software is released under the GNU General Public License version 3
+This software is released under the Apache License, Version 2.0
 Icons used from: http://www.famfamfam.com/lab/icons/silk/
