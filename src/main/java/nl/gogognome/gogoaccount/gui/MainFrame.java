@@ -251,7 +251,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private File askUserForFileOfNewBookkeeping() {
         String extension = ".h2.db";
-        JFileChooser fc = new JFileChooser(new File(document.getFileName()).getParentFile());
+        File directory = document != null ? new File(document.getFileName()).getParentFile() : null;
+        JFileChooser fc = new JFileChooser(directory);
         fc.setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File f) {
@@ -337,6 +338,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                     }
                     Document newDocument = bookkeepingService.closeBookkeeping(document, file, description, date, accountToAddResultTo);
                     setDocument(newDocument);
+                    handleViewBalanceAndOperationalResult();
                 } catch (ServiceException e) {
                     messageDialog.showErrorMessage(e, "mf.closeBookkeepingException");
                 }
@@ -353,6 +355,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             Document newDocument = doLoadFile(file);
             newDocument.notifyChange();
             setDocument(newDocument);
+            handleViewBalanceAndOperationalResult();
         } catch (ServiceException e) {
             messageDialog.showErrorMessage(e, "mf.errorOpeningFile");
         }
@@ -399,7 +402,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         documentRegistry.register(document);
 
         documentChanged(document);
-        handleViewBalanceAndOperationalResult();
     }
 
     private void handleExit() {
