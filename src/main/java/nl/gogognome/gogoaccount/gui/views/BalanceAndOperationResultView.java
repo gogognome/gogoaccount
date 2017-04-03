@@ -15,10 +15,10 @@ import nl.gogognome.gogoaccount.gui.components.OperationalResultComponent;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.views.View;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 
 /**
  * This class implements a view the shows a balance and operation result.
@@ -31,11 +31,13 @@ public class BalanceAndOperationResultView extends View {
 
     private final Document document;
     private final BookkeepingService bookkeepingService;
+    private final MessageDialog messageDialog;
     private DateModel dateModel;
 
     public BalanceAndOperationResultView(Document document, BookkeepingService bookkeepingService) {
         this.document = document;
         this.bookkeepingService = bookkeepingService;
+        messageDialog = new MessageDialog(textResource, this);
     }
 
     @Override
@@ -49,7 +51,7 @@ public class BalanceAndOperationResultView extends View {
             initModels();
             addComponents();
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            messageDialog.showErrorMessage(e, "gen.problemOccurred");
             close();
         }
     }
