@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class InvoicePreviewTemplate {
 
@@ -50,8 +49,8 @@ public class InvoicePreviewTemplate {
         if (lineStartIndex != -1 && lineEndIndex != -1) {
             String lineTemplate = result.substring(lineStartIndex + "${lineStart}".length(), lineEndIndex);
             StringBuilder lines = new StringBuilder();
-            appendInvoiceDetails(lines, lineTemplate, invoiceDetails, d -> invoice.getIssueDate(), d -> d.getDescription(), d -> d.getAmount());
-            appendInvoiceDetails(lines, lineTemplate, payments, p -> p.getDate(), p -> p.getDescription(), p -> p.getAmount().negate());
+            appendInvoiceDetails(lines, lineTemplate, invoiceDetails, d -> invoice.getIssueDate(), InvoiceDetail::getDescription, InvoiceDetail::getAmount);
+            appendInvoiceDetails(lines, lineTemplate, payments, Payment::getDate, Payment::getDescription, p -> p.getAmount().negate());
             result = result.substring(0, lineStartIndex) + lines + result.substring(lineEndIndex + "${lineEnd}".length());
         }
         return result;
@@ -83,10 +82,14 @@ public class InvoicePreviewTemplate {
     }
 
     private String escapeSpecialCharacters(String input) {
+        if (input == null) {
+            return "";
+        }
+
         StringBuilder output = new StringBuilder(input.length());
         for (char c : input.toCharArray()) {
             if (c < 32 || c > 127 || "&\"'<>".indexOf(c) != -1) {
-                output.append("&#" + ((int)c) + ";");
+                output.append("&#").append((int) c).append(";");
             } else {
                 output.append(c);
             }
