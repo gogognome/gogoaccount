@@ -108,7 +108,10 @@ public class EditAccountView extends View {
     }
 
     private boolean validateInput() {
-        return idModel.validate() & descriptionModel.validate() & accountTypeModel.validate();
+        boolean valid = idModel.validate();
+        valid &= descriptionModel.validate();
+        valid &= accountTypeModel.validate();
+        return valid;
     }
 
     private void onCancel() {
