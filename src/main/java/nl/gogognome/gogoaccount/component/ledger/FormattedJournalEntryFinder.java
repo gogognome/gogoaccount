@@ -59,7 +59,7 @@ public class FormattedJournalEntryFinder {
         AmountFormat af = Factory.getInstance(AmountFormat.class);
         formattedJournalEntry.invoiceDescription = append(formattedJournalEntry.invoiceDescription, invoice.getId()
                 + " - " + invoice.getDescription() + " - " +  af.formatAmountWithoutCurrency(amount.toBigInteger()));
-        Party party = partyService.getParty(document, invoice.getPayingPartyId());
+        Party party = partyService.getParty(document, invoice.getPartyId());
         formattedJournalEntry.party = append(formattedJournalEntry.party, party.getId() + " - " + party.getName());
     }
 

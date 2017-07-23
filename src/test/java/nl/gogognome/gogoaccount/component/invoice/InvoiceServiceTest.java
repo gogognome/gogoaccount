@@ -29,7 +29,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Amount amount = AmountBuilder.build(20);
         Account debtor = configurationService.getAccount(document, "190");
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "inv-{id}", issueDate, "Invoice for {name}", buildSomeLine());
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "inv-{id}", null, issueDate, "Invoice for {name}", buildSomeLine());
         ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
 
         for (Party party : parties) {
@@ -45,7 +45,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Account debtor = configurationService.getAccount(document, "190");
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", buildSomeLine());
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", "12731", issueDate, "Invoice for {name}", buildSomeLine());
         ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
 
         Set<String> ids = new HashSet<>();
@@ -66,7 +66,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Account debtor = configurationService.getAccount(document, "190");
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, null, issueDate, "Invoice for {name}", buildSomeLine());
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, null, null, issueDate, "Invoice for {name}", buildSomeLine());
 
         ServiceException exception = assertThrows(ServiceException.class, () ->
                 ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties));
@@ -79,7 +79,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         List<InvoiceTemplateLine> lines = singletonList(new InvoiceTemplateLine((AmountFormula) null, "Zaalhuur", configurationService.getAccount(document, "400")));
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", lines);
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", "1231", issueDate, "Invoice for {name}", lines);
         Account debtor = configurationService.getAccount(document, "190");
 
         ServiceException exception = assertThrows(ServiceException.class, () ->
@@ -91,7 +91,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     public void cannotCreateInvoicesWithoutDebtorOrCreditor() throws Exception {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", buildSomeLine());
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", null, issueDate, "Invoice for {name}", buildSomeLine());
 
         ServiceException exception = assertThrows(ServiceException.class, () ->
             ledgerService.createInvoiceAndJournalForParties(document, null, invoiceTemplate, parties));
@@ -104,7 +104,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Party> parties = partyService.findAllParties(document);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
         Account nonDebtorAndNonCreditor = sportsHallRent;
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", issueDate, "Invoice for {name}", buildSomeLine());
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", "1231", issueDate, "Invoice for {name}", buildSomeLine());
 
         ServiceException exception = assertThrows(ServiceException.class, () ->
             ledgerService.createInvoiceAndJournalForParties(document, nonDebtorAndNonCreditor, invoiceTemplate, parties));
@@ -118,8 +118,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Amount> amounts = asList(null, AmountBuilder.build(30));
         Party party = partyService.getParty(document, "1102");
         Invoice invoice = new Invoice("inv1");
-        invoice.setConcerningPartyId(party.getId());
-        invoice.setPayingPartyId(party.getId());
+        invoice.setPartyId(party.getId());
         invoice.setAmountToBePaid(AmountBuilder.build(30));
         invoice.setIssueDate(DateUtil.createDate(2011, 5, 6));
 
@@ -136,8 +135,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         List<Amount> amounts = asList(null, AmountBuilder.build(30));
         Party party = partyService.getParty(document, "1102");
         Invoice invoice = new Invoice("inv421");
-        invoice.setConcerningPartyId(party.getId());
-        invoice.setPayingPartyId(party.getId());
+        invoice.setPartyId(party.getId());
         invoice.setAmountToBePaid(AmountBuilder.build(30));
         invoice.setIssueDate(DateUtil.createDate(2011, 5, 6));
 
@@ -210,7 +208,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     }
 
     private void createInvoiceWithPayment(String invoiceId, int amountToBePaid, int amountPaid, Party party) throws ServiceException {
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, invoiceId, DateUtil.createDate(2011, 8, 7),
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, invoiceId, null, DateUtil.createDate(2011, 8, 7),
                 "Invoice " + invoiceId + " to be paid: " + amountToBePaid + ", paid: " + amountPaid,
                 singletonList(new InvoiceTemplateLine(AmountBuilder.build(amountToBePaid), "Contribution", contribution)));
         ledgerService.createInvoiceAndJournalForParties(document,
@@ -232,7 +230,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
     private void assertInvoiceOverviewsEqual(List<InvoiceOverview> overviews, String... expectedOverviews) {
         assertEquals(
                 Arrays.stream(expectedOverviews).reduce("", String::concat),
-                overviews.stream().map(o -> o.getId() + ' ' + o.getDescription() + ' ' + o.getPayingPartyName()).reduce("", String::concat));
+                overviews.stream().map(o -> o.getId() + ' ' + o.getDescription() + ' ' + o.getPartyName()).reduce("", String::concat));
     }
 
     @Test
@@ -242,8 +240,8 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         overview.setAmountToBePaid(AmountBuilder.build(456));
         overview.setDescription("Description");
         overview.setIssueDate(DateUtil.createDate(2011, 5, 6));
-        overview.setPayingPartyId("Party id");
-        overview.setPayingPartyName("Party name");
+        overview.setPartyId("Party id");
+        overview.setPartyName("Party name");
 
         assertTrue(invoiceService.matches(null, overview, amountFormat));
         assertMatches(overview, "123");

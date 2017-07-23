@@ -100,7 +100,7 @@ public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTab
     	StringBuilder sb = new StringBuilder(100);
         if (invoice != null) {
             sb.append(invoice.getId());
-            sb.append(" (").append(partyService.getParty(document, invoice.getPayingPartyId()).getName()).append(")");
+            sb.append(" (").append(partyService.getParty(document, invoice.getPartyId()).getName()).append(")");
         }
 		return sb.toString();
 	}

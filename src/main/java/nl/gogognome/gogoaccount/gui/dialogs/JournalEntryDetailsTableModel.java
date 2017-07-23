@@ -88,7 +88,7 @@ public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDe
             if (journalEntryDetail.getInvoiceId() != null) {
                 try {
                     Invoice invoice = invoiceService.getInvoice(document, journalEntryDetail.getInvoiceId());
-                    Party party = partyService.getParty(document, invoice.getPayingPartyId());
+                    Party party = partyService.getParty(document, invoice.getPartyId());
                     result = invoice != null ? invoice.getId() + " (" + party.getId() + " - " + party.getName() + ")" : "";
                 } catch (ServiceException e) {
                     logger.warn("Ignored exception: " + e.getMessage(), e);

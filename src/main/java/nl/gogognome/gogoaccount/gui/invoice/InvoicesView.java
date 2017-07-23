@@ -15,6 +15,7 @@ import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.*;
 import nl.gogognome.lib.swing.action.ActionWrapper;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.BooleanModel;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.models.Tables;
@@ -51,6 +52,7 @@ public class InvoicesView extends View {
     private final PartyService partyService;
     private final EditInvoiceController editInvoiceController;
     private final ViewFactory viewFactory;
+    private final MessageDialog messageDialog;
 
     private StringModel searchCriterionModel = new StringModel();
     private BooleanModel includePaidInvoicesModel = new BooleanModel();
@@ -77,6 +79,7 @@ public class InvoicesView extends View {
         this.partyService = partyService;
         this.editInvoiceController = editInvoiceController;
         this.viewFactory = viewFactory;
+        messageDialog = new MessageDialog(textResource, this);
     }
 
     @Override
@@ -91,7 +94,7 @@ public class InvoicesView extends View {
             onSearch();
             addListeners();
         } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, e, "gen.internalError");
+            messageDialog.showErrorMessage(e, "gen.internalError");
             close();
         }
     }
@@ -161,7 +164,7 @@ public class InvoicesView extends View {
                 buttonPanel.addButton(generateAutomaticCollectionFileAction);
             }
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.internalError");
+            messageDialog.showErrorMessage(e, "gen.internalError");
         }
         return buttonPanel;
     }
@@ -172,32 +175,33 @@ public class InvoicesView extends View {
         invoiceDetailsPanel.setLayout(new GridBagLayout());
         InputFieldsColumn ifc = new InputFieldsColumn();
         ifc.addReadonlyField("gen.id", new StringModel(selectedInvoice.getId()));
+        ifc.addReadonlyField("InvoicesView.partyReference", new StringModel(selectedInvoice.getPartyReference()));
         ifc.addReadonlyField("gen.description", new StringModel(selectedInvoice.getDescription()));
         ifc.addReadonlyField("gen.issueDate", new StringModel(textResource.formatDate("gen.dateFormat", selectedInvoice.getIssueDate())));
-        ifc.addReadonlyField("gen.party", new StringModel(selectedInvoice.getPayingPartyId() + " - " + selectedInvoice.getPayingPartyName()));
+        ifc.addReadonlyField("gen.party", new StringModel(selectedInvoice.getPartyId() + " - " + selectedInvoice.getPartyName()));
 
         Amount amountToBePaidOrReceived;
         Amount amountPaidOrReceived;
-        Amount saldo;
+        Amount balance;
         String amountToBePaidOrReceivedId;
         String amountPaidOrReceivedId;
         if (selectedInvoice.getAmountToBePaid().isNegative()) {
             amountToBePaidOrReceived = selectedInvoice.getAmountToBePaid().negate();
             amountPaidOrReceived = selectedInvoice.getAmountPaid().negate();
-            saldo = amountToBePaidOrReceived.subtract(amountPaidOrReceived);
+            balance = amountToBePaidOrReceived.subtract(amountPaidOrReceived);
             amountToBePaidOrReceivedId = "gen.amountToBePaid";
             amountPaidOrReceivedId = "gen.amountPaid";
         } else {
             amountToBePaidOrReceived = selectedInvoice.getAmountToBePaid();
             amountPaidOrReceived = selectedInvoice.getAmountPaid();
-            saldo = amountToBePaidOrReceived.subtract(amountPaidOrReceived);
+            balance = amountToBePaidOrReceived.subtract(amountPaidOrReceived);
             amountToBePaidOrReceivedId = "gen.amountToBeReceived";
             amountPaidOrReceivedId = "gen.amountReceived";
         }
 
         ifc.addReadonlyField(amountToBePaidOrReceivedId, new StringModel(amountFormat.formatAmountWithoutCurrency(amountToBePaidOrReceived.toBigInteger())));
         ifc.addReadonlyField(amountPaidOrReceivedId, new StringModel(amountFormat.formatAmountWithoutCurrency(amountPaidOrReceived.toBigInteger())));
-        ifc.addReadonlyField("gen.saldo", new StringModel(amountFormat.formatAmountWithoutCurrency(saldo.toBigInteger())));
+        ifc.addReadonlyField("gen.balance", new StringModel(amountFormat.formatAmountWithoutCurrency(balance.toBigInteger())));
 
         invoiceDetailsPanel.add(ifc, SwingUtils.createGBConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, 0, 0, 0, 0));
 
@@ -208,7 +212,7 @@ public class InvoicesView extends View {
             invoiceDetailsPanel.add(detailsWithHeaderTable,
                     SwingUtils.createGBConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 10, 0, 0, 0));
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+            messageDialog.showErrorMessage("gen.internalError", e);
         }
 
         try {
@@ -218,7 +222,7 @@ public class InvoicesView extends View {
             invoiceDetailsPanel.add(detailsWithHeaderTable,
                     SwingUtils.createGBConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 10, 0, 0, 0));
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+            messageDialog.showErrorMessage("gen.internalError", e);
         }
 
         add(invoiceDetailsPanel, BorderLayout.SOUTH);
@@ -255,7 +259,7 @@ public class InvoicesView extends View {
             Tables.selectFirstRow(table);
             table.requestFocusInWindow();
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            messageDialog.showErrorMessage(e, "gen.problemOccurred");
         }
     }
 
@@ -279,22 +283,26 @@ public class InvoicesView extends View {
                         .build());
         columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.party", String.class, 200)
-                        .add(row -> row.getPayingPartyId() + " - " + row.getPayingPartyName())
+                        .add(row -> row.getPartyId() + " - " + row.getPartyName())
+                        .build());
+        columnDefinitions.add(
+                ColumnDefinition.<InvoiceOverview>builder("InvoicesView.partyReference", String.class, 120)
+                        .add(Invoice::getPartyReference)
                         .build());
         columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.emailAddress", String.class, 100)
-                        .add(InvoiceOverview::getPayingPartyEmailAddress)
+                        .add(InvoiceOverview::getPartyEmailAddress)
                         .build());
         if (automaticCollectionEnabled) {
             columnDefinitions.add(
                     ColumnDefinition.<InvoiceOverview>builder("gen.Iban", String.class, 100)
-                            .add(invoice -> partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPayingPartyId()) != null ?
-                                    partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPayingPartyId()).getIban() : null)
+                            .add(invoice -> partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPartyId()) != null ?
+                                    partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPartyId()).getIban() : null)
                             .build());
         }
         columnDefinitions.add(
                 ColumnDefinition.<InvoiceOverview>builder("gen.remarks", String.class, 100)
-                        .add(InvoiceOverview::getPayingPartyRemarks)
+                        .add(InvoiceOverview::getPartyRemarks)
                         .add(new TooltipCellRenderer())
                         .build());
         columnDefinitions.add(
@@ -351,14 +359,14 @@ public class InvoicesView extends View {
     private void sendSelectedInvoices(SendInvoicesView sendInvoicesView) {
         try {
             List<Invoice> selectedInvoices = getSelectedInvoices();
-            Map<String, Party> idToParty = partyService.getIdToParty(document, selectedInvoices.stream().map(Invoice::getConcerningPartyId).collect(toList()));
-            Map<String, Party> invoiceIdToParty = selectedInvoices.stream().collect(toMap(Invoice::getId, i -> idToParty.get(i.getConcerningPartyId())));
+            Map<String, Party> idToParty = partyService.getIdToParty(document, selectedInvoices.stream().map(Invoice::getPartyId).collect(toList()));
+            Map<String, Party> invoiceIdToParty = selectedInvoices.stream().collect(toMap(Invoice::getId, i -> idToParty.get(i.getPartyId())));
             DefaultValueMap<String, List<InvoiceDetail>> invoiceIdToDetails = invoiceService.getIdToInvoiceDetails(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
             DefaultValueMap<String, List<Payment>> invoiceIdToPayments = invoiceService.getIdToPayments(document, selectedInvoices.stream().map(Invoice::getId).collect(toList()));
             sendInvoicesView.setInvoicesToSend(selectedInvoices, invoiceIdToDetails, invoiceIdToPayments, invoiceIdToParty);
             new ViewDialog(getViewOwner().getWindow(), sendInvoicesView).showDialog();
         } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+            messageDialog.showErrorMessage("gen.internalError", e);
         }
     }
 
@@ -369,7 +377,7 @@ public class InvoicesView extends View {
             view.setSelectedInvoices(selectedInvoices);
             new ViewDialog(getViewOwner().getWindow(), view).showDialog();
         } catch (Exception e) {
-            MessageDialog.showErrorMessage(this, "gen.internalError", e);
+            messageDialog.showErrorMessage("gen.internalError", e);
         }
     }
 

@@ -1,6 +1,5 @@
 package nl.gogognome.gogoaccount.reportgenerators;
 
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
@@ -20,7 +19,6 @@ import java.util.*;
 public class InvoicesToModelConverter {
 
     private final AmountFormat amountFormat;
-    private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
     private final TextResource textResource;
@@ -29,9 +27,8 @@ public class InvoicesToModelConverter {
 
     private Map<String, Object> model;
 
-    public InvoicesToModelConverter(AmountFormat amountFormat, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService, TextResource textResource) {
+    public InvoicesToModelConverter(AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService, TextResource textResource) {
         this.amountFormat = amountFormat;
-        this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.partyService = partyService;
         this.textResource = textResource;
@@ -70,7 +67,7 @@ public class InvoicesToModelConverter {
 
         putNullable(map, "id", invoice.getId());
 
-        Party party = partyService.getParty(parameters.getDocument(), invoice.getConcerningPartyId());
+        Party party = partyService.getParty(parameters.getDocument(), invoice.getPartyId());
         putNullable(map, "partyName", party.getName());
         putNullable(map, "partyAddress", party.getAddress());
         putNullable(map, "partyZip", party.getZipCode());

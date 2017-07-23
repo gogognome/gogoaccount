@@ -262,7 +262,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(AmountBuilder.build(20), "Zaalhuur", sportsHallRent));
-            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", createDate(2011, 8, 20), "Invoice for {name}", someLine);
+            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", "847539", createDate(2011, 8, 20), "Invoice for {name}", someLine);
             ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
@@ -279,7 +279,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(AmountBuilder.build(20), "Zaalhuur", sportsHallRent));
-            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto", createDate(2012, 1, 15), "Invoice for {name}", someLine);
+            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "auto",  null, createDate(2012, 1, 15), "Invoice for {name}", someLine);
             ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));

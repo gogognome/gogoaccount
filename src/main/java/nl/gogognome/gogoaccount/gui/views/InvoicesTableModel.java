@@ -1,17 +1,17 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import java.util.Date;
-
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
+import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.tablecellrenderer.AmountCellRenderer;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.swing.ColumnDefinition;
 import nl.gogognome.lib.swing.ListTableModel;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
+
+import java.util.Date;
 
 /**
  * The table model that shows information about the invoices.
@@ -30,7 +30,7 @@ class InvoicesTableModel extends ListTableModel<Invoice> {
                     .add(row -> row.getId())
                     .build(),
                 ColumnDefinition.<Invoice>builder("gen.name", String.class, 200)
-                    .add(row -> { try { return this.partyService.getParty(document, row.getPayingPartyId()).getName(); } catch (ServiceException e) { return "???"; }} )
+                    .add(row -> { try { return this.partyService.getParty(document, row.getPartyId()).getName(); } catch (ServiceException e) { return "???"; }} )
                     .build(),
                 ColumnDefinition.<Invoice>builder("gen.saldo", Amount.class, 200)
                     .add(new AmountCellRenderer(amountFormat))

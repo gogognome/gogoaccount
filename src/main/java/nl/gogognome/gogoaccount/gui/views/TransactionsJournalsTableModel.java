@@ -25,7 +25,7 @@ class TransactionsJournalsTableModel extends ListTableModel<Transaction> {
 
 	private final Document document;
 
-    public TransactionsJournalsTableModel(AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService, Document document) {
+    TransactionsJournalsTableModel(AmountFormat amountFormat, InvoiceService invoiceService, PartyService partyService, Document document) {
         this.invoiceService = invoiceService;
         this.partyService = partyService;
         setColumnDefinitions(
@@ -64,7 +64,7 @@ class TransactionsJournalsTableModel extends ListTableModel<Transaction> {
         if (journalEntry != null && journalEntry.getIdOfCreatedInvoice() != null) {
             try {
                 Invoice invoice = invoiceService.getInvoice(document, journalEntry.getIdOfCreatedInvoice());
-                Party party = partyService.getParty(document, invoice.getConcerningPartyId());
+                Party party = partyService.getParty(document, invoice.getPartyId());
                 return invoice.getId() + " (" + party.getName() + ")";
             } catch (ServiceException e) {
                 logger.warn("Ignored exception: " + e.getMessage(), e);

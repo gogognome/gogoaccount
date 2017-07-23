@@ -56,9 +56,9 @@ public class InvoiceService {
             }
 
             Invoice invoice = new Invoice(specificId);
+            invoice.setPartyReference(invoiceDefinition.getPartyReference());
             invoice.setDescription(invoiceDefinition.getDescription());
-            invoice.setConcerningPartyId(invoiceDefinition.getParty().getId());
-            invoice.setPayingPartyId(invoiceDefinition.getParty().getId());
+            invoice.setPartyId(invoiceDefinition.getParty().getId());
             Amount totalAmount = invoiceDefinition.getTotalAmount();
             invoice.setAmountToBePaid(invoiceDefinition.getType() == SALE ? totalAmount : totalAmount.negate());
             invoice.setIssueDate(invoiceDefinition.getIssueDate());
@@ -237,7 +237,7 @@ public class InvoiceService {
             matches = matches && matches(searchCriteria.getId(), invoice.getId());
         }
         if (searchCriteria.getName() != null) {
-            matches = matches && matches(searchCriteria.getName(), partyService.getParty(document, invoice.getPayingPartyId()).getName());
+            matches = matches && matches(searchCriteria.getName(), partyService.getParty(document, invoice.getPartyId()).getName());
         }
         if (!searchCriteria.areClosedInvoicesIncluded()) {
             matches = matches && !isPaid(document, invoice.getId(), new Date());
@@ -337,18 +337,18 @@ public class InvoiceService {
     private InvoiceOverview buildInvoiceOverview(Invoice invoice, Map<String, List<Payment>> invoiceIdToPayments,
             Map<String, InvoiceSending> invoiceIdToLastInvoiceSending, Map<String, Party> partyIdToParty) {
         InvoiceOverview overview = new InvoiceOverview(invoice.getId());
+        overview.setPartyReference(invoice.getPartyReference());
         overview.setDescription(invoice.getDescription());
         overview.setIssueDate(invoice.getIssueDate());
         overview.setAmountToBePaid(invoice.getAmountToBePaid());
-        overview.setPayingPartyId(invoice.getPayingPartyId());
-        overview.setConcerningPartyId(invoice.getConcerningPartyId());
+        overview.setPartyId(invoice.getPartyId());
         List<Payment> payments = invoiceIdToPayments.getOrDefault(invoice.getId(), emptyList());
         overview.setAmountPaid(payments.stream()
                 .map(Payment::getAmount)
                 .reduce(new Amount(BigInteger.ZERO), (a, b) -> a.add(b)));
-        overview.setPayingPartyName(partyIdToParty.get(invoice.getConcerningPartyId()).getName());
-        overview.setPayingPartyEmailAddress(partyIdToParty.get(invoice.getConcerningPartyId()).getEmailAddress());
-        overview.setPayingPartyRemarks(partyIdToParty.get(invoice.getConcerningPartyId()).getRemarks());
+        overview.setPartyName(partyIdToParty.get(invoice.getPartyId()).getName());
+        overview.setPartyEmailAddress(partyIdToParty.get(invoice.getPartyId()).getEmailAddress());
+        overview.setPartyRemarks(partyIdToParty.get(invoice.getPartyId()).getRemarks());
         overview.setLastSending(invoiceIdToLastInvoiceSending.get(invoice.getId()));
         return overview;
     }
@@ -363,9 +363,10 @@ public class InvoiceService {
                 amountFormat.formatAmount(invoiceOverview.getAmountToBePaid().toBigInteger()),
                 invoiceOverview.getDescription(),
                 invoiceOverview.getId(),
+                invoiceOverview.getPartyReference(),
                 invoiceOverview.getIssueDate(),
-                invoiceOverview.getPayingPartyId(),
-                invoiceOverview.getPayingPartyName());
+                invoiceOverview.getPartyId(),
+                invoiceOverview.getPartyName());
     }
 
     public DefaultValueMap<String,List<InvoiceDetail>> getIdToInvoiceDetails(Document document, List<String> invoiceIds) throws ServiceException {

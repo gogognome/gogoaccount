@@ -32,6 +32,7 @@ public class InvoicePreviewTemplate {
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${date}", textResource.formatDate("gen.dateFormatFull", new Date()));
         replacements.put("${invoice.id}", invoice.getId());
+        replacements.put("${invoice.partyReference}", invoice.getPartyReference());
         replacements.put("${invoice.description}", invoice.getDescription());
         replacements.put("${invoice.amount}", amountFormat.formatAmount(amountToBePaid.toBigInteger()));
         replacements.put("${invoice.issueDate}", textResource.formatDate("gen.dateFormatFull", invoice.getIssueDate()));

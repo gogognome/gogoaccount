@@ -43,9 +43,9 @@ class SepaFileGenerator {
         this.configurationService = configurationService;
     }
 
-    public void generate(AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
-                         Date collectionDate, Map<String, Party> idToParty,
-                         Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings)
+    void generate(AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
+                  Date collectionDate, Map<String, Party> idToParty,
+                  Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings)
             throws Exception {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         amountFormat = new AmountFormat(Locale.US, bookkeeping.getCurrency()); // must use US locale. Therefore, amount format cannot be injected
@@ -108,8 +108,8 @@ class SepaFileGenerator {
         addElement(doc, paymentInformationIdentification, "ChrgBr", "SLEV");
 
         for (Invoice invoice : invoices) {
-            Party party = idToParty.get(invoice.getConcerningPartyId());
-            PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = idToPartyAutomaticCollectionSettings.get(invoice.getConcerningPartyId());
+            Party party = idToParty.get(invoice.getPartyId());
+            PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = idToPartyAutomaticCollectionSettings.get(invoice.getPartyId());
             if (partyAutomaticCollectionSettings == null) {
                 throw new ServiceException("Party " + party.toString() + " has no automatic collection settings. " +
                         "Those settings are required to generate a SEPA file");

@@ -138,9 +138,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.balanceOf", new Object[] {
-                textResource.formatDate("gen.dateFormatFull", date)
-                }));
+        result.append(textResource.getString("rep.balanceOf", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         result.append(textFormat.getStartOfTable(("lr|lr"),
@@ -215,9 +213,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.operationalResultOf", new Object[] {
-                textResource.formatDate("gen.dateFormatFull", date)
-                }));
+        result.append(textResource.getString("rep.operationalResultOf", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         result.append(textFormat.getStartOfTable(("lr|lr"),
@@ -278,9 +274,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.debtorsOf", new Object[] {
-                textResource.formatDate("gen.dateFormatFull", date)
-                }));
+        result.append(textResource.getString("rep.debtorsOf", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         List<Party> debtors = report.getDebtors();
@@ -317,9 +311,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.creditorsOf", new Object[] {
-                textResource.formatDate("gen.dateFormatFull", date)
-                }));
+        result.append(textResource.getString("rep.creditorsOf", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         List<Party> creditors = report.getCreditors();
@@ -406,7 +398,7 @@ public class ReportTask implements Task {
                 if (idOfCreatedInvoice != null) {
                     Invoice invoice = invoiceService.getInvoice(document, idOfCreatedInvoice);
                     values[8] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid().toBigInteger())
-                        + " " + invoice.getId() + " (" + partyService.getParty(document, invoice.getConcerningPartyId()).getName() + ')';
+                        + " " + invoice.getId() + " (" + partyService.getParty(document, invoice.getPartyId()).getName() + ')';
                 } else {
                     values[8] = "";
                 }
@@ -422,7 +414,7 @@ public class ReportTask implements Task {
                             amountFormat.formatAmountWithoutCurrency(item.getAmount().toBigInteger());
                     if (item.getInvoiceId() != null) {
                         Invoice invoice = invoiceService.getInvoice(document, item.getInvoiceId());
-                        values[8] = invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")";
+                        values[8] = invoice.getId() + " (" + partyService.getParty(document, invoice.getPartyId()).getName() + ")";
                     } else {
                         values[8] = "";
                     }
@@ -472,7 +464,7 @@ public class ReportTask implements Task {
                 values[8] = "";
 
                 Invoice invoice = line.invoice;
-                values[8] = invoice != null ? invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")" : "";
+                values[8] = invoice != null ? invoice.getId() + " (" + partyService.getParty(document, invoice.getPartyId()).getName() + ")" : "";
 
                 result.append(textFormat.getRow(values));
             }

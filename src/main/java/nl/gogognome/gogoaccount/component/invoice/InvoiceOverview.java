@@ -6,13 +6,24 @@ public class InvoiceOverview extends Invoice {
 
     private Amount amountToBePaid;
     private Amount amountPaid;
-    private String payingPartyName;
-    private String payingPartyEmailAddress;
-    private String payingPartyRemarks;
+    private String partyReference;
+    private String partyName;
+    private String partyEmailAddress;
+    private String partyRemarks;
     private InvoiceSending lastSending;
 
     public InvoiceOverview(String id) {
         super(id);
+    }
+
+    @Override
+    public String getPartyReference() {
+        return partyReference;
+    }
+
+    @Override
+    public void setPartyReference(String partyReference) {
+        this.partyReference = partyReference;
     }
 
     public Amount getAmountToBePaid() {
@@ -31,32 +42,32 @@ public class InvoiceOverview extends Invoice {
         this.amountPaid = amountPaid;
     }
 
-    public String getPayingPartyName() {
-        return payingPartyName;
+    public String getPartyName() {
+        return partyName;
     }
 
-    public void setPayingPartyName(String payingPartyName) {
-        this.payingPartyName = payingPartyName;
+    public void setPartyName(String partyName) {
+        this.partyName = partyName;
     }
 
     public boolean isSalesInvoice() {
         return !amountToBePaid.isNegative();
     }
 
-    public String getPayingPartyEmailAddress() {
-        return payingPartyEmailAddress;
+    public String getPartyEmailAddress() {
+        return partyEmailAddress;
     }
 
-    public void setPayingPartyEmailAddress(String payingPartyEmailAddress) {
-        this.payingPartyEmailAddress = payingPartyEmailAddress;
+    public void setPartyEmailAddress(String partyEmailAddress) {
+        this.partyEmailAddress = partyEmailAddress;
     }
 
-    public String getPayingPartyRemarks() {
-        return payingPartyRemarks;
+    public String getPartyRemarks() {
+        return partyRemarks;
     }
 
-    public void setPayingPartyRemarks(String payingPartyRemarks) {
-        this.payingPartyRemarks = payingPartyRemarks;
+    public void setPartyRemarks(String partyRemarks) {
+        this.partyRemarks = partyRemarks;
     }
 
     public void setLastSending(InvoiceSending lastSending) {

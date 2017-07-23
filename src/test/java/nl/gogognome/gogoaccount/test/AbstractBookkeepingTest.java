@@ -56,7 +56,7 @@ public abstract class AbstractBookkeepingTest {
     protected final ImportBankStatementService importBankStatementService = new ImportBankStatementService(configurationService);
     protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, new TestTextResource());
     protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), configurationService, invoiceService, partyService);
-    protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(amountFormat, configurationService, ledgerService, partyService);
+    protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(configurationService, ledgerService, partyService);
     protected final BookkeepingService bookkeepingService = new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);
 
     protected Document document;
@@ -156,8 +156,7 @@ public abstract class AbstractBookkeepingTest {
         Party party = new PartyService().getParty(document, "1101");
         Invoice invoice = new Invoice(journalEntry.getIdOfCreatedInvoice());
         invoice.setDescription("Contributie 2011");
-        invoice.setConcerningPartyId(party.getId());
-        invoice.setPayingPartyId(party.getId());
+        invoice.setPartyId(party.getId());
         invoice.setAmountToBePaid(AmountBuilder.build(20));
         invoice.setIssueDate(journalEntry.getDate());
         invoiceService.createInvoice(document, invoice);
@@ -353,8 +352,7 @@ public abstract class AbstractBookkeepingTest {
     public void assertEqualInvoice(Invoice expected, Invoice actual) {
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getAmountToBePaid(), actual.getAmountToBePaid());
-        assertEquals(expected.getConcerningPartyId(), actual.getConcerningPartyId());
-        assertEquals(expected.getPayingPartyId(), actual.getPayingPartyId());
+        assertEquals(expected.getPartyId(), actual.getPartyId());
         assertEquals(expected.getIssueDate(), actual.getIssueDate());
     }
 

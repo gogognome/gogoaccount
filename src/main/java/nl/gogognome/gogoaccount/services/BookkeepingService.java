@@ -180,7 +180,7 @@ public class BookkeepingService {
     // TODO: move to new report component
     public Report createReport(Document document, Date date) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            ReportBuilder reportBuilder = new ReportBuilder(document, configurationService, invoiceService, ledgerService, partyService);
+            ReportBuilder reportBuilder = new ReportBuilder(document, configurationService, invoiceService, partyService);
             reportBuilder.init();
             reportBuilder.setEndDate(date);
             reportBuilder.setAssets(configurationService.findAssets(document));

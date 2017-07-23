@@ -31,14 +31,12 @@ import static java.util.stream.Collectors.toList;
 
 public class AutomaticCollectionService {
 
-    private final AmountFormat amountFormat;
     private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
     private final PartyService partyService;
 
-    public AutomaticCollectionService(AmountFormat amountFormat, ConfigurationService configurationService, LedgerService ledgerService,
+    public AutomaticCollectionService(ConfigurationService configurationService, LedgerService ledgerService,
                                       PartyService partyService) {
-        this.amountFormat = amountFormat;
         this.configurationService = configurationService;
         this.ledgerService = ledgerService;
         this.partyService = partyService;
@@ -84,7 +82,7 @@ public class AutomaticCollectionService {
 
             // Get data needed for generating the SEPA file
             AutomaticCollectionSettings settings = getSettings(document);
-            List<String> partyIds = invoices.stream().map(Invoice::getConcerningPartyId).collect(toList());
+            List<String> partyIds = invoices.stream().map(Invoice::getPartyId).collect(toList());
             Map<String, Party> idToParty = partyService.getIdToParty(document, partyIds);
             Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings =
                     new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds);
@@ -120,7 +118,7 @@ public class AutomaticCollectionService {
                         idToParty, idToPartyAutomaticCollectionSettings);
                 validateSepaAutomaticCollectionFile(fileToCreate);
             } catch (ServiceException e) {
-                invalidInvoices.add(invoices.get(i).getId() + " (" + idToParty.get(invoices.get(i).getConcerningPartyId())
+                invalidInvoices.add(invoices.get(i).getId() + " (" + idToParty.get(invoices.get(i).getPartyId())
                         + "): " + e.getMessage());
             }
         }
@@ -177,8 +175,8 @@ public class AutomaticCollectionService {
                 for (Invoice invoice : invoices) {
                     String[] line = new String[11];
                     line[0] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid().toBigInteger());
-                    line[1] = invoice.getConcerningPartyId();
-                    PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = partyAutomaticCollectionSettingsDAO.get(invoice.getConcerningPartyId());
+                    line[1] = invoice.getPartyId();
+                    PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = partyAutomaticCollectionSettingsDAO.get(invoice.getPartyId());
                     line[2] = dateFormat.format(partyAutomaticCollectionSettings.getMandateDate());
                     line[3] = "";
                     line[4] = partyAutomaticCollectionSettings.getIban();

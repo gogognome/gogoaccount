@@ -72,7 +72,7 @@ public class InvoiceBean extends JPanel {
         selectedInvoice = invoice;
         if (selectedInvoice != null) {
             try {
-                tfDescription.setText(invoice.getId() + " (" + partyService.getParty(document, invoice.getPayingPartyId()).getName() + ")");
+                tfDescription.setText(invoice.getId() + " (" + partyService.getParty(document, invoice.getPartyId()).getName() + ")");
             } catch (ServiceException e) {
                 logger.warn("Ignored exception: " + e.getMessage(), e);
                 tfDescription.setText(invoice.getId() + " (???)");

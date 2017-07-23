@@ -125,8 +125,8 @@ public class EditInvoiceView extends OkCancelView {
             idModel.setEnabled(false, null);
             dateModel.setDate(invoiceToBeEdited.getIssueDate());
             descriptionModel.setString(invoiceToBeEdited.getDescription());
-            concerningPartyModel.setParty(invoiceToBeEdited.getConcerningPartyId() != null ? partyService.getParty(document, invoiceToBeEdited.getConcerningPartyId()) : null);
-            payingPartyModel.setParty(invoiceToBeEdited.getPayingPartyId() != null ? partyService.getParty(document, invoiceToBeEdited.getPayingPartyId()): null);
+            concerningPartyModel.setParty(invoiceToBeEdited.getPartyId() != null ? partyService.getParty(document, invoiceToBeEdited.getPartyId()) : null);
+            payingPartyModel.setParty(invoiceToBeEdited.getPartyId() != null ? partyService.getParty(document, invoiceToBeEdited.getPartyId()): null);
             amountModel.setString(amountFormat.formatAmountWithoutCurrency(
                 invoiceToBeEdited.getAmountToBePaid().toBigInteger()));
         } else {
@@ -310,8 +310,8 @@ public class EditInvoiceView extends OkCancelView {
         editedInvoice = new Invoice(id);
         editedInvoice.setDescription(description);
         editedInvoice.setIssueDate(issueDate);
-        editedInvoice.setPayingPartyId(payingParty.getId());
-        editedInvoice.setConcerningPartyId(concerningParty.getId());
+        editedInvoice.setPartyId(payingParty.getId());
+        editedInvoice.setPartyId(concerningParty.getId());
         editedInvoice.setAmountToBePaid(amount);
         closeAction.actionPerformed(null);
     }
@@ -351,7 +351,7 @@ public class EditInvoiceView extends OkCancelView {
      */
     private static class DescriptionAndAmountTableModel extends ListTableModel<Tuple<String, Amount>> {
 
-        public DescriptionAndAmountTableModel(AmountFormat amountFormat, List<Tuple<String, Amount>> tuples) {
+        DescriptionAndAmountTableModel(AmountFormat amountFormat, List<Tuple<String, Amount>> tuples) {
         	super(asList(
                     ColumnDefinition.<Tuple<String, Amount>>builder("editInvoiceView.tableHeader.descriptions", String.class, 300)
                         .add(Tuple::getFirst)
@@ -369,7 +369,7 @@ public class EditInvoiceView extends OkCancelView {
          * @param description the description of the row
          * @param amount the amount of the row; can be <code>null</code>
          */
-        public void addRow(String description, Amount amount) {
+        void addRow(String description, Amount amount) {
             addRow(new Tuple<>(description, amount));
         }
 
@@ -379,7 +379,7 @@ public class EditInvoiceView extends OkCancelView {
          * @param description the new description of the row
          * @param amount the new amount of the row; can be <code>null</code>
          */
-        public void updateRow(int index, String description, Amount amount) {
+        void updateRow(int index, String description, Amount amount) {
             updateRow(index, new Tuple<>(description, amount));
         }
 

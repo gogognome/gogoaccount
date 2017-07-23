@@ -10,7 +10,6 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -30,7 +29,6 @@ public class ReportBuilder {
 
     private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
-    private final LedgerService ledgerService;
     private final PartyService partyService;
 
     private final Document document;
@@ -46,19 +44,17 @@ public class ReportBuilder {
     private TextResource textResource = Factory.getInstance(TextResource.class);
 
     public ReportBuilder(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
-                         LedgerService ledgerService, PartyService partyService) throws ServiceException {
+                         PartyService partyService) throws ServiceException {
         this.document = document;
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
-        this.ledgerService = ledgerService;
         this.partyService = partyService;
         idToAccount = this.configurationService.findAllAccounts(document).stream().collect(toMap(a -> a.getId(), a -> a));
         bookkeeping = configurationService.getBookkeeping(document);
     }
 
-    public ReportBuilder init() {
+    public void init() {
         this.report = new Report();
-        return this;
     }
 
     public Report build() throws ServiceException {
@@ -71,7 +67,7 @@ public class ReportBuilder {
 
     private void determineBalanceForDebtorsAndCreditors() throws ServiceException {
         for (Invoice invoice : report.getInvoices()) {
-            Party party = partyService.getParty(document, invoice.getPayingPartyId() != null ? invoice.getPayingPartyId() : invoice.getConcerningPartyId());
+            Party party = partyService.getParty(document, invoice.getPartyId() != null ? invoice.getPartyId() : invoice.getPartyId());
             Amount amount = report.getRemaingAmountForInvoice(invoice);
             if (amount.isPositive()) {
                 Amount balance = report.getBalanceForDebtor(party);
@@ -148,7 +144,7 @@ public class ReportBuilder {
         }
     }
 
-    void addStartLedgerLineForAccount(Account account, Amount debetAmount, Amount creditAmount) {
+    private void addStartLedgerLineForAccount(Account account, Amount debetAmount, Amount creditAmount) {
         LedgerLine line = new LedgerLine();
         line.description = textResource.getString("rep.startBalance");
         setAmountInLedgerLine(line, account, debetAmount, creditAmount);
@@ -165,7 +161,7 @@ public class ReportBuilder {
         line.creditAmount = balance.isNegative() || (balance.isZero() && account.isCredit()) ? balance.negate() : null;
     }
 
-    void addLedgerLineForAccount(Account account, JournalEntry journalEntry, JournalEntryDetail item, Invoice invoice) {
+    private void addLedgerLineForAccount(Account account, JournalEntry journalEntry, JournalEntryDetail item, Invoice invoice) {
         LedgerLine line = new LedgerLine();
         line.date = journalEntry.getDate();
         line.id = journalEntry.getId();

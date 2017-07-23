@@ -330,8 +330,7 @@ public class XMLFileReader {
                 }
 
                 Invoice invoice = new Invoice(id);
-                invoice.setPayingPartyId(payingPartyId);
-                invoice.setConcerningPartyId(concerningPartyId);
+                invoice.setPartyId(payingPartyId);
                 invoice.setAmountToBePaid(amountToBePaid);
                 invoice.setIssueDate(issueDate);
                 invoiceService.createInvoice(document, invoice);

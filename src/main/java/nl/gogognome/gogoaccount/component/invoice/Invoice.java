@@ -1,11 +1,9 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
-import java.util.Date;
-import java.util.List;
-
-import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
+
+import java.util.Date;
 
 /**
  * This class represents an invoice. An invoice consists of an amount that has to be paid
@@ -18,14 +16,10 @@ public class Invoice implements Comparable<Invoice> {
 
     private String id;
 
-    /** The party that has to pay the invoice. */
-    private String payingPartyId;
+    /** Reference of the invoice as known by the party. */
+    private String partyReference;
 
-    /**
-     * The party to whom this invoice is concerned. If this party is a minor, then typically
-     * the paying party will be the parent of this party.
-     */
-    private String concerningPartyId;
+    private String partyId;
 
     /**
      * The amount to be paid. Negative amounts represent amounts to be received.
@@ -50,6 +44,14 @@ public class Invoice implements Comparable<Invoice> {
         this.id = id;
     }
 
+    public String getPartyReference() {
+        return partyReference;
+    }
+
+    public void setPartyReference(String partyReference) {
+        this.partyReference = partyReference;
+    }
+
     public void setDescription(String description) {
         this.description = description;
     }
@@ -58,20 +60,12 @@ public class Invoice implements Comparable<Invoice> {
         return description;
     }
 
-    public String getPayingPartyId() {
-        return payingPartyId;
+    public String getPartyId() {
+        return partyId;
     }
 
-    public void setPayingPartyId(String payingPartyId) {
-        this.payingPartyId = payingPartyId;
-    }
-
-    public String getConcerningPartyId() {
-        return concerningPartyId;
-    }
-
-    public void setConcerningPartyId(String concerningPartyId) {
-        this.concerningPartyId = concerningPartyId;
+    public void setPartyId(String payingPartyId) {
+        this.partyId = payingPartyId;
     }
 
     public Amount getAmountToBePaid() {

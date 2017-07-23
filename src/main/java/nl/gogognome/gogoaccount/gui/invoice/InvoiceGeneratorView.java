@@ -62,8 +62,9 @@ public class InvoiceGeneratorView extends View {
     private List<Account> accounts;
 
     private JPanel debtorOrCreditorPanel = new JPanel(new GridBagLayout());
-    private final JTextField tfId = new JTextField();
-    private final JTextField tfDescription = new JTextField();
+    private StringModel idModel ;
+    private StringModel partyReferenceModel;
+    private StringModel descriptionModel;
     private DateModel invoiceGenerationDateModel;
     private JRadioButton rbPurchaseInvoice;
     private JRadioButton rbSalesInvoice;
@@ -253,43 +254,34 @@ public class InvoiceGeneratorView extends View {
     }
 
     private void onTypeSelected() {
-        boolean typeSelected = rbPurchaseInvoice.isSelected() || rbSalesInvoice.isBorderPainted();
-        tfId.setEnabled(typeSelected);
-        tfDescription.setEnabled(typeSelected);
+        boolean typeSelected = rbPurchaseInvoice.isSelected() || rbSalesInvoice.isSelected();
+        idModel.setEnabled(typeSelected, null);
+        partyReferenceModel.setEnabled(typeSelected, null);
+        descriptionModel.setEnabled(typeSelected, null);
         invoiceGenerationDateModel.setEnabled(typeSelected, null);
         addInvoicesToBookkeepingButton.setEnabled(typeSelected);
         updateTemplateLinesPanel();
     }
 
     private JPanel createHeaderPanel() {
-        JPanel headerPanel = new JPanel(new GridBagLayout());
-        int row = 0;
+        InputFieldsColumn ifc = new InputFieldsColumn();
+        idModel = new StringModel();
+        ifc.addField("invoiceGeneratorView.id", idModel);
 
-        headerPanel.add(widgetFactory.createLabel("invoiceGeneratorView.id", tfId),
-                SwingUtils.createLabelGBConstraints(0, row));
-        headerPanel.add(tfId,
-                SwingUtils.createTextFieldGBConstraints(1, row));
-        row++;
+        partyReferenceModel = new StringModel();
+        ifc.addField("invoiceGeneratorView.partyReference", partyReferenceModel);
 
-        tfId.setToolTipText(textResource.getString("invoiceGeneratorView.tooltip"));
         invoiceGenerationDateModel = new DateModel();
         invoiceGenerationDateModel.setDate(new Date(), null);
-        Bean dateSelectionBean = beanFactory.createDateSelectionBean(invoiceGenerationDateModel);
-        headerPanel.add(widgetFactory.createLabel("invoiceGeneratorView.date", dateSelectionBean.getComponent()),
-                SwingUtils.createLabelGBConstraints(0, row));
-        headerPanel.add(dateSelectionBean.getComponent(),
-                SwingUtils.createLabelGBConstraints(1, row));
-        row++;
+        ifc.addField("invoiceGeneratorView.date", invoiceGenerationDateModel);
 
-        headerPanel.add(widgetFactory.createLabel("invoiceGeneratorView.description", tfDescription),
-                SwingUtils.createLabelGBConstraints(0, row));
-        headerPanel.add(tfDescription,
-                SwingUtils.createTextFieldGBConstraints(1, row));
-        tfDescription.setToolTipText(textResource.getString("invoiceGeneratorView.tooltip"));
-        row++;
+        descriptionModel = new StringModel();
+        ifc.addField("invoiceGeneratorView.description", descriptionModel);
 
-        headerPanel.setBorder(new EmptyBorder(0, 0, 12, 0));
-        return headerPanel;
+        ifc.addVariableSizeField("gen.emptyString", widgetFactory.createLabel("invoiceGeneratorView.tooltip"));
+
+        ifc.setBorder(new EmptyBorder(0, 0, 12, 0));
+        return ifc;
     }
 
     private void updateTemplateLinesPanelAndRepaint() {
@@ -396,7 +388,7 @@ public class InvoiceGeneratorView extends View {
     private void generateInvoices(Date date, List<nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine> invoiceLines, Party[] parties) throws ServiceException {
         Account account = rbSalesInvoice.isSelected() ? debtorAccountModel.getSelectedItem() : creditorAccountModel.getSelectedItem();
         InvoiceTemplate.Type type = rbSalesInvoice.isSelected() ? SALE : PURCHASE;
-        InvoiceTemplate template = new InvoiceTemplate(type, tfId.getText(), date, tfDescription.getText(), invoiceLines);
+        InvoiceTemplate template = new InvoiceTemplate(type, idModel.getString(), partyReferenceModel.getString(), date, descriptionModel.getString(), invoiceLines);
         ledgerService.createInvoiceAndJournalForParties(document, account, template, Arrays.asList(parties));
     }
 

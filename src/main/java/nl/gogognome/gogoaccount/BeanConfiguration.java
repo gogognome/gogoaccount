@@ -344,9 +344,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public AutomaticCollectionService automaticCollectionService(AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
+    public AutomaticCollectionService automaticCollectionService(ConfigurationService configurationService,
                                                                  LedgerService ledgerService, PartyService partyService) {
-        return new AutomaticCollectionService(amountFormatWrapper.amountFormat, configurationService, ledgerService, partyService);
+        return new AutomaticCollectionService(configurationService, ledgerService, partyService);
     }
 
     @Bean
@@ -415,10 +415,10 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoicesToModelConverter invoicesToModelConverter(AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
+    public InvoicesToModelConverter invoicesToModelConverter(AmountFormatWrapper amountFormatWrapper,
                                                              InvoiceService invoiceService, PartyService partyService,
                                                              TextResourceWrapper textResourceWrapper) {
-        return new InvoicesToModelConverter(amountFormatWrapper.amountFormat, configurationService, invoiceService,
+        return new InvoicesToModelConverter(amountFormatWrapper.amountFormat, invoiceService,
                 partyService, textResourceWrapper.textResource);
     }
 

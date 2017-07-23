@@ -201,7 +201,7 @@ public class ReportToModelConverter {
         map.put("credit", line.creditAmount != null ?
                 amountFormat.formatAmountWithoutCurrency(line.creditAmount.toBigInteger()) : "");
         map.put("invoice", line.invoice != null ?
-                line.invoice.getId() + " (" + partyService.getParty(document, line.invoice.getConcerningPartyId()).getName() + ')' : "");
+                line.invoice.getId() + " (" + partyService.getParty(document, line.invoice.getPartyId()).getName() + ')' : "");
         return map;
     }
 }
