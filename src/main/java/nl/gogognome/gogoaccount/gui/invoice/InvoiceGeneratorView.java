@@ -30,7 +30,6 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.text.ParseException;
 import java.util.*;
@@ -62,12 +61,13 @@ public class InvoiceGeneratorView extends View {
 
     private List<Account> accounts;
 
-    JPanel debtorOrCreditorPanel = new JPanel(new GridBagLayout());
+    private JPanel debtorOrCreditorPanel = new JPanel(new GridBagLayout());
+    private final JTextField tfId = new JTextField();
     private final JTextField tfDescription = new JTextField();
     private DateModel invoiceGenerationDateModel;
-    private final JTextField tfId = new JTextField();
+    private JRadioButton rbPurchaseInvoice;
     private JRadioButton rbSalesInvoice;
-    private final ButtonGroup invoiceTypeButtonGroup = new ButtonGroup();
+    private JButton addInvoicesToBookkeepingButton;
 
     private ListModel<Account> debtorAccountModel;
     private ListModel<Account> creditorAccountModel;
@@ -78,7 +78,7 @@ public class InvoiceGeneratorView extends View {
         private StringModel amountModel;
         private AmountFormula amountFormula;
 
-        public InvoiceTemplateLine(List<Account> accounts) {
+        InvoiceTemplateLine(List<Account> accounts) {
             amountModel = new StringModel();
             descriptionModel = new StringModel();
             accountListModel.setItems(accounts);
@@ -181,12 +181,14 @@ public class InvoiceGeneratorView extends View {
         add(templatePanel, BorderLayout.CENTER);
 
         setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        initDebtorOrCreditorSelection();
     }
 
     private ButtonPanel createButtonPanel() {
-        // Create button panel
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.RIGHT);
-        buttonPanel.add(widgetFactory.createButton("invoiceGeneratorView.addInvoices", this::onAddInvoicesToBookkeeping));
+        addInvoicesToBookkeepingButton = widgetFactory.createButton("invoiceGeneratorView.addInvoices", this::onAddInvoicesToBookkeeping);
+        buttonPanel.add(addInvoicesToBookkeepingButton);
         buttonPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
         return buttonPanel;
     }
@@ -213,7 +215,7 @@ public class InvoiceGeneratorView extends View {
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
-        JRadioButton rbPurchaseInvoice = new JRadioButton();
+        rbPurchaseInvoice = new JRadioButton();
         invoiceTypePanel.add(rbPurchaseInvoice,
                 SwingUtils.createGBConstraints(0, row, 1, 1, 0.0, 0.0,
                         GridBagConstraints.CENTER, GridBagConstraints.NONE,
@@ -222,11 +224,11 @@ public class InvoiceGeneratorView extends View {
                 SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
 
-        ChangeListener changeListener = e -> onInvoiceTypeChanged();
-        rbSalesInvoice.addChangeListener(changeListener);
+        rbSalesInvoice.addActionListener(a -> initDebtorOrCreditorSelection());
+        rbPurchaseInvoice.addActionListener(a -> initDebtorOrCreditorSelection());
+        ButtonGroup invoiceTypeButtonGroup = new ButtonGroup();
         invoiceTypeButtonGroup.add(rbSalesInvoice);
         invoiceTypeButtonGroup.add(rbPurchaseInvoice);
-        rbSalesInvoice.setSelected(true);
 
         return invoiceTypePanel;
     }
@@ -237,15 +239,26 @@ public class InvoiceGeneratorView extends View {
         InputFieldsColumn ifc = new InputFieldsColumn();
         if (rbSalesInvoice.isSelected()) {
             ifc.addComboBoxField("invoiceGeneratorView.debtorAccount", debtorAccountModel, new AccountFormatter());
-        } else {
+        } else if (rbPurchaseInvoice.isSelected()) {
             ifc.addComboBoxField("invoiceGeneratorView.creditorAccount", creditorAccountModel, new AccountFormatter());
         }
 
         debtorOrCreditorPanel.add(ifc, SwingUtils.createLabelGBConstraints(0, 0));
         debtorOrCreditorPanel.add(new JLabel(""), SwingUtils.createTextFieldGBConstraints(1, 0));
 
+        onTypeSelected();
+
         repaint();
         revalidate();
+    }
+
+    private void onTypeSelected() {
+        boolean typeSelected = rbPurchaseInvoice.isSelected() || rbSalesInvoice.isBorderPainted();
+        tfId.setEnabled(typeSelected);
+        tfDescription.setEnabled(typeSelected);
+        invoiceGenerationDateModel.setEnabled(typeSelected, null);
+        addInvoicesToBookkeepingButton.setEnabled(typeSelected);
+        updateTemplateLinesPanel();
     }
 
     private JPanel createHeaderPanel() {
@@ -312,20 +325,28 @@ public class InvoiceGeneratorView extends View {
     }
 
     private void addLineToTemplateLinePanel(int row, int index) {
+        boolean typeSelected = rbPurchaseInvoice.isSelected() || rbSalesInvoice.isSelected();
+
         InvoiceTemplateLine line = invoiceTemplateLines.get(index);
         Bean cbAccount = beanFactory.createComboBoxBean(line.accountListModel, new AccountFormatter());
+        line.accountListModel.setEnabled(typeSelected, null);
         templateLinesPanel.add(cbAccount.getComponent(),
                 SwingUtils.createLabelGBConstraints(1, row));
+
         Bean descriptionBean = beanFactory.createTextFieldBean(line.descriptionModel);
+        line.descriptionModel.setEnabled(typeSelected, null);
         templateLineBeans.add(descriptionBean);
         templateLinesPanel.add(descriptionBean.getComponent(),
                 SwingUtils.createTextFieldGBConstraints(2, row));
+
         Bean amountBean = beanFactory.createRightAlignedTextFieldBean(line.amountModel);
+        line.amountModel.setEnabled(typeSelected, null);
         templateLineBeans.add(amountBean);
         templateLinesPanel.add(amountBean.getComponent(),
                 SwingUtils.createTextFieldGBConstraints(3, row));
 
         JButton deleteButton = widgetFactory.createButton("invoiceGeneratorView.delete", () -> onDelete(index));
+        deleteButton.setEnabled(typeSelected);
         templateLinesPanel.add(deleteButton,
                 SwingUtils.createLabelGBConstraints(4, row));
     }
@@ -337,6 +358,7 @@ public class InvoiceGeneratorView extends View {
                     SwingUtilities.invokeLater(() -> templateLinesPanel.getComponent(templateLinesPanel.getComponentCount() - 5).requestFocus());
                 }
         );
+        newButton.setEnabled(rbPurchaseInvoice.isSelected() || rbSalesInvoice.isSelected());
         templateLinesPanel.add(newButton, SwingUtils.createLabelGBConstraints(4, row));
     }
 
@@ -405,10 +427,6 @@ public class InvoiceGeneratorView extends View {
             }
         }
         return true;
-    }
-
-    private void onInvoiceTypeChanged() {
-        initDebtorOrCreditorSelection();
     }
 
 }
