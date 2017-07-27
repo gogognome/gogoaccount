@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
@@ -62,7 +63,6 @@ public class InvoiceGeneratorView extends View {
     private List<Account> accounts;
 
     private JPanel debtorOrCreditorPanel = new JPanel(new GridBagLayout());
-    private StringModel idModel ;
     private StringModel partyReferenceModel;
     private StringModel descriptionModel;
     private DateModel invoiceGenerationDateModel;
@@ -73,13 +73,13 @@ public class InvoiceGeneratorView extends View {
     private ListModel<Account> debtorAccountModel;
     private ListModel<Account> creditorAccountModel;
 
-    private class InvoiceTemplateLine {
+    private class InvoiceTemplateLineModel {
         private final ListModel<Account> accountListModel = new ListModel<>();
         private StringModel descriptionModel;
         private StringModel amountModel;
         private AmountFormula amountFormula;
 
-        InvoiceTemplateLine(List<Account> accounts) {
+        InvoiceTemplateLineModel(List<Account> accounts) {
             amountModel = new StringModel();
             descriptionModel = new StringModel();
             accountListModel.setItems(accounts);
@@ -116,7 +116,7 @@ public class InvoiceGeneratorView extends View {
         }
     }
 
-    private final List<InvoiceTemplateLine> invoiceTemplateLines = new ArrayList<>();
+    private final List<InvoiceTemplateLineModel> invoiceTemplateLineModels = new ArrayList<>();
     private JPanel templateLinesPanel;
     private List<Bean> templateLineBeans = new ArrayList<>();
 
@@ -198,7 +198,7 @@ public class InvoiceGeneratorView extends View {
         templateLinesPanel = new JPanel(new GridBagLayout());
 
         // Add one empty line so the user can start editing the template.
-        invoiceTemplateLines.add(new InvoiceTemplateLine(accounts));
+        invoiceTemplateLineModels.add(new InvoiceTemplateLineModel(accounts));
 
         updateTemplateLinesPanel();
     }
@@ -255,7 +255,6 @@ public class InvoiceGeneratorView extends View {
 
     private void onTypeSelected() {
         boolean typeSelected = rbPurchaseInvoice.isSelected() || rbSalesInvoice.isSelected();
-        idModel.setEnabled(typeSelected, null);
         partyReferenceModel.setEnabled(typeSelected, null);
         descriptionModel.setEnabled(typeSelected, null);
         invoiceGenerationDateModel.setEnabled(typeSelected, null);
@@ -265,9 +264,6 @@ public class InvoiceGeneratorView extends View {
 
     private JPanel createHeaderPanel() {
         InputFieldsColumn ifc = new InputFieldsColumn();
-        idModel = new StringModel();
-        ifc.addField("invoiceGeneratorView.id", idModel);
-
         partyReferenceModel = new StringModel();
         ifc.addField("invoiceGeneratorView.partyReference", partyReferenceModel);
 
@@ -295,7 +291,7 @@ public class InvoiceGeneratorView extends View {
 
         int row = 0;
         createTemplatePanelHeader(row++);
-        for (int i = 0; i< invoiceTemplateLines.size(); i++) {
+        for (int i = 0; i< invoiceTemplateLineModels.size(); i++) {
             addLineToTemplateLinePanel(row++, i);
         }
         addNewButtonToTemplateLinesPanel(row++);
@@ -319,7 +315,7 @@ public class InvoiceGeneratorView extends View {
     private void addLineToTemplateLinePanel(int row, int index) {
         boolean typeSelected = rbPurchaseInvoice.isSelected() || rbSalesInvoice.isSelected();
 
-        InvoiceTemplateLine line = invoiceTemplateLines.get(index);
+        InvoiceTemplateLineModel line = invoiceTemplateLineModels.get(index);
         Bean cbAccount = beanFactory.createComboBoxBean(line.accountListModel, new AccountFormatter());
         line.accountListModel.setEnabled(typeSelected, null);
         templateLinesPanel.add(cbAccount.getComponent(),
@@ -345,7 +341,7 @@ public class InvoiceGeneratorView extends View {
 
     private void addNewButtonToTemplateLinesPanel(int row) {
         JButton newButton = widgetFactory.createButton("invoiceGeneratorView.new", () -> {
-                    invoiceTemplateLines.add(new InvoiceTemplateLine(accounts));
+                    invoiceTemplateLineModels.add(new InvoiceTemplateLineModel(accounts));
                     updateTemplateLinesPanelAndRepaint();
                     SwingUtilities.invokeLater(() -> templateLinesPanel.getComponent(templateLinesPanel.getComponentCount() - 5).requestFocus());
                 }
@@ -355,15 +351,15 @@ public class InvoiceGeneratorView extends View {
     }
 
     private void onDelete(int index) {
-        invoiceTemplateLines.remove(index);
+        invoiceTemplateLineModels.remove(index);
         updateTemplateLinesPanelAndRepaint();
     }
 
     private void onAddInvoicesToBookkeeping() {
         handleException.of(() -> {
             Date date = invoiceGenerationDateModel.getDate();
-            List<nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine> invoiceLines = invoiceTemplateLines.stream()
-                    .map(line -> new nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine(line.amountFormula, line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
+            List<InvoiceTemplateLine> invoiceLines = invoiceTemplateLineModels.stream()
+                    .map(line -> new InvoiceTemplateLine(line.amountFormula, line.descriptionModel.getString(), line.accountListModel.getSelectedItem()))
                     .collect(toList());
 
             if (!validateInput(date, invoiceLines)) {
@@ -388,7 +384,7 @@ public class InvoiceGeneratorView extends View {
     private void generateInvoices(Date date, List<nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine> invoiceLines, Party[] parties) throws ServiceException {
         Account account = rbSalesInvoice.isSelected() ? debtorAccountModel.getSelectedItem() : creditorAccountModel.getSelectedItem();
         InvoiceTemplate.Type type = rbSalesInvoice.isSelected() ? SALE : PURCHASE;
-        InvoiceTemplate template = new InvoiceTemplate(type, idModel.getString(), partyReferenceModel.getString(), date, descriptionModel.getString(), invoiceLines);
+        InvoiceTemplate template = new InvoiceTemplate(type, partyReferenceModel.getString(), date, descriptionModel.getString(), invoiceLines);
         ledgerService.createInvoiceAndJournalForParties(document, account, template, Arrays.asList(parties));
     }
 

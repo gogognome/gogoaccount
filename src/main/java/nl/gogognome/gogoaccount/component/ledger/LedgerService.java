@@ -80,54 +80,60 @@ public class LedgerService {
      * @param invoiceTemplate the definition of the invoice
      * @param parties the parties
      * @throws ServiceException if a problem occurs while creating invoices for one or more of the parties
+     * @return the created invoices
      */
-    public void createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, InvoiceTemplate invoiceTemplate,
+    public List<Invoice> createInvoiceAndJournalForParties(Document document, Account debtorOrCreditorAccount, InvoiceTemplate invoiceTemplate,
                                                   List<Party> parties) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> {
+        return ServiceTransaction.withResult(() -> {
             document.ensureDocumentIsWriteable();
-            if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
-                throw new ServiceException(textResource.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
-            }
-            if (debtorOrCreditorAccount.getType() == DEBTOR && invoiceTemplate.getType() != SALE) {
-                throw new ServiceException(textResource.getString("InvoiceService.salesInvoiceMustHaveDebtor"));
-            }
-            if (debtorOrCreditorAccount.getType() == CREDITOR && invoiceTemplate.getType() != PURCHASE) {
-                throw new ServiceException(textResource.getString("InvoiceService.purchaseInvoiceMustHaveCreditor"));
-            }
-
+            validateDebtorOrCreditorAccount(debtorOrCreditorAccount, invoiceTemplate);
             validateInvoice(invoiceTemplate);
 
-            ServiceTransaction.withoutResult(() -> {
-                List<Party> partiesForWhichCreationFailed = new LinkedList<>();
-                Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
-                for (Party party : parties) {
-                    List<String> tags = partyIdToTags.getOrDefault(party.getId(), emptyList());
-                    InvoiceDefinition invoiceDefinition = invoiceTemplate.getInvoiceDefinitionFor(party, tags);
+            Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+            List<Party> partiesForWhichCreationFailed = new LinkedList<>();
+            Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
+            List<Invoice> createdInvoices = new ArrayList<>();
+            for (Party party : parties) {
+                List<String> tags = partyIdToTags.getOrDefault(party.getId(), emptyList());
+                InvoiceDefinition invoiceDefinition = invoiceTemplate.getInvoiceDefinitionFor(party, tags);
 
-                    try {
-                        Invoice invoice = invoiceService.create(document, invoiceDefinition);
-                        JournalEntry journalEntry = buildJournalEntry(invoice);
-                        List<JournalEntryDetail> journalEntryDetails = buildJournalEntryDetails(debtorOrCreditorAccount, invoiceDefinition);
-                        addJournalEntry(document, journalEntry, journalEntryDetails);
-                    } catch (ServiceException e) {
-                        partiesForWhichCreationFailed.add(party);
-                    }
+                try {
+                    Invoice invoice = invoiceService.create(document, bookkeeping.getInvoiceIdFormat(), invoiceDefinition);
+                    createdInvoices.add(invoice);
+                    JournalEntry journalEntry = buildJournalEntry(invoice);
+                    List<JournalEntryDetail> journalEntryDetails = buildJournalEntryDetails(debtorOrCreditorAccount, invoiceDefinition);
+                    addJournalEntry(document, journalEntry, journalEntryDetails);
+                } catch (ServiceException e) {
+                    partiesForWhichCreationFailed.add(party);
                 }
+            }
 
-                if (!partiesForWhichCreationFailed.isEmpty()) {
-                    if (partiesForWhichCreationFailed.size() == 1) {
-                        Party party = partiesForWhichCreationFailed.get(0);
-                        throw new ServiceException("Failed to create journal for " + party.getId() + " - " + party.getName());
-                    } else {
-                        StringBuilder sb = new StringBuilder(1000);
-                        for (Party party : partiesForWhichCreationFailed) {
-                            sb.append('\n').append(party.getId()).append(" - ").append(party.getName());
-                        }
-                        throw new ServiceException("Failed to create journal for the parties:" + sb.toString());
+            if (!partiesForWhichCreationFailed.isEmpty()) {
+                if (partiesForWhichCreationFailed.size() == 1) {
+                    Party party = partiesForWhichCreationFailed.get(0);
+                    throw new ServiceException("Failed to create journal for " + party.getId() + " - " + party.getName());
+                } else {
+                    StringBuilder sb = new StringBuilder(1000);
+                    for (Party party : partiesForWhichCreationFailed) {
+                        sb.append('\n').append(party.getId()).append(" - ").append(party.getName());
                     }
+                    throw new ServiceException("Failed to create journal for the parties:" + sb.toString());
                 }
-            });
+            }
+            return createdInvoices;
         });
+    }
+
+    private void validateDebtorOrCreditorAccount(Account debtorOrCreditorAccount, InvoiceTemplate invoiceTemplate) throws ServiceException {
+        if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
+            throw new ServiceException(textResource.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
+        }
+        if (debtorOrCreditorAccount.getType() == DEBTOR && invoiceTemplate.getType() != SALE) {
+            throw new ServiceException(textResource.getString("InvoiceService.salesInvoiceMustHaveDebtor"));
+        }
+        if (debtorOrCreditorAccount.getType() == CREDITOR && invoiceTemplate.getType() != PURCHASE) {
+            throw new ServiceException(textResource.getString("InvoiceService.purchaseInvoiceMustHaveCreditor"));
+        }
     }
 
     private JournalEntry buildJournalEntry(Invoice invoice) {
@@ -165,9 +171,6 @@ public class LedgerService {
         TextResource tr = Factory.getInstance(TextResource.class);
         if (invoiceTemplate.getIssueDate() == null) {
             throw new ServiceException(tr.getString("InvoiceService.issueDateNull"));
-        }
-        if (invoiceTemplate.getId() == null) {
-            throw new ServiceException(tr.getString("InvoiceService.idIsNull"));
         }
         if (invoiceTemplate.getLines().isEmpty()) {
             throw new ServiceException(tr.getString("InvoiceService.invoiceWithZeroLines"));

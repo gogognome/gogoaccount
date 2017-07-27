@@ -1,9 +1,7 @@
 package nl.gogognome.gogoaccount.component.configuration;
 
-import java.util.Calendar;
 import java.util.Currency;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 public class Bookkeeping {
 
@@ -11,6 +9,8 @@ public class Bookkeeping {
     private Date startOfPeriod;
     private Currency currency = Currency.getInstance("EUR");
     private boolean closed;
+    private String invoiceIdFormat;
+    private int nextinvoiceSequenceId;
 
     private String organizationName;
     private String organizationAddress;
@@ -33,6 +33,14 @@ public class Bookkeeping {
 
     public void setCurrency(Currency currency) {
         this.currency = currency;
+    }
+
+    public String getInvoiceIdFormat() {
+        return invoiceIdFormat;
+    }
+
+    public void setInvoiceIdFormat(String invoiceIdFormat) {
+        this.invoiceIdFormat = invoiceIdFormat;
     }
 
     public String getOrganizationAddress() {

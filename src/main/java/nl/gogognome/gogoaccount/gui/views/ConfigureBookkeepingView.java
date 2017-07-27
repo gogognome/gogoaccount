@@ -44,24 +44,23 @@ public class ConfigureBookkeepingView extends View {
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
-    private final StringModel descriptionModel = new StringModel();
-    private final ListModel<Currency> currencyModel = new ListModel<>();
-    private final DateModel startDateModel = new DateModel();
-    private final StringModel organisationNameModel = new StringModel();
-    private final StringModel organizationAddressModel = new StringModel();
-    private final StringModel organizationZipCodeModel = new StringModel();
-    private final StringModel organizationCityModel = new StringModel();
-    private final StringModel organizationCountryModel = new StringModel();
-    private final BooleanModel enableAutomaticCollectionModel = new BooleanModel();
-    private final StringModel ibanModel = new StringModel();
-    private final StringModel bicModel = new StringModel();
-    private final StringModel automaticCollectionContractNumberModel = new StringModel();
-    private final StringModel sequenceNumberModel = new StringModel();
+    private StringModel descriptionModel;
+    private ListModel<Currency> currencyModel;
+    private DateModel startDateModel;
+    private StringModel invoiceIdFormatModel;
+    private StringModel organisationNameModel;
+    private StringModel organizationAddressModel;
+    private StringModel organizationZipCodeModel;
+    private StringModel organizationCityModel;
+    private StringModel organizationCountryModel;
+    private BooleanModel enableAutomaticCollectionModel;
+    private StringModel ibanModel;
+    private StringModel bicModel;
+    private StringModel automaticCollectionContractNumberModel;
+    private StringModel sequenceNumberModel;
 
     private AccountTableModel tableModel;
     private JTable table;
-
-    private ModelChangeListener modelChangeListener;
 
     private JButton editAccountButton;
     private JButton deleteAccountButton;
@@ -89,49 +88,32 @@ public class ConfigureBookkeepingView extends View {
             initModels();
             addComponents();
             updateButtonState();
-            addListeners();
         });
     }
 
     private void initModels() throws ServiceException {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
-        startDateModel.setDate(bookkeeping.getStartOfPeriod());
-        descriptionModel.setString(bookkeeping.getDescription());
+        ModelChangeListener modelChangeListener = model -> updateDatabaseWithEnteredValues();
+        startDateModel = Model.of(bookkeeping.getStartOfPeriod(), v -> {}, modelChangeListener);
+        descriptionModel = Model.of(bookkeeping.getDescription(), v -> {}, modelChangeListener);
 
-        currencyModel.setItems(CurrencyUtil.getAllCurrencies());
+        currencyModel = Model.of(CurrencyUtil.getAllCurrencies(), v -> {});
         currencyModel.setSelectedItem(bookkeeping.getCurrency(), null);
+        invoiceIdFormatModel = Model.of(bookkeeping.getInvoiceIdFormat(), v -> {}, modelChangeListener);
 
-        organisationNameModel.setString(bookkeeping.getOrganizationName());
-        organizationAddressModel.setString(bookkeeping.getOrganizationAddress());
-        organizationCityModel.setString(bookkeeping.getOrganizationCity());
-        organizationZipCodeModel.setString(bookkeeping.getOrganizationZipCode());
-        organizationCountryModel.setString(bookkeeping.getOrganizationCountry());
-        enableAutomaticCollectionModel.setBoolean(bookkeeping.isEnableAutomaticCollection());
+        organisationNameModel = Model.of(bookkeeping.getOrganizationName(), v -> {}, modelChangeListener);
+        organizationAddressModel = Model.of(bookkeeping.getOrganizationAddress(), v -> {}, modelChangeListener);
+        organizationCityModel = Model.of(bookkeeping.getOrganizationCity(), v -> {}, modelChangeListener);
+        organizationZipCodeModel = Model.of(bookkeeping.getOrganizationZipCode(), v -> {}, modelChangeListener);
+        organizationCountryModel = Model.of(bookkeeping.getOrganizationCountry(), v -> {}, modelChangeListener);
+        enableAutomaticCollectionModel = Model.of(bookkeeping.isEnableAutomaticCollection(), v -> {}, modelChangeListener);
+        enableAutomaticCollectionModel.addModelChangeListener(m -> updateVisibilityOfAutomaticCollectionInputFields());
 
         AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
-        ibanModel.setString(settings.getIban());
-        bicModel.setString(settings.getBic());
-        automaticCollectionContractNumberModel.setString(settings.getAutomaticCollectionContractNumber());
-        sequenceNumberModel.setString(Long.toString(settings.getSequenceNumber()));
-    }
-
-    private void addListeners() {
-        modelChangeListener = model -> updateDatabaseWithEnteredValues();
-        startDateModel.addModelChangeListener(modelChangeListener);
-        descriptionModel.addModelChangeListener(modelChangeListener);
-        currencyModel.addModelChangeListener(modelChangeListener);
-        organisationNameModel.addModelChangeListener(modelChangeListener);
-        organizationAddressModel.addModelChangeListener(modelChangeListener);
-        organizationZipCodeModel.addModelChangeListener(modelChangeListener);
-        organizationCityModel.addModelChangeListener(modelChangeListener);
-        organizationCountryModel.addModelChangeListener(modelChangeListener);
-        enableAutomaticCollectionModel.addModelChangeListener(modelChangeListener);
-        ibanModel.addModelChangeListener(modelChangeListener);
-        bicModel.addModelChangeListener(modelChangeListener);
-        automaticCollectionContractNumberModel.addModelChangeListener(modelChangeListener);
-        sequenceNumberModel.addModelChangeListener(modelChangeListener);
-
-        enableAutomaticCollectionModel.addModelChangeListener(m -> updateVisibilityOfAutomaticCollectionInputFields());
+        ibanModel = Model.of(settings.getIban(), v -> {}, modelChangeListener);
+        bicModel = Model.of(settings.getBic(), v -> {}, modelChangeListener);
+        automaticCollectionContractNumberModel = Model.of(settings.getAutomaticCollectionContractNumber(), v -> {}, modelChangeListener);
+        sequenceNumberModel = Model.of(Long.toString(settings.getSequenceNumber()), v -> {}, modelChangeListener);
     }
 
     private void updateVisibilityOfAutomaticCollectionInputFields() {
@@ -153,14 +135,16 @@ public class ConfigureBookkeepingView extends View {
         ifc.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.generalSettings"));
 
         ifc.addField("ConfigureBookkeepingView.description", descriptionModel);
-        ifc.addField("ConfigureBookkeepingView.startDate", startDateModel);
-        ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel, new CurrencyFormatter());
         ifc.addField("ConfigureBookkeepingView.organizationName", organisationNameModel);
         ifc.addField("ConfigureBookkeepingView.organizationAddress", organizationAddressModel);
         ifc.addField("ConfigureBookkeepingView.organizationZipCode", organizationZipCodeModel);
         ifc.addField("ConfigureBookkeepingView.organizationCity", organizationCityModel);
         ifc.addField("ConfigureBookkeepingView.organizationCountry", organizationCountryModel);
         ifc.addField("ConfigureBookkeepingView.enableAutomaticCollection", enableAutomaticCollectionModel);
+        ifc.addField("ConfigureBookkeepingView.startDate", startDateModel);
+        ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel, new CurrencyFormatter());
+        ifc.addField("ConfigureBookkeepingView.invoiceIdFormat", invoiceIdFormatModel);
+        ifc.addVariableSizeField("gen.emptyString", widgetFactory.createLabel("ConfigureBookkeepingView.invoiceIdFormat.explanation"));
 
         automaticCollectionInputFields.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.automaticCollectionSettings"));
         automaticCollectionInputFields.addField("ConfigureBookkeepingView.iban", ibanModel);
@@ -198,13 +182,6 @@ public class ConfigureBookkeepingView extends View {
 
     @Override
     public void onClose() {
-        removeListeners();
-    }
-
-    private void removeListeners() {
-        startDateModel.removeModelChangeListener(modelChangeListener);
-        descriptionModel.removeModelChangeListener(modelChangeListener);
-        currencyModel.removeModelChangeListener(modelChangeListener);
     }
 
     private void updateDatabaseWithEnteredValues() {
@@ -375,7 +352,7 @@ public class ConfigureBookkeepingView extends View {
 
     private static class AccountTableModel extends ListTableModel<AccountDefinition> {
 
-        public AccountTableModel(List<AccountDefinition> accountDefinitions) {
+        AccountTableModel(List<AccountDefinition> accountDefinitions) {
             super(asList(
                     ColumnDefinition.<AccountDefinition>builder("ConfigureBookkeepingView.id", String.class, 50)
                         .add(row -> row.account.getId())

@@ -42,7 +42,7 @@ public class InvoiceService {
         return ServiceTransaction.withResult(() -> new InvoiceDAO(document).findAll("id"));
     }
 
-    public Invoice create(Document document, InvoiceDefinition invoiceDefinition) throws ServiceException {
+    public Invoice create(Document document, String invoiceIdFormat, InvoiceDefinition invoiceDefinition) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             document.ensureDocumentIsWriteable();
             validateInvoice(invoiceDefinition);
@@ -50,12 +50,7 @@ public class InvoiceService {
             InvoiceDAO invoiceDAO = new InvoiceDAO(document);
             InvoiceDetailDAO invoiceDetailsDAO = new InvoiceDetailDAO(document);
 
-            String specificId = invoiceDefinition.getId();
-            if (invoiceDAO.exists(specificId)) {
-                specificId = suggestNewInvoiceId(document, specificId);
-            }
-
-            Invoice invoice = new Invoice(specificId);
+            Invoice invoice = new Invoice();
             invoice.setPartyReference(invoiceDefinition.getPartyReference());
             invoice.setDescription(invoiceDefinition.getDescription());
             invoice.setPartyId(invoiceDefinition.getParty().getId());
@@ -63,7 +58,7 @@ public class InvoiceService {
             invoice.setAmountToBePaid(invoiceDefinition.getType() == SALE ? totalAmount : totalAmount.negate());
             invoice.setIssueDate(invoiceDefinition.getIssueDate());
 
-            invoice = invoiceDAO.create(invoice);
+            invoice = invoiceDAO.create(invoiceIdFormat, invoice);
             List<String> descriptions = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getDescription).collect(toList());
             List<Amount> amounts = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getAmount).collect(toList());
             invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);
@@ -76,9 +71,6 @@ public class InvoiceService {
     private void validateInvoice(InvoiceDefinition invoiceDefinition) throws ServiceException {
         if (invoiceDefinition.getIssueDate() == null) {
             throw new ServiceException(textResource.getString("InvoiceService.issueDateNull"));
-        }
-        if (invoiceDefinition.getId() == null) {
-            throw new ServiceException(textResource.getString("InvoiceService.idIsNull"));
         }
         if (invoiceDefinition.getLines().isEmpty()) {
             throw new ServiceException(textResource.getString("InvoiceService.invoiceWithZeroLines"));
@@ -123,27 +115,6 @@ public class InvoiceService {
      */
     public boolean isPaid(Document document, String invoiceId, Date date) throws ServiceException {
     	return getRemainingAmountToBePaid(document, invoiceId, date).isZero();
-    }
-
-
-    /**
-     * Gets a suggestion for an unused invoice id.
-     *
-     * @param document database containing the bookkeeping
-     * @param id a possibly existing invoice id
-     * @return an invoice id that does not exist yet in this database
-     */
-    public String suggestNewInvoiceId(Document document, String id) throws ServiceException {
-        return ServiceTransaction.withResult(() -> {
-            String newId;
-            Set<String> existingInvoiceIds = new InvoiceDAO(document).findExistingInvoiceIds();
-            int serialNumber = 1;
-            do {
-                newId = id + "-" + serialNumber;
-                serialNumber++;
-            } while (existingInvoiceIds.contains(newId));
-            return newId;
-        });
     }
 
     public Invoice createInvoice(Document document, Invoice invoice) throws ServiceException {

@@ -8,3 +8,4 @@
 70: create-invoice-sendings.sql
 80: add-bookkeeping-closed.sql
 90: invoice-one-party-and-add-party-reference.sql
+100: add-bookkeeping-invoice-id-format.sql

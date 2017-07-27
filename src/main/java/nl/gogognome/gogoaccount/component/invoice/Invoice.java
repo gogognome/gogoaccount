@@ -32,6 +32,10 @@ public class Invoice implements Comparable<Invoice> {
     private Date issueDate;
     private String description;
 
+    public Invoice() {
+        this(null);
+    }
+
     public Invoice(String id) {
         this.id = id;
     }

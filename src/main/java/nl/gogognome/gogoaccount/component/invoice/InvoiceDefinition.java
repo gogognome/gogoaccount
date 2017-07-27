@@ -11,17 +11,15 @@ public class InvoiceDefinition {
 
     private final Party party;
     private final InvoiceTemplate.Type type;
-    private final String id;
     private final String partyReference;
     private final Date issueDate;
     private final String description;
     private final List<InvoiceDefinitionLine> invoiceDefinitionLines;
 
-    public InvoiceDefinition(Party party, InvoiceTemplate.Type type, String id, String partyReference,
-                             Date issueDate, String description, List<InvoiceDefinitionLine> invoiceDefinitionLines) {
+    InvoiceDefinition(Party party, InvoiceTemplate.Type type, String partyReference,
+                      Date issueDate, String description, List<InvoiceDefinitionLine> invoiceDefinitionLines) {
         this.party = party;
         this.type = type;
-        this.id = id;
         this.partyReference = partyReference;
         this.issueDate = issueDate;
         this.description = description;
@@ -34,10 +32,6 @@ public class InvoiceDefinition {
 
     public InvoiceTemplate.Type getType() {
         return type;
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getPartyReference() {
@@ -58,7 +52,7 @@ public class InvoiceDefinition {
 
     public Amount getTotalAmount() {
         return invoiceDefinitionLines.stream()
-                .map(l -> l.getAmount())
+                .map(InvoiceDefinitionLine::getAmount)
                 .reduce(new Amount(BigInteger.ZERO), (a,b) -> a.add(b));
     }
 

@@ -131,8 +131,7 @@ public class EditInvoiceView extends OkCancelView {
                 invoiceToBeEdited.getAmountToBePaid().toBigInteger()));
         } else {
             dateModel.setDate(new Date());
-            idModel.setString(invoiceService.suggestNewInvoiceId(document,
-                    textResource.formatDate("editInvoiceView.dateFormatForNewId", dateModel.getDate())));
+            idModel.setString(null);
         }
 
 	}

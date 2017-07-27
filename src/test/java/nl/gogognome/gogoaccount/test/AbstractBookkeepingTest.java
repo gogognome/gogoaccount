@@ -81,6 +81,7 @@ public abstract class AbstractBookkeepingTest {
 
     @Before
     public void initBookkeeping() throws Exception {
+        DateUtil.setDateFactory(() -> DateUtil.createDate(2011, 2, 3, 14, 20, 30));
         CurrentTransaction.transactionCreator = DocumentAwareTransaction::new;
         initFactory();
 

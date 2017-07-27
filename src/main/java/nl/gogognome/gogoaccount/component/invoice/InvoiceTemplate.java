@@ -15,15 +15,13 @@ public class InvoiceTemplate {
     }
 
     private final Type type;
-    private final String id;
     private final String partyReference;
     private final Date issueDate;
     private String description;
     private final List<InvoiceTemplateLine> invoiceTemplateLines;
 
-    public InvoiceTemplate(Type type, String id, String partyReference, Date issueDate, String description, List<InvoiceTemplateLine> invoiceTemplateLines) {
+    public InvoiceTemplate(Type type, String partyReference, Date issueDate, String description, List<InvoiceTemplateLine> invoiceTemplateLines) {
         this.type = type;
-        this.id = id;
         this.partyReference = partyReference;
         this.issueDate = issueDate;
         this.description = description;
@@ -32,10 +30,6 @@ public class InvoiceTemplate {
 
     public Type getType() {
         return type;
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getPartyReference() {
@@ -63,7 +57,7 @@ public class InvoiceTemplate {
                 resultLineDefinitions.add(new InvoiceDefinitionLine(amount, line.getDescription(), line.getAccount()));
             }
         }
-        return new InvoiceDefinition(party, type, replaceKeywords(getId(), party), getPartyReference(), issueDate, replaceKeywords(getDescription(), party), resultLineDefinitions);
+        return new InvoiceDefinition(party, type, getPartyReference(), issueDate, replaceKeywords(getDescription(), party), resultLineDefinitions);
     }
 
     /**
