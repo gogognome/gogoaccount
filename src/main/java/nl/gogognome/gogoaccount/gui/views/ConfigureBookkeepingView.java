@@ -205,6 +205,7 @@ public class ConfigureBookkeepingView extends View {
             bookkeeping.setOrganizationZipCode(organizationZipCodeModel.getString());
             bookkeeping.setOrganizationCity(organizationCityModel.getString());
             bookkeeping.setOrganizationCountry(organizationCountryModel.getString());
+            bookkeeping.setInvoiceIdFormat(invoiceIdFormatModel.getString());
             bookkeeping.setEnableAutomaticCollection(enableAutomaticCollectionModel.getBoolean());
             configurationService.updateBookkeeping(document, bookkeeping);
 
