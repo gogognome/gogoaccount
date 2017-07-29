@@ -27,6 +27,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void createInvoicesForMultipleParties_allInvoicesHaveCorrectAmountsAndUniqueId() throws Exception {
+        removeExistingInvoices();
         List<Party> parties = partyService.findAllParties(document);
         assertTrue(parties.size() > 1);
         Date issueDate = DateUtil.createDate(2011, 8, 20);
@@ -35,13 +36,14 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, null, issueDate, "Invoice for {name}", buildSomeLine());
         ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
 
+        int index = 0;
         Set<String> uniqueIds = new HashSet<>();
-        for (Party party : parties) {
-            Invoice invoice = invoiceService.getInvoice(document, "inv-" + party.getId());
+        for (Invoice invoice : invoiceService.findAllInvoices(document)) {
             uniqueIds.add(invoice.getId());
-            assertEquals("Invoice for " + party.getName(), invoice.getDescription());
+            assertEquals("Invoice for " + parties.get(index).getName(), invoice.getDescription());
             assertEquals(singletonList("Zaalhuur"), invoiceService.findDescriptions(document, invoice));
             assertEquals(amount, invoice.getAmountToBePaid());
+            index++;
         }
         assertEquals(parties.size(), uniqueIds.size());
     }
@@ -64,47 +66,13 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         Account debtor = configurationService.getAccount(document, "190");
         InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, null, issueDate, "Invoice for {name}", buildSomeLine());
         List<Invoice> createdInvoices = ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
-        return createdInvoices.stream().map(invoice -> invoice.getId()).collect(toList()).toString();
+        return createdInvoices.stream().map(Invoice::getId).collect(toList()).toString();
     }
 
     private void setInvoiceIdPattern(String invoiceIdPattern) throws ServiceException {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         bookkeeping.setInvoiceIdFormat(invoiceIdPattern);
         configurationService.updateBookkeeping(document, bookkeeping);
-    }
-
-    @Test
-    public void whenCreatingInvoicesIdsMustBeUnique() throws Exception {
-        List<Party> parties = partyService.findAllParties(document);
-        Date issueDate = DateUtil.createDate(2011, 8, 20);
-        Account debtor = configurationService.getAccount(document, "190");
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "12731", issueDate, "Invoice for {name}", buildSomeLine());
-        ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties);
-
-        Set<String> ids = new HashSet<>();
-        for (Party p : parties) {
-            InvoiceSearchCriteria searchCriteria = new InvoiceSearchCriteria();
-            searchCriteria.setName(p.getName());
-            searchCriteria.setId("auto");
-            List<Invoice> invoices = invoiceService.findInvoices(document, searchCriteria);
-            assertEquals(1, invoices.size());
-            ids.add(invoices.get(0).getId());
-        }
-
-        assertEquals(parties.size(), ids.size());
-    }
-
-    @Test
-    public void cannotCreateInvoicesWithoutId() throws Exception {
-        List<Party> parties = partyService.findAllParties(document);
-        Date issueDate = DateUtil.createDate(2011, 8, 20);
-        Account debtor = configurationService.getAccount(document, "190");
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, null, issueDate, "Invoice for {name}", buildSomeLine());
-
-        ServiceException exception = assertThrows(ServiceException.class, () ->
-                ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, parties));
-
-        assertEquals("An invoice must have an id!", exception.getMessage());
     }
 
     @Test
@@ -183,9 +151,9 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         createInvoiceWithPayment(100, 120, janPieterszoon);
         List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, null, true);
         assertInvoiceOverviewsEqual(overviews,
-                "I-001 Invoice I-001 to be paid: 100, paid: 100 Pietje Puk",
-                "I-002 Invoice I-002 to be paid: 100, paid: 80 Jan Pieterszoon",
-                "I-003 Invoice I-003 to be paid: 100, paid: 120 Jan Pieterszoon");
+                "201100001 Invoice to be paid: 100, paid: 100 Pietje Puk",
+                "201100002 Invoice to be paid: 100, paid: 80 Jan Pieterszoon",
+                "201100003 Invoice to be paid: 100, paid: 120 Jan Pieterszoon");
     }
 
     @Test
@@ -202,7 +170,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         createInvoiceWithPayment(100, 80, janPieterszoon);
         List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, null, false);
         assertInvoiceOverviewsEqual(overviews,
-                "I-003 Invoice I-003 to be paid: 100, paid: 80 Jan Pieterszoon");
+                "201100001 Invoice to be paid: 100, paid: 80 Jan Pieterszoon");
     }
 
     @Test
@@ -211,7 +179,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         createInvoiceWithPayment(100, 120, janPieterszoon);
         List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, null, false);
         assertInvoiceOverviewsEqual(overviews,
-                "I-003 Invoice I-003 to be paid: 100, paid: 120 Jan Pieterszoon");
+                "201100001 Invoice to be paid: 100, paid: 120 Jan Pieterszoon");
     }
 
     @Test
@@ -222,7 +190,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
         createInvoiceWithPayment(100, 120, janPieterszoon);
         List<InvoiceOverview> overviews = invoiceService.findInvoiceOverviews(document, new StringLiteral("puk"), true);
         assertInvoiceOverviewsEqual(overviews,
-                "I-001 Invoice I-001 to be paid: 100, paid: 100 Pietje Puk");
+                "201100001 Invoice to be paid: 100, paid: 100 Pietje Puk");
     }
 
     private void removeExistingInvoices() throws ServiceException {

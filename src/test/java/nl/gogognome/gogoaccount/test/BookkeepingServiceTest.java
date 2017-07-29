@@ -268,7 +268,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
             assertEquals("[20111231 start start balance]", ledgerService.findJournalEntries(newDocument).toString());
-            assertEquals("[20110820 auto Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
+            assertEquals("[20110820 201100001 Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
         } finally {
             assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
         }
@@ -284,8 +284,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            assertEquals("[20111231 start start balance, 20120115 auto Invoice for Pietje Puk]", ledgerService.findJournalEntries(newDocument).toString());
-            assertEquals("[20120115 auto Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
+            assertEquals("[20111231 start start balance, 20120115 201100001 Invoice for Pietje Puk]", ledgerService.findJournalEntries(newDocument).toString());
+            assertEquals("[20120115 201100001 Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
         } finally {
             assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
         }
