@@ -15,6 +15,32 @@ class PartyDAO extends AbstractDomainClassDAO<Party> {
         super("party", null, document.getBookkeepingId());
     }
 
+    public Party createWithNewId(Party party) throws SQLException {
+        String nextPartyId = getNextId();
+
+        NameValuePairs nvp = getNameValuePairs(party);
+        nvp.remove("id");
+        nvp.add("id", nextPartyId);
+        insert(tableName, nvp);
+
+        return this.getObjectFromResultSet(convertNameValuePairsToResultSet(nvp));
+    }
+
+    private String getNextId() throws SQLException {
+        String previousId = execute("SELECT MAX(id) FROM " + tableName).findFirst(r -> r.getString(1));
+        int previousIdNumber;
+        if (previousId == null) {
+            previousIdNumber = 0;
+        } else {
+            try {
+                previousIdNumber = Integer.parseInt(previousId);
+            } catch (NumberFormatException e) {
+                throw new SQLException("Unexpected party id found while determining previous party id: " + previousId);
+            }
+        }
+        return Integer.toString(previousIdNumber + 1);
+    }
+
     public Map<String, Party> getIdToParty(List<String> partyIds) throws SQLException {
         return execute("SELECT * FROM " + tableName + " WHERE id IN (?)", partyIds).toHashMap(r -> r.getString("id"), r -> getObjectFromResultSet(r));
     }

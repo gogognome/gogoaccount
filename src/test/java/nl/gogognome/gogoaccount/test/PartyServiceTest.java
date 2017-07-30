@@ -7,13 +7,15 @@ import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.textsearch.criteria.StringLiteral;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 public class PartyServiceTest extends AbstractBookkeepingTest {
 
@@ -21,7 +23,7 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testAddingNonExistentParty() throws Exception {
-        Party party = new Party("1115");
+        Party party = new Party();
         party.setName("Hendrik Erikszoon");
         party.setAddress("Willemstraat 5");
         party.setZipCode("6122 CC");
@@ -29,105 +31,75 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
         party.setBirthDate(DateUtil.createDate(1976, 4, 23));
         party.setRemarks("This is an excellent person!");
 
-        assertFalse(partyService.existsParty(document, party.getId()));
-        partyService.createParty(document, party, Arrays.asList("excellent", "party"));
-        assertEqualParty(party, partyService.getParty(document, party.getId()));
-    }
-
-    @Test(expected = ServiceException.class)
-    public void testAddingExistentPartyFails() throws Exception {
-        Party party = createParty();
-        partyService.createParty(document, party, Arrays.asList("already", "exists"));
+        Party createdParty = partyService.createPartyWithNewId(document, party, asList("excellent", "party"));
+        party = overrideId(party, createdParty.getId());
+        assertEqualParty(party, partyService.getParty(document, createdParty.getId()));
     }
 
     @Test
-    public void updateExistingParty() throws Exception {
-        Party party = createParty();
+    public void createPartyWithSpecifiedId_existingPartyId_fails() throws Exception {
+        assertThrows(ServiceException.class, () -> partyService.createPartyWithSpecifiedId(document, pietPuk, asList("already", "exists")));
+    }
 
-        party.setBirthDate(null);
+    @Test
+    public void updateParty_updatesPartyAndTags() throws Exception {
+        pietPuk.setBirthDate(null);
         List<String> newTags = singletonList("updated");
-        partyService.updateParty(document, party, newTags);
+        partyService.updateParty(document, pietPuk, newTags);
 
-        Party updatedParty = partyService.getParty(document, party.getId());
-        assertEqualParty(party, updatedParty);
-        assertEquals(newTags, partyService.findTagsForParty(document, party));
-    }
-
-    @Test(expected = ServiceException.class)
-    public void updateNonExistingPartyFails() throws Exception {
-        Party party = new Party("1115");
-        party.setName("Hendrik Erikszoon");
-        assertFalse(partyService.existsParty(document, party.getId()));
-
-        partyService.updateParty(document, party, singletonList("updated"));
+        Party updatedParty = partyService.getParty(document, pietPuk.getId());
+        assertEqualParty(pietPuk, updatedParty);
+        assertEquals(newTags, partyService.findTagsForParty(document, pietPuk));
     }
 
     @Test
-    public void removeExistingParty() throws Exception {
-        Party party = createParty();
-        partyService.deleteParty(document, party);
-        assertFalse(partyService.existsParty(document, party.getId()));
+    public void updateParty_nonExistingPartyId_fails() throws Exception {
+        assertThrows(ServiceException.class, () -> partyService.updateParty(document, overrideId(pietPuk, "1234"), singletonList("updated")));
     }
 
-    @Test(expected = ServiceException.class)
+    @Test
+    public void deleteParty_existingParty_succeeds() throws Exception {
+        partyService.deleteParty(document, pietPuk);
+        assertFalse(partyService.existsParty(document, pietPuk.getId()));
+    }
+
+    @Test
     public void removeNonExistingPartyFails() throws Exception {
-        Party party = new Party("1115");
-        party.setName("Hendrik Erikszoon");
-        assertFalse(partyService.existsParty(document, party.getId()));
+        Party party = overrideId(pietPuk, "1234");
 
-        partyService.deleteParty(document, party);
+        assertThrows(ServiceException.class, () -> partyService.deleteParty(document, party));
     }
 
     @Test
-    public void testPartyTags() throws Exception {
-        Party party = new Party("1115");
+    public void findPartyTags_returnsUniqueTagsForAllParties() throws Exception {
+        Party party = new Party();
         party.setName("Hendrik Erikszoon");
-        partyService.createParty(document, party, singletonList("Type 2"));
+        partyService.createPartyWithNewId(document, party, singletonList("Type 2"));
 
-        party = new Party("1116");
+        party = new Party();
         party.setName("Hendrika Eriksdochter");
-        partyService.createParty(document, party, singletonList("Type 1"));
+        partyService.createPartyWithNewId(document, party, asList("Type 1", "Type 2"));
 
-        party = new Party("1117");
+        party = new Party();
         party.setName("Jan Jansen");
-        partyService.createParty(document, party, emptyList());
+        partyService.createPartyWithNewId(document, party, emptyList());
 
         assertEquals("[Type 1, Type 2]", partyService.findPartyTags(document).toString());
     }
 
-    private Party createParty() throws ServiceException {
-        Party party = new Party("12345");
-        party.setName("Hendrik Erikszoon");
-        return partyService.createParty(document, party, emptyList());
-    }
-
     @Test
     public void testPartySearchCriteria() throws Exception {
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, new StringLiteral("Puk")).toString());
-        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Sterrenlaan")).toString());
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, new StringLiteral("19800223")).toString());
-        assertEquals("[1102 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Eind")).toString());
-        assertEquals("[1101 Pietje Puk]", partyService.findParties(document, new StringLiteral("15")).toString());
+        assertEquals("[1 Pietje Puk]", partyService.findParties(document, new StringLiteral("Puk")).toString());
+        assertEquals("[2 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Sterrenlaan")).toString());
+        assertEquals("[1 Pietje Puk]", partyService.findParties(document, new StringLiteral("19800223")).toString());
+        assertEquals("[2 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Eind")).toString());
+        assertEquals("[1 Pietje Puk]", partyService.findParties(document, new StringLiteral("15")).toString());
     }
 
-    @Test
-    public void performanceTest() throws ServiceException {
-        for (int i=0; i<10000; i++) {
-            Party party = new Party("p-" + i);
-            party.setName("Hendrik Erikszoon");
-            party.setAddress("Willemstraat 5");
-            party.setZipCode("6122 CC");
-            party.setCity("Heerenveen");
-            party.setBirthDate(DateUtil.createDate(1976, 4, 23));
-            party.setRemarks("This is an excellent person!");
-
-            partyService.createParty(document, party, Arrays.asList("excellent-" + i, "party-" + i));
-        }
-
-        for (int i=0; i<1000; i++) {
-            partyService.getParty(document, "p-" + i);
-            partyService.getParty(document, "p-123");
-        }
+    private Party overrideId(Party party, String partyId) {
+        party = spy(party);
+        when(party.getId()).thenReturn(partyId);
+        return party;
     }
 
 }

@@ -17,9 +17,15 @@ class InvoiceDAO extends AbstractDomainClassDAO<Invoice> {
         super("invoice", null, document.getBookkeepingId());
     }
 
-    public Invoice create(String invoiceIdFormat, Invoice invoice) throws SQLException {
-        invoice.setId(getNextInvoiceId(invoiceIdFormat));
-        return create(invoice);
+    public Invoice createWithNewId(String invoiceIdFormat, Invoice invoice) throws SQLException {
+        String nextInvoiceId = getNextInvoiceId(invoiceIdFormat);
+
+        NameValuePairs nvp = getNameValuePairs(invoice);
+        nvp.remove("id");
+        nvp.add("id", nextInvoiceId);
+        insert(tableName, nvp);
+
+        return getObjectFromResultSet(convertNameValuePairsToResultSet(nvp));
     }
 
     private String getNextInvoiceId(String invoiceIdFormat) throws SQLException {
@@ -44,7 +50,7 @@ class InvoiceDAO extends AbstractDomainClassDAO<Invoice> {
     }
 
     private int getPreviousSequenceNumber(String invoiceIdFormat, int startIndex, int endIndex) throws SQLException {
-        String pattern = StringUtil.replace(invoiceIdFormat, startIndex, endIndex, "%");
+        String pattern = StringUtil.replace(invoiceIdFormat, startIndex, endIndex, StringUtil.prependToSize("", endIndex - startIndex, '_'));
         String previousId = execute("SELECT MAX(id) FROM " + tableName + " WHERE id LIKE '" + pattern + "'").findFirst(r -> r.getString(1));
         int previousSequenceNumber;
         if (previousId != null) {

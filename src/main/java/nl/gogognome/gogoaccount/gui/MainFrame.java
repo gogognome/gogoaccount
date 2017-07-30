@@ -13,7 +13,6 @@ import nl.gogognome.gogoaccount.gui.invoice.InvoicesView;
 import nl.gogognome.gogoaccount.gui.views.*;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.lib.swing.WidgetFactory;
 import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.views.*;
@@ -65,13 +64,12 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final ControllerFactory controllerFactory;
     private final DocumentRegistry documentRegistry;
     private final ResourceLoader resourceLoader;
-    private final XMLFileReader xmlFileReader;
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
     public MainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
                      ViewFactory viewFactory, ControllerFactory controllerFactory, DocumentRegistry documentRegistry,
-                     ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
+                     ResourceLoader resourceLoader) {
         this.bookkeepingService = bookkeepingService;
         this.documentService = documentService;
         this.configurationService = configurationService;
@@ -79,7 +77,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         this.controllerFactory = controllerFactory;
         this.documentRegistry = documentRegistry;
         this.resourceLoader = resourceLoader;
-        this.xmlFileReader = xmlFileReader;
         messageDialog = new MessageDialog(textResource, this);
         handleException = new HandleException(messageDialog);
 
@@ -230,7 +227,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                 return;
             }
             boolean existingBookkeeping = false;
-            Document newDocument = null;
+            Document newDocument;
             if (file.exists()) {
                 newDocument = doLoadFile(file);
                 existingBookkeeping = true;
@@ -362,18 +359,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private Document doLoadFile(File file) throws ServiceException {
-        Document newDocument;
-        if (file.getName().toLowerCase().endsWith(".xml")) {
-            newDocument = xmlFileReader.createDatabaseFromFile(file);
-            if (MessageDialog.YES_OPTION == messageDialog.showYesNoQuestion("mf.xmlChangedToDatabase.title", "mf.xmlChangedToDatabase")) {
-                if (!file.delete()) {
-                    messageDialog.showErrorMessage("mf.failedToDeleteFile", file.getAbsoluteFile());
-                }
-            }
-        } else {
-            String filename = file.getAbsolutePath();
-            newDocument = documentService.openDocument(filename);
-        }
+        String filename = file.getAbsolutePath();
+        Document newDocument = documentService.openDocument(filename);
 
         Currency currency = configurationService.getBookkeeping(newDocument).getCurrency();
         Factory.bindSingleton(AmountFormat.class, new AmountFormat(Factory.getInstance(Locale.class), currency));

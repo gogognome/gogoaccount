@@ -1,13 +1,5 @@
 package nl.gogognome.gogoaccount.businessobjects;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Currency;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
@@ -16,6 +8,8 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.Factory;
+
+import java.util.*;
 
 /**
  * This class contains the financial report for a specific date.
@@ -200,11 +194,11 @@ public class Report {
 
         if (resultOfOperations.isPositive()) {
             resultOfOperationsAccount =
-                new Account("", textResource.getString("gen.profit"), AccountType.LIABILITY);
+                new Account("__profit__", textResource.getString("gen.profit"), AccountType.LIABILITY);
             setAmount(resultOfOperationsAccount, resultOfOperations);
         } else if (resultOfOperations.isNegative()) {
             resultOfOperationsAccount =
-                new Account("", textResource.getString("gen.loss"), AccountType.ASSET);
+                new Account("__loss__", textResource.getString("gen.loss"), AccountType.ASSET);
             setAmount(resultOfOperationsAccount, resultOfOperations.negate());
         }
     }

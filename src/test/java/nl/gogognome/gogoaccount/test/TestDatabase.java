@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount.test;
 
 import nl.gogognome.gogoaccount.component.configuration.Account;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.services.ServiceException;
@@ -11,7 +12,9 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static junit.framework.Assert.*;
+import static java.util.Arrays.asList;
+import static nl.gogognome.lib.util.DateUtil.createDate;
+import static org.junit.Assert.*;
 
 public class TestDatabase extends AbstractBookkeepingTest {
 
@@ -19,16 +22,22 @@ public class TestDatabase extends AbstractBookkeepingTest {
     public void testGetAllAccounts() throws Exception {
         List<Account> accounts = configurationService.findAllAccounts(document);
 
-        assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
-                        "200 Eigen vermogen, 290 Crediteuren, " +
-                        "300 Contributie, 390 Onvoorzien, " +
-                        "400 Zaalhuur, 490 Onvoorzien]",
-                accounts.toString());
+        assertEquals(asList(cash, bankAccount, debtors, equity, creditors, subscription, unforeseenRevenues, sportsHallRent, unforeseenExpenses),
+                accounts);
     }
 
     @Test
-    public void testGetCreatingInvoice() throws Exception {
-        assertEquals("t1", ledgerService.findJournalThatCreatesInvoice(document, "inv1").getId());
+    public void findJournalThatCreatesInvoice_validInvoiceId_returnsIdOfJournalCreatingInvoice() throws Exception {
+        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+
+        assertEquals(invoice.getId(), ledgerService.findJournalThatCreatesInvoice(document, invoice.getId()).getId());
+        JournalEntry journalEntry = ledgerService.findJournalEntry(document, invoice.getId());
+        assertNotNull(journalEntry);
+        assertEquals(invoice.getId(), journalEntry.getIdOfCreatedInvoice());
+    }
+
+    @Test
+    public void findJournalThatCreatesInvoice_invalidInvoiceId_returnsNull() throws Exception {
         assertNull(ledgerService.findJournalThatCreatesInvoice(document, "bla"));
     }
 
@@ -41,8 +50,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
     @Test
     public void updateExistingJournal() throws Exception {
-        JournalEntry oldJournalEntry = findJournalEntry("t1");
-        assertNotNull(oldJournalEntry);
+        JournalEntry oldJournalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, null, debtors, null);
 
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
         JournalEntryDetail d1 = new JournalEntryDetail();

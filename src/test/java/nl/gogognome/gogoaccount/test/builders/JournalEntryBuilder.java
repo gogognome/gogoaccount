@@ -28,14 +28,13 @@ public class JournalEntryBuilder {
         return journalEntryDetail;
     }
 
-    public static JournalEntryDetail buildDetail(int amountInt, String accountId, boolean debet, String invoiceId, String paymentId) {
+    public static JournalEntryDetail buildDetail(int amountInt, String accountId, boolean debet, String invoiceId) {
         Amount amount = AmountBuilder.build(amountInt);
         JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
         journalEntryDetail.setAmount(amount);
         journalEntryDetail.setAccountId(accountId);
         journalEntryDetail.setDebet(debet);
         journalEntryDetail.setInvoiceId(invoiceId);
-        journalEntryDetail.setPaymentId(paymentId);
         return journalEntryDetail;
     }
 

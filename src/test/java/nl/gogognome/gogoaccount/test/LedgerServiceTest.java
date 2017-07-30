@@ -8,44 +8,46 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetailBuilder;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static junit.framework.Assert.*;
-import static junit.framework.Assert.assertTrue;
+import static java.util.Collections.emptyList;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNull;
+import static nl.gogognome.lib.util.DateUtil.createDate;
 import static org.junit.Assert.assertEquals;
 
 public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
-    public void checkThatOneInvoiceExistsAndJournalEntry_t2_generatedAPaymentForTheInvoice() throws ServiceException {
-        List<Invoice> invoices = invoiceService.findAllInvoices(document);
-        assertEquals(1, invoices.size());
-        Invoice invoice = invoices.get(0);
+    public void findPayments_createInvoiceAndJournalWithPayment_returnsPaymentForInvoice() throws ServiceException {
+        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        JournalEntry journalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
+        assertEquals(1, invoiceService.findPayments(document, invoice).size());
+
         List<Payment> payments = invoiceService.findPayments(document, invoice);
-        JournalEntry journalEntry = ledgerService.findJournalEntry(document, "t2");
+        journalEntry = ledgerService.findJournalEntry(document, journalEntry.getId());
         assertEquals(invoice.getId(), ledgerService.findJournalEntryDetails(document, journalEntry).get(0).getInvoiceId());
         assertEquals(payments.get(0).getId(), ledgerService.findJournalEntryDetails(document, journalEntry).get(0).getPaymentId());
     }
 
     @Test
-    public void whenAJournalEntryDetailWithPaymentIsUpdatedThePaymentMustBeUpdatedToo() throws ServiceException {
-        List<Invoice> invoices = invoiceService.findAllInvoices(document);
-        Invoice invoice = invoices.get(0);
+    public void whenAJournalEntryDetailWithPaymentIsUpdatedThePaymentMustBeUpdatedToo() throws Exception {
+        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
 
-        JournalEntry journalEntry = ledgerService.findJournalEntry(document, "t2");
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                JournalEntryDetailBuilder.debet().amount("15").account("100").invoiceId(invoice.getId()).build(),
-                JournalEntryDetailBuilder.credit().amount("15").account("101").build());
+                JournalEntryDetailBuilder.debet().amount("15").account(bankAccount.getId()).invoiceId(invoice.getId()).build(),
+                JournalEntryDetailBuilder.credit().amount("15").account(debtors.getId()).build());
         ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails);
 
         List<Payment> payments = invoiceService.findPayments(document, invoice);
         assertEquals(1, payments.size());
         Payment payment = payments.get(0);
-        assertEquals(AmountBuilder.build(15), payment.getAmount());
+        checkAmount(15, payment.getAmount());
+
         Account account = configurationService.getAccount(document, journalEntryDetails.get(0).getAccountId());
         assertEquals(account.getName(), payment.getDescription());
         assertEquals(journalEntry.getDate(), payment.getDate());
@@ -54,55 +56,64 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenAJournalEntryDetailWithPaymentIsUpdatedWithoutInvoiceThenPaymentMustBeRemoved() throws ServiceException {
-        List<Invoice> invoices = invoiceService.findAllInvoices(document);
-        Invoice invoice = invoices.get(0);
+        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
 
-        JournalEntry journalEntry = ledgerService.findJournalEntry(document, "t2");
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                JournalEntryDetailBuilder.debet().amount("15").account("100").build(),
-                JournalEntryDetailBuilder.credit().amount("15").account("101").build());
+                JournalEntryDetailBuilder.debet().amount("15").account(cash.getId()).build(),
+                JournalEntryDetailBuilder.credit().amount("15").account(bankAccount.getId()).build());
         ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails);
 
         List<Payment> payments = invoiceService.findPayments(document, invoice);
-        assertEquals("[]", payments.toString());
+        assertEquals(emptyList(), payments);
     }
 
     @Test
-    public void whenAJournalEntryDetailWithoutPaymentIsUpdatedWithInvoiceThenPaymentMustBeCreated() throws ServiceException {
-        whenAJournalEntryDetailWithPaymentIsUpdatedWithoutInvoiceThenPaymentMustBeRemoved(); // now t2 has no payment
-        whenAJournalEntryDetailWithPaymentIsUpdatedThePaymentMustBeUpdatedToo(); // now t2 has a payment
+    public void whenAJournalEntryDetailWithoutPaymentIsUpdatedWithInvoiceThenPaymentMustBeCreated() throws Exception {
+        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, null, debtors, null);
+
+        List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
+                JournalEntryDetailBuilder.debet().amount("15").account(cash.getId()).invoiceId(invoice.getId()).build(),
+                JournalEntryDetailBuilder.credit().amount("15").account(debtors.getId()).build());
+        ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails);
+
+        List<Payment> payments = invoiceService.findPayments(document, invoice);
+        assertEquals(1, payments.size());
+        Payment payment = payments.get(0);
+        checkAmount(15, payment.getAmount());
+
     }
 
     @Test
-    public void removeJournalThatCreatesInvoice() throws Exception {
-        assertNotNull(findJournalEntry("t1"));
-        assertTrue(invoiceService.existsInvoice(document, "inv1"));
+    public void removeJournal_journalCreatesInvoice_journalAndInvoiceRemoved() throws Exception {
+        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        JournalEntry journalEntry = findJournalEntry(invoice.getId());
 
-        ledgerService.removeJournalEntry(document, findJournalEntry("t2")); // must remove journal with payment too to prevent foreign key violation
-        ledgerService.removeJournalEntry(document, findJournalEntry("t1"));
+        ledgerService.removeJournalEntry(document, journalEntry);
 
-        assertNull(findJournalEntry("t1"));
-        assertFalse(invoiceService.existsInvoice(document, "inv1"));
+        assertNull(findJournalEntry(journalEntry.getId()));
+        assertFalse(invoiceService.existsInvoice(document, invoice.getId()));
     }
 
     @Test
-    public void removeJournalWithPayment() throws Exception {
-        assertNotNull(findJournalEntry("t2"));
-        Invoice invoice = invoiceService.getInvoice(document, "inv1");
-        assertFalse(invoiceService.findPayments(document, invoice).isEmpty());
+    public void removeJournal_journalHasPayment_journalAndPaymentRemoved() throws Exception {
+        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        JournalEntry journalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
+        assertEquals(1, invoiceService.findPayments(document, invoice).size());
 
-        ledgerService.removeJournalEntry(document, findJournalEntry("t2"));
+        ledgerService.removeJournalEntry(document, journalEntry);
 
-        assertNull(findJournalEntry("t2"));
-        assertTrue(invoiceService.findPayments(document, invoice).isEmpty());
+        assertNull(findJournalEntry(journalEntry.getId()));
+        assertEquals(emptyList(), invoiceService.findPayments(document, invoice));
     }
 
     @Test
     public void updateJournalEntry_journalEntryNotInBalance_shouldFail() throws ServiceException {
-        JournalEntry journalEntry = ledgerService.findJournalEntry(document, "t2");
+        JournalEntry journalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, null, debtors, null);
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                JournalEntryDetailBuilder.debet().amount("10").account("100").build(),
-                JournalEntryDetailBuilder.credit().amount("20").account("101").build());
+                JournalEntryDetailBuilder.debet().amount("10").account(cash.getId()).build(),
+                JournalEntryDetailBuilder.credit().amount("20").account(bankAccount.getId()).build());
 
         assertThrows(DebetAndCreditAmountsDifferException.class, () -> ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails));
     }

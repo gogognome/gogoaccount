@@ -58,7 +58,7 @@ public class InvoiceService {
             invoice.setAmountToBePaid(invoiceDefinition.getType() == SALE ? totalAmount : totalAmount.negate());
             invoice.setIssueDate(invoiceDefinition.getIssueDate());
 
-            invoice = invoiceDAO.create(invoiceIdFormat, invoice);
+            invoice = invoiceDAO.createWithNewId(invoiceIdFormat, invoice);
             List<String> descriptions = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getDescription).collect(toList());
             List<Amount> amounts = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getAmount).collect(toList());
             invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);

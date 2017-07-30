@@ -67,7 +67,7 @@ public class ReportBuilder {
 
     private void determineBalanceForDebtorsAndCreditors() throws ServiceException {
         for (Invoice invoice : report.getInvoices()) {
-            Party party = partyService.getParty(document, invoice.getPartyId() != null ? invoice.getPartyId() : invoice.getPartyId());
+            Party party = partyService.getParty(document, invoice.getPartyId());
             Amount amount = report.getRemaingAmountForInvoice(invoice);
             if (amount.isPositive()) {
                 Amount balance = report.getBalanceForDebtor(party);

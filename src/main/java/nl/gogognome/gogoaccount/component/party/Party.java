@@ -1,7 +1,6 @@
 package nl.gogognome.gogoaccount.component.party;
 
 import java.util.Date;
-import java.util.List;
 
 
 /**
@@ -17,9 +16,12 @@ public class Party implements Comparable<Party> {
     private String emailAddress;
     private Date birthDate;
     private String remarks;
-    private List<String> tags;
 
-    public Party(String id) {
+    public Party() {
+        this(null);
+    }
+
+    Party(String id) {
         this.id = id;
     }
 

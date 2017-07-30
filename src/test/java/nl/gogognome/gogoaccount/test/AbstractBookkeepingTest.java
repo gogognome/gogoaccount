@@ -2,7 +2,7 @@ package nl.gogognome.gogoaccount.test;
 
 import junit.framework.Assert;
 import nl.gogognome.dataaccess.transaction.CurrentTransaction;
-import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
@@ -10,18 +10,16 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentAwareTransaction;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
+import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
@@ -41,8 +39,8 @@ import java.util.*;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static junit.framework.Assert.*;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
 
 /**
  * Abstract class that sets up a bookkeeping in an in-memory database. A new database instance is used per test.
@@ -63,18 +61,18 @@ public abstract class AbstractBookkeepingTest {
     protected Bookkeeping bookkeeping;
     protected Amount zero;
 
-    protected Account cash = new Account("100", "Kas", AccountType.ASSET);
-    protected Account bankAccount = new Account("101", "Betaalrekening", AccountType.ASSET);
-    protected Account debtor =  new Account("190", "Debiteuren", AccountType.DEBTOR);
+    protected Account cash = new Account("100", "Cash", AccountType.ASSET);
+    protected Account bankAccount = new Account("101", "Bank account", AccountType.ASSET);
+    protected Account debtors =  new Account("190", "Debtors", AccountType.DEBTOR);
 
-    protected Account equity = new Account("200", "Eigen vermogen", AccountType.EQUITY);
-    protected Account creditors = new Account("290", "Crediteuren", AccountType.CREDITOR);
+    protected Account equity = new Account("200", "Equity", AccountType.EQUITY);
+    protected Account creditors = new Account("290", "Creditors", AccountType.CREDITOR);
 
-    protected Account sportsHallRent = new Account("400", "Zaalhuur", AccountType.EXPENSE);
-    protected Account unforeseenExpenses = new Account("490", "Onvoorzien", AccountType.EXPENSE);
+    protected Account sportsHallRent = new Account("400", "Sports hall rent", AccountType.EXPENSE);
+    protected Account unforeseenExpenses = new Account("490", "Unforeseen expenses", AccountType.EXPENSE);
 
-    protected Account contribution = new Account("300", "Contributie", AccountType.REVENUE);
-    protected Account unforeseenRevenues = new Account("390", "Onvoorzien", AccountType.REVENUE);
+    protected Account subscription = new Account("300", "Subscription", AccountType.REVENUE);
+    protected Account unforeseenRevenues = new Account("390", "Unforeseen revenues", AccountType.REVENUE);
 
     protected Party pietPuk;
     protected Party janPieterszoon;
@@ -103,27 +101,23 @@ public abstract class AbstractBookkeepingTest {
         settings.setBic("RABONL2U");
         automaticCollectionService.setSettings(document, settings);
 
-        PartyService partyService = new PartyService();
-        for (Party party : createParties()) {
-            partyService.createParty(document, party, emptyList());
-        }
+        createParties();
 
-        createPartyAutomaticCollectionSettingsForParty1101();
+        createPartyAutomaticCollectionSettingsFor(pietPuk);
 
         for (Account account : createAccounts()) {
             configurationService.createAccount(document, account);
         }
 
         addStartBalance();
-        addJournals();
 
         document.notifyChange();
 
         zero = new Amount("0");
     }
 
-    private void createPartyAutomaticCollectionSettingsForParty1101() throws ServiceException {
-        PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = new PartyAutomaticCollectionSettings("1101");
+    private void createPartyAutomaticCollectionSettingsFor(Party party) throws ServiceException {
+        PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = new PartyAutomaticCollectionSettings(party.getId());
         partyAutomaticCollectionSettings.setIban("NL52ABNA0123456789");
         partyAutomaticCollectionSettings.setName("P. Puk");
         partyAutomaticCollectionSettings.setAddress("Sesamstraat 137");
@@ -142,43 +136,39 @@ public abstract class AbstractBookkeepingTest {
         Factory.bindSingleton(AmountFormat.class, amountFormat);
     }
 
-    private void addJournals() throws Exception {
+    protected void createJournalEntryCreatingInvoiceAndJournalEntryPayingInvoice() throws Exception {
+        Party party = new PartyService().findAllParties(document).get(0);
+        String invoiceDescription = "Factuur contributie voor {name}";
+        Invoice createdInvoice = createJournalEntryCreatingInvoice(DateUtil.createDate(2011, 3, 15), party, invoiceDescription, subscription, debtors, 20);
+
+        createJournalEntry(DateUtil.createDate(2011, 5, 20), "t2", "Payment", 20, this.bankAccount, createdInvoice, this.debtors, null);
+    }
+
+    protected Invoice createJournalEntryCreatingInvoice(Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)
+            throws ServiceException {
+        List<InvoiceTemplateLine> invoiceTemplateLines = asList(new InvoiceTemplateLine(AmountBuilder.build(amount), invoiceLineAccount.getName(), invoiceLineAccount));
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(SALE, null, date, invoiceDescription, invoiceTemplateLines);
+        List<Invoice> createdInvoices = ledgerService.createInvoiceAndJournalForParties(document, debtorOrCreditor, invoiceTemplate, asList(party));
+        return createdInvoices.get(0);
+    }
+
+    protected JournalEntry createJournalEntry(Date date, String journalEntryId, String journalEntryDescription, int amount, Account account1, Invoice invoice1, Account account2, Invoice invoice2)
+            throws ServiceException {
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(JournalEntryBuilder.buildDetail(20, "190", true));
-        journalEntryDetails.add(JournalEntryBuilder.buildDetail(20, "300", false));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(amount, account1.getId(), true, invoice1 != null ? invoice1.getId() : null));
+        journalEntryDetails.add(JournalEntryBuilder.buildDetail(amount, account2.getId(), false, invoice2 != null ? invoice2.getId() : null));
         JournalEntry journalEntry = new JournalEntry();
-        journalEntry.setId("t1");
-        journalEntry.setDescription("Payment");
-        journalEntry.setDate(DateUtil.createDate(2011, 3, 5));
-        journalEntry.setIdOfCreatedInvoice("inv1");
-
-        List<String> descriptions = singletonList("Contributie");
-        List<Amount> amounts = singletonList(AmountBuilder.build(20));
-        Party party = new PartyService().getParty(document, "1101");
-        Invoice invoice = new Invoice(journalEntry.getIdOfCreatedInvoice());
-        invoice.setDescription("Contributie 2011");
-        invoice.setPartyId(party.getId());
-        invoice.setAmountToBePaid(AmountBuilder.build(20));
-        invoice.setIssueDate(journalEntry.getDate());
-        invoiceService.createInvoice(document, invoice);
-        invoiceService.createDetails(document, invoice, descriptions, amounts);
-        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
-
-        journalEntryDetails = new ArrayList<>();
-        journalEntryDetails.add(JournalEntryBuilder.buildDetail(10, "101", true, "inv1", "pay1"));
-        journalEntryDetails.add(JournalEntryBuilder.buildDetail(10, "190", false));
-        journalEntry = new JournalEntry();
-        journalEntry.setId("t2");
-        journalEntry.setDescription("Payment");
-        journalEntry.setDate(DateUtil.createDate(2011, 5, 10));
-        ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, true);
+        journalEntry.setId(journalEntryId);
+        journalEntry.setDescription(journalEntryDescription);
+        journalEntry.setDate(date);
+        return ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, invoice1 != null || invoice2 != null);
     }
 
     private List<Account> createAccounts() {
         return asList(
                 cash,
                 bankAccount,
-                debtor,
+                debtors,
 
                 equity,
                 creditors,
@@ -186,30 +176,27 @@ public abstract class AbstractBookkeepingTest {
                 sportsHallRent,
                 unforeseenExpenses,
 
-                contribution,
+                subscription,
                 unforeseenRevenues
         );
     }
 
-    private List<Party> createParties() {
-        List<Party> parties = new ArrayList<>();
-        pietPuk = new Party("1101");
+    private void createParties() throws ServiceException {
+        pietPuk = new Party();
         pietPuk.setName("Pietje Puk");
         pietPuk.setAddress("Eikenlaan 64");
         pietPuk.setZipCode("1535 DS");
         pietPuk.setCity("Den Bosch");
         pietPuk.setBirthDate(DateUtil.createDate(1980, 2, 23));
         pietPuk.setRemarks("Is vaak afwezig");
-        parties.add(pietPuk);
+        pietPuk = partyService.createPartyWithNewId(document, pietPuk, emptyList());
 
-        janPieterszoon = new Party("1102");
+        janPieterszoon = new Party();
         janPieterszoon.setName("Jan Pieterszoon");
         janPieterszoon.setAddress("Sterrenlaan 532");
         janPieterszoon.setZipCode("5217 FG");
         janPieterszoon.setCity("Eindhoven");
-        parties.add(janPieterszoon);
-
-        return parties;
+        janPieterszoon = partyService.createPartyWithNewId(document, janPieterszoon, emptyList());
     }
 
     private void addStartBalance() throws Exception {
@@ -317,6 +304,19 @@ public abstract class AbstractBookkeepingTest {
         assertEquals(expectedReport.getTotalCreditors(), actualReport.getTotalCreditors());
     }
 
+    public void assertEqualAccount(Account expected, Account actual) {
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.getType(), actual.getType());
+    }
+
+    public void assertEqualParties(List<Party> expectedParties, List<Party> actualParties) {
+        assertEquals(expectedParties.size(), actualParties.size());
+        for (int i=0; i<expectedParties.size(); i++) {
+            assertEqualParty(expectedParties.get(i), actualParties.get(i));
+        }
+    }
+
     public void assertEqualParty(Party expected, Party actual) {
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getName(), actual.getName());
@@ -352,9 +352,24 @@ public abstract class AbstractBookkeepingTest {
 
     public void assertEqualInvoice(Invoice expected, Invoice actual) {
         assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getDescription(), actual.getDescription());
         assertEquals(expected.getAmountToBePaid(), actual.getAmountToBePaid());
         assertEquals(expected.getPartyId(), actual.getPartyId());
-        assertEquals(expected.getIssueDate(), actual.getIssueDate());
+        assertEquals(expected.getPartyReference(), actual.getPartyReference());
+        assertEqualDayOfYear(expected.getIssueDate(), actual.getIssueDate());
+    }
+
+    public void assertEqualsInvoiceDetails(List<InvoiceDetail> expected, List<InvoiceDetail> actual) {
+        assertEquals(expected.size(), actual.size());
+        for (int i=0; i<expected.size(); i++) {
+            assertEqualsInvoiceDetail(expected.get(i), actual.get(i));
+        }
+    }
+
+    public void assertEqualsInvoiceDetail(InvoiceDetail expected, InvoiceDetail actual) {
+        assertEquals(expected.getInvoiceId(), actual.getInvoiceId());
+        assertEquals(expected.getDescription(), actual.getDescription());
+        assertEquals(expected.getAmount(), actual.getAmount());
     }
 
     private void assertEqualPayment(Payment expected, Payment actual) {

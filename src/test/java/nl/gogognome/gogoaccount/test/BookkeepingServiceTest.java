@@ -7,55 +7,52 @@ import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceTemplateLine;
+import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
 import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Currency;
 import java.util.Date;
 import java.util.List;
 
-import static java.util.Collections.singletonList;
-import static junit.framework.Assert.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static nl.gogognome.gogoaccount.component.configuration.AccountType.LIABILITY;
 import static nl.gogognome.lib.util.DateUtil.createDate;
-
+import static org.junit.Assert.*;
 
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testStartBalance() throws Exception {
-        checkAmount(100, ledgerService.getStartBalance(document, configurationService.getAccount(document, "100")));
-        checkAmount(300, ledgerService.getStartBalance(document, configurationService.getAccount(document, "101")));
-        checkAmount(400, ledgerService.getStartBalance(document, configurationService.getAccount(document, "200")));
+        checkAmount(100, ledgerService.getStartBalance(document, cash));
+        checkAmount(300, ledgerService.getStartBalance(document, bankAccount));
+        checkAmount(400, ledgerService.getStartBalance(document, equity));
     }
 
     @Test
     public void deleteUnusedAccountSucceeds() throws Exception {
-        configurationService.deleteAccount(document, configurationService.getAccount(document, "290"));
-        assertAccountDoesNotExist(document, "290");
-    }
-
-    @Test
-    public void deleteUsedAccountFails() throws Exception {
-        try {
-            configurationService.deleteAccount(document, configurationService.getAccount(document, "190"));
-            fail("Expected exception was not thrown");
-        } catch (ServiceException e) {
-            assertAccountExists(document, "190");
-        }
+        configurationService.deleteAccount(document, creditors);
+        assertAccountDoesNotExist(document, creditors.getId());
     }
 
     private void assertAccountDoesNotExist(Document document, String accountId) throws ServiceException {
         assertTrue(configurationService.findAllAccounts(document).stream().noneMatch(account -> account.getId().equals(accountId)));
+    }
+
+    @Test
+    public void deleteUsedAccountFails() throws Exception {
+        createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+
+        assertThrows(ServiceException.class, () -> configurationService.deleteAccount(document, debtors));
+        assertAccountExists(document, debtors.getId());
     }
 
     private void assertAccountExists(Document document, String accountId) throws ServiceException {
@@ -64,39 +61,42 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testReportAtEndOf2011() throws Exception {
+        Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+        createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
+
         Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
 
-        assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
-                "200 Eigen vermogen, 290 Crediteuren, " +
-                "400 Zaalhuur, 490 Onvoorzien, " +
-                "300 Contributie, 390 Onvoorzien]",
-            report.getAllAccounts().toString());
+        assertEquals(asList(cash, bankAccount, debtors, equity, creditors, sportsHallRent, unforeseenExpenses, subscription, unforeseenRevenues),
+                report.getAllAccounts());
 
-        assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
-            report.getAssetsInclLossAccount().toString());
+        assertEquals(asList(cash, bankAccount, debtors),
+            report.getAssetsInclLossAccount());
 
-        assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Profit]",
-                report.getLiabilitiesInclProfitAccount().toString());
+        assertEquals(asList(equity, creditors, new Account("__profit__", "profit", LIABILITY)),
+                report.getLiabilitiesInclProfitAccount());
 
-        checkAmount(20, report.getAmount(new Account("", "", AccountType.LIABILITY)));
+        assertEquals(invoice1.getAmountToBePaid().add(invoice2.getAmountToBePaid()), report.getAmount(new Account("__profit__", "", LIABILITY)));
 
-        assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
-        assertEquals("[]", report.getCreditors().toString());
+        assertEquals(asList(pietPuk), report.getDebtors());
+        assertEquals(emptyList(), report.getCreditors());
 
-        Party party = partyService.getParty(document, "1101");
-        checkAmount(10, report.getBalanceForDebtor(party));
-        checkAmount(0, report.getBalanceForCreditor(party));
+        assertEquals(invoice2.getAmountToBePaid(), report.getBalanceForDebtor(pietPuk));
+        checkAmount(0, report.getBalanceForCreditor(janPieterszoon));
 
-        assertEquals("[ null start balance 30000 null, " +
-                        "20110510 t2 Payment 1000 null inv1,  " +
-                        "null total mutations 1000 0,  " +
-                        "null end balance 31000 null]",
-                report.getLedgerLinesForAccount(configurationService.getAccount(document, "101")).toString());
+        assertEquals("[ " +
+                        "null start balance 30000 null, " +
+                        "20110325 p1 Payment subscription Jan Pieterszoon 12300 null 201100001,  " +
+                        "null total mutations 12300 0,  " +
+                        "null end balance 42300 null]",
+                report.getLedgerLinesForAccount(configurationService.getAccount(document, bankAccount.getId())).toString());
 
-        assertEquals("[ null start balance null 0, " +
-                "20110305 t1 Payment null 2000 inv1,  " +
-                "null total mutations 0 2000,  " +
-                "null end balance null 2000]",
+        assertEquals("[ " +
+                        "null start balance null 0, " +
+                        "20110315 201100001 Subscription 2011 Jan Pieterszoon null 12300 201100001, " +
+                        "20110315 201100002 Subscription 2011 Pietje Puk null 45600 201100002,  " +
+                        "null total mutations 0 57900,  " +
+                        "null end balance null 57900]",
                 report.getLedgerLinesForAccount(configurationService.getAccount(document, "300")).toString());
 
         checkTotalsOfReport(report);
@@ -104,34 +104,43 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testReportApril30_2011() throws Exception {
+        Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+        createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
+
         Report report = bookkeepingService.createReport(document,
                 createDate(2011, 4, 30));
 
-        assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
-                "200 Eigen vermogen, 290 Crediteuren, " +
-                "400 Zaalhuur, 490 Onvoorzien, " +
-                "300 Contributie, 390 Onvoorzien]",
-            report.getAllAccounts().toString());
+        assertEquals(asList(cash, bankAccount, debtors, equity, creditors, sportsHallRent, unforeseenExpenses, subscription, unforeseenRevenues),
+                report.getAllAccounts());
 
-        assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
-            report.getAssetsInclLossAccount().toString());
+        assertEquals(asList(cash, bankAccount, debtors),
+                report.getAssetsInclLossAccount());
 
-        assertEquals("[200 Eigen vermogen, 290 Crediteuren,  Profit]",
-                report.getLiabilitiesInclProfitAccount().toString());
+        assertEquals(asList(equity, creditors, new Account("__profit__", "profit", LIABILITY)),
+                report.getLiabilitiesInclProfitAccount());
 
-        checkAmount(20, report.getAmount(new Account("", "", AccountType.LIABILITY)));
+        assertEquals(invoice1.getAmountToBePaid().add(invoice2.getAmountToBePaid()), report.getAmount(new Account("__profit__", "", LIABILITY)));
 
-        assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
-        assertEquals("[]", report.getCreditors().toString());
+        assertEquals(asList(pietPuk, janPieterszoon), report.getDebtors());
+        assertEquals(emptyList(), report.getCreditors());
 
-        Party party = partyService.getParty(document, "1101");
-        checkAmount(20, report.getBalanceForDebtor(party));
-        checkAmount(0, report.getBalanceForCreditor(party));
+        assertEquals(invoice2.getAmountToBePaid(), report.getBalanceForDebtor(pietPuk));
+        checkAmount(0, report.getBalanceForCreditor(janPieterszoon));
 
-        assertEquals("[ null start balance 30000 null,  " +
+        assertEquals("[ " +
+                        "null start balance 30000 null,  " +
                         "null total mutations 0 0,  " +
                         "null end balance 30000 null]",
-                report.getLedgerLinesForAccount(configurationService.getAccount(document, "101")).toString());
+                report.getLedgerLinesForAccount(configurationService.getAccount(document, bankAccount.getId())).toString());
+
+        assertEquals("[ " +
+                        "null start balance null 0, " +
+                        "20110315 201100001 Subscription 2011 Jan Pieterszoon null 12300 201100001, " +
+                        "20110315 201100002 Subscription 2011 Pietje Puk null 45600 201100002,  " +
+                        "null total mutations 0 57900,  " +
+                        "null end balance null 57900]",
+                report.getLedgerLinesForAccount(configurationService.getAccount(document, "300")).toString());
 
         checkTotalsOfReport(report);
     }
@@ -140,6 +149,11 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_copiesAccountsAndDebtorsAndTotalAmounts() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
+            Amount startEquity = ledgerService.getStartBalance(document, equity);
+            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+            createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
+
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
             Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
 
@@ -150,27 +164,23 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             Report report = bookkeepingService.createReport(newDocument, createDate(2011, 12, 31));
 
-            assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren, " +
-                            "200 Eigen vermogen, 290 Crediteuren, " +
-                            "400 Zaalhuur, 490 Onvoorzien, " +
-                            "300 Contributie, 390 Onvoorzien]",
-                    report.getAllAccounts().toString());
+            assertEquals(asList(cash, bankAccount, debtors, equity, creditors, sportsHallRent, unforeseenExpenses, subscription, unforeseenRevenues),
+                    report.getAllAccounts());
 
-            assertEquals("[100 Kas, 101 Betaalrekening, 190 Debiteuren]",
-                    report.getAssetsInclLossAccount().toString());
+            assertEquals(asList(cash, bankAccount, debtors),
+                    report.getAssetsInclLossAccount());
 
-            assertEquals("[200 Eigen vermogen, 290 Crediteuren]",
-                    report.getLiabilitiesInclProfitAccount().toString());
+            assertEquals(asList(equity, creditors),
+                    report.getLiabilitiesInclProfitAccount());
 
-            assertEquals("[1101 Pietje Puk]", report.getDebtors().toString());
-            assertEquals("[]", report.getCreditors().toString());
+            assertEquals(asList(pietPuk), report.getDebtors());
+            assertEquals(emptyList(), report.getCreditors());
 
-            Party party = partyService.getParty(document, "1101");
-            checkAmount(10, report.getBalanceForDebtor(party));
-            checkAmount(0, report.getBalanceForCreditor(party));
+            assertEquals(invoice2.getAmountToBePaid(), report.getBalanceForDebtor(pietPuk));
+            checkAmount(0, report.getBalanceForCreditor(janPieterszoon));
 
-            checkAmount(420, report.getAmount(configurationService.getAccount(document, "200")));
-            checkAmount(0, report.getAmount(configurationService.getAccount(document, "300")));
+            assertEquals(startEquity.add(invoice1.getAmountToBePaid().add(invoice2.getAmountToBePaid())), report.getAmount(equity));
+            checkAmount(0, report.getAmount(subscription));
 
             checkTotalsOfReport(report);
         } finally {
@@ -191,10 +201,35 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
         }
     }
-   @Test
+
+    @Test
+    public void closeBookkeeping_copiesPartiesWithoutChangingTheirIds() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Party luke = new Party();
+            luke.setName("Luke");
+            List<String> lukesTags = asList("tag1", "tag2");
+            luke = partyService.createPartyWithNewId(document, luke, lukesTags);
+
+            partyService.deleteParty(document, pietPuk);
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            List<Party> newParties = partyService.findAllParties(newDocument);
+            assertEqualParties(asList(janPieterszoon, luke), newParties);
+
+            assertEquals(lukesTags, partyService.findTagsForParty(newDocument, luke));
+        } finally {
+            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        }
+    }
+
+    @Test
     public void closeBookkeeping_bookkeepingHasProfit_profitIsAddedToEquityInNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
+            createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+
             Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
             Amount oldEquityAmount = report.getAmount(equity);
             Amount resultOfOperations = report.getResultOfOperations();
@@ -214,12 +249,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_bookkeepingHasLoss_lossIsSubtractedFromEquityInNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
-                    JournalEntryBuilder.debet(300, sportsHallRent),
-                    JournalEntryBuilder.credit(300, creditors));
-            JournalEntry journalEntry = JournalEntryBuilder.build(createDate(2011, 6, 1), "Test");
+            createJournalEntry(createDate(2011, 6, 1), "p1", "rent sports hall", 123, sportsHallRent, null, creditors, null);
 
-            ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
             Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
             Amount oldEquityAmount = report.getAmount(equity);
             Amount resultOfOperations = report.getResultOfOperations();
@@ -239,7 +270,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_oldBookkeepingHasJournalEntryAfterClosingDate_journalEntryIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
+            List<JournalEntryDetail> journalEntryDetails = asList(
                     JournalEntryBuilder.buildDetail(20, "100", true),
                     JournalEntryBuilder.buildDetail(20, "101", false));
             JournalEntry journalEntry = new JournalEntry();
@@ -261,14 +292,18 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_invoiceCreatedBeforeClosingDateButHasNotBeenPaid_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(AmountBuilder.build(20), "Zaalhuur", sportsHallRent));
-            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE, "847539", createDate(2011, 8, 20), "Invoice for {name}", someLine);
-            ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
+            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+            createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            assertEquals("[20111231 start start balance]", ledgerService.findJournalEntries(newDocument).toString());
-            assertEquals("[20110820 201100001 Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
+            assertEquals("[20111231 start start balance]",
+                    ledgerService.findJournalEntries(newDocument).toString());
+            List<Invoice> openInvoices = invoiceService.findAllInvoices(newDocument);
+            assertEquals(1, openInvoices.size());
+            assertEqualInvoice(invoice2, openInvoices.get(0));
+            assertEqualsInvoiceDetails(invoiceService.findDetails(document, invoice2), invoiceService.findDetails(newDocument, openInvoices.get(0)));
         } finally {
             assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
         }
@@ -278,24 +313,35 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_invoiceCreatedAfterClosingDate_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            List<InvoiceTemplateLine> someLine = singletonList(new InvoiceTemplateLine(AmountBuilder.build(20), "Zaalhuur", sportsHallRent));
-            InvoiceTemplate invoiceTemplate = new InvoiceTemplate(InvoiceTemplate.Type.SALE,  null, createDate(2012, 1, 15), "Invoice for {name}", someLine);
-            ledgerService.createInvoiceAndJournalForParties(document, debtor, invoiceTemplate, singletonList(pietPuk));
+            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2012, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+            createJournalEntry(createDate(2012, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            assertEquals("[20111231 start start balance, 20120115 201100001 Invoice for Pietje Puk]", ledgerService.findJournalEntries(newDocument).toString());
-            assertEquals("[20120115 201100001 Invoice for Pietje Puk, 20110305 inv1 Contributie 2011]", invoiceService.findAllInvoices(newDocument).toString());
+            assertEquals("[20111231 start start balance, " +
+                        "20120315 201100001 Subscription 2011 Jan Pieterszoon, " +
+                        "20120315 201100002 Subscription 2011 Pietje Puk, " +
+                        "20120325 p1 Payment subscription Jan Pieterszoon]",
+                    ledgerService.findJournalEntries(newDocument).toString());
+            List<Invoice> openInvoices = invoiceService.findAllInvoices(newDocument);
+            assertEquals(2, openInvoices.size());
+            assertEqualInvoice(invoice1, openInvoices.get(0));
+            assertEqualsInvoiceDetails(invoiceService.findDetails(document, invoice1), invoiceService.findDetails(newDocument, openInvoices.get(0)));
+            assertEqualInvoice(invoice2, openInvoices.get(1));
+            assertEqualsInvoiceDetails(invoiceService.findDetails(document, invoice2), invoiceService.findDetails(newDocument, openInvoices.get(1)));
         } finally {
             assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
         }
     }
 
     @Test
-    public void closeBookkeeping_organizationDetailsFilledIn_organizationDetailsAreCopiedToNewBookkeeping() throws Exception {
+    public void closeBookkeeping_bookkeepingSettingsFilledIn_bookkeepingSettingsAreCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
+            bookkeeping.setCurrency(Currency.getInstance("EUR"));
+            bookkeeping.setInvoiceIdFormat("yyyy.nnn");
             bookkeeping.setEnableAutomaticCollection(true);
             bookkeeping.setOrganizationAddress("Organization address");
             bookkeeping.setOrganizationCity("Organization city");
@@ -307,6 +353,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
             Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
+            assertEquals(bookkeeping.getCurrency(), newBookkeeping.getCurrency());
+            assertEquals(bookkeeping.getInvoiceIdFormat(), newBookkeeping.getInvoiceIdFormat());
             assertEquals(bookkeeping.getOrganizationAddress(), newBookkeeping.getOrganizationAddress());
             assertEquals(bookkeeping.getOrganizationCity(), newBookkeeping.getOrganizationCity());
             assertEquals(bookkeeping.getOrganizationCountry(), newBookkeeping.getOrganizationCountry());
@@ -375,46 +423,40 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void checkInUseForUsedAccount() throws ServiceException {
-        assertTrue(ledgerService.isAccountUsed(document, "190"));
-        assertTrue(ledgerService.isAccountUsed(document, "200"));
+        createJournalEntryCreatingInvoice(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        assertTrue(ledgerService.isAccountUsed(document, subscription.getId()));
+        assertTrue(ledgerService.isAccountUsed(document, debtors.getId()));
     }
 
     @Test
     public void checkInUseForUnusedAccount() throws ServiceException {
-        assertFalse(ledgerService.isAccountUsed(document, "400"));
+        assertFalse(ledgerService.isAccountUsed(document, sportsHallRent.getId()));
     }
 
     @Test
     public void addNewAccount() throws Exception {
-        configurationService.createAccount(document,
-                new Account("103", "Spaarrekening", AccountType.ASSET));
-        Account a = configurationService.getAccount(document, "103");
-        assertEquals("103", a.getId());
-        assertEquals("Spaarrekening", a.getName());
-        assertEquals(AccountType.ASSET, a.getType());
-    }
-
-    @Test(expected = ServiceException.class)
-    public void addAccountWithExistingIdFails() throws Exception {
-        configurationService.createAccount(document,
-                new Account("101", "Spaarrekening", AccountType.ASSET));
+        Account savingsAccount = new Account("103", "Savings account", AccountType.ASSET);
+        configurationService.createAccount(document, savingsAccount);
+        assertEqualAccount(savingsAccount, configurationService.getAccount(document, savingsAccount.getId()));
     }
 
     @Test
-    public void addUpdateAccount() throws Exception {
-        configurationService.updateAccount(document,
-                new Account("101", "Spaarrekening", AccountType.ASSET));
-        Account a = configurationService.getAccount(document, "101");
-        assertEquals("101", a.getId());
-        assertEquals("Spaarrekening", a.getName());
-        assertEquals(AccountType.ASSET, a.getType());
+    public void addAccountWithExistingIdFails() throws Exception {
+        Account accountWithExistingId = new Account(bankAccount.getId(), "Savings account", AccountType.ASSET);
+        assertThrows(ServiceException.class, () -> configurationService.createAccount(document, accountWithExistingId));
     }
 
-    @Test(expected = ServiceException.class)
+    @Test
+    public void updateExistingAccount() throws Exception {
+        Account bankAccountChangedToSavingsAccount = new Account(bankAccount.getId(), "Savings account", AccountType.ASSET);
+        configurationService.updateAccount(document, bankAccountChangedToSavingsAccount);
+        assertEqualAccount(bankAccountChangedToSavingsAccount, configurationService.getAccount(document, bankAccount.getId()));
+    }
+
+    @Test
     public void updateNonExistingAccountFails() throws Exception {
-        configurationService.updateAccount(document,
-                new Account("103", "Spaarrekening", AccountType.ASSET));
-        fail("Expected exception was not thrown");
+        Account accountWithNonExistingId = new Account("103", "Savings account", AccountType.ASSET);
+        assertThrows(ServiceException.class, () -> configurationService.updateAccount(document, accountWithNonExistingId));
     }
 
     private void checkTotalsOfReport(Report report) {

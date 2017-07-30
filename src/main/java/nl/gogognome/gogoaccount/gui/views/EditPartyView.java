@@ -228,7 +228,7 @@ public class EditPartyView extends OkCancelView {
 
     @Override
     protected void onOk() {
-        resultParty = new Party(idModel.getString());
+        resultParty = initialParty != null ? initialParty : new Party();
         resultParty.setName(nameModel.getString());
         resultParty.setAddress(addressModel.getString());
         resultParty.setZipCode(zipCodeModel.getString());

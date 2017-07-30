@@ -6,8 +6,6 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.textsearch.criteria.Criterion;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +15,17 @@ public class PartyService {
 
     private final ObjectCriterionMatcher objectCriterionMatcher = new ObjectCriterionMatcher();
 
-    public Party createParty(Document document, Party party, List<String> tags) throws ServiceException {
+    public Party createPartyWithNewId(Document document, Party party, List<String> tags) throws ServiceException {
+        return ServiceTransaction.withResult(() -> {
+            document.ensureDocumentIsWriteable();
+            Party createdParty = new PartyDAO(document).createWithNewId(party);
+            new TagDAO(document).saveTags(createdParty.getId(), tags);
+            document.notifyChange();
+            return createdParty;
+        });
+    }
+
+    public Party createPartyWithSpecifiedId(Document document, Party party, List<String> tags) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             document.ensureDocumentIsWriteable();
             Party createdParty = new PartyDAO(document).create(party);

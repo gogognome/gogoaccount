@@ -51,7 +51,7 @@ public class BookkeepingService {
 
             markBookkeepingAsClosed(document);
             Date dayBeforeStart = DateUtil.addDays(date, -1);
-            Document newDocument = CreateNewBookkeeping(document, newBookkeepingFile, description, date);
+            Document newDocument = createNewBookkeeping(document, newBookkeepingFile, description, date);
             copyAutomaticCollectionSettings(document, newDocument);
             copyParties(document, newDocument);
             copyAccounts(document, newDocument);
@@ -76,13 +76,14 @@ public class BookkeepingService {
         automaticCollectionService.setSettings(newDocument, settings);
     }
 
-    private Document CreateNewBookkeeping(Document document, File newBookkeepingFile, String description, Date date) throws ServiceException {
+    private Document createNewBookkeeping(Document document, File newBookkeepingFile, String description, Date date) throws ServiceException {
         Document newDocument = documentService.createNewDocument(newBookkeepingFile, "New bookkeeping");
         newDocument.setFileName(null);
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
         newBookkeeping.setDescription(description);
         newBookkeeping.setCurrency(bookkeeping.getCurrency());
+        newBookkeeping.setInvoiceIdFormat(bookkeeping.getInvoiceIdFormat());
         newBookkeeping.setEnableAutomaticCollection(bookkeeping.isEnableAutomaticCollection());
         newBookkeeping.setOrganizationAddress(bookkeeping.getOrganizationAddress());
         newBookkeeping.setOrganizationCity(bookkeeping.getOrganizationCity());
@@ -97,7 +98,7 @@ public class BookkeepingService {
     private void copyParties(Document document, Document newDocument) throws ServiceException {
         Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
         for (Party party : partyService.findAllParties(document)) {
-            partyService.createParty(newDocument, party, partyIdToTags.get(party.getId()));
+            partyService.createPartyWithSpecifiedId(newDocument, party, partyIdToTags.get(party.getId()));
             PartyAutomaticCollectionSettings settings = automaticCollectionService.findSettings(document, party);
             if (settings != null) {
                 automaticCollectionService.setAutomaticCollectionSettings(newDocument, settings);

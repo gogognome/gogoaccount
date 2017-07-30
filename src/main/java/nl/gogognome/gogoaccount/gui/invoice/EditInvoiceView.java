@@ -306,7 +306,7 @@ public class EditInvoiceView extends OkCancelView {
         	editedAmounts.add(tuple.getSecond() == null || tuple.getSecond().isZero() ? null : tuple.getSecond());
         }
 
-        editedInvoice = new Invoice(id);
+        editedInvoice = invoiceToBeEdited != null ? invoiceToBeEdited : new Invoice();
         editedInvoice.setDescription(description);
         editedInvoice.setIssueDate(issueDate);
         editedInvoice.setPartyId(payingParty.getId());

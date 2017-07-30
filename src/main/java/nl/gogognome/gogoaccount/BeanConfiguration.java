@@ -27,7 +27,6 @@ import nl.gogognome.gogoaccount.reportgenerators.InvoicesToModelConverter;
 import nl.gogognome.gogoaccount.reportgenerators.ReportToModelConverter;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.services.XMLFileReader;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import org.springframework.beans.factory.BeanFactory;
@@ -45,9 +44,9 @@ public class BeanConfiguration {
     @Bean
     public MainFrame mainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
                                ViewFactory viewFactory, ControllerFactory controllerFactory, DocumentRegistry documentRegistry,
-                               ResourceLoader resourceLoader, XMLFileReader xmlFileReader) {
+                               ResourceLoader resourceLoader) {
         return new MainFrame(bookkeepingService, documentService, configurationService, viewFactory, controllerFactory, documentRegistry,
-                resourceLoader, xmlFileReader);
+                resourceLoader);
     }
 
     @Bean
@@ -440,15 +439,6 @@ public class BeanConfiguration {
     @Bean
     public KeyValueReplacer variableReplacer() {
         return new KeyValueReplacer();
-    }
-
-    @Bean
-    @Scope("prototype")
-    public XMLFileReader xmlFileReader(ConfigurationService configurationService, DocumentService documentService,
-                                       ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
-                                       LedgerService ledgerService, PartyService partyService) {
-        return new XMLFileReader(configurationService, documentService, importBankStatementService, invoiceService,
-                ledgerService, partyService);
     }
 
     @Bean
