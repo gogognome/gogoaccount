@@ -4,8 +4,7 @@ import java.util.Date;
 
 public class PartyAutomaticCollectionSettings {
 
-    private final String partyId;
-
+    private String partyId;
     private String name;
     private String address;
     private String zipCode;
@@ -15,6 +14,10 @@ public class PartyAutomaticCollectionSettings {
     private Date mandateDate;
 
     public PartyAutomaticCollectionSettings(String partyId) {
+        this.partyId = partyId;
+    }
+
+    public void setPartyId(String partyId) {
         this.partyId = partyId;
     }
 

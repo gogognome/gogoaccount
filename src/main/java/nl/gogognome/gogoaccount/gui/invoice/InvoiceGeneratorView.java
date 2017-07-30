@@ -238,6 +238,7 @@ public class InvoiceGeneratorView extends View {
         debtorOrCreditorPanel.removeAll();
 
         InputFieldsColumn ifc = new InputFieldsColumn();
+        addCloseable(ifc);
         if (rbSalesInvoice.isSelected()) {
             ifc.addComboBoxField("invoiceGeneratorView.debtorAccount", debtorAccountModel, new AccountFormatter());
         } else if (rbPurchaseInvoice.isSelected()) {

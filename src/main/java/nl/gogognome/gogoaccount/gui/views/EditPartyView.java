@@ -13,11 +13,8 @@ import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
-import nl.gogognome.lib.swing.models.ModelChangeListener;
 import nl.gogognome.lib.swing.models.StringModel;
 import nl.gogognome.lib.swing.views.OkCancelView;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,8 +30,6 @@ public class EditPartyView extends OkCancelView {
 
 	private static final long serialVersionUID = 1L;
 
-    private final Logger logger = LoggerFactory.getLogger(EditPartyView.class);
-
     private final Document document;
     private final ConfigurationService configurationService;
     private final PartyService partyService;
@@ -42,7 +37,6 @@ public class EditPartyView extends OkCancelView {
     private final HandleException handleException;
     private List<String> tags;
 
-    private final StringModel idModel = new StringModel();
     private final StringModel nameModel = new StringModel();
     private final StringModel addressModel = new StringModel();
     private final StringModel zipCodeModel = new StringModel();
@@ -57,7 +51,6 @@ public class EditPartyView extends OkCancelView {
     private final DateModel automaticCollectionMandateDateModel = new DateModel();
     private final List<ListModel<String>> tagListModels = new ArrayList<>();
     private final DateModel birthDateModel = new DateModel();
-    private JTextField lbIdRemark = new JTextField(); // text field 'misused' as text label
     private final JTextArea taRemarks = new JTextArea(5, 40);
     private JPanel labelsPanel = new JPanel(new GridBagLayout());
     private final List<PartyTagBean> partyTagBeans = new ArrayList<>();
@@ -68,8 +61,6 @@ public class EditPartyView extends OkCancelView {
     private Party resultParty;
     private List<String> resultTags;
     private PartyAutomaticCollectionSettings resulAutomaticCollectionSettings;
-
-    private ModelChangeListener idUpdateListener;
 
     public EditPartyView(Document document, ConfigurationService configurationService, PartyService partyService) {
         this.document = document;
@@ -91,8 +82,6 @@ public class EditPartyView extends OkCancelView {
         try {
             initModels();
             addComponents();
-            addListeners();
-            updateIdMessage();
         } catch (ServiceException e) {
             messageDialog.showErrorMessage(e, "gen.problemOccurred");
             close();
@@ -105,8 +94,6 @@ public class EditPartyView extends OkCancelView {
     	tags.addAll(partyService.findPartyTags(document));
 
     	if (initialParty != null) {
-            idModel.setString(initialParty.getId());
-            idModel.setEnabled(false, null);
             nameModel.setString(initialParty.getName());
             addressModel.setString(initialParty.getAddress());
             zipCodeModel.setString(initialParty.getZipCode());
@@ -121,7 +108,6 @@ public class EditPartyView extends OkCancelView {
                 tagListModels.add(tagListModel);
             }
         } else {
-            idModel.setString(suggestNewId());
             tagListModels.add(new ListModel<>(tags)); // add one empty tag input field to start with
         }
 
@@ -142,13 +128,6 @@ public class EditPartyView extends OkCancelView {
         InputFieldsColumn ifc = new InputFieldsColumn();
         ifc.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.generalInformation"));
         addCloseable(ifc);
-
-        ifc.addField("editPartyView.id", idModel);
-        lbIdRemark = new JTextField(20);
-        lbIdRemark.setEditable(false);
-        lbIdRemark.setEnabled(false);
-        lbIdRemark.setBorder(null);
-        ifc.add(lbIdRemark, SwingUtils.createTextFieldGBConstraints(2, 0));
 
         ifc.addField("editPartyView.name", nameModel);
         ifc.addField("editPartyView.address", addressModel);
@@ -221,11 +200,6 @@ public class EditPartyView extends OkCancelView {
         labelsPanel.add(addButton, SwingUtils.createGBConstraints(0, index, 1, 1, 0, 0, GridBagConstraints.EAST, 0, 0, 0, 0, 0));
     }
 
-    private void addListeners() {
-        idUpdateListener = model -> updateIdMessage();
-        idModel.addModelChangeListener(idUpdateListener);
-    }
-
     @Override
     protected void onOk() {
         resultParty = initialParty != null ? initialParty : new Party();
@@ -290,72 +264,9 @@ public class EditPartyView extends OkCancelView {
         return textResource.getString(initialParty != null ? "editPartyView.titleEdit" : "editPartyView.titleAdd");
     }
 
-    private void updateIdMessage() {
-        try {
-            String remark = "";
-            String id = idModel.getString();
-            if (initialParty == null && partyService.existsParty(document, id)) {
-                remark = textResource.getString("editPartyView.idExistsAlready");
-            } else if (id.length() == 0) {
-                remark = textResource.getString("editPartyView.idIsEmpty");
-            }
-            lbIdRemark.setText(remark);
-        } catch (ServiceException e) {
-            logger.warn("Ignored exception", e);
-        }
-    }
-
-    private String suggestNewId() throws ServiceException {
-        List<Party> parties = partyService.findAllParties(document);
-
-        String suggestion = null;
-        for (Party party : parties) {
-            if (suggestion == null) {
-                suggestion = party.getId();
-            } else {
-                if (suggestion.compareTo(party.getId()) < 0) {
-                    suggestion = party.getId();
-                }
-            }
-        }
-        // If suggestion != null, then it contains the largest ID according to the
-        // lexicographically order. Increase the ID to get a unique ID.
-        if (suggestion != null) {
-            StringBuilder sb = new StringBuilder(suggestion);
-            int index = sb.length() - 1;
-            boolean done = false;
-            while (!done && index >= 0) {
-                char c = (char) (sb.charAt(index) + 1);
-                if (c == (char)('9' + 1)) {
-                    c = '0';
-                } else if (c == (char)('z' + 1)) {
-                    c = 'a';
-                } else if (c == (char)('Z' + 1)) {
-                    c = 'A';
-                } else {
-                    done = true;
-                }
-                sb.setCharAt(index, c);
-                index--;
-            }
-            if (!done) {
-                sb.insert(0, '1');
-            }
-            suggestion = sb.toString();
-        } else {
-            suggestion = "001";
-        }
-        return suggestion;
-    }
-
 	@Override
 	public void onClose() {
         partyTagBeans.forEach(PartyTagBean::close);
-        removeListeners();
     }
-
-	private void removeListeners() {
-		idModel.removeModelChangeListener(idUpdateListener);
-	}
 
 }

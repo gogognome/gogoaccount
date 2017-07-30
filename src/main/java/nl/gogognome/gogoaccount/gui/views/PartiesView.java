@@ -217,8 +217,10 @@ public class PartiesView extends View {
             Party party = editPartyView.getEnteredParty();
             List<String> tags = editPartyView.getEnteredTags();
             if (party != null && tags != null) {
-                partyService.createPartyWithNewId(document, party, tags);
-                automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
+                party = partyService.createPartyWithNewId(document, party, tags);
+                PartyAutomaticCollectionSettings enteredAutomaticCollectionSettings = editPartyView.getEnteredAutomaticCollectionSettings();
+                enteredAutomaticCollectionSettings.setPartyId(party.getId());
+                automaticCollectionService.setAutomaticCollectionSettings(document, enteredAutomaticCollectionSettings);
             }
             onSearch();
         });
