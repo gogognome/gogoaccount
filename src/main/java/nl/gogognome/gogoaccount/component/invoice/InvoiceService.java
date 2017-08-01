@@ -4,6 +4,7 @@ import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.collections.DefaultValueMap;
@@ -26,11 +27,13 @@ public class InvoiceService {
 
     private final AmountFormat amountFormat;
     private final PartyService partyService;
+    private final SettingsService settingsService;
     private final TextResource textResource;
 
-    public InvoiceService(AmountFormat amountFormat, PartyService partyService, TextResource textResource) {
+    public InvoiceService(AmountFormat amountFormat, PartyService partyService, SettingsService settingsService, TextResource textResource) {
         this.amountFormat = amountFormat;
         this.partyService = partyService;
+        this.settingsService = settingsService;
         this.textResource = textResource;
     }
 
@@ -58,7 +61,8 @@ public class InvoiceService {
             invoice.setAmountToBePaid(invoiceDefinition.getType() == SALE ? totalAmount : totalAmount.negate());
             invoice.setIssueDate(invoiceDefinition.getIssueDate());
 
-            invoice = invoiceDAO.createWithNewId(invoiceIdFormat, invoice);
+            String invoiceId = settingsService.findNextId(document, "previousInvoiceId", invoiceIdFormat);
+            invoice = invoiceDAO.createWithNewId(invoiceId, invoice);
             List<String> descriptions = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getDescription).collect(toList());
             List<Amount> amounts = invoiceDefinition.getLines().stream().map(InvoiceDefinitionLine::getAmount).collect(toList());
             invoiceDetailsDAO.createDetails(invoice.getId(), descriptions, amounts);

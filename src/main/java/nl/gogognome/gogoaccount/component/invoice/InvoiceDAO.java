@@ -5,11 +5,9 @@ import nl.gogognome.dataaccess.dao.NameValuePairs;
 import nl.gogognome.dataaccess.dao.ResultSetWrapper;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.util.AmountInDatabase;
-import nl.gogognome.lib.util.DateUtil;
 import nl.gogognome.lib.util.StringUtil;
 
 import java.sql.SQLException;
-import java.util.Calendar;
 
 class InvoiceDAO extends AbstractDomainClassDAO<Invoice> {
 
@@ -17,36 +15,13 @@ class InvoiceDAO extends AbstractDomainClassDAO<Invoice> {
         super("invoice", null, document.getBookkeepingId());
     }
 
-    public Invoice createWithNewId(String invoiceIdFormat, Invoice invoice) throws SQLException {
-        String nextInvoiceId = getNextInvoiceId(invoiceIdFormat);
-
+    public Invoice createWithNewId(String invoiceId, Invoice invoice) throws SQLException {
         NameValuePairs nvp = getNameValuePairs(invoice);
         nvp.remove("id");
-        nvp.add("id", nextInvoiceId);
+        nvp.add("id", invoiceId);
         insert(tableName, nvp);
 
         return getObjectFromResultSet(convertNameValuePairsToResultSet(nvp));
-    }
-
-    private String getNextInvoiceId(String invoiceIdFormat) throws SQLException {
-        invoiceIdFormat = fillInYearAndDate(invoiceIdFormat);
-        int startIndex = invoiceIdFormat.indexOf('n');
-        int endIndex = startIndex;
-        while (endIndex < invoiceIdFormat.length() && invoiceIdFormat.charAt(endIndex) == 'n') {
-            endIndex++;
-        }
-        int previousSequenceNumber = getPreviousSequenceNumber(invoiceIdFormat, startIndex, endIndex);
-
-        String formattedSequenceNumber = StringUtil.prependToSize(Integer.toString(previousSequenceNumber + 1), endIndex - startIndex, '0');
-        return StringUtil.replace(invoiceIdFormat, startIndex, endIndex, formattedSequenceNumber);
-    }
-
-    private String fillInYearAndDate(String invoiceIdFormat) {
-        String year = Integer.toString(DateUtil.getField(DateUtil.createNow(), Calendar.YEAR));
-        String month = Integer.toString(DateUtil.getField(DateUtil.createNow(), Calendar.MONTH) + 1);
-        invoiceIdFormat = invoiceIdFormat.replaceAll("yyyy", StringUtil.prependToSize(year, 4, '0'));
-        invoiceIdFormat = invoiceIdFormat.replaceAll("mm", StringUtil.prependToSize(month, 2, '0'));
-        return invoiceIdFormat;
     }
 
     private int getPreviousSequenceNumber(String invoiceIdFormat, int startIndex, int endIndex) throws SQLException {

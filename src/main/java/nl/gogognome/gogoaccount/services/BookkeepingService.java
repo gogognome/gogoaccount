@@ -1,12 +1,14 @@
 package nl.gogognome.gogoaccount.services;
 
-import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.businessobjects.Report;
+import nl.gogognome.gogoaccount.businessobjects.ReportBuilder;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
+import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
@@ -16,13 +18,16 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.lib.collections.DefaultValueMap;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.util.DateUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 
 public class BookkeepingService {
@@ -58,6 +63,7 @@ public class BookkeepingService {
             createStartBalance(document, newDocument, dayBeforeStart, equity);
             copyOpenInvoices(document, newDocument, dayBeforeStart);
             copyRemainingJournalEntries(document, newDocument, date);
+            copySettings(document, newDocument);
 
             newDocument.notifyChange();
             return newDocument;
@@ -206,6 +212,14 @@ public class BookkeepingService {
 
             return reportBuilder.build();
         });
+    }
+
+    private void copySettings(Document document, Document newDocument) throws ServiceException {
+        SettingsService settingsService = new SettingsService();
+        Map<String, String> keyToValue = settingsService.findAllSettings(document);
+        for (Map.Entry<String, String> keyValue : keyToValue.entrySet()) {
+            settingsService.save(newDocument, keyValue.getKey(), keyValue.getValue());
+        }
     }
 
 }

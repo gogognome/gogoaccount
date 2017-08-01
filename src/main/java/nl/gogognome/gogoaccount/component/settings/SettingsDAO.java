@@ -13,6 +13,14 @@ class SettingsDAO extends AbstractDomainClassDAO<Setting> {
         super("settings", null, document.getBookkeepingId());
     }
 
+    public void save(Setting setting) throws SQLException {
+        if (exists(setting.getKey())) {
+            update(setting);
+        } else {
+            create(setting);
+        }
+    }
+
     @Override
     protected Setting getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
         Setting setting = new Setting(result.getString("key"));

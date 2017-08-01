@@ -382,9 +382,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService,
+    public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService, SettingsService settingsService,
                                          TextResourceWrapper textResourceWrapper) {
-        return new InvoiceService(amountFormat, partyService, textResourceWrapper.textResource);
+        return new InvoiceService(amountFormat, partyService, settingsService, textResourceWrapper.textResource);
     }
 
     @Bean

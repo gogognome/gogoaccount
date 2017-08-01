@@ -20,6 +20,7 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
@@ -48,11 +49,12 @@ import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SA
 public abstract class AbstractBookkeepingTest {
 
     protected final AmountFormat amountFormat = new AmountFormat(Locale.US, Currency.getInstance("EUR"));
+    protected final SettingsService settingsService = new SettingsService();
     protected final PartyService partyService = new PartyService();
     protected final ConfigurationService configurationService = new ConfigurationService();
     protected final DocumentService documentService = new DocumentService(configurationService);
     protected final ImportBankStatementService importBankStatementService = new ImportBankStatementService(configurationService);
-    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, new TestTextResource());
+    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, settingsService, new TestTextResource());
     protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), configurationService, invoiceService, partyService);
     protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(configurationService, ledgerService, partyService);
     protected final BookkeepingService bookkeepingService = new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);

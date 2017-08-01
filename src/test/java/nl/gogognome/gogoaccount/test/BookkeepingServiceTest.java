@@ -184,7 +184,23 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             checkTotalsOfReport(report);
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
+        }
+    }
+
+    @Test
+    public void closeBookkeeping_copiesSettings() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            settingsService.save(document, "foo", "FOO");
+            settingsService.save(document, "bar", "BAR");
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            assertEquals("FOO", settingsService.findValueForSetting(newDocument, "foo"));
+            assertEquals("BAR", settingsService.findValueForSetting(newDocument, "bar"));
+        } finally {
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -198,7 +214,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertTrue(configurationService.getBookkeeping(document).isClosed());
             assertFalse(newBookkeeping.isClosed());
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -220,7 +236,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             assertEquals(lukesTags, partyService.findTagsForParty(newDocument, luke));
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -241,7 +257,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             Amount newEquityAmount = bookkeepingService.createReport(newDocument, createDate(2012, 1, 1)).getAmount(equity);
             assertEquals(oldEquityAmount.add(resultOfOperations), newEquityAmount);
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -262,7 +278,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             Amount newEquityAmount = bookkeepingService.createReport(newDocument, createDate(2012, 1, 1)).getAmount(equity);
             assertEquals(oldEquityAmount.add(resultOfOperations), newEquityAmount);
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -284,7 +300,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             assertEquals("[20111231 start start balance, 20120110 ABC Test]", ledgerService.findJournalEntries(newDocument).toString());
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -305,7 +321,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEqualInvoice(invoice2, openInvoices.get(0));
             assertEqualsInvoiceDetails(invoiceService.findDetails(document, invoice2), invoiceService.findDetails(newDocument, openInvoices.get(0)));
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -331,7 +347,24 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEqualInvoice(invoice2, openInvoices.get(1));
             assertEqualsInvoiceDetails(invoiceService.findDetails(document, invoice2), invoiceService.findDetails(newDocument, openInvoices.get(1)));
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
+        }
+    }
+
+    @Test
+    public void closeBookkeeping_invoiceCreatedAndPayedBeforeClosingDate_newInvoiceGetsNewId() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            createJournalEntry(createDate(2012, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
+
+            document = closeBookkeeping(newBookkeepingFile, createDate(2012, 4, 1));
+
+            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2012, 4, 5), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
+
+            assertNotEquals(invoice1.getId(), invoice2.getId());
+        } finally {
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -361,7 +394,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEquals(bookkeeping.getOrganizationName(), newBookkeeping.getOrganizationName());
             assertEquals(bookkeeping.getOrganizationZipCode(), newBookkeeping.getOrganizationZipCode());
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -384,7 +417,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEquals(settings.getIban(), newSettings.getIban());
             assertEquals(settings.getSequenceNumber(), newSettings.getSequenceNumber());
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -413,7 +446,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEquals(settings.getName(), newSettings.getName());
             assertEquals(settings.getZipCode(), newSettings.getZipCode());
         } finally {
-            assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+            deleteNewBookkeeping(newBookkeepingFile);
         }
     }
 
@@ -467,4 +500,9 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         a = a.add(report.getResultOfOperations());
         assertEquals(zero, a);
     }
+
+    private void deleteNewBookkeeping(File newBookkeepingFile) {
+        assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+    }
+
 }

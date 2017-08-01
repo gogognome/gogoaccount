@@ -9,6 +9,11 @@ class Setting {
         this.key = key;
     }
 
+    Setting(String key, String value) {
+        this(key);
+        this.value = value;
+    }
+
     public String getKey() {
         return key;
     }
