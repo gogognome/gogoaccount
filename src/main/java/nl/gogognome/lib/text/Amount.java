@@ -1,11 +1,6 @@
 package nl.gogognome.lib.text;
 
 import java.math.BigInteger;
-import java.text.DecimalFormatSymbols;
-import java.util.Comparator;
-import java.util.Currency;
-import java.util.HashMap;
-import java.util.Locale;
 
 /**
  * This class represents amounts. It should be used instead of floats, doubles,
@@ -14,8 +9,10 @@ import java.util.Locale;
  */
 public class Amount implements Comparable<Amount>
 {
+    public static final Amount ZERO = new Amount("0");
+
     /** Represents the amount in cents. */
-    private BigInteger amount;
+    private final BigInteger amount;
 
     /**
      * Constructs an amount.
