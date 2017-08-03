@@ -10,6 +10,7 @@ import nl.gogognome.gogoaccount.component.invoice.InvoicePreviewTemplate;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormulaParser;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.ledger.PaymentAmountAgainstDebtorAndCreditorValidator;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.component.text.KeyValueReplacer;
@@ -390,8 +391,9 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public LedgerService ledgerService(TextResourceWrapper textResourceWrapper, ConfigurationService configurationService,
-                                       InvoiceService invoiceService, PartyService partyService) {
-        return new LedgerService(textResourceWrapper.textResource, configurationService, invoiceService, partyService);
+                                       InvoiceService invoiceService, PartyService partyService,
+                                       PaymentAmountAgainstDebtorAndCreditorValidator paymentAmountAgainstDebtorAndCreditorValidator) {
+        return new LedgerService(textResourceWrapper.textResource, configurationService, invoiceService, partyService, paymentAmountAgainstDebtorAndCreditorValidator);
     }
 
     @Bean
@@ -434,6 +436,12 @@ public class BeanConfiguration {
                                                              PartyService partyService, TextResourceWrapper textResourceWrapper) {
         return new ReportToModelConverter(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
                 configurationService, partyService);
+    }
+
+    @Bean
+    public PaymentAmountAgainstDebtorAndCreditorValidator paymentAmountAgainstDebtorAndCreditorValidator(
+            ConfigurationService configurationService, InvoiceService invoiceService, TextResourceWrapper textResourceWrapper) {
+        return new PaymentAmountAgainstDebtorAndCreditorValidator(configurationService, invoiceService, textResourceWrapper.textResource);
     }
 
     @Bean

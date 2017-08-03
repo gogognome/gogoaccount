@@ -18,6 +18,7 @@ import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.LedgerService;
+import nl.gogognome.gogoaccount.component.ledger.PaymentAmountAgainstDebtorAndCreditorValidator;
 import nl.gogognome.gogoaccount.component.party.Party;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.component.settings.SettingsService;
@@ -54,8 +55,12 @@ public abstract class AbstractBookkeepingTest {
     protected final PartyService partyService = new PartyService(configurationService, settingsService);
     protected final DocumentService documentService = new DocumentService(configurationService);
     protected final ImportBankStatementService importBankStatementService = new ImportBankStatementService(configurationService);
-    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, settingsService, new TestTextResource());
-    protected final LedgerService ledgerService = new LedgerService(new TestTextResource(), configurationService, invoiceService, partyService);
+    protected final TextResource textResource = new TestTextResource();
+    protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, settingsService, textResource);
+    protected final PaymentAmountAgainstDebtorAndCreditorValidator paymentAmountAgainstDebtorAndCreditorValidator =
+            new PaymentAmountAgainstDebtorAndCreditorValidator(configurationService, invoiceService, textResource);
+    protected final LedgerService ledgerService = new LedgerService(textResource, configurationService, invoiceService, partyService,
+            paymentAmountAgainstDebtorAndCreditorValidator);
     protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(configurationService, ledgerService, partyService);
     protected final BookkeepingService bookkeepingService = new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);
 
