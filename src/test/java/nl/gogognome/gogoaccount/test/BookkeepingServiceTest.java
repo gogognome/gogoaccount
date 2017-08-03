@@ -32,9 +32,9 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testStartBalance() throws Exception {
-        checkAmount(100, ledgerService.getStartBalance(document, cash));
-        checkAmount(300, ledgerService.getStartBalance(document, bankAccount));
-        checkAmount(400, ledgerService.getStartBalance(document, equity));
+        assertAmountEquals(100, ledgerService.getStartBalance(document, cash));
+        assertAmountEquals(300, ledgerService.getStartBalance(document, bankAccount));
+        assertAmountEquals(400, ledgerService.getStartBalance(document, equity));
     }
 
     @Test
@@ -82,7 +82,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         assertEquals(emptyList(), report.getCreditors());
 
         assertEquals(invoice2.getAmountToBePaid(), report.getBalanceForDebtor(pietPuk));
-        checkAmount(0, report.getBalanceForCreditor(janPieterszoon));
+        assertAmountEquals(0, report.getBalanceForCreditor(janPieterszoon));
 
         assertEquals("[ " +
                         "null start balance 30000 null, " +
@@ -126,7 +126,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         assertEquals(emptyList(), report.getCreditors());
 
         assertEquals(invoice2.getAmountToBePaid(), report.getBalanceForDebtor(pietPuk));
-        checkAmount(0, report.getBalanceForCreditor(janPieterszoon));
+        assertAmountEquals(0, report.getBalanceForCreditor(janPieterszoon));
 
         assertEquals("[ " +
                         "null start balance 30000 null,  " +
@@ -177,10 +177,10 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEquals(emptyList(), report.getCreditors());
 
             assertEquals(invoice2.getAmountToBePaid(), report.getBalanceForDebtor(pietPuk));
-            checkAmount(0, report.getBalanceForCreditor(janPieterszoon));
+            assertAmountEquals(0, report.getBalanceForCreditor(janPieterszoon));
 
             assertEquals(startEquity.add(invoice1.getAmountToBePaid().add(invoice2.getAmountToBePaid())), report.getAmount(equity));
-            checkAmount(0, report.getAmount(subscription));
+            assertAmountEquals(0, report.getAmount(subscription));
 
             checkTotalsOfReport(report);
         } finally {
@@ -520,7 +520,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         Amount a = report.getTotalExpenses();
         a = a.subtract(report.getTotalRevenues());
         a = a.add(report.getResultOfOperations());
-        assertEquals(zero, a);
+        assertEquals(Amount.ZERO, a);
     }
 
     private void deleteNewBookkeeping(File newBookkeepingFile) {

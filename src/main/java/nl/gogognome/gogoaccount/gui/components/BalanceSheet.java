@@ -15,25 +15,19 @@
 */
 package nl.gogognome.gogoaccount.gui.components;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.util.Collections;
-import java.util.Currency;
-import java.util.List;
-
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This component shows two columns of names and amounts.
@@ -103,8 +97,8 @@ public class BalanceSheet extends JPanel {
 	private void addComponents() {
         row = 0;
 
-        totalLeft = new Amount("0");
-        totalRight = new Amount("0");
+        totalLeft = Amount.ZERO;
+        totalRight = Amount.ZERO;
 
         addHeader();
 

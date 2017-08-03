@@ -61,7 +61,6 @@ public abstract class AbstractBookkeepingTest {
 
     protected Document document;
     protected Bookkeeping bookkeeping;
-    protected Amount zero;
 
     protected Account cash = new Account("100", "Cash", AccountType.ASSET);
     protected Account bankAccount = new Account("101", "Bank account", AccountType.ASSET);
@@ -114,9 +113,8 @@ public abstract class AbstractBookkeepingTest {
         addStartBalance();
 
         document.notifyChange();
-
-        zero = new Amount("0");
     }
+
 
     private void createPartyAutomaticCollectionSettingsFor(Party party) throws ServiceException {
         PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = new PartyAutomaticCollectionSettings(party.getId());
@@ -210,7 +208,7 @@ public abstract class AbstractBookkeepingTest {
         ledgerService.addJournalEntry(document, journalEntry, journalEntryDetails, false);
     }
 
-    protected void checkAmount(int expectedAmountInt, Amount actualAmount) throws ParseException {
+    protected void assertAmountEquals(int expectedAmountInt, Amount actualAmount) throws ParseException {
         Amount expectedAmount = AmountBuilder.build(expectedAmountInt);
         assertEquals(amountFormat.formatAmount(expectedAmount.toBigInteger()),
                 amountFormat.formatAmount(actualAmount.toBigInteger()));

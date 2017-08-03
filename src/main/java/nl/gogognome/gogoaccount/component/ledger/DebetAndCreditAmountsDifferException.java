@@ -4,7 +4,7 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 
 public class DebetAndCreditAmountsDifferException extends ServiceException {
 
-    public DebetAndCreditAmountsDifferException(String message) {
+    DebetAndCreditAmountsDifferException(String message) {
         super(message);
     }
 }
