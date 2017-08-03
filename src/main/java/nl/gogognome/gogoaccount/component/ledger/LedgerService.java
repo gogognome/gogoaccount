@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toSet;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.CREDITOR;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.DEBTOR;
 import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.PURCHASE;
@@ -225,6 +226,7 @@ public class LedgerService {
             validateDebetAndCreditSumsAreEqual(journalEntry, journalEntryDetails);
 
             if (createPayments) {
+                validatePaymentAmountEqualsDebtorOrCreditorAmount(document, journalEntryDetails);
                 createPaymentsForItemsOfJournal(document, journalEntry, journalEntryDetails);
             }
 
@@ -236,6 +238,48 @@ public class LedgerService {
             document.notifyChange();
             return createdJournalEntry;
         });
+    }
+
+    private void validatePaymentAmountEqualsDebtorOrCreditorAmount(Document document, List<JournalEntryDetail> journalEntryDetails) throws ServiceException {
+        Set<String> invoiceIds = journalEntryDetails.stream()
+                .filter(d -> d.getInvoiceId() != null)
+                .map(d -> d.getInvoiceId())
+                .collect(toSet());
+        Map<String, Invoice> idToInvoice = new HashMap<>();
+        for (String invoiceId : invoiceIds) {
+            idToInvoice.put(invoiceId, invoiceService.getInvoice(document, invoiceId));
+        }
+
+        Amount expectedDebtorsAmount = Amount.ZERO;
+        Amount expectedCreditorAmount = Amount.ZERO;
+        Amount actualDebtorsAmount = Amount.ZERO;
+        Amount actualCreditorsAmount = Amount.ZERO;
+        Set<String> debtorIds = configurationService.findAccountsOfType(document, DEBTOR).stream().map(account -> account.getId()).collect(toSet());
+        Set<String> creditorIds = configurationService.findAccountsOfType(document, CREDITOR).stream().map(account -> account.getId()).collect(toSet());
+
+        for (JournalEntryDetail journalEntryDetail : journalEntryDetails) {
+            Amount amountAsIfDebet = journalEntryDetail.isDebet() ? journalEntryDetail.getAmount() : journalEntryDetail.getAmount().negate();
+            if (journalEntryDetail.getInvoiceId() != null) {
+                Invoice invoice = idToInvoice.get(journalEntryDetail.getInvoiceId());
+                if (invoice.getAmountToBePaid().isPositive()) {
+                    expectedDebtorsAmount = expectedDebtorsAmount.add(amountAsIfDebet.negate());
+                } else {
+                    expectedCreditorAmount = expectedCreditorAmount.add(amountAsIfDebet);
+                }
+            } else {
+                if (debtorIds.contains(journalEntryDetail.getAccountId())) {
+                    actualDebtorsAmount = actualDebtorsAmount.add(amountAsIfDebet);
+                } else if (creditorIds.contains(journalEntryDetail.getAccountId())) {
+                    actualCreditorsAmount = actualCreditorsAmount.add(amountAsIfDebet.negate());
+                }
+            }
+        }
+
+        if (!expectedDebtorsAmount.equals(actualDebtorsAmount)) {
+            throw new PaymentAmountDoesNotMatchDebtorOrCreditorAmountException(textResource.getString("LedgerService.debtorAmountNotEqualToAmountPaidForSaleInvoice"));
+        } else if (!expectedCreditorAmount.equals(actualCreditorsAmount)) {
+            throw new PaymentAmountDoesNotMatchDebtorOrCreditorAmountException(textResource.getString("LedgerService.creditorAmountNotEqualToAmountPaidForPurchaseInvoice"));
+        }
     }
 
     private void validateDebetAndCreditSumsAreEqual(JournalEntry journalEntry, List<JournalEntryDetail> journalEntryDetails) throws DebetAndCreditAmountsDifferException {
@@ -271,12 +315,7 @@ public class LedgerService {
 
     private Payment createPaymentForJournalEntryDetail(Document document, JournalEntry journalEntry, JournalEntryDetail journalEntryDetail)
             throws ServiceException {
-        Amount amount;
-        if (journalEntryDetail.isDebet()) {
-            amount = journalEntryDetail.getAmount();
-        } else {
-            amount = journalEntryDetail.getAmount().negate();
-        }
+        Amount amount = journalEntryDetail.isDebet() ? journalEntryDetail.getAmount() : journalEntryDetail.getAmount().negate();
         Date date = journalEntry.getDate();
         String description = configurationService.getAccount(document, journalEntryDetail.getAccountId()).getName();
         Payment payment = new Payment(journalEntryDetail.getPaymentId());
@@ -366,7 +405,7 @@ public class LedgerService {
     public Amount getAccountBalance(Document document, Account account, Date date) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             List<JournalEntry> journalEntries = new JournalEntryDAO(document).findAll();
-            Amount result = new Amount("0");
+            Amount result = Amount.ZERO;
             JournalEntryDetailDAO journalEntryDetailDAO = new JournalEntryDetailDAO(document);
             for (JournalEntry journalEntry : journalEntries) {
                 if (DateUtil.compareDayOfYear(journalEntry.getDate(), date) <= 0) {

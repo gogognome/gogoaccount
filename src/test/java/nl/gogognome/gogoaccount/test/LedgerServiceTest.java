@@ -1,17 +1,16 @@
 package nl.gogognome.gogoaccount.test;
 
+import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
-import nl.gogognome.gogoaccount.component.ledger.DebetAndCreditAmountsDifferException;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetailBuilder;
+import nl.gogognome.gogoaccount.component.ledger.*;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -23,6 +22,8 @@ import static nl.gogognome.lib.util.DateUtil.createDate;
 import static org.junit.Assert.assertEquals;
 
 public class LedgerServiceTest extends AbstractBookkeepingTest {
+
+    private final Date someDate = DateUtil.createDate(2011, 5, 9);
 
     @Test
     public void findPayments_createInvoiceAndJournalWithPayment_returnsPaymentForInvoice() throws ServiceException {
@@ -49,7 +50,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         List<Payment> payments = invoiceService.findPayments(document, invoice);
         assertEquals(1, payments.size());
         Payment payment = payments.get(0);
-        checkAmount(15, payment.getAmount());
+        assertAmountEquals(15, payment.getAmount());
 
         Account account = configurationService.getAccount(document, journalEntryDetails.get(0).getAccountId());
         assertEquals(account.getName(), payment.getDescription());
@@ -84,7 +85,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         List<Payment> payments = invoiceService.findPayments(document, invoice);
         assertEquals(1, payments.size());
         Payment payment = payments.get(0);
-        checkAmount(15, payment.getAmount());
+        assertAmountEquals(15, payment.getAmount());
 
     }
 
@@ -122,7 +123,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void createInvoiceAndJournalForParties_createSalesInvoiceWithoutDebtor_isNotAllwed() {
+    public void createInvoiceAndJournalEntryForParties_createSalesInvoiceWithoutDebtor_isNotAllwed() {
         assertCreatingSalesInvoiceForAccountFails(null, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingSalesInvoiceForAccountFails(bankAccount, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingSalesInvoiceForAccountFails(creditors, "resource-id: InvoiceService.salesInvoiceMustHaveDebtor");
@@ -135,7 +136,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void createInvoiceAndJournalForParties_createPurchaseInvoiceWithoutCreditor_isNotAllwed() {
+    public void createInvoiceAndJournalEntryForParties_createPurchaseInvoiceWithoutCreditor_isNotAllwed() {
         assertCreatingPurchaseInvoiceForAccountFails(null, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingPurchaseInvoiceForAccountFails(bankAccount, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingPurchaseInvoiceForAccountFails(debtors, "resource-id: InvoiceService.purchaseInvoiceMustHaveCreditor");
@@ -146,4 +147,74 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
                 () -> createInvoiceAndJournalEntry(PURCHASE, DateUtil.createDate(2011, 5, 9), pietPuk, "Subscription", subscription, creditorAccount, 123));
         assertEquals(expectedMessage, serviceException.getMessage());
     }
+
+    @Test
+    public void createInvoiceAndJournalEntryForParties_createSalesInvoiceWithDebtor_debtorAndInvoiceAmountToBePaidAreEqual() throws Exception {
+        createInvoiceAndJournalEntry(SALE, someDate, pietPuk, "Subscription", subscription, debtors, 123);
+
+        Report report = bookkeepingService.createReport(document, someDate);
+        assertAmountEquals(123, report.getBalanceForDebtor(pietPuk));
+        assertAmountEquals(123, report.getInvoices().get(0).getAmountToBePaid());
+    }
+
+    @Test
+    public void createInvoiceAndJournalEntryForParties_createPurchaseInvoiceWithCreditor_creditorAndInvoiceAmountToBePaidAreEqual() throws Exception {
+        createInvoiceAndJournalEntry(PURCHASE, someDate, pietPuk, "Subscription", subscription, creditors, 123);
+
+        Report report = bookkeepingService.createReport(document, someDate);
+        assertAmountEquals(123, report.getBalanceForCreditor(pietPuk));
+        assertAmountEquals(-123, report.getInvoices().get(0).getAmountToBePaid());
+    }
+
+    @Test
+    public void createSaleInvoiceAndPartialPayment_debtorAndInvoiceAmountToBePaidAreEqual() throws Exception {
+        Invoice invoice = createInvoiceAndJournalEntry(SALE, someDate, pietPuk, "Subscription", subscription, debtors, 123);
+
+        createJournalEntry(someDate, "p1", "partial payment", 100, bankAccount, invoice, debtors, null);
+
+        Report report = bookkeepingService.createReport(document, someDate);
+        assertAmountEquals(23, report.getBalanceForDebtor(pietPuk));
+        assertAmountEquals(23, report.getRemaingAmountForInvoice(invoice));
+    }
+
+    @Test
+    public void createPurchaseInvoiceAndPartialPayment_creditorAndInvoiceAmountToBePaidAreEqual() throws Exception {
+        Invoice invoice = createInvoiceAndJournalEntry(PURCHASE, someDate, pietPuk, "Subscription", subscription, creditors, 123);
+
+        createJournalEntry(someDate, "p1", "partial payment", 100, creditors, null, bankAccount, invoice);
+
+        Report report = bookkeepingService.createReport(document, someDate);
+        assertAmountEquals(23, report.getBalanceForCreditor(pietPuk));
+        assertAmountEquals(-23, report.getRemaingAmountForInvoice(invoice));
+    }
+
+    @Test
+    public void createSaleInvoice_addPaymentUsingNonDebtorAccount_shouldFail() throws Exception {
+        Invoice invoice = createInvoiceAndJournalEntry(SALE, someDate, pietPuk, "Subscription", subscription, debtors, 123);
+
+        assertPaymentAmountNotEqualsDebtorAmount(invoice, cash);
+        assertPaymentAmountNotEqualsDebtorAmount(invoice, creditors);
+    }
+
+    private void assertPaymentAmountNotEqualsDebtorAmount(Invoice invoice, Account creditAccount) {
+        ServiceException exception = assertThrows(PaymentAmountDoesNotMatchDebtorOrCreditorAmountException.class,
+                () -> createJournalEntry(someDate, "p1", "partial payment", 123, bankAccount, invoice, creditAccount, null));
+        assertEquals("resource-id: LedgerService.debtorAmountNotEqualToAmountPaidForSaleInvoice", exception.getMessage());
+    }
+
+    @Test
+    public void createPurchaseInvoice_addPaymentUsingNonCreditorAccount_shouldFail() throws Exception {
+        Invoice invoice = createInvoiceAndJournalEntry(PURCHASE, someDate, pietPuk, "Subscription", subscription, creditors, 123);
+
+        assertPaymentAmountNotEqualsCreditorAmount(invoice, cash);
+        assertPaymentAmountNotEqualsCreditorAmount(invoice, debtors);
+    }
+
+    private void assertPaymentAmountNotEqualsCreditorAmount(Invoice invoice, Account debetAccount) {
+        ServiceException exception = assertThrows(PaymentAmountDoesNotMatchDebtorOrCreditorAmountException.class,
+                () -> createJournalEntry(someDate, "p1", "partial payment", 123, debetAccount, invoice, bankAccount, null));
+        assertEquals("resource-id: LedgerService.creditorAmountNotEqualToAmountPaidForPurchaseInvoice", exception.getMessage());
+    }
+
+
 }
