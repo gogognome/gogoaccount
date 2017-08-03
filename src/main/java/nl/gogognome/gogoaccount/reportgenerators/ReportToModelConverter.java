@@ -70,8 +70,8 @@ public class ReportToModelConverter {
     private void addBalanceSheetLines(List<Map<String, Object>> lines,
             List<Account> leftAccounts, List<Account> rightAccounts) throws ServiceException {
 
-        Amount leftTotal = new Amount("0");
-        Amount rightTotal = new Amount("0");
+        Amount leftTotal = Amount.ZERO;
+        Amount rightTotal = Amount.ZERO;
 
         Iterator<Account> leftIter = leftAccounts.iterator();
         Iterator<Account> rightIter = rightAccounts.iterator();
@@ -128,7 +128,7 @@ public class ReportToModelConverter {
 
     private Object createDebtors() throws ServiceException {
         List<Map<String, Object>> lines = new ArrayList<>();
-        Amount total = new Amount("0");
+        Amount total = Amount.ZERO;
         for (Party p : report.getDebtors()) {
             Amount amount = report.getBalanceForDebtor(p);
             total = total.add(amount);
@@ -143,7 +143,7 @@ public class ReportToModelConverter {
 
     private Object createCreditors() throws ServiceException {
         List<Map<String, Object>> lines = new ArrayList<>();
-        Amount total = new Amount("0");
+        Amount total = Amount.ZERO;
         for (Party p : report.getCreditors()) {
             Amount amount = report.getBalanceForCreditor(p);
             total = total.add(amount);

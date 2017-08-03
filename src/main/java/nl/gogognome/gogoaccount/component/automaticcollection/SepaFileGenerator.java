@@ -62,7 +62,7 @@ class SepaFileGenerator {
         addElement(doc, groupHeader, "MsgId", settings.getSequenceNumber());
         addElement(doc, groupHeader, "CreDtTm", dateTimeFormat.format(new Date()));
         addElement(doc, groupHeader, "NbOfTxs", Integer.toString(invoices.size()));
-        Amount totalAmount = invoices.stream().map(Invoice::getAmountToBePaid).reduce(new Amount("0"), (a, b) -> a.add(b));
+        Amount totalAmount = invoices.stream().map(Invoice::getAmountToBePaid).reduce(Amount.ZERO, (a, b) -> a.add(b));
         String formattedAmount = amountFormat.formatAmountWithoutCurrency(totalAmount.toBigInteger());
         addElement(doc, groupHeader, "CtrlSum", formattedAmount);
         addElement(doc, groupHeader, "InitgPty/Nm", bookkeeping.getOrganizationName());
