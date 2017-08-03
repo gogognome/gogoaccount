@@ -115,7 +115,7 @@ public class InvoiceServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void updateExistingInvoice() throws Exception {
-        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
 
         List<String> descriptions = asList("Changed description 1", "Changed description 2");
         List<Amount> amounts = asList(null, AmountBuilder.build(30));

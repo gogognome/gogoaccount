@@ -138,18 +138,15 @@ public abstract class AbstractBookkeepingTest {
         Factory.bindSingleton(AmountFormat.class, amountFormat);
     }
 
-    protected void createJournalEntryCreatingInvoiceAndJournalEntryPayingInvoice() throws Exception {
-        Party party = new PartyService(configurationService, settingsService).findAllParties(document).get(0);
-        String invoiceDescription = "Factuur contributie voor {name}";
-        Invoice createdInvoice = createJournalEntryCreatingInvoice(DateUtil.createDate(2011, 3, 15), party, invoiceDescription, subscription, debtors, 20);
-
-        createJournalEntry(DateUtil.createDate(2011, 5, 20), "t2", "Payment", 20, this.bankAccount, createdInvoice, this.debtors, null);
+    protected Invoice createInvoiceAndJournalEntry(Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)
+            throws ServiceException {
+        return createInvoiceAndJournalEntry(SALE, date, party, invoiceDescription, invoiceLineAccount, debtorOrCreditor, amount);
     }
 
-    protected Invoice createJournalEntryCreatingInvoice(Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)
+    protected Invoice createInvoiceAndJournalEntry(InvoiceTemplate.Type type, Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)
             throws ServiceException {
         List<InvoiceTemplateLine> invoiceTemplateLines = asList(new InvoiceTemplateLine(AmountBuilder.build(amount), invoiceLineAccount.getName(), invoiceLineAccount));
-        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(SALE, null, date, invoiceDescription, invoiceTemplateLines);
+        InvoiceTemplate invoiceTemplate = new InvoiceTemplate(type, null, date, invoiceDescription, invoiceTemplateLines);
         List<Invoice> createdInvoices = ledgerService.createInvoiceAndJournalForParties(document, debtorOrCreditor, invoiceTemplate, asList(party));
         return createdInvoices.get(0);
     }

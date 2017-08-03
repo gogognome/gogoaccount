@@ -128,10 +128,10 @@ public class LedgerService {
         if (debtorOrCreditorAccount == null || debtorOrCreditorAccount.getType() != DEBTOR && debtorOrCreditorAccount.getType() != CREDITOR) {
             throw new ServiceException(textResource.getString("InvoiceService.accountMustHaveDebtorOrCreditorType"));
         }
-        if (debtorOrCreditorAccount.getType() == DEBTOR && invoiceTemplate.getType() != SALE) {
+        if (invoiceTemplate.getType() == SALE && debtorOrCreditorAccount.getType() != DEBTOR) {
             throw new ServiceException(textResource.getString("InvoiceService.salesInvoiceMustHaveDebtor"));
         }
-        if (debtorOrCreditorAccount.getType() == CREDITOR && invoiceTemplate.getType() != PURCHASE) {
+        if (invoiceTemplate.getType() == PURCHASE && debtorOrCreditorAccount.getType() != CREDITOR) {
             throw new ServiceException(textResource.getString("InvoiceService.purchaseInvoiceMustHaveCreditor"));
         }
     }

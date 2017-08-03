@@ -49,7 +49,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void deleteUsedAccountFails() throws Exception {
-        createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
 
         assertThrows(ServiceException.class, () -> configurationService.deleteAccount(document, debtors));
         assertAccountExists(document, debtors.getId());
@@ -61,8 +61,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testReportAtEndOf2011() throws Exception {
-        Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
-        Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+        Invoice invoice1 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice2 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
         createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
         Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
@@ -104,8 +104,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testReportApril30_2011() throws Exception {
-        Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
-        Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+        Invoice invoice1 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice2 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
         createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
         Report report = bookkeepingService.createReport(document,
@@ -150,8 +150,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             Amount startEquity = ledgerService.getStartBalance(document, equity);
-            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
-            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+            Invoice invoice1 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
             createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
@@ -244,7 +244,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_bookkeepingHasProfit_profitIsAddedToEquityInNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
 
             Report report = bookkeepingService.createReport(document, createDate(2011, 12, 31));
             Amount oldEquityAmount = report.getAmount(equity);
@@ -308,8 +308,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_invoiceCreatedBeforeClosingDateButHasNotBeenPaid_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
-            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+            Invoice invoice1 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
             createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
@@ -329,8 +329,8 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_invoiceCreatedAfterClosingDate_invoiceIsCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
-            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2012, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
+            Invoice invoice1 = createInvoiceAndJournalEntry(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createInvoiceAndJournalEntry(createDate(2012, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
             createJournalEntry(createDate(2012, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
@@ -355,12 +355,12 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     public void closeBookkeeping_invoiceCreatedAndPayedBeforeClosingDate_newInvoiceGetsNewId() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice1 = createInvoiceAndJournalEntry(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
             createJournalEntry(createDate(2012, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
             document = closeBookkeeping(newBookkeepingFile, createDate(2012, 4, 1));
 
-            Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2012, 4, 5), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createInvoiceAndJournalEntry(createDate(2012, 4, 5), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
 
             assertNotEquals(invoice1.getId(), invoice2.getId());
         } finally {
@@ -478,7 +478,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void checkInUseForUsedAccount() throws ServiceException {
-        createJournalEntryCreatingInvoice(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        createInvoiceAndJournalEntry(createDate(2012, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         assertTrue(ledgerService.isAccountUsed(document, subscription.getId()));
         assertTrue(ledgerService.isAccountUsed(document, debtors.getId()));
     }

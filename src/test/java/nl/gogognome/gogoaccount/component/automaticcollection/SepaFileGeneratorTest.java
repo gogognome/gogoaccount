@@ -43,7 +43,7 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
     @Test
     public void generateSepaFile() throws Exception {
-        createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
+        createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
         generateAutomaticCollectionFile(file);
 
         automaticCollectionService.validateSepaAutomaticCollectionFile(file);
@@ -53,7 +53,7 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
     @Test
     public void generateSepaFileWithPartyWithoutAutomaticCollectionSettings() throws Exception {
-        createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
 
         ServiceException serviceException = assertThrows(ServiceException.class, () -> generateAutomaticCollectionFile(file));
 
@@ -65,7 +65,7 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
     @Test
     public void generateSepaFileWithPartyWithIncompleteAutomaticCollectionSettings() throws Exception {
-        createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
+        createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
         PartyAutomaticCollectionSettings partyAutomaticCollectionSettings =
                 automaticCollectionService.findSettings(document, partyService.getParty(document, pietPuk.getId()));
         partyAutomaticCollectionSettings.setCountry(null);
@@ -80,7 +80,7 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
     @Test
     public void generateSepaFileWithNegativeInvoiceAmount() throws Exception {
-        createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, -123);
+        createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, -123);
 
         ServiceException serviceException = assertThrows(ServiceException.class, () -> generateAutomaticCollectionFile(file));
 
@@ -97,8 +97,8 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenJournalEntryIsCreatedForSepaFileThenJournalEntryIsCreatedIncludingPayments() throws ServiceException {
-        Invoice invoice1 = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
-        Invoice invoice2 = createJournalEntryCreatingInvoice(createDate(2011, 4, 10), pietPuk, "Extra subscription 2011 {name}", subscription, debtors, 456);
+        Invoice invoice1 = createInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice2 = createInvoiceAndJournalEntry(createDate(2011, 4, 10), pietPuk, "Extra subscription 2011 {name}", subscription, debtors, 456);
         List<Invoice> invoices = asList(invoice1, invoice2);
 
         Date date = DateUtil.createDate(2011, 5, 24);

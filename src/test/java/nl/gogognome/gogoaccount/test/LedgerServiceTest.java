@@ -8,6 +8,7 @@ import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetailBuilder;
 import nl.gogognome.gogoaccount.services.ServiceException;
+import nl.gogognome.lib.util.DateUtil;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -16,6 +17,8 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.PURCHASE;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
 import static nl.gogognome.lib.util.DateUtil.createDate;
 import static org.junit.Assert.assertEquals;
 
@@ -23,7 +26,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void findPayments_createInvoiceAndJournalWithPayment_returnsPaymentForInvoice() throws ServiceException {
-        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
         assertEquals(1, invoiceService.findPayments(document, invoice).size());
 
@@ -35,7 +38,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenAJournalEntryDetailWithPaymentIsUpdatedThePaymentMustBeUpdatedToo() throws Exception {
-        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
 
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -56,7 +59,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenAJournalEntryDetailWithPaymentIsUpdatedWithoutInvoiceThenPaymentMustBeRemoved() throws ServiceException {
-        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
 
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -70,7 +73,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenAJournalEntryDetailWithoutPaymentIsUpdatedWithInvoiceThenPaymentMustBeCreated() throws Exception {
-        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, null, debtors, null);
 
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -87,7 +90,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void removeJournal_journalCreatesInvoice_journalAndInvoiceRemoved() throws Exception {
-        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = findJournalEntry(invoice.getId());
 
         ledgerService.removeJournalEntry(document, journalEntry);
@@ -98,7 +101,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void removeJournal_journalHasPayment_journalAndPaymentRemoved() throws Exception {
-        Invoice invoice = createJournalEntryCreatingInvoice(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
         assertEquals(1, invoiceService.findPayments(document, invoice).size());
 
@@ -118,4 +121,29 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
         assertThrows(DebetAndCreditAmountsDifferException.class, () -> ledgerService.updateJournalEntry(document, journalEntry, journalEntryDetails));
     }
 
+    @Test
+    public void createInvoiceAndJournalForParties_createSalesInvoiceWithoutDebtor_isNotAllwed() {
+        assertCreatingSalesInvoiceForAccountFails(null, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
+        assertCreatingSalesInvoiceForAccountFails(bankAccount, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
+        assertCreatingSalesInvoiceForAccountFails(creditors, "resource-id: InvoiceService.salesInvoiceMustHaveDebtor");
+    }
+
+    private void assertCreatingSalesInvoiceForAccountFails(Account debtorAccount, String expectedMessage) {
+        ServiceException serviceException = assertThrows(ServiceException.class,
+                () -> createInvoiceAndJournalEntry(SALE, DateUtil.createDate(2011, 5, 9), pietPuk, "Subscription", subscription, debtorAccount, 123));
+        assertEquals(expectedMessage, serviceException.getMessage());
+    }
+
+    @Test
+    public void createInvoiceAndJournalForParties_createPurchaseInvoiceWithoutCreditor_isNotAllwed() {
+        assertCreatingPurchaseInvoiceForAccountFails(null, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
+        assertCreatingPurchaseInvoiceForAccountFails(bankAccount, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
+        assertCreatingPurchaseInvoiceForAccountFails(debtors, "resource-id: InvoiceService.purchaseInvoiceMustHaveCreditor");
+    }
+
+    private void assertCreatingPurchaseInvoiceForAccountFails(Account creditorAccount, String expectedMessage) {
+        ServiceException serviceException = assertThrows(ServiceException.class,
+                () -> createInvoiceAndJournalEntry(PURCHASE, DateUtil.createDate(2011, 5, 9), pietPuk, "Subscription", subscription, creditorAccount, 123));
+        assertEquals(expectedMessage, serviceException.getMessage());
+    }
 }
