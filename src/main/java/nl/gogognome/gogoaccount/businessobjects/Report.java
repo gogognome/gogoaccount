@@ -137,7 +137,7 @@ public class Report {
     public Amount getAmount(Account account) {
         Amount a = accountToAmount.get(account);
         if (a == null) {
-            a = new Amount("0");
+            a = Amount.ZERO;
         }
         return a;
     }
@@ -184,7 +184,7 @@ public class Report {
     }
 
     void determineResultOfOperations() {
-        resultOfOperations = new Amount("0");
+        resultOfOperations = Amount.ZERO;
         for (Account a : assets) {
             resultOfOperations = resultOfOperations.add(getAmount(a));
         }
@@ -206,7 +206,7 @@ public class Report {
     public Amount getRemaingAmountForInvoice(Invoice invoice) {
         Amount amount = invoiceToRemainingAmount.get(invoice);
         if (amount == null) {
-            amount = new Amount("0");
+            amount = Amount.ZERO;
         }
         return amount;
     }
@@ -218,7 +218,7 @@ public class Report {
     public Amount getBalanceForDebtor(Party debtor) {
         Amount amount = debtorToRemainingAmount.get(debtor);
         if (amount == null) {
-            amount = new Amount("0");
+            amount = Amount.ZERO;
         }
         return amount;
     }
@@ -230,7 +230,7 @@ public class Report {
     public Amount getBalanceForCreditor(Party creditor) {
         Amount amount = creditorToRemainingAmount.get(creditor);
         if (amount == null) {
-            amount = new Amount("0");
+            amount = Amount.ZERO;
         }
         return amount;
     }
@@ -276,7 +276,7 @@ public class Report {
     }
 
     public Amount getTotalOfAccounts(List<Account> accounts) {
-        Amount total = new Amount("0");
+        Amount total = Amount.ZERO;
         for (Account a : accounts) {
             total = total.add(getAmount(a));
         }
@@ -288,7 +288,7 @@ public class Report {
      * @return the total amount.
      */
     public Amount getTotalDebtors() {
-        Amount total = new Amount("0");
+        Amount total = Amount.ZERO;
         for (Amount a : debtorToRemainingAmount.values()) {
             total = total.add(a);
         }
@@ -300,7 +300,7 @@ public class Report {
      * @return the total amount.
      */
     public Amount getTotalCreditors() {
-        Amount total = new Amount("0");
+        Amount total = Amount.ZERO;
         for (Amount a : creditorToRemainingAmount.values()) {
             total = total.add(a);
         }

@@ -282,7 +282,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noDebtors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = new Amount("0");
+            Amount total = Amount.ZERO;
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 
@@ -319,7 +319,7 @@ public class ReportTask implements Task {
             result.append(textResource.getString("rep.noCreditors"));
             result.append(textFormat.getNewLine());
         } else {
-            Amount total = new Amount("0");
+            Amount total = Amount.ZERO;
             result.append(textFormat.getStartOfTable(("lr"),
                     new int[] { 40, 15 }));
 

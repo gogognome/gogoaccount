@@ -197,7 +197,8 @@ public class ReportBuilder {
 
     private Amount nullToZero(Amount amount) {
         if (amount == null) {
-            amount = new Amount("0");
+            amount = Amount.ZERO;
+            amount = Amount.ZERO;
         }
         return amount;
     }
