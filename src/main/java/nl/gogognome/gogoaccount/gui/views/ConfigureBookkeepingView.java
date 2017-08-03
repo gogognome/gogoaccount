@@ -48,6 +48,7 @@ public class ConfigureBookkeepingView extends View {
     private ListModel<Currency> currencyModel;
     private DateModel startDateModel;
     private StringModel invoiceIdFormatModel;
+    private StringModel partyIdFormatModel;
     private StringModel organisationNameModel;
     private StringModel organizationAddressModel;
     private StringModel organizationZipCodeModel;
@@ -100,6 +101,7 @@ public class ConfigureBookkeepingView extends View {
         currencyModel = Model.of(CurrencyUtil.getAllCurrencies(), v -> {});
         currencyModel.setSelectedItem(bookkeeping.getCurrency(), null);
         invoiceIdFormatModel = Model.of(bookkeeping.getInvoiceIdFormat(), v -> {}, modelChangeListener);
+        partyIdFormatModel = Model.of(bookkeeping.getPartyIdFormat(), v -> {}, modelChangeListener);
 
         organisationNameModel = Model.of(bookkeeping.getOrganizationName(), v -> {}, modelChangeListener);
         organizationAddressModel = Model.of(bookkeeping.getOrganizationAddress(), v -> {}, modelChangeListener);
@@ -145,6 +147,8 @@ public class ConfigureBookkeepingView extends View {
         ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel, new CurrencyFormatter());
         ifc.addField("ConfigureBookkeepingView.invoiceIdFormat", invoiceIdFormatModel);
         ifc.addVariableSizeField("gen.emptyString", widgetFactory.createLabel("ConfigureBookkeepingView.invoiceIdFormat.explanation"));
+        ifc.addField("ConfigureBookkeepingView.partyIdFormat", partyIdFormatModel);
+        ifc.addVariableSizeField("gen.emptyString", widgetFactory.createLabel("ConfigureBookkeepingView.partyIdFormat.explanation"));
 
         automaticCollectionInputFields.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.automaticCollectionSettings"));
         automaticCollectionInputFields.addField("ConfigureBookkeepingView.iban", ibanModel);
@@ -206,6 +210,7 @@ public class ConfigureBookkeepingView extends View {
             bookkeeping.setOrganizationCity(organizationCityModel.getString());
             bookkeeping.setOrganizationCountry(organizationCountryModel.getString());
             bookkeeping.setInvoiceIdFormat(invoiceIdFormatModel.getString());
+            bookkeeping.setPartyIdFormat(partyIdFormatModel.getString());
             bookkeeping.setEnableAutomaticCollection(enableAutomaticCollectionModel.getBoolean());
             configurationService.updateBookkeeping(document, bookkeeping);
 

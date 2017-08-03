@@ -16,17 +16,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class FormattedJournalEntryFinder {
+class FormattedJournalEntryFinder {
 
     private final ObjectCriterionMatcher objectCriterionMatcher = new ObjectCriterionMatcher();
     private final LedgerService ledgerService;
     private final InvoiceService invoiceService;
-    private final PartyService partyService = new PartyService();
+    private final PartyService partyService;
     private Logger logger = LoggerFactory.getLogger(LedgerService.class);
 
-    public FormattedJournalEntryFinder(LedgerService ledgerService, InvoiceService invoiceService) {
+    public FormattedJournalEntryFinder(LedgerService ledgerService, InvoiceService invoiceService, PartyService partyService) {
         this.ledgerService = ledgerService;
         this.invoiceService = invoiceService;
+        this.partyService = partyService;
     }
 
     FormattedJournalEntry format(Document document, JournalEntry journalEntry) {

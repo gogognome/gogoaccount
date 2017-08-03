@@ -90,6 +90,7 @@ public class BookkeepingService {
         newBookkeeping.setDescription(description);
         newBookkeeping.setCurrency(bookkeeping.getCurrency());
         newBookkeeping.setInvoiceIdFormat(bookkeeping.getInvoiceIdFormat());
+        newBookkeeping.setPartyIdFormat(bookkeeping.getPartyIdFormat());
         newBookkeeping.setEnableAutomaticCollection(bookkeeping.isEnableAutomaticCollection());
         newBookkeeping.setOrganizationAddress(bookkeeping.getOrganizationAddress());
         newBookkeeping.setOrganizationCity(bookkeeping.getOrganizationCity());

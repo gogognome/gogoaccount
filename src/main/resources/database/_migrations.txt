@@ -9,3 +9,4 @@
 80: add-bookkeeping-closed.sql
 90: invoice-one-party-and-add-party-reference.sql
 100: add-bookkeeping-invoice-id-format.sql
+110: add-bookkeeping-party-id-format.sql

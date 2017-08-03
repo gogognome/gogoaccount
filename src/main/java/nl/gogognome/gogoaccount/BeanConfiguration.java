@@ -396,8 +396,8 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public PartyService partyService() {
-        return new PartyService();
+    public PartyService partyService(ConfigurationService configurationService, SettingsService settingsService) {
+        return new PartyService(configurationService, settingsService);
     }
 
     @Bean

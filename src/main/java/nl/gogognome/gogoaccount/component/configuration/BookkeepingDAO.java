@@ -28,6 +28,7 @@ class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
         bookkeeping.setStartOfPeriod(result.getDate("start_of_period"));
         bookkeeping.setClosed(result.getBoolean("closed"));
         bookkeeping.setInvoiceIdFormat(result.getString("invoice_id_format"));
+        bookkeeping.setPartyIdFormat(result.getString("party_id_format"));
         bookkeeping.setOrganizationName(result.getString("organization_name"));
         bookkeeping.setOrganizationAddress(result.getString("organization_address"));
         bookkeeping.setOrganizationZipCode(result.getString("organization_zip_code"));
@@ -46,6 +47,7 @@ class BookkeepingDAO extends AbstractDomainClassDAO<Bookkeeping> {
                 .add("start_of_period", bookkeeping.getStartOfPeriod())
                 .add("closed", bookkeeping.isClosed())
                 .add("invoice_id_format", bookkeeping.getInvoiceIdFormat())
+                .add("party_id_format", bookkeeping.getPartyIdFormat())
                 .add("organization_name", bookkeeping.getOrganizationName())
                 .add("organization_address", bookkeeping.getOrganizationAddress())
                 .add("organization_zip_code", bookkeeping.getOrganizationZipCode())

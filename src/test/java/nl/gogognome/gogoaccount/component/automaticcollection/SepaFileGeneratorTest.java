@@ -18,10 +18,8 @@ import java.util.Date;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static junit.framework.Assert.*;
 import static nl.gogognome.lib.util.DateUtil.createDate;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
@@ -33,12 +31,14 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
     @Before
     public void createTemporaryFile() throws IOException {
         file = File.createTempFile("sepa-test", "xml");
-        file.delete();
+        assertTrue(file.delete());
     }
 
     @After
     public void deleteTemporaryFile() {
-        file.delete();
+        if (file.exists()) {
+            assertTrue(file.delete());
+        }
     }
 
     @Test
@@ -57,8 +57,8 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
         ServiceException serviceException = assertThrows(ServiceException.class, () -> generateAutomaticCollectionFile(file));
 
-        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Invoices with incomplete or incorrect data: 201100001 (2 Jan Pieterszoon)"));
-        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Party 2 Jan Pieterszoon has no automatic collection settings. " +
+        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Invoices with incomplete or incorrect data: 201100001 (0002 Jan Pieterszoon)"));
+        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Party 0002 Jan Pieterszoon has no automatic collection settings. " +
                 "Those settings are required to generate a SEPA file"));
         assertFalse(file.exists());
     }
@@ -67,13 +67,13 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
     public void generateSepaFileWithPartyWithIncompleteAutomaticCollectionSettings() throws Exception {
         createJournalEntryCreatingInvoice(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 123);
         PartyAutomaticCollectionSettings partyAutomaticCollectionSettings =
-                automaticCollectionService.findSettings(document, partyService.getParty(document, "1"));
+                automaticCollectionService.findSettings(document, partyService.getParty(document, pietPuk.getId()));
         partyAutomaticCollectionSettings.setCountry(null);
         automaticCollectionService.setAutomaticCollectionSettings(document, partyAutomaticCollectionSettings);
 
         ServiceException serviceException = assertThrows(ServiceException.class, () -> generateAutomaticCollectionFile(file));
 
-        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Invoices with incomplete or incorrect data: 201100001 (1 Pietje Puk)"));
+        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Invoices with incomplete or incorrect data: 201100001 (0001 Pietje Puk)"));
         assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Value '' is not facet-valid with respect to pattern '[A-Z]{2,2}' for type 'CountryCode'."));
         assertFalse(file.exists());
     }
@@ -84,7 +84,7 @@ public class SepaFileGeneratorTest extends AbstractBookkeepingTest {
 
         ServiceException serviceException = assertThrows(ServiceException.class, () -> generateAutomaticCollectionFile(file));
 
-        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Invoices with incomplete or incorrect data: 201100001 (1 Pietje Puk)"));
+        assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Invoices with incomplete or incorrect data: 201100001 (0001 Pietje Puk)"));
         assertTrue(serviceException.getMessage(), serviceException.getMessage().contains("Amount to be paid must be positive."));
         assertFalse(file.exists());
     }

@@ -50,8 +50,8 @@ public abstract class AbstractBookkeepingTest {
 
     protected final AmountFormat amountFormat = new AmountFormat(Locale.US, Currency.getInstance("EUR"));
     protected final SettingsService settingsService = new SettingsService();
-    protected final PartyService partyService = new PartyService();
     protected final ConfigurationService configurationService = new ConfigurationService();
+    protected final PartyService partyService = new PartyService(configurationService, settingsService);
     protected final DocumentService documentService = new DocumentService(configurationService);
     protected final ImportBankStatementService importBankStatementService = new ImportBankStatementService(configurationService);
     protected final InvoiceService invoiceService = new InvoiceService(amountFormat, partyService, settingsService, new TestTextResource());
@@ -139,7 +139,7 @@ public abstract class AbstractBookkeepingTest {
     }
 
     protected void createJournalEntryCreatingInvoiceAndJournalEntryPayingInvoice() throws Exception {
-        Party party = new PartyService().findAllParties(document).get(0);
+        Party party = new PartyService(configurationService, settingsService).findAllParties(document).get(0);
         String invoiceDescription = "Factuur contributie voor {name}";
         Invoice createdInvoice = createJournalEntryCreatingInvoice(DateUtil.createDate(2011, 3, 15), party, invoiceDescription, subscription, debtors, 20);
 

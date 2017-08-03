@@ -369,12 +369,33 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
+    public void closeBookkeeping_partyCreatedAndRemovedBeforeClosingDate_newPartyGetsNewId() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Party party = new Party();
+            party.setName("Johan Johansson");
+            party = partyService.createPartyWithNewId(document, party, emptyList());
+
+            document = closeBookkeeping(newBookkeepingFile, createDate(2012, 4, 1));
+
+            Party party2 = new Party();
+            party2.setName("Klaas Klaassen");
+            party2 = partyService.createPartyWithNewId(document, party2, emptyList());
+
+            assertNotEquals(party2.getId(), party.getId());
+        } finally {
+            deleteNewBookkeeping(newBookkeepingFile);
+        }
+    }
+
+    @Test
     public void closeBookkeeping_bookkeepingSettingsFilledIn_bookkeepingSettingsAreCopiedToNewBookkeeping() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
             Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
             bookkeeping.setCurrency(Currency.getInstance("EUR"));
-            bookkeeping.setInvoiceIdFormat("yyyy.nnn");
+            bookkeeping.setInvoiceIdFormat("I-yyyy.nnn");
+            bookkeeping.setPartyIdFormat("P-yyyy.nnn");
             bookkeeping.setEnableAutomaticCollection(true);
             bookkeeping.setOrganizationAddress("Organization address");
             bookkeeping.setOrganizationCity("Organization city");
@@ -388,6 +409,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
             assertEquals(bookkeeping.getCurrency(), newBookkeeping.getCurrency());
             assertEquals(bookkeeping.getInvoiceIdFormat(), newBookkeeping.getInvoiceIdFormat());
+            assertEquals(bookkeeping.getPartyIdFormat(), newBookkeeping.getPartyIdFormat());
             assertEquals(bookkeeping.getOrganizationAddress(), newBookkeeping.getOrganizationAddress());
             assertEquals(bookkeeping.getOrganizationCity(), newBookkeeping.getOrganizationCity());
             assertEquals(bookkeeping.getOrganizationCountry(), newBookkeeping.getOrganizationCountry());

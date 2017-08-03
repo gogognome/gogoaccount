@@ -10,7 +10,7 @@ public class Bookkeeping {
     private Currency currency = Currency.getInstance("EUR");
     private boolean closed;
     private String invoiceIdFormat;
-    private int nextinvoiceSequenceId;
+    private String partyIdFormat;
 
     private String organizationName;
     private String organizationAddress;
@@ -41,6 +41,14 @@ public class Bookkeeping {
 
     public void setInvoiceIdFormat(String invoiceIdFormat) {
         this.invoiceIdFormat = invoiceIdFormat;
+    }
+
+    public String getPartyIdFormat() {
+        return partyIdFormat;
+    }
+
+    public void setPartyIdFormat(String partyIdFormat) {
+        this.partyIdFormat = partyIdFormat;
     }
 
     public String getOrganizationAddress() {

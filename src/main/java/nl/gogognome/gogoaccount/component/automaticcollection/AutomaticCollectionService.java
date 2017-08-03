@@ -14,6 +14,8 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.task.TaskProgressListener;
 import nl.gogognome.lib.text.AmountFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
@@ -31,6 +33,7 @@ import static java.util.stream.Collectors.toList;
 
 public class AutomaticCollectionService {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
     private final PartyService partyService;
@@ -93,7 +96,9 @@ public class AutomaticCollectionService {
                     settings, idToParty, idToPartyAutomaticCollectionSettings, sepaFileGenerator, progressListener);
 
             if (!invalidInvoices.isEmpty()) {
-                fileToCreate.delete();
+                if (!fileToCreate.delete()) {
+                    logger.warn("Could not delete the file " + fileToCreate.getAbsolutePath() + ". It must be deleted because it contains invalid or incomplete data.");
+                }
                 throw new ServiceException("Invoices with incomplete or incorrect data: " + String.join(", ", invalidInvoices));
             }
 
@@ -109,7 +114,9 @@ public class AutomaticCollectionService {
         });
     }
 
-    private List<String> determineInvalidInvoices(File fileToCreate, List<Invoice> invoices, Date collectionDate, AutomaticCollectionSettings settings, Map<String, Party> idToParty, Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings, SepaFileGenerator sepaFileGenerator, TaskProgressListener progressListener) throws Exception {
+    private List<String> determineInvalidInvoices(File fileToCreate, List<Invoice> invoices, Date collectionDate, AutomaticCollectionSettings settings,
+                                                  Map<String, Party> idToParty, Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings,
+                                                  SepaFileGenerator sepaFileGenerator, TaskProgressListener progressListener) throws Exception {
         List<String> invalidInvoices = new ArrayList<>();
         for (int i=0; i<invoices.size(); i++) {
             progressListener.onProgressUpdate((i+1) * 100 / invoices.size());

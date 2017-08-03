@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 public class PartyServiceTest extends AbstractBookkeepingTest {
 
-    private final PartyService partyService = new PartyService();
+    private final PartyService partyService = new PartyService(configurationService, settingsService);
 
     @Test
     public void testAddingNonExistentParty() throws Exception {
@@ -89,11 +89,11 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void testPartySearchCriteria() throws Exception {
-        assertEquals("[1 Pietje Puk]", partyService.findParties(document, new StringLiteral("Puk")).toString());
-        assertEquals("[2 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Sterrenlaan")).toString());
-        assertEquals("[1 Pietje Puk]", partyService.findParties(document, new StringLiteral("19800223")).toString());
-        assertEquals("[2 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Eind")).toString());
-        assertEquals("[1 Pietje Puk]", partyService.findParties(document, new StringLiteral("15")).toString());
+        assertEquals("[0001 Pietje Puk]", partyService.findParties(document, new StringLiteral("Puk")).toString());
+        assertEquals("[0002 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Sterrenlaan")).toString());
+        assertEquals("[0001 Pietje Puk]", partyService.findParties(document, new StringLiteral("19800223")).toString());
+        assertEquals("[0002 Jan Pieterszoon]", partyService.findParties(document, new StringLiteral("Eind")).toString());
+        assertEquals("[0001 Pietje Puk]", partyService.findParties(document, new StringLiteral("15")).toString());
     }
 
     private Party overrideId(Party party, String partyId) {

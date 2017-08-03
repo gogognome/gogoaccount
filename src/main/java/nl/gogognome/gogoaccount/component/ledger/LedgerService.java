@@ -65,7 +65,7 @@ public class LedgerService {
     }
 
     public List<FormattedJournalEntry> findFormattedJournalEntries(Document document, Criterion criterion) throws ServiceException {
-        FormattedJournalEntryFinder formattedJournalEntryFinder = new FormattedJournalEntryFinder(this, invoiceService);
+        FormattedJournalEntryFinder formattedJournalEntryFinder = new FormattedJournalEntryFinder(this, invoiceService, partyService);
         return ServiceTransaction.withResult(() -> new JournalEntryDAO(document).findAll("date")
             .stream()
             .map(journalEntry -> formattedJournalEntryFinder.format(document, journalEntry))

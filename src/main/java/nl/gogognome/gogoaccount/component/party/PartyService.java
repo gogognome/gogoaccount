@@ -1,7 +1,9 @@
 package nl.gogognome.gogoaccount.component.party;
 
+import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.criterion.ObjectCriterionMatcher;
 import nl.gogognome.gogoaccount.component.document.Document;
+import nl.gogognome.gogoaccount.component.settings.SettingsService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.textsearch.criteria.Criterion;
@@ -14,11 +16,21 @@ import static java.util.stream.Collectors.toList;
 public class PartyService {
 
     private final ObjectCriterionMatcher objectCriterionMatcher = new ObjectCriterionMatcher();
+    private final ConfigurationService configurationService;
+    private final SettingsService settingsService;
+
+    public PartyService(ConfigurationService configurationService, SettingsService settingsService) {
+        this.configurationService = configurationService;
+        this.settingsService = settingsService;
+    }
 
     public Party createPartyWithNewId(Document document, Party party, List<String> tags) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
             document.ensureDocumentIsWriteable();
-            Party createdParty = new PartyDAO(document).createWithNewId(party);
+
+            String partyIdFormat = configurationService.getBookkeeping(document).getPartyIdFormat();
+            String nextPartyId = settingsService.findNextId(document, "previousPartyId", partyIdFormat);
+            Party createdParty = new PartyDAO(document).createWithNewId(nextPartyId, party);
             new TagDAO(document).saveTags(createdParty.getId(), tags);
             document.notifyChange();
             return createdParty;
