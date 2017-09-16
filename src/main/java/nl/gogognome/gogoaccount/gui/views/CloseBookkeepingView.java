@@ -8,7 +8,7 @@ import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.gui.components.AccountFormatter;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.models.StringModel;
@@ -36,10 +36,12 @@ public class CloseBookkeepingView extends OkCancelView {
 	private ListModel<Account> accountListModel = new ListModel<>();
 
     private boolean dataSuccessfullyEntered;
+    private MessageDialog messageDialog;
 
     public CloseBookkeepingView(Document document, ConfigurationService configurationService) {
         this.document = document;
         this.configurationService = configurationService;
+        messageDialog = new MessageDialog(textResource, this);
     }
 
     @Override
@@ -57,7 +59,7 @@ public class CloseBookkeepingView extends OkCancelView {
             initModels();
             addComponents();
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            messageDialog.showErrorMessage(e, "gen.problemOccurred");
             close();
         }
     }
@@ -85,12 +87,12 @@ public class CloseBookkeepingView extends OkCancelView {
     @Override
 	protected void onOk() {
         if (dateModel.getDate() == null) {
-            MessageDialog.showWarningMessage(this, "closeBookkeepingView.enterDate");
+            messageDialog.showWarningMessage("closeBookkeepingView.enterDate");
             return;
         }
 
         if (accountListModel.getSelectedIndex() == -1) {
-            MessageDialog.showWarningMessage(this, "closeBookkeepingView.selectAccount");
+            messageDialog.showWarningMessage("closeBookkeepingView.selectAccount");
             return;
         }
 
