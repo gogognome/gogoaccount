@@ -9,6 +9,7 @@ public class Account implements Comparable<Account> {
     private String id;
     private String name;
     private AccountType type;
+    private boolean resultOfOperations;
 
     /**
      * Constructs an account.
@@ -64,6 +65,14 @@ public class Account implements Comparable<Account> {
      */
     public AccountType getType() {
         return type;
+    }
+
+    public boolean isResultOfOperations() {
+        return resultOfOperations;
+    }
+
+    public void setResultOfOperations(boolean resultOfOperations) {
+        this.resultOfOperations = resultOfOperations;
     }
 
     @Override

@@ -195,10 +195,12 @@ public class Report {
         if (resultOfOperations.isPositive()) {
             resultOfOperationsAccount =
                 new Account("__profit__", textResource.getString("gen.profit"), AccountType.LIABILITY);
+            resultOfOperationsAccount.setResultOfOperations(true);
             setAmount(resultOfOperationsAccount, resultOfOperations);
         } else if (resultOfOperations.isNegative()) {
             resultOfOperationsAccount =
                 new Account("__loss__", textResource.getString("gen.loss"), AccountType.ASSET);
+            resultOfOperationsAccount.setResultOfOperations(true);
             setAmount(resultOfOperationsAccount, resultOfOperations.negate());
         }
     }

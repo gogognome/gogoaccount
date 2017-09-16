@@ -8,9 +8,9 @@ import nl.gogognome.gogoaccount.gui.components.BalanceSheet.Row;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.Closeable;
-import nl.gogognome.lib.swing.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.WidgetFactory;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
@@ -27,8 +27,6 @@ import java.util.List;
 
 /**
  * This class implements a graphical component that shows a balance.
- *
- * @author Sander Kooijmans
  */
 public class BalanceComponent extends JScrollPane implements Closeable {
 
@@ -45,16 +43,19 @@ public class BalanceComponent extends JScrollPane implements Closeable {
     private ModelChangeListener modelChangeListener;
 
     private final TextResource textResource = Factory.getInstance(TextResource.class);
+    private final MessageDialog messageDialog;
 
     /**
      * Creates a new <code>BalanceComponent</code>.
      * @param document the datebase used to create the balance
-     * @param bookkeepingService
+     * @param bookkeepingService the bookkeepingService
+     * @param dateModel determines the date of the balance
      */
     public BalanceComponent(Document document, BookkeepingService bookkeepingService, DateModel dateModel) throws ServiceException {
         this.document = document;
         this.bookkeepingService = bookkeepingService;
         this.dateModel = dateModel;
+        messageDialog = new MessageDialog(textResource, this);
 
         balanceSheet = new BalanceSheet(textResource.getString("gen.assets"), textResource.getString("gen.liabilities"));
         balanceSheet.setOpaque(false);
@@ -115,7 +116,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
                             GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
             row++;
 		} catch (ServiceException e) {
-			MessageDialog.showErrorMessage(this, e, "gen.internalError");
+			messageDialog.showErrorMessage(e, "gen.internalError");
             close();
 		}
     }
@@ -125,7 +126,7 @@ public class BalanceComponent extends JScrollPane implements Closeable {
 
         for (Account a : accounts) {
         	Row row = new Row();
-        	row.description = a.getId() + ' ' + a.getName();
+        	row.description = a.isResultOfOperations() ? a.getName() : a.getId() + ' ' + a.getName();
             row.amount = report.getAmount(a);
             rows.add(row);
         }
