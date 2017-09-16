@@ -42,6 +42,7 @@ import java.util.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static junit.framework.Assert.*;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.PURCHASE;
 import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
 
 /**
@@ -141,9 +142,14 @@ public abstract class AbstractBookkeepingTest {
         Factory.bindSingleton(AmountFormat.class, amountFormat);
     }
 
-    protected Invoice createInvoiceAndJournalEntry(Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)
+    protected Invoice createSalesInvoiceAndJournalEntry(Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)
             throws ServiceException {
         return createInvoiceAndJournalEntry(SALE, date, party, invoiceDescription, invoiceLineAccount, debtorOrCreditor, amount);
+    }
+
+    protected Invoice createPurchaseInvoiceAndJournalEntry(Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)
+            throws ServiceException {
+        return createInvoiceAndJournalEntry(PURCHASE, date, party, invoiceDescription, invoiceLineAccount, debtorOrCreditor, amount);
     }
 
     protected Invoice createInvoiceAndJournalEntry(InvoiceTemplate.Type type, Date date, Party party, String invoiceDescription, Account invoiceLineAccount, Account debtorOrCreditor, int amount)

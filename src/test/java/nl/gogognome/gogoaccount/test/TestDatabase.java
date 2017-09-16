@@ -28,7 +28,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
 
     @Test
     public void findJournalThatCreatesInvoice_validInvoiceId_returnsIdOfJournalCreatingInvoice() throws Exception {
-        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
 
         assertEquals(invoice.getId(), ledgerService.findJournalThatCreatesInvoice(document, invoice.getId()).getId());
         JournalEntry journalEntry = ledgerService.findJournalEntry(document, invoice.getId());

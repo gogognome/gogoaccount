@@ -27,7 +27,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void findPayments_createInvoiceAndJournalWithPayment_returnsPaymentForInvoice() throws ServiceException {
-        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
         assertEquals(1, invoiceService.findPayments(document, invoice).size());
 
@@ -39,7 +39,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenAJournalEntryDetailWithPaymentIsUpdatedThePaymentMustBeUpdatedToo() throws Exception {
-        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
 
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -60,7 +60,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenAJournalEntryDetailWithPaymentIsUpdatedWithoutInvoiceThenPaymentMustBeRemoved() throws ServiceException {
-        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
 
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -74,7 +74,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void whenAJournalEntryDetailWithoutPaymentIsUpdatedWithInvoiceThenPaymentMustBeCreated() throws Exception {
-        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, null, debtors, null);
 
         List<JournalEntryDetail> journalEntryDetails = Arrays.asList(
@@ -91,7 +91,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void removeJournal_journalCreatesInvoice_journalAndInvoiceRemoved() throws Exception {
-        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = findJournalEntry(invoice.getId());
 
         ledgerService.removeJournalEntry(document, journalEntry);
@@ -102,7 +102,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void removeJournal_journalHasPayment_journalAndPaymentRemoved() throws Exception {
-        Invoice invoice = createInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+        Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
         JournalEntry journalEntry = createJournalEntry(createDate(2011, 3, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice, debtors, null);
         assertEquals(1, invoiceService.findPayments(document, invoice).size());
 
