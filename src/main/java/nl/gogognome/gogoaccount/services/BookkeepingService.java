@@ -55,14 +55,13 @@ public class BookkeepingService {
             document.ensureDocumentIsWriteable();
 
             markBookkeepingAsClosed(document);
-            Date dayBeforeStart = DateUtil.addDays(date, -1);
             Document newDocument = createNewBookkeeping(document, newBookkeepingFile, description, date);
             copyAutomaticCollectionSettings(document, newDocument);
             copyParties(document, newDocument);
             copyAccounts(document, newDocument);
-            createStartBalance(document, newDocument, dayBeforeStart, equity);
-            copyOpenInvoices(document, newDocument, dayBeforeStart);
-            copyRemainingJournalEntries(document, newDocument, date);
+            createStartBalance(document, newDocument, date, equity);
+            copyOpenInvoices(document, newDocument, date);
+            copyRemainingJournalEntries(document, newDocument, DateUtil.addDays(date, 1));
             copySettings(document, newDocument);
 
             newDocument.notifyChange();
@@ -119,11 +118,11 @@ public class BookkeepingService {
         }
     }
 
-    private void createStartBalance(Document document, Document newDocument, Date dayBeforeStart, Account equity) throws ServiceException {
+    private void createStartBalance(Document document, Document newDocument, Date date, Account equity) throws ServiceException {
         List<JournalEntryDetail> journalEntryDetails = new ArrayList<>(20);
         for (Account account : configurationService.findAssets(document)) {
             JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(ledgerService.getAccountBalance(document, account, dayBeforeStart));
+            journalEntryDetail.setAmount(ledgerService.getAccountBalance(document, account, date));
             journalEntryDetail.setAccountId(account.getId());
             journalEntryDetail.setDebet(true);
             if (!journalEntryDetail.getAmount().isZero()) {
@@ -132,7 +131,7 @@ public class BookkeepingService {
         }
         for (Account account : configurationService.findLiabilities(document)) {
             JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(ledgerService.getAccountBalance(document, account, dayBeforeStart));
+            journalEntryDetail.setAmount(ledgerService.getAccountBalance(document, account, date));
             journalEntryDetail.setAccountId(account.getId());
             if (!journalEntryDetail.getAmount().isZero()) {
                 journalEntryDetails.add(journalEntryDetail);
@@ -140,7 +139,7 @@ public class BookkeepingService {
         }
 
         // Add the result of operations to the specified account.
-        Report report = createReport(document, dayBeforeStart);
+        Report report = createReport(document, date);
         Amount resultOfOperations = report.getResultOfOperations();
         if (resultOfOperations.isPositive()) {
             JournalEntryDetail profit = new JournalEntryDetail();
@@ -159,7 +158,7 @@ public class BookkeepingService {
             JournalEntry startBalance = new JournalEntry();
             startBalance.setId("start");
             startBalance.setDescription("start balance");
-            startBalance.setDate(dayBeforeStart);
+            startBalance.setDate(date);
             ledgerService.addJournalEntry(newDocument, startBalance, journalEntryDetails);
         } catch (IllegalArgumentException  e) {
             throw new ServiceException("Failed to create journal for start balance.", e);
@@ -174,9 +173,9 @@ public class BookkeepingService {
         }
     }
 
-    private void copyOpenInvoices(Document document, Document newDocument, Date dayBeforeStart) throws ServiceException {
+    private void copyOpenInvoices(Document document, Document newDocument, Date date) throws ServiceException {
         for (Invoice invoice : invoiceService.findAllInvoices(document)) {
-            if (!invoiceService.isPaid(document, invoice.getId(), dayBeforeStart)) {
+            if (!invoiceService.isPaid(document, invoice.getId(), date)) {
                 invoiceService.createInvoice(newDocument, invoice);
                 invoiceService.createDetails(newDocument, invoice,
                         invoiceService.findDescriptions(document, invoice), invoiceService.findAmounts(document, invoice));

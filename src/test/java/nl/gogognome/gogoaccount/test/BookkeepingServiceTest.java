@@ -154,15 +154,16 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             Invoice invoice2 = createSalesInvoiceAndJournalEntry(createDate(2011, 3, 15), pietPuk, "Subscription 2011 {name}", subscription, debtors, 456);
             createJournalEntry(createDate(2011, 5, 25), "p1", "Payment subscription Jan Pieterszoon", 123, bankAccount, invoice1, debtors, null);
 
-            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+            Date closingDate = createDate(2012, 1, 1);
+            Document newDocument = closeBookkeeping(newBookkeepingFile, closingDate);
             Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
 
             assertEquals("new bookkeeping", newBookkeeping.getDescription());
             assertEquals(configurationService.findAllAccounts(document).toString(), configurationService.findAllAccounts(newDocument).toString());
-            assertEquals(0, DateUtil.compareDayOfYear(createDate(2012, 1, 1),
+            assertEquals(0, DateUtil.compareDayOfYear(closingDate,
                     newBookkeeping.getStartOfPeriod()));
 
-            Report report = bookkeepingService.createReport(newDocument, createDate(2011, 12, 31));
+            Report report = bookkeepingService.createReport(newDocument, closingDate);
 
             assertEquals(asList(cash, bankAccount, debtors, equity, creditors, sportsHallRent, unforeseenExpenses, subscription, unforeseenRevenues),
                     report.getAllAccounts());
@@ -199,6 +200,38 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
             Report report = bookkeepingService.createReport(newDocument, createDate(2012, 1, 1));
+
+            assertEquals(asList(janPieterszoon), report.getDebtors());
+            assertEquals(asList(pietPuk), report.getCreditors());
+
+            assertEquals(invoice1.getAmountToBePaid(), report.getBalanceForDebtor(janPieterszoon));
+            assertEquals(invoice1.getAmountToBePaid(), report.getAmount(debtors));
+            assertEquals(invoice2.getAmountToBePaid(), report.getBalanceForCreditor(pietPuk).negate());
+            assertEquals(invoice2.getAmountToBePaid(), report.getAmount(creditors).negate());
+
+            assertEquals(Amount.ZERO, report.getResultOfOperations());
+            assertEquals(startEquity.add(invoice1.getAmountToBePaid().add(invoice2.getAmountToBePaid())), report.getAmount(equity));
+
+            assertAmountEquals(0, report.getAmount(subscription));
+
+            checkTotalsOfReport(report);
+        } finally {
+            deleteNewBookkeeping(newBookkeepingFile);
+        }
+    }
+
+    @Test
+    public void closeBookkeeping_invoiceCreatedOnClosingDate() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Amount startEquity = ledgerService.getStartBalance(document, equity);
+            Date closingDate = createDate(2012, 1, 1);
+            Invoice invoice1 = createSalesInvoiceAndJournalEntry(closingDate, janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            Invoice invoice2 = createPurchaseInvoiceAndJournalEntry(closingDate, pietPuk, "Rent of sports hall", sportsHallRent, creditors, 456);
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, closingDate);
+
+            Report report = bookkeepingService.createReport(newDocument, closingDate);
 
             assertEquals(asList(janPieterszoon), report.getDebtors());
             assertEquals(asList(pietPuk), report.getCreditors());
@@ -329,7 +362,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            assertEquals("[20111231 start start balance, 20120110 ABC Test]", ledgerService.findJournalEntries(newDocument).toString());
+            assertEquals("[20120101 start start balance, 20120110 ABC Test]", ledgerService.findJournalEntries(newDocument).toString());
         } finally {
             deleteNewBookkeeping(newBookkeepingFile);
         }
@@ -345,7 +378,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            assertEquals("[20111231 start start balance]",
+            assertEquals("[20120101 start start balance]",
                     ledgerService.findJournalEntries(newDocument).toString());
             List<Invoice> openInvoices = invoiceService.findAllInvoices(newDocument);
             assertEquals(1, openInvoices.size());
@@ -366,7 +399,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            assertEquals("[20111231 start start balance, " +
+            assertEquals("[20120101 start start balance, " +
                         "20120315 201100001 Subscription 2011 Jan Pieterszoon, " +
                         "20120315 201100002 Subscription 2011 Pietje Puk, " +
                         "20120325 p1 Payment subscription Jan Pieterszoon]",
