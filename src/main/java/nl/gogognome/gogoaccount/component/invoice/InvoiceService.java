@@ -353,15 +353,23 @@ public class InvoiceService {
     }
 
     public void createInvoiceSending(Document document, Invoice invoice, InvoiceSending.Type type) throws ServiceException {
+        InvoiceSending invoiceSending = new InvoiceSending();
+        invoiceSending.setDate(DateUtil.createNow());
+        invoiceSending.setInvoiceId(invoice.getId());
+        invoiceSending.setType(type);
+        createInvoiceSending(document, invoiceSending);
+    }
+
+    public void createInvoiceSending(Document document, InvoiceSending invoiceSending) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             document.ensureDocumentIsWriteable();
-            InvoiceSending invoiceSending = new InvoiceSending();
-            invoiceSending.setDate(new Date());
-            invoiceSending.setInvoiceId(invoice.getId());
-            invoiceSending.setType(type);
             new InvoiceSendingDAO(document).create(invoiceSending);
             document.notifyChange();
         });
+    }
+
+    public List<InvoiceSending> findAllInvoiceSendings(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new InvoiceSendingDAO(document).findAll());
     }
 
 }

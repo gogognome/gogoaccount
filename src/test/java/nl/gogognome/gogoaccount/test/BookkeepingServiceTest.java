@@ -8,6 +8,7 @@ import nl.gogognome.gogoaccount.component.configuration.AccountType;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceSending;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
 import nl.gogognome.gogoaccount.component.party.Party;
@@ -25,6 +26,8 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static nl.gogognome.gogoaccount.component.configuration.AccountType.LIABILITY;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.EMAIL;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.PRINT;
 import static nl.gogognome.lib.util.DateUtil.createDate;
 import static org.junit.Assert.*;
 
@@ -282,6 +285,38 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             assertEquals(invoice2.getAmountToBePaid(), report.getAmount(sportsHallRent).negate());
 
             checkTotalsOfReport(report);
+        } finally {
+            deleteNewBookkeeping(newBookkeepingFile);
+        }
+    }
+
+    @Test
+    public void closeBookkeeping_invoiceSendingsBeforeClosingDateAreCopiedToo() throws Exception {
+        File newBookkeepingFile = File.createTempFile("test", "h2.db");
+        try {
+            Invoice invoice = createSalesInvoiceAndJournalEntry(createDate(2011, 10, 51), janPieterszoon, "Subscription 2011 {name}", subscription, debtors, 123);
+            DateUtil.setDateFactory(() -> DateUtil.createDate(2011, 10, 10));
+            invoiceService.createInvoiceSending(document, invoice, EMAIL);
+            DateUtil.setDateFactory(() -> DateUtil.createDate(2011, 11, 11));
+            invoiceService.createInvoiceSending(document, invoice, PRINT);
+
+            Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
+
+            Report report = bookkeepingService.createReport(newDocument, createDate(2012, 1, 1));
+
+            assertEquals(asList(janPieterszoon), report.getDebtors());
+            List<InvoiceSending> invoiceSendings = invoiceService.findAllInvoiceSendings(newDocument);
+            assertEquals(2, invoiceSendings.size());
+            InvoiceSending invoiceSending1 = invoiceSendings.get(0);
+            assertEquals(invoice.getId(), invoiceSending1.getInvoiceId());
+            assertEqualDayOfYear(DateUtil.createDate(2011, 10, 10), invoiceSending1.getDate());
+            assertEquals(EMAIL, invoiceSending1.getType());
+
+            InvoiceSending invoiceSending2 = invoiceSendings.get(1);
+            assertEquals(invoice.getId(), invoiceSending2.getInvoiceId());
+            assertEqualDayOfYear(DateUtil.createDate(2011, 11, 11), invoiceSending2.getDate());
+            assertEquals(PRINT, invoiceSending2.getType());
+
         } finally {
             deleteNewBookkeeping(newBookkeepingFile);
         }

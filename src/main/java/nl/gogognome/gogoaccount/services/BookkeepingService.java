@@ -11,6 +11,7 @@ import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
 import nl.gogognome.gogoaccount.component.invoice.Invoice;
+import nl.gogognome.gogoaccount.component.invoice.InvoiceSending;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.invoice.Payment;
 import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.stream.Collectors.toList;
 
 
 public class BookkeepingService {
@@ -175,12 +178,20 @@ public class BookkeepingService {
     }
 
     private void copyOpenInvoices(Document document, Document newDocument, Date dayBeforeStart) throws ServiceException {
+        List<InvoiceSending> invoiceSendings = invoiceService.findAllInvoiceSendings(document);
         for (Invoice invoice : invoiceService.findAllInvoices(document)) {
             if (!invoiceService.isPaid(document, invoice.getId(), dayBeforeStart)) {
                 invoiceService.createInvoice(newDocument, invoice);
                 invoiceService.createDetails(newDocument, invoice,
                         invoiceService.findDescriptions(document, invoice), invoiceService.findAmounts(document, invoice));
                 invoiceService.createPayments(newDocument, invoiceService.findPayments(document, invoice));
+
+                List<InvoiceSending> invoiceSendingsForInvoice = invoiceSendings.stream()
+                        .filter(invoiceSending -> invoiceSending.getInvoiceId().equals(invoice.getId()))
+                        .collect(toList());
+                for (InvoiceSending invoiceSending : invoiceSendingsForInvoice) {
+                    invoiceService.createInvoiceSending(newDocument, invoiceSending);
+                }
             }
         }
     }
