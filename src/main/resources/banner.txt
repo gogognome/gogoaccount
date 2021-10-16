@@ -1,6 +1,6 @@
-Gogo Account 2.6
-Copyright 2011-2017 Sander Kooijmans
-http://www.gogognome.nl
+Gogo Account 2.6.1
+Copyright 2011-2021 Sander Kooijmans
+https://gogognome.nl
 
 This software is released under the Apache License, Version 2.0
 Icons used from: http://www.famfamfam.com/lab/icons/silk/
