@@ -6,7 +6,7 @@ import nl.gogognome.gogoaccount.component.invoice.InvoiceSearchCriteria;
 import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.SwingUtils;
 import nl.gogognome.lib.swing.TableRowSelectAction;
 import nl.gogognome.lib.swing.action.ActionWrapper;
@@ -31,6 +31,7 @@ public class InvoiceEditAndSelectionView extends View {
     private final AmountFormat amountFormat;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
+    private final MessageDialog messageDialog;
 
 	private InvoicesTableModel invoicesTableModel;
 
@@ -57,6 +58,7 @@ public class InvoiceEditAndSelectionView extends View {
         this.amountFormat = amountFormat;
         this.invoiceService = invoiceService;
         this.partyService = partyService;
+        messageDialog = new MessageDialog(textResource, this);
     }
 
     public void enableSingleSelect() {
@@ -202,7 +204,7 @@ public class InvoiceEditAndSelectionView extends View {
                 setDefaultButton(btSelect);
             }
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(this, e, "gen.problemOccurred");
+            messageDialog.showErrorMessage(e, "gen.problemOccurred");
         }
     }
 
