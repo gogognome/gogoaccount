@@ -136,7 +136,7 @@ public class InvoiceEditAndSelectionView extends View {
         row++;
 
         btIncludeClosedInvoices = new JCheckBox(
-            textResource.getString("invoicesView.includeClosedInvoices"), false);
+            textResource.getString("invoicesView.includePaidInvoices"), false);
         criteriaPanel.add(btIncludeClosedInvoices,
             SwingUtils.createTextFieldGBConstraints(1, row));
         row++;
