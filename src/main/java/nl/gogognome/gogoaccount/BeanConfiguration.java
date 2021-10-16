@@ -43,6 +43,7 @@ import java.util.Locale;
 public class BeanConfiguration {
 
     @Bean
+    @Scope("prototype")
     public MainFrame mainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
                                ViewFactory viewFactory, ControllerFactory controllerFactory, DocumentRegistry documentRegistry,
                                ResourceLoader resourceLoader) {
@@ -180,7 +181,7 @@ public class BeanConfiguration {
     @Scope("prototype")
     public EmailConfigurationView emailConfigurationView(DocumentWrapper documentWrapper, TextResourceWrapper textResourceWrapper,
                                                          EmailService emailService) {
-        return new EmailConfigurationView(documentWrapper.document, textResourceWrapper.textResource, emailService);
+        return new EmailConfigurationView(documentWrapper.document, getResource(textResourceWrapper), emailService);
     }
 
     @Bean
@@ -320,7 +321,7 @@ public class BeanConfiguration {
     public EditJournalController editJournalController(DocumentWrapper documentWrapper, InvoiceService invoiceService,
                                                        LedgerService ledgerService, ViewFactory viewFactory,
                                                        TextResourceWrapper textResourceWrappere) {
-        return new EditJournalController(documentWrapper.document, invoiceService, ledgerService, viewFactory, textResourceWrappere.textResource);
+        return new EditJournalController(documentWrapper.document, invoiceService, ledgerService, viewFactory, getResource(textResourceWrappere));
     }
 
     @Bean
@@ -328,7 +329,7 @@ public class BeanConfiguration {
     public EditInvoiceController editInvoiceController(DocumentWrapper documentWrapper, InvoiceService invoiceService,
                                                        LedgerService ledgerService, ViewFactory viewFactory,
                                                        TextResourceWrapper textResourceWrapper) {
-        return new EditInvoiceController(documentWrapper.document, invoiceService, ledgerService, viewFactory, textResourceWrapper.textResource);
+        return new EditInvoiceController(documentWrapper.document, invoiceService, ledgerService, viewFactory, getResource(textResourceWrapper));
     }
 
     @Bean
@@ -338,7 +339,7 @@ public class BeanConfiguration {
                                                              ConfigurationService configurationService, InvoiceService invoiceService,
                                                              LedgerService ledgerService, PartyService partyService,
                                                              ReportToModelConverter reportToModelConverter, ViewFactory viewFactory) {
-        return new GenerateReportController(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
+        return new GenerateReportController(documentWrapper.document, amountFormatWrapper.amountFormat, getResource(textResourceWrapper),
                 bookkeepingService, configurationService, invoiceService, ledgerService, partyService, reportToModelConverter, viewFactory);
     }
 
@@ -372,7 +373,7 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public EmailService emailService(SettingsService settingsService, TextResourceWrapper textResourceWrapper) {
-        return new EmailService(settingsService, textResourceWrapper.textResource);
+        return new EmailService(settingsService, getResource(textResourceWrapper));
     }
 
     @Bean
@@ -385,7 +386,7 @@ public class BeanConfiguration {
     @Scope("prototype")
     public InvoiceService invoiceService(AmountFormat amountFormat, PartyService partyService, SettingsService settingsService,
                                          TextResourceWrapper textResourceWrapper) {
-        return new InvoiceService(amountFormat, partyService, settingsService, textResourceWrapper.textResource);
+        return new InvoiceService(amountFormat, partyService, settingsService, getResource(textResourceWrapper));
     }
 
     @Bean
@@ -393,7 +394,7 @@ public class BeanConfiguration {
     public LedgerService ledgerService(TextResourceWrapper textResourceWrapper, ConfigurationService configurationService,
                                        InvoiceService invoiceService, PartyService partyService,
                                        PaymentAmountAgainstDebtorAndCreditorValidator paymentAmountAgainstDebtorAndCreditorValidator) {
-        return new LedgerService(textResourceWrapper.textResource, configurationService, invoiceService, partyService, paymentAmountAgainstDebtorAndCreditorValidator);
+        return new LedgerService(getResource(textResourceWrapper), configurationService, invoiceService, partyService, paymentAmountAgainstDebtorAndCreditorValidator);
     }
 
     @Bean
@@ -420,28 +421,36 @@ public class BeanConfiguration {
                                                              InvoiceService invoiceService, PartyService partyService,
                                                              TextResourceWrapper textResourceWrapper) {
         return new InvoicesToModelConverter(amountFormatWrapper.amountFormat, invoiceService,
-                partyService, textResourceWrapper.textResource);
+                partyService, getResource(textResourceWrapper));
     }
 
     @Bean
     @Scope("prototype")
     public InvoicePreviewTemplate invoicePreviewTemplate(AmountFormatWrapper amountFormatWrapper, KeyValueReplacer keyValueReplacer,
                                                          TextResourceWrapper textResourceWrapper) {
-        return new InvoicePreviewTemplate(amountFormatWrapper.amountFormat, keyValueReplacer, textResourceWrapper.textResource);
+        return new InvoicePreviewTemplate(amountFormatWrapper.amountFormat, keyValueReplacer, getResource(textResourceWrapper));
     }
 
     @Bean
     @Scope("prototype")
     public ReportToModelConverter reportToModelConverter(DocumentWrapper documentWrapper, AmountFormatWrapper amountFormatWrapper, ConfigurationService configurationService,
                                                              PartyService partyService, TextResourceWrapper textResourceWrapper) {
-        return new ReportToModelConverter(documentWrapper.document, amountFormatWrapper.amountFormat, textResourceWrapper.textResource,
+        return new ReportToModelConverter(documentWrapper.document, amountFormatWrapper.amountFormat, getResource(textResourceWrapper),
                 configurationService, partyService);
     }
 
     @Bean
+    @Scope("prototype")
     public PaymentAmountAgainstDebtorAndCreditorValidator paymentAmountAgainstDebtorAndCreditorValidator(
             ConfigurationService configurationService, InvoiceService invoiceService, TextResourceWrapper textResourceWrapper) {
-        return new PaymentAmountAgainstDebtorAndCreditorValidator(configurationService, invoiceService, textResourceWrapper.textResource);
+        return new PaymentAmountAgainstDebtorAndCreditorValidator(configurationService, invoiceService, getResource(textResourceWrapper));
+    }
+
+    private TextResource getResource(TextResourceWrapper textResourceWrapper) {
+        if (textResourceWrapper.textResource == null) {
+            throw new IllegalArgumentException("The text resource has not been set yet. Perhaps the bean needs the @Scope(\"prototype\") annotation?");
+        }
+        return textResourceWrapper.textResource;
     }
 
     @Bean
