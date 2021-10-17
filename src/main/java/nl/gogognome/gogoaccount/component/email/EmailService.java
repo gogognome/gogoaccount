@@ -6,9 +6,7 @@ import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.gogoaccount.services.ServiceTransaction;
 import nl.gogognome.lib.text.TextResource;
 
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
+import javax.mail.*;
 import javax.mail.internet.MimeMessage;
 import java.util.Date;
 import java.util.Properties;
@@ -64,44 +62,57 @@ public class EmailService {
         ServiceTransaction.withoutResult(() -> {
             document.ensureDocumentIsWriteable();
             EmailConfiguration configuration = getConfiguration(document);
-            if (configuration.getSenderEmailAddress() == null || configuration.getSmtpHost() == null
-                    || configuration.getSmtpUsername() == null || configuration.getSmtpPassword() == null) {
-                throw new ServiceException(textResource.getString("EmailService.configurationIsIncomplete"));
-            }
-
-            Properties props = new Properties();
-            props.put("mail.smtp.host", configuration.getSmtpHost());
-            props.put("mail.smtp.port", configuration.getSmtpPort());
-
-            switch (configuration.getSmtpEncryption()) {
-                case NONE:
-                    break;
-                case STARTTLS:
-                    props.put("mail.smtp.starttls.enable", "true");
-                    break;
-                case SSL:
-                    props.put("mail.smtp.socketFactory.port", configuration.getSmtpPort());
-                    props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-                    props.put("mail.smtp.socketFactory.fallback", "false");
-                    break;
-                default:
-                    throw new IllegalArgumentException("The encryption type " + configuration.getSmtpEncryption() + " has not been implemented yet.");
-            }
-
-            Session session = Session.getInstance(props, null);
-
-            try {
-                MimeMessage msg = new MimeMessage(session);
-                msg.setFrom(configuration.getSenderEmailAddress());
-                msg.setRecipients(Message.RecipientType.TO, recipient);
-                msg.setRecipients(Message.RecipientType.BCC, configuration.getSenderEmailAddress());
-                msg.setSubject(subject);
-                msg.setSentDate(new Date());
-                msg.setText(contents, charset, subtype);
-                Transport.send(msg, configuration.getSmtpUsername(), configuration.getSmtpPassword());
-            } catch (Exception e) {
-                throw new ServiceException(e);
-            }
+            sendEmail(recipient, subject, contents, charset, subtype, configuration);
         });
+    }
+
+    // Package scope for tests.
+    void sendEmail(String recipient, String subject, String contents, String charset, String subtype, EmailConfiguration configuration) throws ServiceException {
+        if (configuration.getSenderEmailAddress() == null || configuration.getSmtpHost() == null
+                || configuration.getSmtpUsername() == null || configuration.getSmtpPassword() == null) {
+            throw new ServiceException(textResource.getString("EmailService.configurationIsIncomplete"));
+        }
+
+        Properties props = buildPropertiesFromConfiguration(configuration);
+
+        try {
+            Session session = Session.getInstance(props, null);
+            String senderEmailAddress = configuration.getSenderEmailAddress();
+            MimeMessage msg = buildMimeMessage(session, recipient, subject, contents, charset, subtype, senderEmailAddress);
+            Transport.send(msg, configuration.getSmtpUsername(), configuration.getSmtpPassword());
+        } catch (Exception e) {
+            throw new ServiceException(e);
+        }
+    }
+
+    private Properties buildPropertiesFromConfiguration(EmailConfiguration configuration) {
+        Properties props = new Properties();
+        props.put("mail.smtp.host", configuration.getSmtpHost());
+        props.put("mail.smtp.port", configuration.getSmtpPort());
+
+        switch (configuration.getSmtpEncryption()) {
+            case NONE:
+                break;
+            case STARTTLS:
+                props.put("mail.smtp.starttls.enable", "true");
+                break;
+            case SSL:
+                props.put("mail.smtp.ssl.enable", "true");
+                break;
+            default:
+                throw new IllegalArgumentException("The encryption type " + configuration.getSmtpEncryption() + " has not been implemented yet.");
+        }
+        return props;
+    }
+
+    private MimeMessage buildMimeMessage(Session session, String recipient, String subject, String contents, String charset, String subtype, String senderEmailAddress) throws MessagingException {
+        MimeMessage msg = new MimeMessage(session);
+        msg.setFrom(senderEmailAddress);
+        msg.setRecipients(Message.RecipientType.TO, recipient);
+        msg.setRecipients(Message.RecipientType.BCC, senderEmailAddress);
+        msg.setSubject(subject);
+        msg.setSentDate(new Date());
+        msg.setText(contents, charset, subtype);
+        return msg;
     }
 }
