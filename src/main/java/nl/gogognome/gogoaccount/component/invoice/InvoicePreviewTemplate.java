@@ -28,7 +28,7 @@ public class InvoicePreviewTemplate {
 
     public String fillInParametersInTemplate(String templateContents, Invoice invoice, List<InvoiceDetail> invoiceDetails,
                                              List<Payment> payments, Party party, Date dueDate) {
-        Amount amountToBePaid = getAmountToBePaid(invoiceDetails, payments);
+        Amount amountToBePaid = getAmountToBePaid(invoice, invoiceDetails, payments);
         Map<String, String> replacements = new HashMap<>();
         replacements.put("${date}", textResource.formatDate("gen.dateFormatFull", new Date()));
         replacements.put("${invoice.id}", invoice.getId());
@@ -50,22 +50,27 @@ public class InvoicePreviewTemplate {
         if (lineStartIndex != -1 && lineEndIndex != -1) {
             String lineTemplate = result.substring(lineStartIndex + "${lineStart}".length(), lineEndIndex);
             StringBuilder lines = new StringBuilder();
-            appendInvoiceDetails(lines, lineTemplate, invoiceDetails, d -> invoice.getIssueDate(), InvoiceDetail::getDescription, InvoiceDetail::getAmount);
+            appendInvoiceDetails(lines, lineTemplate, invoiceDetails, d -> invoice.getIssueDate(), InvoiceDetail::getDescription,
+                    d -> getAmountToBePaidForDetailLine(invoice, d));
             appendInvoiceDetails(lines, lineTemplate, payments, Payment::getDate, Payment::getDescription, p -> p.getAmount().negate());
             result = result.substring(0, lineStartIndex) + lines + result.substring(lineEndIndex + "${lineEnd}".length());
         }
         return result;
     }
 
-    private Amount getAmountToBePaid(List<InvoiceDetail> invoiceDetails, List<Payment> payments) {
+    private Amount getAmountToBePaid(Invoice invoice, List<InvoiceDetail> invoiceDetails, List<Payment> payments) {
         Amount amountToBePaid = new Amount(BigInteger.ZERO);
         for (InvoiceDetail invoiceDetail : invoiceDetails) {
-            amountToBePaid = amountToBePaid.add(invoiceDetail.getAmount());
+            amountToBePaid = amountToBePaid.add(getAmountToBePaidForDetailLine(invoice, invoiceDetail));
         }
         for (Payment payment : payments) {
             amountToBePaid = amountToBePaid.subtract(payment.getAmount());
         }
         return amountToBePaid;
+    }
+
+    private Amount getAmountToBePaidForDetailLine(Invoice invoice, InvoiceDetail detailLine) {
+        return invoice.getAmountToBePaid().isNegative() ? detailLine.getAmount().negate() : detailLine.getAmount();
     }
 
     private <T> void appendInvoiceDetails(StringBuilder formattedLines,
