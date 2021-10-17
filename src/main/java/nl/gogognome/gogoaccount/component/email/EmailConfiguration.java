@@ -2,11 +2,18 @@ package nl.gogognome.gogoaccount.component.email;
 
 public class EmailConfiguration {
 
+    public enum SmtpEncryption {
+        NONE,
+        SSL,
+        STARTTLS
+    }
+
     private String senderEmailAddress;
     private String smtpHost;
     private int smtpPort;
     private String smtpUsername;
     private String smtpPassword;
+    private SmtpEncryption smtpEncryption = SmtpEncryption.NONE;
 
     public String getSenderEmailAddress() {
         return senderEmailAddress;
@@ -46,5 +53,13 @@ public class EmailConfiguration {
 
     public void setSmtpPort(int smtpPort) {
         this.smtpPort = smtpPort;
+    }
+
+    public SmtpEncryption getSmtpEncryption() {
+        return smtpEncryption;
+    }
+
+    public void setSmtpEncryption(SmtpEncryption smtpEncryption) {
+        this.smtpEncryption = smtpEncryption;
     }
 }

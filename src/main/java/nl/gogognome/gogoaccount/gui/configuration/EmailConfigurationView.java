@@ -6,14 +6,16 @@ import nl.gogognome.gogoaccount.component.email.EmailService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
 import nl.gogognome.lib.swing.ButtonPanel;
-import nl.gogognome.lib.swing.MessageDialog;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.IntegerModel;
 import nl.gogognome.lib.swing.models.StringModel;
+import nl.gogognome.lib.swing.models.ListModel;
 import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.text.TextResource;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
 
 public class EmailConfigurationView extends View {
 
@@ -27,11 +29,15 @@ public class EmailConfigurationView extends View {
     private final IntegerModel smtpPortModel = new IntegerModel();
     private final StringModel smtpUsernameModel = new StringModel();
     private final StringModel smtpPasswordModel = new StringModel();
+    private final ListModel<EmailConfiguration.SmtpEncryption> smtpEncryptionModel = new ListModel<EmailConfiguration.SmtpEncryption>();
+
+    private final MessageDialog messageDialog;
 
     public EmailConfigurationView(Document document, TextResource textResource, EmailService emailService) {
         this.document = document;
         this.textResource = textResource;
         this.emailService = emailService;
+        messageDialog = new MessageDialog(textResource, this);
     }
 
     @Override
@@ -45,7 +51,7 @@ public class EmailConfigurationView extends View {
             initModels();
             addComponents();
         } catch (Exception e) {
-            MessageDialog.showErrorMessage(getViewOwner().getWindow(), "gen.internalError", e);
+            messageDialog.showErrorMessage(e, "gen.internalError");
             close();
         }
     }
@@ -57,6 +63,10 @@ public class EmailConfigurationView extends View {
         smtpPortModel.setInteger(configuration.getSmtpPort());
         smtpUsernameModel.setString(configuration.getSmtpUsername());
         smtpPasswordModel.setString(configuration.getSmtpPassword());
+        smtpEncryptionModel.setItems(Arrays.asList(EmailConfiguration.SmtpEncryption.values()));
+        if (configuration.getSmtpEncryption() != null) {
+            smtpEncryptionModel.setSelectedItem(configuration.getSmtpEncryption(), null);
+        }
     }
 
     private void addComponents() {
@@ -69,6 +79,7 @@ public class EmailConfigurationView extends View {
         ifc.addField("EmailConfigurationView.senderEmailAddress", senderEmailAddressModel);
         ifc.addField("EmailConfigurationView.smtpHost", smtpHostModel);
         ifc.addField("EmailConfigurationView.smtpPortNumber", smtpPortModel);
+        ifc.addComboBoxField("EmailConfigurationView.encryption", smtpEncryptionModel, textResource::getString);
         ifc.addField("EmailConfigurationView.smtpUsername", smtpUsernameModel);
         ifc.addPasswordField("EmailConfigurationView.smtpPassword", smtpPasswordModel, 20);
         add(ifc, BorderLayout.CENTER);
@@ -85,11 +96,12 @@ public class EmailConfigurationView extends View {
         configuration.setSmtpPort(smtpPortModel.getInteger());
         configuration.setSmtpUsername(smtpUsernameModel.getString());
         configuration.setSmtpPassword(smtpPasswordModel.getString());
+        configuration.setSmtpEncryption(smtpEncryptionModel.getSelectedItem());
         try {
             emailService.saveConfiguration(document, configuration);
             close();
         } catch (ServiceException e) {
-            MessageDialog.showErrorMessage(getViewOwner().getWindow(), "gen.saveError", e);
+            messageDialog.showErrorMessage(e, "gen.saveError");
         }
     }
 

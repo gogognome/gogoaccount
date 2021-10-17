@@ -21,6 +21,7 @@ public class EmailService {
     private final static String MAIL_SMTP_PORT = "EmailService.MailSmtpPort";
     private final static String MAIL_SMTP_USERNAME = "EmailService.MailUserName";
     private final static String MAIL_SMTP_PASSWORD = "EmailService.MailPassword";
+    private final static String MAIL_SMTP_ENCRYPTION = "EmailService.MailEncryption";
 
     private final SettingsService settingsService;
     private final TextResource textResource;
@@ -39,6 +40,9 @@ public class EmailService {
             emailConfiguration.setSmtpPort(portString != null ? Integer.parseInt(portString) : DEFAULT_PORT);
             emailConfiguration.setSmtpUsername(settingsService.findValueForSetting(document, MAIL_SMTP_USERNAME));
             emailConfiguration.setSmtpPassword(settingsService.findValueForSetting(document, MAIL_SMTP_PASSWORD));
+
+            String encryptionString = settingsService.findValueForSetting(document, MAIL_SMTP_ENCRYPTION);
+            emailConfiguration.setSmtpEncryption(encryptionString != null ? EmailConfiguration.SmtpEncryption.valueOf(encryptionString) : EmailConfiguration.SmtpEncryption.NONE);
             return emailConfiguration;
         });
     }
@@ -51,6 +55,7 @@ public class EmailService {
             settingsService.save(document, MAIL_SMTP_PORT, Integer.toString(configuration.getSmtpPort()));
             settingsService.save(document, MAIL_SMTP_USERNAME, configuration.getSmtpUsername());
             settingsService.save(document, MAIL_SMTP_PASSWORD, configuration.getSmtpPassword());
+            settingsService.save(document, MAIL_SMTP_ENCRYPTION, configuration.getSmtpEncryption().toString());
         });
     }
 
@@ -67,6 +72,22 @@ public class EmailService {
             Properties props = new Properties();
             props.put("mail.smtp.host", configuration.getSmtpHost());
             props.put("mail.smtp.port", configuration.getSmtpPort());
+
+            switch (configuration.getSmtpEncryption()) {
+                case NONE:
+                    break;
+                case STARTTLS:
+                    props.put("mail.smtp.starttls.enable", "true");
+                    break;
+                case SSL:
+                    props.put("mail.smtp.socketFactory.port", configuration.getSmtpPort());
+                    props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+                    props.put("mail.smtp.socketFactory.fallback", "false");
+                    break;
+                default:
+                    throw new IllegalArgumentException("The encryption type " + configuration.getSmtpEncryption() + " has not been implemented yet.");
+            }
+
             Session session = Session.getInstance(props, null);
 
             try {
