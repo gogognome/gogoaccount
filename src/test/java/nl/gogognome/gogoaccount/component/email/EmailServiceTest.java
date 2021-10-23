@@ -23,7 +23,7 @@ public class EmailServiceTest {
 		configuration.setSmtpEncryption(EmailConfiguration.SmtpEncryption.SSL);
 		configuration.setSmtpUsername("foo@bar.nl");
 		configuration.setSmtpPassword("***********");
-		emailService.sendEmail("recipient@gmail.com", "Test message", "This is a test message.", "UTF-8", "text/plain", configuration);
+		emailService.sendEmail("recipient@gmail.com", "Test message", "This is a test message.", "UTF-8", "plain", configuration);
 
 		System.out.println("The email was sent successfully.");
 	}
