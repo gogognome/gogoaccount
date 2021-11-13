@@ -1,35 +1,28 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
-import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.gui.ViewFactory;
-import nl.gogognome.lib.gui.beans.InputFieldsColumn;
-import nl.gogognome.lib.swing.SwingUtils;
-import nl.gogognome.lib.swing.TableRowSelectAction;
-import nl.gogognome.lib.swing.dialogs.MessageDialog;
-import nl.gogognome.lib.swing.models.StringModel;
-import nl.gogognome.lib.swing.models.Tables;
-import nl.gogognome.lib.swing.views.View;
-import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.textsearch.criteria.Criterion;
-import nl.gogognome.textsearch.criteria.Parser;
-
-import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import static java.util.Collections.*;
+import static nl.gogognome.lib.util.StringUtil.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
+import java.io.*;
 import java.util.List;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
-import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
+import javax.swing.filechooser.*;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
+import org.slf4j.*;
+import nl.gogognome.gogoaccount.component.automaticcollection.*;
+import nl.gogognome.gogoaccount.component.document.*;
+import nl.gogognome.gogoaccount.component.party.*;
+import nl.gogognome.gogoaccount.gui.*;
+import nl.gogognome.lib.gui.beans.*;
+import nl.gogognome.lib.swing.*;
+import nl.gogognome.lib.swing.dialogs.MessageDialog;
+import nl.gogognome.lib.swing.models.*;
+import nl.gogognome.lib.swing.views.*;
+import nl.gogognome.textsearch.criteria.*;
 
 /**
  * This class implements a view for adding, removing, editing and (optionally) selecting parties.
@@ -37,6 +30,8 @@ import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
 public class PartiesView extends View {
 
 	private static final long serialVersionUID = 1L;
+
+    private final static Logger logger = LoggerFactory.getLogger(PartiesView.class);
 
     private final Document document;
     private final AutomaticCollectionService automaticCollectionService;
@@ -51,7 +46,7 @@ public class PartiesView extends View {
     private boolean selectionEnabled;
     private boolean multiSelectionEnabled;
 
-    private StringModel searchCriterionModel = new StringModel();
+    private final StringModel searchCriterionModel = new StringModel();
 
     private JTextArea taRemarks;
 
@@ -94,16 +89,18 @@ public class PartiesView extends View {
     }
 
     private void addComponents() {
-        JButton addButton = widgetFactory.createButton("partiesView.addParty", new AddPartyAction());
+        JButton addButton = widgetFactory.createButton("partiesView.addParty", () -> onAddParty());
 
-        JButton editButton = widgetFactory.createButton("partiesView.editParty", new EditPartyAction());
-        JButton deleteButton = widgetFactory.createButton("partiesView.deleteParty", new DeletePartyAction());
-        btSelect = widgetFactory.createButton("partiesView.selectParty", new SelectActionParty());
+        JButton editButton = widgetFactory.createButton("partiesView.editParty", () -> onEditParty());
+        JButton deleteButton = widgetFactory.createButton("partiesView.deleteParty", () -> onDeleteParty());
+        JButton exportButton = widgetFactory.createButton("partiesView.exportParties", () -> onExportParties());
+        btSelect = widgetFactory.createButton("partiesView.selectParty", () -> onSelectParty());
 
         JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 0, 5));
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
+        buttonPanel.add(exportButton);
         if (selectionEnabled) {
             buttonPanel.add(new JLabel());
             buttonPanel.add(btSelect);
@@ -274,6 +271,51 @@ public class PartiesView extends View {
         });
     }
 
+	private void onExportParties() {
+        handleException.of(() -> {
+            File file = selectFileToExportPartiesTo();
+            if (file == null) {
+                return;
+            }
+
+            logger.info("Exporting parties to " + file);
+            exportParties(file);
+        });
+    }
+
+    private File selectFileToExportPartiesTo() {
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter(textResource.getString("partiesExport.fileType"), ".xlsx"));
+        int choice = fc.showSaveDialog(this);
+        return choice == JFileChooser.APPROVE_OPTION ? fc.getSelectedFile() : null;
+    }
+
+    private void exportParties(File file) throws IOException {
+        Workbook wb = new XSSFWorkbook();
+        Sheet sheet = wb.createSheet(textResource.getString("partiesExport.sheet"));
+        Row row = sheet.createRow(0);
+        for (int columnIndex=0; columnIndex < partiesTableModel.getColumnCount(); columnIndex++) {
+            Cell cell = row.createCell(columnIndex);
+            cell.setCellValue(partiesTableModel.getColumnName(columnIndex));
+        }
+
+        for (int rowIndex = 0; rowIndex < partiesTableModel.getRowCount(); rowIndex++) {
+            row = sheet.createRow(rowIndex+1);
+            for (int columnIndex=0; columnIndex < partiesTableModel.getColumnCount(); columnIndex++) {
+                Cell cell = row.createCell(columnIndex);
+                Object value = partiesTableModel.getValueAt(rowIndex, columnIndex);
+                if (value != null) {
+                    cell.setCellValue(value.toString());
+                }
+            }
+        }
+
+        try (OutputStream fileOut = new FileOutputStream(file)) {
+            wb.write(fileOut);
+        }
+    }
+
     private void onSelectParty() {
         int rows[] = Tables.getSelectedRowsConvertedToModel(table);
         selectedParties = new Party[rows.length];
@@ -303,34 +345,6 @@ public class PartiesView extends View {
 		}
 	}
 
-	private final class SelectActionParty extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent evt) {
-		    onSelectParty();
-		}
-	}
-
-	private final class DeletePartyAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent evt) {
-		    onDeleteParty();
-		}
-	}
-
-	private final class EditPartyAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent evt) {
-		    onEditParty();
-		}
-	}
-
-	private final class AddPartyAction extends AbstractAction {
-		@Override
-		public void actionPerformed(ActionEvent evt) {
-		    onAddParty();
-		}
-	}
-
 	private class SelectionActionImpl extends AbstractAction {
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
@@ -341,4 +355,5 @@ public class PartiesView extends View {
             }
 		}
     }
+
 }
