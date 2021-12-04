@@ -30,7 +30,7 @@ public class DocumentService {
             String fileNameWithouExtension = getFilePathWithoutExtension(filePath);
             String jdbcUrl = "jdbc:h2:file:" + fileNameWithouExtension;
             Document document = new Document();
-            document.setFileName(filePath);
+            document.setFilePath(filePath);
 
             registerDataSource(document, jdbcUrl);
             applyDatabaseMigrations(document, Long.MAX_VALUE);

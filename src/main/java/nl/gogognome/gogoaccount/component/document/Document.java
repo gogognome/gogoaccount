@@ -12,7 +12,7 @@ public class Document {
 
     private final ArrayList<DocumentListener> listeners = new ArrayList<>();
     private final String bookkeepingId = UUID.randomUUID().toString();
-    private String fileName;
+    private String filePath;
     private Locale locale = Locale.US;
     protected Connection connectionToKeepInMemoryDatabaseAlive;
     private boolean readonly;
@@ -67,14 +67,14 @@ public class Document {
         this.locale = locale;
     }
 
-    public String getFileName()
+    public String getFilePath()
     {
-        return fileName;
+        return filePath;
     }
 
-    public void setFileName(String fileName)
+    public void setFilePath(String filePath)
     {
-        this.fileName = fileName;
+        this.filePath = filePath;
         notifyChange();
     }
 

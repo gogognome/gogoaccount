@@ -87,7 +87,7 @@ public class BookkeepingService {
 
     private Document createNewBookkeeping(Document document, File newBookkeepingFile, String description, Date date) throws ServiceException {
         Document newDocument = documentService.createNewDocument(newBookkeepingFile, "New bookkeeping");
-        newDocument.setFileName(null);
+        newDocument.setFilePath(null);
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
         newBookkeeping.setDescription(description);

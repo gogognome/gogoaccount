@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.gui;
 
+import nl.gogognome.gogoaccount.component.backup.*;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -47,16 +48,17 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private Document document;
 
     /** The menu bar of the application. */
-    private JMenuBar menuBar = new JMenuBar();
+    private final JMenuBar menuBar = new JMenuBar();
 
     /** The tabbed pane containing the views. */
-    private ViewTabbedPane viewTabbedPane;
+    private final ViewTabbedPane viewTabbedPane;
 
-    private Map<Class<?>, View> openViews = new HashMap<>();
+    private final Map<Class<?>, View> openViews = new HashMap<>();
 
-    private TextResource textResource = Factory.getInstance(TextResource.class);
-    private WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
+    private final TextResource textResource = Factory.getInstance(TextResource.class);
+    private final WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
+    private final BackupService backupService;
     private final BookkeepingService bookkeepingService;
     private final DocumentService documentService;
     private final ConfigurationService configurationService;
@@ -67,9 +69,16 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
-    public MainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
-                     ViewFactory viewFactory, ControllerFactory controllerFactory, DocumentRegistry documentRegistry,
-                     ResourceLoader resourceLoader) {
+    public MainFrame(
+            BackupService backupService,
+            BookkeepingService bookkeepingService,
+            DocumentService documentService,
+            ConfigurationService configurationService,
+            ViewFactory viewFactory,
+            ControllerFactory controllerFactory,
+            DocumentRegistry documentRegistry,
+            ResourceLoader resourceLoader) {
+        this.backupService = backupService;
         this.bookkeepingService = bookkeepingService;
         this.documentService = documentService;
         this.configurationService = configurationService;
@@ -248,7 +257,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private File askUserForFileOfNewBookkeeping() {
         String extension = ".h2.db";
-        File directory = document != null ? new File(document.getFileName()).getParentFile() : null;
+        File directory = document != null ? new File(document.getFilePath()).getParentFile() : null;
         JFileChooser fc = new JFileChooser(directory);
         fc.setFileFilter(new FileFilter() {
             @Override
@@ -277,8 +286,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void handleOpenBookkeeping()
     {
         JFileChooser fc = new JFileChooser();
-        if (document != null && document.getFileName() != null) {
-            fc.setCurrentDirectory(new File(document.getFileName()));
+        if (document != null && document.getFilePath() != null) {
+            fc.setCurrentDirectory(new File(document.getFilePath()));
         }
         fc.setFileFilter(new FileFilter() {
             @Override
@@ -353,6 +362,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             newDocument.notifyChange();
             setDocument(newDocument);
             handleViewBalanceAndOperationalResult();
+            backupService.createBackup(document);
         } catch (ServiceException e) {
             messageDialog.showErrorMessage(e, "mf.errorOpeningFile");
         }

@@ -1,6 +1,7 @@
 package nl.gogognome.gogoaccount;
 
 import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
+import nl.gogognome.gogoaccount.component.backup.*;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentService;
@@ -44,10 +45,23 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public MainFrame mainFrame(BookkeepingService bookkeepingService, DocumentService documentService, ConfigurationService configurationService,
-                               ViewFactory viewFactory, ControllerFactory controllerFactory, DocumentRegistry documentRegistry,
-                               ResourceLoader resourceLoader) {
-        return new MainFrame(bookkeepingService, documentService, configurationService, viewFactory, controllerFactory, documentRegistry,
+    public MainFrame mainFrame(
+            BackupService backupService,
+            BookkeepingService bookkeepingService,
+            DocumentService documentService,
+            ConfigurationService configurationService,
+            ViewFactory viewFactory,
+            ControllerFactory controllerFactory,
+            DocumentRegistry documentRegistry,
+            ResourceLoader resourceLoader) {
+        return new MainFrame(
+                backupService,
+                bookkeepingService,
+                documentService,
+                configurationService,
+                viewFactory,
+                controllerFactory,
+                documentRegistry,
                 resourceLoader);
     }
 
@@ -348,6 +362,12 @@ public class BeanConfiguration {
     public AutomaticCollectionService automaticCollectionService(ConfigurationService configurationService,
                                                                  LedgerService ledgerService, PartyService partyService) {
         return new AutomaticCollectionService(configurationService, ledgerService, partyService);
+    }
+
+    @Bean
+    @Scope("prototype")
+    public BackupService backupService() {
+        return new BackupService();
     }
 
     @Bean
