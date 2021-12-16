@@ -358,11 +358,12 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     public void loadFile(File file) {
         try {
+            backupService.createBackupOfDatabaseFile(file);
             Document newDocument = doLoadFile(file);
             newDocument.notifyChange();
             setDocument(newDocument);
             handleViewBalanceAndOperationalResult();
-            backupService.createBackup(document);
+            backupService.createBackupOfSqlStatements(document);
         } catch (ServiceException e) {
             messageDialog.showErrorMessage(e, "mf.errorOpeningFile");
         }

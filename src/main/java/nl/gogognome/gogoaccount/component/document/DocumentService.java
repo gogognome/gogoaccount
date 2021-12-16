@@ -27,8 +27,8 @@ public class DocumentService {
 
     public Document openDocument(String filePath) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            String fileNameWithouExtension = getFilePathWithoutExtension(filePath);
-            String jdbcUrl = "jdbc:h2:file:" + fileNameWithouExtension;
+            String fileNameWithoutExtension = getFilePathWithoutExtension(filePath);
+            String jdbcUrl = "jdbc:h2:file:" + fileNameWithoutExtension;
             Document document = new Document();
             document.setFilePath(filePath);
 
