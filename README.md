@@ -5,8 +5,10 @@
 ### Creating a new version
 
 1. Update version number in `pom.xml` and `banner.txt`.
-2. Use `splash.xsf` and GIMP to generate a new version of `splash.png` with the new version or year of copyright.
-3. Build the jar file with Maven.
+2. Build the jar file with Maven.
+
+The splash image and about image are generated in the compile step by the
+image-modifier-maven-plugin.
 
 ### Configuration emails
 
