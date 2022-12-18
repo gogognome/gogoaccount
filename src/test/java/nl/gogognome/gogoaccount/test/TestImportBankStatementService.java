@@ -1,20 +1,14 @@
 package nl.gogognome.gogoaccount.test;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.importer.ImportedTransaction;
-import nl.gogognome.gogoaccount.component.importer.RabobankCSVImporter;
-import nl.gogognome.gogoaccount.component.importer.TransactionImporter;
-import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
-import nl.gogognome.lib.util.DateUtil;
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.List;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
+import java.io.*;
+import java.nio.charset.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.component.configuration.*;
+import nl.gogognome.gogoaccount.component.importer.*;
+import nl.gogognome.gogoaccount.test.builders.*;
+import nl.gogognome.lib.util.*;
 
 public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
@@ -107,7 +101,7 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		for (String l : lines) {
 			sb.append(l.replace('\'', '"')).append('\n');
 		}
-		ByteArrayInputStream bais = new ByteArrayInputStream(sb.toString().getBytes("utf-8"));
+		ByteArrayInputStream bais = new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
 		try (Reader reader = new InputStreamReader(bais)) {
 			TransactionImporter importer = new RabobankCSVImporter();
 			return importer.importTransactions(reader);

@@ -37,7 +37,7 @@ public class AboutView extends View {
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         setLayout(new GridBagLayout());
 
-        URL url = getClass().getClassLoader().getResource("/about.png");
+        URL url = getClass().getResource("/about.png");
         Image image = Toolkit.getDefaultToolkit().createImage(url);
         add(new JLabel(new ImageIcon(image)), SwingUtils.createLabelGBConstraints(0, 0));
 

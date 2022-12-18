@@ -1,49 +1,31 @@
 package nl.gogognome.gogoaccount.test;
 
-import junit.framework.Assert;
-import nl.gogognome.dataaccess.transaction.CurrentTransaction;
-import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
-import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.AccountType;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.document.DocumentAwareTransaction;
-import nl.gogognome.gogoaccount.component.document.DocumentService;
-import nl.gogognome.gogoaccount.component.importer.ImportBankStatementService;
-import nl.gogognome.gogoaccount.component.invoice.*;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
-import nl.gogognome.gogoaccount.component.ledger.PaymentAmountAgainstDebtorAndCreditorValidator;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.component.settings.SettingsService;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
-import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
-import nl.gogognome.helpers.TestTextResource;
-import nl.gogognome.lib.swing.RunnableWithException;
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
-import nl.gogognome.lib.util.DateUtil;
-import nl.gogognome.lib.util.Factory;
-import org.junit.Before;
-
-import java.sql.SQLException;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.*;
+import static org.junit.jupiter.api.Assertions.*;
+import java.sql.*;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.*;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static junit.framework.Assert.*;
-import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.PURCHASE;
-import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
+import org.junit.jupiter.api.*;
+import nl.gogognome.dataaccess.transaction.*;
+import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.component.automaticcollection.*;
+import nl.gogognome.gogoaccount.component.configuration.*;
+import nl.gogognome.gogoaccount.component.document.*;
+import nl.gogognome.gogoaccount.component.importer.*;
+import nl.gogognome.gogoaccount.component.invoice.*;
+import nl.gogognome.gogoaccount.component.ledger.*;
+import nl.gogognome.gogoaccount.component.party.*;
+import nl.gogognome.gogoaccount.component.settings.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.gogoaccount.test.builders.*;
+import nl.gogognome.helpers.*;
+import nl.gogognome.lib.swing.*;
+import nl.gogognome.lib.text.*;
+import nl.gogognome.lib.util.*;
 
 /**
  * Abstract class that sets up a bookkeeping in an in-memory database. A new database instance is used per test.
@@ -84,7 +66,7 @@ public abstract class AbstractBookkeepingTest {
     protected Party pietPuk;
     protected Party janPieterszoon;
 
-    @Before
+    @BeforeEach
     public void initBookkeeping() throws Exception {
         DateUtil.setDateFactory(() -> DateUtil.createDate(2011, 2, 3, 14, 20, 30));
         CurrentTransaction.transactionCreator = DocumentAwareTransaction::new;
@@ -244,15 +226,13 @@ public abstract class AbstractBookkeepingTest {
         }
 
         if (expected == null) {
-            assertNull("Expected null but was " + DateUtil.formatDateYYYYMMDD(actual), actual);
+            assertNull(actual, "Expected null but was " + DateUtil.formatDateYYYYMMDD(actual));
         } else {
-            assertNotNull("Expected " + DateUtil.formatDateYYYYMMDD(expected)
-                    + " but was null", actual);
+            assertNotNull(actual, "Expected " + DateUtil.formatDateYYYYMMDD(expected) + " but was null");
         }
 
-        assertEquals("Expected " + DateUtil.formatDateYYYYMMDD(expected)
-                + " but was " + DateUtil.formatDateYYYYMMDD(actual),
-                0, DateUtil.compareDayOfYear(expected, actual));
+        assertEquals(0, DateUtil.compareDayOfYear(expected, actual),
+                "Expected " + DateUtil.formatDateYYYYMMDD(expected) + " but was " + DateUtil.formatDateYYYYMMDD(actual));
     }
 
     /**
@@ -390,11 +370,10 @@ public abstract class AbstractBookkeepingTest {
     protected <T extends Exception> T assertThrows(Class<T> expectedExceptionClass, RunnableWithException runnable) {
         try {
             runnable.run();
-            Assert.fail("Expected exception was not thrown!");
+            fail("Expected exception was not thrown!");
             return null; // will never be executed
         } catch (Exception e) {
-            assertTrue("Expected exception of type " + expectedExceptionClass + " but actual type was " + e.getClass(),
-                    e.getClass().equals(expectedExceptionClass));
+            assertEquals(e.getClass(), expectedExceptionClass, "Expected exception of type " + expectedExceptionClass + " but actual type was " + e.getClass());
             //noinspection unchecked
             return (T) e;
         }

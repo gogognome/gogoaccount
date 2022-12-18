@@ -1,20 +1,16 @@
 package nl.gogognome.gogoaccount.component.criterion;
 
-import nl.gogognome.lib.util.DateUtil;
-import nl.gogognome.mockito.VarArgsMatcher;
-import nl.gogognome.textsearch.criteria.Criterion;
-import nl.gogognome.textsearch.string.CriterionMatcher;
-import org.junit.Test;
-
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.mockito.Mockito.*;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.lib.util.*;
+import nl.gogognome.textsearch.criteria.*;
+import nl.gogognome.textsearch.string.*;
 
 public class ObjectCriterionMatcherTest {
 
-    private Criterion criterion = mock(Criterion.class);
+    private final Criterion criterion = new StringLiteral("foobar");
 
     @Test
     @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
@@ -27,9 +23,28 @@ public class ObjectCriterionMatcherTest {
     }
 
     private void assertConvertsParameters(List<Object> inputArguments, List<String> expectedArgumens) {
-        CriterionMatcher criterionMatcher = mock(CriterionMatcher.class);
+        CriterionMatcherSpy criterionMatcher = new CriterionMatcherSpy(new StringSearchFactory().caseInsensitiveStringSearch());
         ObjectCriterionMatcher matcher = new ObjectCriterionMatcher(criterionMatcher);
-        matcher.matches(criterion, inputArguments.toArray(new Object[inputArguments.size()]));
-        verify(criterionMatcher).matches(any(), VarArgsMatcher.varArgEquals(expectedArgumens));
+        matcher.matches(criterion, inputArguments.toArray(new Object[0]));
+        Assertions.assertEquals(expectedArgumens, criterionMatcher.getTextElements());
+    }
+
+    private static class CriterionMatcherSpy extends CriterionMatcher {
+
+        private List<String> textElements;
+
+        public CriterionMatcherSpy(StringSearch stringSearch) {
+            super(stringSearch);
+        }
+
+        @Override
+        public boolean matches(Criterion criterion, String... textElements) {
+            this.textElements = Arrays.asList(textElements);
+            return super.matches(criterion, textElements);
+        }
+
+        public List<String> getTextElements() {
+            return textElements;
+        }
     }
 }

@@ -1,6 +1,6 @@
 package nl.gogognome.gogoaccount.component.email;
 
-import org.junit.*;
+import org.junit.jupiter.api.*;
 import org.mockito.*;
 import nl.gogognome.gogoaccount.component.settings.*;
 import nl.gogognome.gogoaccount.services.*;
@@ -12,7 +12,7 @@ public class EmailServiceTest {
 	 * Execute this test to test sending emails manually.
 	 * Check README.md for fixing issues with SSL and STARTTLS.
 	 */
-	@Ignore("This test will actually send an email.")
+	@Disabled("This test will actually send an email.")
 	@Test
 	public void testSendingEmail() throws ServiceException {
 		EmailService emailService = new EmailService(Mockito.mock(SettingsService.class), new TestTextResource());

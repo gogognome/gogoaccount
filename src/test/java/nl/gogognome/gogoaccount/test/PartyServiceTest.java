@@ -1,21 +1,15 @@
 package nl.gogognome.gogoaccount.test;
 
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.lib.util.DateUtil;
-import nl.gogognome.textsearch.criteria.StringLiteral;
-import org.junit.Test;
-
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.component.party.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.lib.util.*;
+import nl.gogognome.textsearch.criteria.*;
 
 public class PartyServiceTest extends AbstractBookkeepingTest {
 
@@ -54,7 +48,8 @@ public class PartyServiceTest extends AbstractBookkeepingTest {
 
     @Test
     public void updateParty_nonExistingPartyId_fails() throws Exception {
-        assertThrows(ServiceException.class, () -> partyService.updateParty(document, overrideId(pietPuk, "1234"), singletonList("updated")));
+        Party party = overrideId(pietPuk, "1234");
+        assertThrows(ServiceException.class, () -> partyService.updateParty(document, party, singletonList("updated")));
     }
 
     @Test

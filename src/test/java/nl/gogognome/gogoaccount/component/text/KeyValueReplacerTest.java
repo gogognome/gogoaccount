@@ -1,23 +1,22 @@
 package nl.gogognome.gogoaccount.component.text;
 
-import com.google.common.collect.ImmutableMap;
-import org.junit.Test;
-
-import static java.util.Collections.emptyMap;
-import static org.junit.Assert.*;
+import static java.util.Collections.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.*;
+import com.google.common.collect.*;
 
 public class KeyValueReplacerTest {
 
-    private KeyValueReplacer keyValueReplacer = new KeyValueReplacer();
+    private final KeyValueReplacer keyValueReplacer = new KeyValueReplacer();
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void whenTextIsNullAnExceptionIsThrown() {
-        keyValueReplacer.applyReplacements(null, emptyMap());
+        assertThrows(IllegalArgumentException.class, () -> keyValueReplacer.applyReplacements(null, emptyMap()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void whenReplacementsMapIsNullAnExceptionIsThrown() {
-        keyValueReplacer.applyReplacements("some text", null);
+        assertThrows(IllegalArgumentException.class, () -> keyValueReplacer.applyReplacements("some text", null));
     }
 
     @Test

@@ -1,7 +1,5 @@
 package nl.gogognome.gogoaccount.services;
 
-import javax.xml.ws.Service;
-
 /**
  * This exception is thrown by a service method if it cannot fulfill its contract.
  * @author Sander Kooijmans

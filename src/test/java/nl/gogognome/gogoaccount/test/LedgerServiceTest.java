@@ -1,25 +1,17 @@
 package nl.gogognome.gogoaccount.test;
 
-import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.Payment;
+import static java.util.Collections.*;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.*;
+import static nl.gogognome.lib.util.DateUtil.*;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.component.configuration.*;
+import nl.gogognome.gogoaccount.component.invoice.*;
 import nl.gogognome.gogoaccount.component.ledger.*;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.lib.util.DateUtil;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
-import static java.util.Collections.emptyList;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNull;
-import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.PURCHASE;
-import static nl.gogognome.gogoaccount.component.invoice.InvoiceTemplate.Type.SALE;
-import static nl.gogognome.lib.util.DateUtil.createDate;
-import static org.junit.Assert.assertEquals;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.lib.util.*;
 
 public class LedgerServiceTest extends AbstractBookkeepingTest {
 
@@ -123,7 +115,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void createInvoiceAndJournalEntryForParties_createSalesInvoiceWithoutDebtor_isNotAllwed() {
+    public void createInvoiceAndJournalEntryForParties_createSalesInvoiceWithoutDebtor_isNotAllowed() {
         assertCreatingSalesInvoiceForAccountFails(null, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingSalesInvoiceForAccountFails(bankAccount, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingSalesInvoiceForAccountFails(creditors, "resource-id: InvoiceService.salesInvoiceMustHaveDebtor");
@@ -136,7 +128,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void createInvoiceAndJournalEntryForParties_createPurchaseInvoiceWithoutCreditor_isNotAllwed() {
+    public void createInvoiceAndJournalEntryForParties_createPurchaseInvoiceWithoutCreditor_isNotAllowed() {
         assertCreatingPurchaseInvoiceForAccountFails(null, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingPurchaseInvoiceForAccountFails(bankAccount, "resource-id: InvoiceService.accountMustHaveDebtorOrCreditorType");
         assertCreatingPurchaseInvoiceForAccountFails(debtors, "resource-id: InvoiceService.purchaseInvoiceMustHaveCreditor");

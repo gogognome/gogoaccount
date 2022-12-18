@@ -1,22 +1,17 @@
 package nl.gogognome.gogoaccount.component.automaticcollection;
 
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.lib.text.TextResource;
-import nl.gogognome.lib.util.Factory;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Locale;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.lib.text.*;
+import nl.gogognome.lib.util.*;
 
 public class IbanValidatorTest {
 
     private final IbanValidator ibanValidator = new IbanValidator();
 
-    @Before
+    @BeforeEach
     public void initTextResource() {
         Locale.setDefault(Locale.US);
         TextResource tr = new TextResource(Locale.US);
@@ -54,6 +49,5 @@ public class IbanValidatorTest {
 
     private void assertValid(String iban) throws ServiceException {
         ibanValidator.validate(iban);
-        assertTrue("IBAN is valid", true);
     }
 }

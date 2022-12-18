@@ -1,16 +1,9 @@
 package nl.gogognome.gogoaccount.util;
 
-import nl.gogognome.dataaccess.DataAccessException;
-import nl.gogognome.lib.text.Amount;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.math.BigInteger;
-import java.sql.SQLClientInfoException;
-import java.sql.SQLException;
-import java.text.DateFormat;
-
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import java.sql.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.lib.text.*;
 
 public class AmountInDatabaseTest {
 
@@ -37,7 +30,7 @@ public class AmountInDatabaseTest {
 
     @Test
     public void formatAmount() {
-        assertEquals(null, AmountInDatabase.format(null));
+        assertNull(AmountInDatabase.format(null));
         assertEquals("1234", AmountInDatabase.format(new Amount("1234")));
         assertEquals("-1234", AmountInDatabase.format(new Amount("-1234")));
     }

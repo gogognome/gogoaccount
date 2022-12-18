@@ -1,22 +1,16 @@
 package nl.gogognome.gogoaccount.component.invoice.amountformula;
 
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.textsearch.criteria.And;
-import nl.gogognome.textsearch.criteria.Criterion;
-import nl.gogognome.textsearch.criteria.StringLiteral;
-import org.junit.Test;
-
-import java.text.ParseException;
-import java.util.Currency;
-import java.util.Locale;
-
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import java.text.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.lib.text.*;
+import nl.gogognome.textsearch.criteria.*;
 
 public class AmountFormulaParserTest {
 
-    private AmountFormat amountFormat = new AmountFormat(Locale.US, Currency.getInstance("EUR"));
-    private AmountFormulaParser parser = new AmountFormulaParser(amountFormat);
+    private final AmountFormat amountFormat = new AmountFormat(Locale.US, Currency.getInstance("EUR"));
+    private final AmountFormulaParser parser = new AmountFormulaParser(amountFormat);
 
     @Test
     public void testParser() throws ParseException {
@@ -52,12 +46,9 @@ public class AmountFormulaParserTest {
     }
 
     private void parseShouldFail(String text, String expectedErrorMessage) {
-        try {
-            AmountFormula formula = parser.parse(text);
-            fail("Expected exception not thrown!");
-        } catch (ParseException e) {
-            assertEquals(expectedErrorMessage, e.getMessage());
-        }
+        Assertions.assertThrowsExactly(ParseException.class,
+                () -> parser.parse(text),
+                expectedErrorMessage);
     }
 
     private void parseShouldResultIn(String text, AmountFormula expectedFormula) {

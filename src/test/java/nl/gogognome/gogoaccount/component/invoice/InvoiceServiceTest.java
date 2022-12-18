@@ -1,27 +1,22 @@
 package nl.gogognome.gogoaccount.component.invoice;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.invoice.amountformula.AmountFormula;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.test.AbstractBookkeepingTest;
-import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
-import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.util.DateUtil;
-import nl.gogognome.textsearch.criteria.StringLiteral;
-import org.junit.Test;
-
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
+import static nl.gogognome.lib.util.DateUtil.*;
+import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
-import static nl.gogognome.lib.util.DateUtil.createDate;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.component.configuration.*;
+import nl.gogognome.gogoaccount.component.invoice.amountformula.*;
+import nl.gogognome.gogoaccount.component.ledger.*;
+import nl.gogognome.gogoaccount.component.party.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.gogoaccount.test.*;
+import nl.gogognome.gogoaccount.test.builders.*;
+import nl.gogognome.lib.text.*;
+import nl.gogognome.lib.util.*;
+import nl.gogognome.textsearch.criteria.*;
 
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 public class InvoiceServiceTest extends AbstractBookkeepingTest {

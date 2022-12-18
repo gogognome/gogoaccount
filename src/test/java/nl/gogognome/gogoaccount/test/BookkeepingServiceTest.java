@@ -1,35 +1,25 @@
 package nl.gogognome.gogoaccount.test;
 
-import nl.gogognome.gogoaccount.businessobjects.Report;
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
-import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.configuration.AccountType;
-import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceSending;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.component.party.Party;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.test.builders.JournalEntryBuilder;
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.util.DateUtil;
-import org.junit.Test;
-
-import java.io.File;
-import java.util.Currency;
-import java.util.Date;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static nl.gogognome.gogoaccount.component.configuration.AccountType.LIABILITY;
-import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.EMAIL;
-import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.PRINT;
-import static nl.gogognome.lib.util.DateUtil.createDate;
-import static org.junit.Assert.*;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
+import static nl.gogognome.gogoaccount.component.configuration.AccountType.*;
+import static nl.gogognome.gogoaccount.component.invoice.InvoiceSending.Type.*;
+import static nl.gogognome.lib.util.DateUtil.*;
+import static org.junit.jupiter.api.Assertions.*;
+import java.io.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.businessobjects.*;
+import nl.gogognome.gogoaccount.component.automaticcollection.*;
+import nl.gogognome.gogoaccount.component.configuration.*;
+import nl.gogognome.gogoaccount.component.document.*;
+import nl.gogognome.gogoaccount.component.invoice.*;
+import nl.gogognome.gogoaccount.component.ledger.*;
+import nl.gogognome.gogoaccount.component.party.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.gogoaccount.test.builders.*;
+import nl.gogognome.lib.text.*;
+import nl.gogognome.lib.util.*;
 
 public class BookkeepingServiceTest extends AbstractBookkeepingTest {
 
@@ -658,7 +648,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     private void deleteNewBookkeeping(File newBookkeepingFile) {
-        assertTrue("Failed to delete " + newBookkeepingFile.getAbsolutePath(), newBookkeepingFile.delete());
+        assertTrue(newBookkeepingFile.delete(), "Failed to delete " + newBookkeepingFile.getAbsolutePath());
     }
 
 }

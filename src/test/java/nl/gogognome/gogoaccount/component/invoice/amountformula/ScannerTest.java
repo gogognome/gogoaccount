@@ -1,13 +1,10 @@
 package nl.gogognome.gogoaccount.component.invoice.amountformula;
 
-import org.junit.Test;
-
+import static java.util.Arrays.*;
+import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
 
 public class ScannerTest {
 

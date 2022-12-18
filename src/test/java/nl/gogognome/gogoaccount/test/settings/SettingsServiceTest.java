@@ -1,11 +1,10 @@
 package nl.gogognome.gogoaccount.test.settings;
 
-import nl.gogognome.gogoaccount.component.settings.SettingsService;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.test.AbstractBookkeepingTest;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.component.settings.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.gogoaccount.test.*;
 
 public class SettingsServiceTest extends AbstractBookkeepingTest {
 

@@ -1,34 +1,30 @@
 package nl.gogognome.gogoaccount.component.invoice.amountformula;
 
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.mockito.VarArgsMatcher;
-import nl.gogognome.textsearch.criteria.Criterion;
-import nl.gogognome.textsearch.criteria.StringLiteral;
-import nl.gogognome.textsearch.string.CriterionMatcher;
-import org.junit.Test;
-
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
+import static java.util.Arrays.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import org.mockito.*;
+import nl.gogognome.lib.text.*;
+import nl.gogognome.textsearch.criteria.*;
+import nl.gogognome.textsearch.string.*;
 
 public class IfThenElseAmountTest {
 
-    private Criterion criterion = mock(Criterion.class);
-    private CriterionMatcher criterionMatcher = mock(CriterionMatcher.class);
-    private AmountFormula thenFormula = mock(AmountFormula.class);
-    private AmountFormula elseFormula = mock(AmountFormula.class);
-    private IfThenElseAmount ifThenElse = new IfThenElseAmount(criterionMatcher, criterion, thenFormula, elseFormula);
-    private IfThenElseAmount ifThen = new IfThenElseAmount(criterionMatcher, criterion, thenFormula, null);
+    private final Criterion criterion = mock(Criterion.class);
+    private final CriterionMatcher criterionMatcher = mock(CriterionMatcher.class);
+    private final AmountFormula thenFormula = mock(AmountFormula.class);
+    private final AmountFormula elseFormula = mock(AmountFormula.class);
+    private final IfThenElseAmount ifThenElse = new IfThenElseAmount(criterionMatcher, criterion, thenFormula, elseFormula);
+    private final IfThenElseAmount ifThen = new IfThenElseAmount(criterionMatcher, criterion, thenFormula, null);
 
-    private Amount someAmount = new Amount("123");
+    private final Amount someAmount = new Amount("123");
 
     @Test
     public void getAmountReturningThenAmount() throws Exception {
-        when(criterionMatcher.matches(any(), VarArgsMatcher.varArg(l -> true))).thenReturn(true);
-        when(thenFormula.getAmount(anyListOf(String.class))).thenReturn(someAmount);
+        when(criterionMatcher.matches(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(true);
+        when(thenFormula.getAmount(ArgumentMatchers.<String>anyList())).thenReturn(someAmount);
 
         List<String> tags = asList("tag1", "tag2");
         Amount amount = ifThenElse.getAmount(tags);
@@ -40,8 +36,8 @@ public class IfThenElseAmountTest {
 
     @Test
     public void getAmountReturningElseAmount() throws Exception {
-        when(criterionMatcher.matches(any(), VarArgsMatcher.varArg(l -> true))).thenReturn(false);
-        when(elseFormula.getAmount(anyListOf(String.class))).thenReturn(someAmount);
+        when(criterionMatcher.matches(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(false);
+        when(elseFormula.getAmount(ArgumentMatchers.<String>anyList())).thenReturn(someAmount);
 
         List<String> tags = asList("tag1", "tag2");
         Amount amount = ifThenElse.getAmount(tags);
@@ -54,7 +50,7 @@ public class IfThenElseAmountTest {
 
     @Test
     public void getAmountWithoutElseReturningNull() throws Exception {
-        when(criterionMatcher.matches(any(), VarArgsMatcher.varArg(l -> true))).thenReturn(false);
+        when(criterionMatcher.matches(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(false);
 
         List<String> tags = asList("tag1", "tag2");
         Amount amount = ifThen.getAmount(tags);
@@ -89,10 +85,10 @@ public class IfThenElseAmountTest {
     public void getAmountMatchesWholeTagsOnly() {
         IfThenElseAmount if_c_Amount = new IfThenElseAmount(new StringLiteral("c"), new ConstantAmount(someAmount), null);
 
-        assertEquals(someAmount, if_c_Amount.getAmount(asList("c")));
-        assertEquals(someAmount, if_c_Amount.getAmount(asList("C")));
+        assertEquals(someAmount, if_c_Amount.getAmount(Collections.singletonList("c")));
+        assertEquals(someAmount, if_c_Amount.getAmount(Collections.singletonList("C")));
         assertEquals(someAmount, if_c_Amount.getAmount(asList("a", "b", "c")));
-        assertNull(if_c_Amount.getAmount(asList("abc")));
+        assertNull(if_c_Amount.getAmount(Collections.singletonList("abc")));
     }
 
     @Test
@@ -104,16 +100,14 @@ public class IfThenElseAmountTest {
         assertHashAndEqual(false, ifThenElse, ifThen, ifThenElse, null);
         assertHashAndEqual(false, ifThenElse, ifThen, ifThenElse, new ConstantAmount(someAmount));
 
-        assertFalse(ifThen.equals(new Object()));
-        assertFalse(ifThen.equals(null));
+        assertNotEquals(ifThen, new Object());
+        assertNotEquals(null, ifThen);
     }
 
     private void assertHashAndEqual(boolean expectedEqual, AmountFormula thenFormule1, AmountFormula elseFormula1, AmountFormula thenFormule2, AmountFormula elseFormula2) {
         IfThenElseAmount ifThenElseAmount1 = new IfThenElseAmount(criterionMatcher, criterion, thenFormule1, elseFormula1);
         IfThenElseAmount ifThenElseAmount2 = new IfThenElseAmount(criterionMatcher, criterion, thenFormule2, elseFormula2);
-        assertEquals("Formula " + ifThenElseAmount1 + " should " + (expectedEqual ? "" : "not ") + "  be equal to " + ifThenElseAmount2,
-                expectedEqual, ifThenElseAmount1.equals(ifThenElseAmount2));
-        assertEquals("Hashcode for formula " + ifThenElseAmount1 + " should " + (expectedEqual ? "" : "not ") + "  be equal to hashcode of " + ifThenElseAmount2,
-                expectedEqual, ifThenElseAmount1.hashCode() == ifThenElseAmount2.hashCode());
+        assertEquals(expectedEqual, ifThenElseAmount1.equals(ifThenElseAmount2), "Formula " + ifThenElseAmount1 + " should " + (expectedEqual ? "" : "not ") + "  be equal to " + ifThenElseAmount2);
+        assertEquals(expectedEqual, ifThenElseAmount1.hashCode() == ifThenElseAmount2.hashCode(), "Hashcode for formula " + ifThenElseAmount1 + " should " + (expectedEqual ? "" : "not ") + "  be equal to hashcode of " + ifThenElseAmount2);
     }
 }

@@ -1,19 +1,16 @@
 package nl.gogognome.gogoaccount.component.document;
 
-import nl.gogognome.dataaccess.transaction.CurrentTransaction;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.dataaccess.transaction.*;
 
 public class DocumentTest {
 
-    private Document document = new Document();
-    private DocumentListener listener = mock(DocumentListener.class);
+    private final Document document = new Document();
+    private final DocumentListener listener = mock(DocumentListener.class);
 
-    @Before
+    @BeforeEach
     public void initTest() {
         CurrentTransaction.transactionCreator = DocumentAwareTransaction::new;
         document.addListener(listener);
@@ -21,7 +18,7 @@ public class DocumentTest {
 
     @Test
     public void whenNoTrasnsactionPresentNotifyChangeNotifiesListenerImmediately() {
-        Assert.assertFalse(CurrentTransaction.hasTransaction());
+        assertFalse(CurrentTransaction.hasTransaction());
 
         document.notifyChange();
 

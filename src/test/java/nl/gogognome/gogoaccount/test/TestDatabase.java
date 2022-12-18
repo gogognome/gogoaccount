@@ -1,20 +1,17 @@
 package nl.gogognome.gogoaccount.test;
 
-import nl.gogognome.gogoaccount.component.configuration.Account;
-import nl.gogognome.gogoaccount.component.invoice.Invoice;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntry;
-import nl.gogognome.gogoaccount.component.ledger.JournalEntryDetail;
-import nl.gogognome.gogoaccount.services.ServiceException;
-import nl.gogognome.gogoaccount.test.builders.AmountBuilder;
-import nl.gogognome.lib.util.DateUtil;
-import org.junit.Test;
-
+import static java.util.Arrays.*;
+import static nl.gogognome.lib.util.DateUtil.*;
+import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
-import java.util.List;
-
-import static java.util.Arrays.asList;
-import static nl.gogognome.lib.util.DateUtil.createDate;
-import static org.junit.Assert.*;
+import java.util.*;
+import org.junit.jupiter.api.*;
+import nl.gogognome.gogoaccount.component.configuration.*;
+import nl.gogognome.gogoaccount.component.invoice.*;
+import nl.gogognome.gogoaccount.component.ledger.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.gogoaccount.test.builders.*;
+import nl.gogognome.lib.util.*;
 
 public class TestDatabase extends AbstractBookkeepingTest {
 
@@ -75,7 +72,7 @@ public class TestDatabase extends AbstractBookkeepingTest {
         assertEqualJournalEntryDetails(journalEntryDetails, findJournalEntryDetails(newJournalEntry.getId()));
     }
 
-    @Test(expected = ServiceException.class)
+    @Test
     public void updateNonExistingJournalFails() throws Exception {
         List<JournalEntryDetail> newJournalEntryDetails = new ArrayList<>();
         JournalEntryDetail d1 = new JournalEntryDetail();
@@ -96,6 +93,6 @@ public class TestDatabase extends AbstractBookkeepingTest {
         newJournalEntry.setDate(DateUtil.createDate(2011, 9, 3));
 
         assertNull(findJournalEntry(newJournalEntry.getId()));
-        ledgerService.updateJournalEntry(document, newJournalEntry, newJournalEntryDetails);
+        assertThrows(ServiceException.class, () -> ledgerService.updateJournalEntry(document, newJournalEntry, newJournalEntryDetails));
     }
 }

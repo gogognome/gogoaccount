@@ -14,11 +14,11 @@ import nl.gogognome.lib.text.TextResource;
 import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.*;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.env.CommandLinePropertySource;
-import org.springframework.core.env.SimpleCommandLinePropertySource;
+import org.springframework.core.env.*;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
@@ -53,13 +53,13 @@ public class Start {
     private void startApplication(String[] args) {
         CurrentTransaction.transactionCreator = DocumentAwareTransaction::new;
         initFactory(Locale.getDefault());
-        CommandLinePropertySource clps = new SimpleCommandLinePropertySource(args);
-        parseArguments(clps);
+        SimpleCommandLinePropertySource commandLinePropertySource = new SimpleCommandLinePropertySource(args);
+        parseArguments(commandLinePropertySource);
         DefaultLookAndFeel.useDefaultLookAndFeel();
         logger.debug("Locale: " + Locale.getDefault());
 
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Start.class).headless(false).web(false).run(args);
-        ctx.getEnvironment().getPropertySources().addFirst(clps);
+        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Start.class).headless(false).web(WebApplicationType.NONE).run(args);
+        ctx.getEnvironment().getPropertySources().addFirst(commandLinePropertySource);
         ctx.getBean(TextResourceRegistry.class).register(Factory.getInstance(TextResource.class));
         MainFrame mainFrame = initFrame(ctx);
 
@@ -102,7 +102,7 @@ public class Start {
         Factory.bindSingleton(AmountFormat.class, new AmountFormat(locale, Currency.getInstance("EUR")));
     }
 
-    private void parseArguments(CommandLinePropertySource commandLinePropertySource) {
+    private void parseArguments(CommandLinePropertySource<?> commandLinePropertySource) {
         if (commandLinePropertySource.containsProperty("lang")) {
             Locale locale = new Locale(commandLinePropertySource.getProperty("lang"));
             initFactory(locale);
