@@ -1,5 +1,5 @@
-Gogo Account 2.6.1
-Copyright 2011-2021 Sander Kooijmans
+Gogo Account 2.7.0
+Copyright 2011-2022 Sander Kooijmans
 https://gogognome.nl
 
 This software is released under the Apache License, Version 2.0
