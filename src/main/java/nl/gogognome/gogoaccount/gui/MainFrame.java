@@ -32,15 +32,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import static nl.gogognome.gogoaccount.gui.ActionRunner.run;
 
 public class MainFrame extends JFrame implements ActionListener, DocumentListener {
-
-    private static final long serialVersionUID = 1L;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -363,7 +360,6 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             newDocument.notifyChange();
             setDocument(newDocument);
             handleViewBalanceAndOperationalResult();
-            backupService.createBackupOfSqlStatements(document);
         } catch (ServiceException e) {
             messageDialog.showErrorMessage(e, "mf.errorOpeningFile");
         }
@@ -389,6 +385,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
         if (document != null) {
             document.removeListener(this);
+            backupService.createBackupOfSqlStatements(document);
+            document.close();
         }
 
         document = newDocument;
@@ -404,9 +402,19 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private void handleExit() {
         if (document != null) {
+            logger.info("Create backup of database (zip file of SQL statements).");
             document.removeListener(this);
+            try {
+                backupService.createBackupOfSqlStatements(document);
+            } catch (ServiceException e) {
+                logger.error("Failed to create a backup of the database.", e);
+            }
+
+            logger.info("Close database");
+            document.close();
         }
         dispose();
+        logger.info("Exited");
     }
 
     private void handleViewBalanceAndOperationalResult() {
