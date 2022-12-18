@@ -73,8 +73,6 @@ public class Start {
             } else {
                 MessageDialog.showErrorMessage(mainFrame, "mf.fileDoesNotExist", fileName);
             }
-        } else {
-            mainFrame.handleNewEdition();
         }
 
         waitForFrameToClose();
