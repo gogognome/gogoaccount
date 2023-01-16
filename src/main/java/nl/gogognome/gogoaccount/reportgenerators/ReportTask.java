@@ -27,19 +27,20 @@ import nl.gogognome.lib.util.Factory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.stream.Collectors.toMap;
+import org.slf4j.*;
 
 /**
- * This class generates reports in a text-format.
+ * <p>This class generates reports in a text-format.</p>
  *
- * A <i>report</i> consists of a balance, operational result, and a list
- * of debtors and creditors.
+ * <p>A <i>report</i> consists of a balance, operational result, and a list
+ * of debtors and creditors.</p>
  */
 public class ReportTask implements Task {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(ReportTask.class);
 
     private final Document document;
     private final AmountFormat amountFormat;
@@ -51,14 +52,14 @@ public class ReportTask implements Task {
     private final PartyService partyService;
 
     private Bookkeeping bookkeeping;
-    private Date date;
+    private final Date date;
     private Report report;
 
     private PrintWriter writer;
 
     private TextFormat textFormat;
-    private File file;
-    private ReportType fileType;
+    private final File file;
+    private final ReportType fileType;
 
     private TaskProgressListener progressListener;
 
@@ -88,12 +89,10 @@ public class ReportTask implements Task {
         bookkeeping = configurationService.getBookkeeping(document);
     	this.progressListener = progressListener;
     	progressListener.onProgressUpdate(0);
-        switch(fileType) {
-            case PLAIN_TEXT:
-                textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
-                break;
-            default:
-                throw new IllegalArgumentException("Illegal file type: " + fileType);
+        if (Objects.requireNonNull(fileType) == ReportType.PLAIN_TEXT) {
+            textFormat = new PlainTextFormat(Factory.getInstance(TextResource.class));
+        } else {
+            throw new IllegalArgumentException("Illegal file type: " + fileType);
         }
 
         report = bookkeepingService.createReport(document, date);
@@ -105,6 +104,7 @@ public class ReportTask implements Task {
         }
 
         progressListener.onProgressUpdate(100);
+        LOGGER.info("Created report at " + file.getAbsolutePath());
         return null;
     }
 
@@ -195,7 +195,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getEndOfTable());
 
-        writer.println(result.toString());
+        writer.println(result);
     }
 
 	private String formatAccount(Account account) {
@@ -266,7 +266,7 @@ public class ReportTask implements Task {
 
        result.append(textFormat.getEndOfTable());
 
-        writer.println(result.toString());
+        writer.println(result);
     }
 
     private void printDebtors() {
@@ -303,7 +303,7 @@ public class ReportTask implements Task {
             result.append(textFormat.getRow(values));
             result.append(textFormat.getEndOfTable());
         }
-        writer.println(result.toString());
+        writer.println(result);
     }
 
     private void printCreditors() {
@@ -340,7 +340,7 @@ public class ReportTask implements Task {
             result.append(textFormat.getRow(values));
             result.append(textFormat.getEndOfTable());
         }
-        writer.println(result.toString());
+        writer.println(result);
     }
 
     private String formatParty(Party party) {
@@ -424,7 +424,7 @@ public class ReportTask implements Task {
                 result.append(textFormat.getHorizontalSeparator());
             }
         }
-        writer.println(result.toString());
+        writer.println(result);
     }
 
     private void printLedger() throws ServiceException {
@@ -471,7 +471,7 @@ public class ReportTask implements Task {
 
             result.append(textFormat.getHorizontalSeparator());
         }
-        writer.println(result.toString());
+        writer.println(result);
     }
 
 }

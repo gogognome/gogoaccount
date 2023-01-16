@@ -1,28 +1,21 @@
 package nl.gogognome.gogoaccount.gui.controllers;
 
-import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
-import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.component.invoice.InvoiceService;
-import nl.gogognome.gogoaccount.component.ledger.LedgerService;
-import nl.gogognome.gogoaccount.component.party.PartyService;
-import nl.gogognome.gogoaccount.gui.ViewFactory;
-import nl.gogognome.gogoaccount.gui.views.GenerateReportView;
-import nl.gogognome.gogoaccount.gui.views.HandleException;
-import nl.gogognome.gogoaccount.reportgenerators.OdtReportGeneratorTask;
-import nl.gogognome.gogoaccount.reportgenerators.ReportTask;
-import nl.gogognome.gogoaccount.reportgenerators.ReportToModelConverter;
-import nl.gogognome.gogoaccount.services.BookkeepingService;
-import nl.gogognome.lib.swing.dialogs.MessageDialog;
-import nl.gogognome.lib.swing.views.ViewDialog;
-import nl.gogognome.lib.swing.views.ViewOwner;
-import nl.gogognome.lib.task.Task;
-import nl.gogognome.lib.task.ui.TaskWithProgressDialog;
-import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
-import nl.gogognome.lib.util.Factory;
-
-import java.io.File;
-import java.util.Date;
+import java.io.*;
+import java.util.*;
+import nl.gogognome.gogoaccount.component.configuration.*;
+import nl.gogognome.gogoaccount.component.document.*;
+import nl.gogognome.gogoaccount.component.invoice.*;
+import nl.gogognome.gogoaccount.component.ledger.*;
+import nl.gogognome.gogoaccount.component.party.*;
+import nl.gogognome.gogoaccount.gui.*;
+import nl.gogognome.gogoaccount.gui.views.*;
+import nl.gogognome.gogoaccount.reportgenerators.*;
+import nl.gogognome.gogoaccount.services.*;
+import nl.gogognome.lib.swing.dialogs.*;
+import nl.gogognome.lib.swing.views.*;
+import nl.gogognome.lib.task.*;
+import nl.gogognome.lib.task.ui.*;
+import nl.gogognome.lib.text.*;
 
 public class GenerateReportController {
 
@@ -70,29 +63,20 @@ public class GenerateReportController {
             Date date = view.getDate();
             File reportFile = view.getReportFile();
             if (date != null && reportFile != null) {
-                Task task;
+                Task task = switch (view.getReportType()) {
+                    case PLAIN_TEXT ->
+                            new ReportTask(document, amountFormat, textResource, bookkeepingService, configurationService, invoiceService, ledgerService, partyService, date, reportFile, view.getReportType());
+                    case ODT_DOCUMENT ->
+                            new OdtReportGeneratorTask(document, bookkeepingService, reportToModelConverter, date, reportFile, view.getTemplateFile());
+                };
 
-                switch (view.getReportType()) {
-                    case PLAIN_TEXT:
-                        task = new ReportTask(document, amountFormat, textResource, bookkeepingService, configurationService, invoiceService, ledgerService, partyService, date, reportFile, view.getReportType());
-                        break;
-
-                    case ODT_DOCUMENT:
-                        task = new OdtReportGeneratorTask(document, bookkeepingService, reportToModelConverter, date, reportFile, view.getTemplateFile());
-                        break;
-
-                    default:
-                        throw new Exception("Unknown report type: " + view.getReportType());
-                }
-
-                startTask(task);
+                startTask(task, reportFile);
             }
         });
     }
 
-    private void startTask(Task task) {
-        String description = Factory.getInstance(TextResource.class).getString("genreport.progress");
-        TaskWithProgressDialog taskWithProgressDialog = new TaskWithProgressDialog(viewOwner, textResource, description);
+    private void startTask(Task task, File reportFile) {
+        TaskWithProgressDialog taskWithProgressDialog = new TaskWithProgressDialog(viewOwner, textResource, "genreport.progress", reportFile.getAbsolutePath());
         taskWithProgressDialog.execute(task);
     }
 }
