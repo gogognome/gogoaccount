@@ -30,9 +30,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.stream.Collectors.toList;
-
-
 public class BookkeepingService {
 
     private final AutomaticCollectionService automaticCollectionService;
@@ -87,7 +84,7 @@ public class BookkeepingService {
 
     private Document createNewBookkeeping(Document document, File newBookkeepingFile, String description, Date date) throws ServiceException {
         Document newDocument = documentService.createNewDocument(newBookkeepingFile, "New bookkeeping");
-        newDocument.setFilePath(null);
+        newDocument.setFilePath(newBookkeepingFile.getAbsolutePath());
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         Bookkeeping newBookkeeping = configurationService.getBookkeeping(newDocument);
         newBookkeeping.setDescription(description);
@@ -188,7 +185,7 @@ public class BookkeepingService {
 
                 List<InvoiceSending> invoiceSendingsForInvoice = invoiceSendings.stream()
                         .filter(invoiceSending -> invoiceSending.getInvoiceId().equals(invoice.getId()))
-                        .collect(toList());
+                        .toList();
                 for (InvoiceSending invoiceSending : invoiceSendingsForInvoice) {
                     invoiceService.createInvoiceSending(newDocument, invoiceSending);
                 }
