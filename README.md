@@ -5,7 +5,8 @@
 ### Creating a new version
 
 1. Update version number in `pom.xml` and `banner.txt`.
-2. Build the jar file with Maven.
+2. Update the year in copyright notices in `banner.txt`, `stringresource.properties` and `stringresources_nl.properties`.
+3. Build the jar file with Maven.
 
 The splash image and about image are generated in the compile step by the
 image-modifier-maven-plugin.

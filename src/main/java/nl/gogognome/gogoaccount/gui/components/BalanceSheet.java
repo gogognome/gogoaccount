@@ -1,18 +1,3 @@
-/*
-   Copyright 2011 Sander Kooijmans
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
 package nl.gogognome.gogoaccount.gui.components;
 
 import nl.gogognome.lib.swing.SwingUtils;
@@ -45,8 +30,8 @@ public class BalanceSheet extends JPanel {
 		public Amount amount;
 	}
 
-	private String leftTitle;
-	private String rightTitle;
+	private final String leftTitle;
+	private final String rightTitle;
 	private List<Row> leftRows;
 	private List<Row> rightRows;
 
@@ -56,13 +41,13 @@ public class BalanceSheet extends JPanel {
 	private int row;
 	private int row2;
 
-    private TextResource tr = Factory.getInstance(TextResource.class);
-    private AmountFormat af = Factory.getInstance(AmountFormat.class);
+    private final TextResource tr = Factory.getInstance(TextResource.class);
+    private final AmountFormat af = Factory.getInstance(AmountFormat.class);
 
-    private Border rightBorder = new CompoundBorder(new LineBorder(LineBorder.LB_RIGHT, 1),
+    private final Border rightBorder = new CompoundBorder(new LineBorder(LineBorder.LB_RIGHT, 1),
         new EmptyBorder(0, 0, 0, 5));
 
-    private Border leftBorder = new CompoundBorder(new LineBorder(LineBorder.LB_LEFT, 1),
+    private final Border leftBorder = new CompoundBorder(new LineBorder(LineBorder.LB_LEFT, 1),
         new EmptyBorder(0, 5, 0, 0));
 
 	public BalanceSheet(String leftTitle, String rightTitle) {
