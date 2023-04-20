@@ -2,9 +2,9 @@ package nl.gogognome.gogoaccount.services;
 
 import nl.gogognome.gogoaccount.businessobjects.Report;
 import nl.gogognome.gogoaccount.businessobjects.ReportBuilder;
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
-import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.directdebit.DirectDebitService;
+import nl.gogognome.gogoaccount.component.directdebit.DirectDebitSettings;
+import nl.gogognome.gogoaccount.component.directdebit.PartyDirectDebitSettings;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -32,17 +32,17 @@ import java.util.Map;
 
 public class BookkeepingService {
 
-    private final AutomaticCollectionService automaticCollectionService;
+    private final DirectDebitService directDebitService;
     private final ConfigurationService configurationService;
     private final DocumentService documentService;
     private final LedgerService ledgerService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
 
-    public BookkeepingService(AutomaticCollectionService automaticCollectionService, LedgerService ledgerService,
-                              ConfigurationService configurationService, DocumentService documentService,
-                              InvoiceService invoiceService, PartyService partyService) {
-        this.automaticCollectionService = automaticCollectionService;
+    public BookkeepingService(DirectDebitService directDebitService, LedgerService ledgerService,
+							  ConfigurationService configurationService, DocumentService documentService,
+							  InvoiceService invoiceService, PartyService partyService) {
+        this.directDebitService = directDebitService;
         this.ledgerService = ledgerService;
         this.configurationService = configurationService;
         this.documentService = documentService;
@@ -57,7 +57,7 @@ public class BookkeepingService {
             markBookkeepingAsClosed(document);
             Date dayBeforeStart = DateUtil.addDays(date, -1);
             Document newDocument = createNewBookkeeping(document, newBookkeepingFile, description, date);
-            copyAutomaticCollectionSettings(document, newDocument);
+            copyDirectDebitSettings(document, newDocument);
             copyParties(document, newDocument);
             copyAccounts(document, newDocument);
             createStartBalance(document, newDocument, dayBeforeStart, equity);
@@ -77,9 +77,9 @@ public class BookkeepingService {
         document.setReadonly(true);
     }
 
-    private void copyAutomaticCollectionSettings(Document document, Document newDocument) throws ServiceException {
-        AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
-        automaticCollectionService.setSettings(newDocument, settings);
+    private void copyDirectDebitSettings(Document document, Document newDocument) throws ServiceException {
+        DirectDebitSettings settings = directDebitService.getSettings(document);
+        directDebitService.setSettings(newDocument, settings);
     }
 
     private Document createNewBookkeeping(Document document, File newBookkeepingFile, String description, Date date) throws ServiceException {
@@ -91,7 +91,7 @@ public class BookkeepingService {
         newBookkeeping.setCurrency(bookkeeping.getCurrency());
         newBookkeeping.setInvoiceIdFormat(bookkeeping.getInvoiceIdFormat());
         newBookkeeping.setPartyIdFormat(bookkeeping.getPartyIdFormat());
-        newBookkeeping.setEnableAutomaticCollection(bookkeeping.isEnableAutomaticCollection());
+        newBookkeeping.setEnableSepaDirectDebit(bookkeeping.isEnableSepaDirectDebit());
         newBookkeeping.setOrganizationAddress(bookkeeping.getOrganizationAddress());
         newBookkeeping.setOrganizationCity(bookkeeping.getOrganizationCity());
         newBookkeeping.setOrganizationCountry(bookkeeping.getOrganizationCountry());
@@ -106,9 +106,9 @@ public class BookkeepingService {
         Map<String, List<String>> partyIdToTags = partyService.findPartyIdToTags(document);
         for (Party party : partyService.findAllParties(document)) {
             partyService.createPartyWithSpecifiedId(newDocument, party, partyIdToTags.get(party.getId()));
-            PartyAutomaticCollectionSettings settings = automaticCollectionService.findSettings(document, party);
+            PartyDirectDebitSettings settings = directDebitService.findSettings(document, party);
             if (settings != null) {
-                automaticCollectionService.setAutomaticCollectionSettings(newDocument, settings);
+                directDebitService.setDirectDebitSettings(newDocument, settings);
             }
         }
     }

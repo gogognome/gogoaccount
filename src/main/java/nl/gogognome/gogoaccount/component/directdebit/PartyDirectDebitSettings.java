@@ -1,8 +1,8 @@
-package nl.gogognome.gogoaccount.component.automaticcollection;
+package nl.gogognome.gogoaccount.component.directdebit;
 
 import java.util.Date;
 
-public class PartyAutomaticCollectionSettings {
+public class PartyDirectDebitSettings {
 
     private String partyId;
     private String name;
@@ -13,7 +13,7 @@ public class PartyAutomaticCollectionSettings {
     private String iban;
     private Date mandateDate;
 
-    public PartyAutomaticCollectionSettings(String partyId) {
+    public PartyDirectDebitSettings(String partyId) {
         this.partyId = partyId;
     }
 

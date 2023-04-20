@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.component.automaticcollection;
+package nl.gogognome.gogoaccount.component.directdebit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;

@@ -1,7 +1,7 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.directdebit.DirectDebitService;
+import nl.gogognome.gogoaccount.component.directdebit.DirectDebitSettings;
 import nl.gogognome.gogoaccount.component.configuration.Account;
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -38,7 +38,7 @@ public class ConfigureBookkeepingView extends View {
     private static final long serialVersionUID = 1L;
 
     private final Document document;
-    private final AutomaticCollectionService automaticCollectionService;
+    private final DirectDebitService directDebitService;
     private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
     private final MessageDialog messageDialog;
@@ -54,10 +54,10 @@ public class ConfigureBookkeepingView extends View {
     private StringModel organizationZipCodeModel;
     private StringModel organizationCityModel;
     private StringModel organizationCountryModel;
-    private BooleanModel enableAutomaticCollectionModel;
+    private BooleanModel enableSepaDirectDebitModel;
     private StringModel ibanModel;
     private StringModel bicModel;
-    private StringModel automaticCollectionContractNumberModel;
+    private StringModel sepaDirectDebitContractNumberModel;
     private StringModel sequenceNumberModel;
 
     private AccountTableModel tableModel;
@@ -67,11 +67,11 @@ public class ConfigureBookkeepingView extends View {
     private JButton deleteAccountButton;
 
     private JPanel settingsPanel = new JPanel(new BorderLayout());
-    private InputFieldsColumn automaticCollectionInputFields;
+    private InputFieldsColumn directDebitInputFields;
 
-    public ConfigureBookkeepingView(Document document, AutomaticCollectionService automaticCollectionService, ConfigurationService configurationService, LedgerService ledgerService) {
+    public ConfigureBookkeepingView(Document document, DirectDebitService directDebitService, ConfigurationService configurationService, LedgerService ledgerService) {
         this.document = document;
-        this.automaticCollectionService = automaticCollectionService;
+        this.directDebitService = directDebitService;
         this.configurationService = configurationService;
         this.ledgerService = ledgerService;
         messageDialog = new MessageDialog(textResource, this);
@@ -108,21 +108,21 @@ public class ConfigureBookkeepingView extends View {
         organizationCityModel = Model.of(bookkeeping.getOrganizationCity(), v -> {}, modelChangeListener);
         organizationZipCodeModel = Model.of(bookkeeping.getOrganizationZipCode(), v -> {}, modelChangeListener);
         organizationCountryModel = Model.of(bookkeeping.getOrganizationCountry(), v -> {}, modelChangeListener);
-        enableAutomaticCollectionModel = Model.of(bookkeeping.isEnableAutomaticCollection(), v -> {}, modelChangeListener);
-        enableAutomaticCollectionModel.addModelChangeListener(m -> updateVisibilityOfAutomaticCollectionInputFields());
+        enableSepaDirectDebitModel = Model.of(bookkeeping.isEnableSepaDirectDebit(), v -> {}, modelChangeListener);
+        enableSepaDirectDebitModel.addModelChangeListener(m -> updateVisibilityOfDirectDebitInputFields());
 
-        AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
+        DirectDebitSettings settings = directDebitService.getSettings(document);
         ibanModel = Model.of(settings.getIban(), v -> {}, modelChangeListener);
         bicModel = Model.of(settings.getBic(), v -> {}, modelChangeListener);
-        automaticCollectionContractNumberModel = Model.of(settings.getAutomaticCollectionContractNumber(), v -> {}, modelChangeListener);
+        sepaDirectDebitContractNumberModel = Model.of(settings.SepaDirectDebitContractNumber(), v -> {}, modelChangeListener);
         sequenceNumberModel = Model.of(Long.toString(settings.getSequenceNumber()), v -> {}, modelChangeListener);
     }
 
-    private void updateVisibilityOfAutomaticCollectionInputFields() {
-        if (enableAutomaticCollectionModel.getBoolean()) {
-            settingsPanel.add(automaticCollectionInputFields, BorderLayout.SOUTH);
+    private void updateVisibilityOfDirectDebitInputFields() {
+        if (enableSepaDirectDebitModel.getBoolean()) {
+            settingsPanel.add(directDebitInputFields, BorderLayout.SOUTH);
         } else {
-            settingsPanel.remove(automaticCollectionInputFields);
+            settingsPanel.remove(directDebitInputFields);
         }
         validate();
     }
@@ -131,9 +131,9 @@ public class ConfigureBookkeepingView extends View {
         setLayout(new BorderLayout());
 
         InputFieldsColumn ifc = new InputFieldsColumn();
-        automaticCollectionInputFields = new InputFieldsColumn();
+        directDebitInputFields = new InputFieldsColumn();
         addCloseable(ifc);
-        addCloseable(automaticCollectionInputFields);
+        addCloseable(directDebitInputFields);
         ifc.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.generalSettings"));
 
         ifc.addField("ConfigureBookkeepingView.description", descriptionModel);
@@ -142,7 +142,7 @@ public class ConfigureBookkeepingView extends View {
         ifc.addField("ConfigureBookkeepingView.organizationZipCode", organizationZipCodeModel);
         ifc.addField("ConfigureBookkeepingView.organizationCity", organizationCityModel);
         ifc.addField("ConfigureBookkeepingView.organizationCountry", organizationCountryModel);
-        ifc.addField("ConfigureBookkeepingView.enableAutomaticCollection", enableAutomaticCollectionModel);
+        ifc.addField("ConfigureBookkeepingView.enableSepaDirectDebit", enableSepaDirectDebitModel);
         ifc.addField("ConfigureBookkeepingView.startDate", startDateModel);
         ifc.addComboBoxField("ConfigureBookkeepingView.currency", currencyModel, new CurrencyFormatter());
         ifc.addField("ConfigureBookkeepingView.invoiceIdFormat", invoiceIdFormatModel);
@@ -150,11 +150,11 @@ public class ConfigureBookkeepingView extends View {
         ifc.addField("ConfigureBookkeepingView.partyIdFormat", partyIdFormatModel);
         ifc.addVariableSizeField("gen.emptyString", widgetFactory.createLabel("ConfigureBookkeepingView.partyIdFormat.explanation"));
 
-        automaticCollectionInputFields.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.automaticCollectionSettings"));
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.iban", ibanModel);
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.bic", bicModel);
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.automaticCollectionContractNumber", automaticCollectionContractNumberModel);
-        automaticCollectionInputFields.addField("ConfigureBookkeepingView.sequenceNumber", sequenceNumberModel);
+        directDebitInputFields.setBorder(widgetFactory.createTitleBorderWithPadding("ConfigureBookkeepingView.directDebitSettings"));
+        directDebitInputFields.addField("ConfigureBookkeepingView.iban", ibanModel);
+        directDebitInputFields.addField("ConfigureBookkeepingView.bic", bicModel);
+        directDebitInputFields.addField("ConfigureBookkeepingView.directDebitContractNumber", sepaDirectDebitContractNumberModel);
+        directDebitInputFields.addField("ConfigureBookkeepingView.sequenceNumber", sequenceNumberModel);
 
         // Create panel with accounts table
         JPanel accountsAndButtonsPanel = new JPanel(new BorderLayout());
@@ -178,7 +178,7 @@ public class ConfigureBookkeepingView extends View {
 
         // Add panels to view
         settingsPanel.add(ifc, BorderLayout.NORTH);
-        updateVisibilityOfAutomaticCollectionInputFields();
+        updateVisibilityOfDirectDebitInputFields();
 
         add(settingsPanel, BorderLayout.NORTH);
         add(accountsAndButtonsPanel, BorderLayout.CENTER);
@@ -211,14 +211,14 @@ public class ConfigureBookkeepingView extends View {
             bookkeeping.setOrganizationCountry(organizationCountryModel.getString());
             bookkeeping.setInvoiceIdFormat(invoiceIdFormatModel.getString());
             bookkeeping.setPartyIdFormat(partyIdFormatModel.getString());
-            bookkeeping.setEnableAutomaticCollection(enableAutomaticCollectionModel.getBoolean());
+            bookkeeping.setEnableSepaDirectDebit(enableSepaDirectDebitModel.getBoolean());
             configurationService.updateBookkeeping(document, bookkeeping);
 
-            if (enableAutomaticCollectionModel.getBoolean()) {
-                AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
+            if (enableSepaDirectDebitModel.getBoolean()) {
+                DirectDebitSettings settings = directDebitService.getSettings(document);
                 settings.setIban(ibanModel.getString());
                 settings.setBic(bicModel.getString());
-                settings.setAutomaticCollectionContractNumber(automaticCollectionContractNumberModel.getString());
+                settings.setSepaDirectDebitContractNumber(sepaDirectDebitContractNumberModel.getString());
                 try {
                     if (!StringUtil.isNullOrEmpty(sequenceNumberModel.getString())) {
                         settings.setSequenceNumber(Long.parseLong(sequenceNumberModel.getString()));
@@ -228,7 +228,7 @@ public class ConfigureBookkeepingView extends View {
                     settings.setSequenceNumber(0);
                     // probably incorrect syntax
                 }
-                automaticCollectionService.setSettings(document, settings);
+                directDebitService.setSettings(document, settings);
             }
         });
     }

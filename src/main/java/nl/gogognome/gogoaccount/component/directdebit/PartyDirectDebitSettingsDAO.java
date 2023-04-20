@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.component.automaticcollection;
+package nl.gogognome.gogoaccount.component.directdebit;
 
 import nl.gogognome.dataaccess.dao.AbstractDomainClassDAO;
 import nl.gogognome.dataaccess.dao.NameValuePairs;
@@ -9,23 +9,20 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-class PartyAutomaticCollectionSettingsDAO extends AbstractDomainClassDAO<PartyAutomaticCollectionSettings> {
+class PartyDirectDebitSettingsDAO extends AbstractDomainClassDAO<PartyDirectDebitSettings> {
 
-    private Document document;
-    private List<String> partyId;
-
-    public PartyAutomaticCollectionSettingsDAO(Document document) {
-        super("party_automatic_collection_settings", null, document.getBookkeepingId());
+    public PartyDirectDebitSettingsDAO(Document document) {
+        super("party_direct_debit_settings", null, document.getBookkeepingId());
     }
 
-    public Map<String, PartyAutomaticCollectionSettings> getIdToParty(List<String> partyIds) throws SQLException {
+    public Map<String, PartyDirectDebitSettings> getIdToParty(List<String> partyIds) throws SQLException {
         return execute("select * from " + tableName + " where party_id in (?)", partyIds)
                 .toHashMap(r -> r.getString(getPkColumn()), r -> getObjectFromResultSet(r));
     }
 
     @Override
-    protected PartyAutomaticCollectionSettings getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
-        PartyAutomaticCollectionSettings settings = new PartyAutomaticCollectionSettings(result.getString("party_id"));
+    protected PartyDirectDebitSettings getObjectFromResultSet(ResultSetWrapper result) throws SQLException {
+        PartyDirectDebitSettings settings = new PartyDirectDebitSettings(result.getString("party_id"));
         settings.setName(result.getString("name"));
         settings.setAddress(result.getString("address"));
         settings.setZipCode(result.getString("zip_code"));
@@ -37,7 +34,7 @@ class PartyAutomaticCollectionSettingsDAO extends AbstractDomainClassDAO<PartyAu
     }
 
     @Override
-    protected NameValuePairs getNameValuePairs(PartyAutomaticCollectionSettings settings) throws SQLException {
+    protected NameValuePairs getNameValuePairs(PartyDirectDebitSettings settings) throws SQLException {
         return new NameValuePairs()
                 .add("party_id", settings.getPartyId())
                 .add("name", settings.getName())

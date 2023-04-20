@@ -1,7 +1,7 @@
 package nl.gogognome.gogoaccount.gui.invoice;
 
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
-import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.directdebit.DirectDebitService;
+import nl.gogognome.gogoaccount.component.directdebit.PartyDirectDebitSettings;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.document.DocumentListener;
@@ -46,7 +46,7 @@ public class InvoicesView extends View {
     private final Document document;
     private final AmountFormat amountFormat;
 
-    private final AutomaticCollectionService automaticCollectionService;
+    private final DirectDebitService directDebitService;
     private final ConfigurationService configurationService;
     private final InvoiceService invoiceService;
     private final PartyService partyService;
@@ -60,7 +60,7 @@ public class InvoicesView extends View {
     private ActionWrapper emailSelectedInvoicesAction = widgetFactory.createActionWrapper("EmailInvoicesView.sendEmail", this::onEmail);
     private ActionWrapper exportPdfsSelectedInvoicesAction = widgetFactory.createActionWrapper("ExportPdfsInvoicesView.exportPdf", this::onExportPdfs);
     private ActionWrapper printSelectedInvoicesAction = widgetFactory.createActionWrapper("gen.print", this::onPrint);
-    private ActionWrapper generateAutomaticCollectionFileAction = widgetFactory.createActionWrapper("InvoicesView.generateAutomaticCollectionFile", this::onGenerateAutomaticCollectionFile);
+    private ActionWrapper generateDirectDebitFileAction = widgetFactory.createActionWrapper("InvoicesView.generateDirectDebitFile", this::onGenerateDirectDebitFile);
 
     private DocumentListener documentListener;
 
@@ -69,11 +69,11 @@ public class InvoicesView extends View {
     private JButton btSearch;
     private CloseableJPanel invoiceDetailsPanel;
 
-    public InvoicesView(Document document, AmountFormat amountFormat, AutomaticCollectionService automaticCollectionService, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService,
+    public InvoicesView(Document document, AmountFormat amountFormat, DirectDebitService directDebitService, ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService,
                         EditInvoiceController editInvoiceController, ViewFactory viewFactory) {
         this.document = document;
         this.amountFormat = amountFormat;
-        this.automaticCollectionService = automaticCollectionService;
+        this.directDebitService = directDebitService;
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.partyService = partyService;
@@ -160,8 +160,8 @@ public class InvoicesView extends View {
         buttonPanel.addButton(printSelectedInvoicesAction);
 
         try {
-            if (configurationService.getBookkeeping(document).isEnableAutomaticCollection()) {
-                buttonPanel.addButton(generateAutomaticCollectionFileAction);
+            if (configurationService.getBookkeeping(document).isEnableSepaDirectDebit()) {
+                buttonPanel.addButton(generateDirectDebitFileAction);
             }
         } catch (ServiceException e) {
             messageDialog.showErrorMessage(e, "gen.internalError");
@@ -240,7 +240,7 @@ public class InvoicesView extends View {
         emailSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         exportPdfsSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         printSelectedInvoicesAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
-        generateAutomaticCollectionFileAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
+        generateDirectDebitFileAction.setEnabled(Tables.getSelectedRowsConvertedToModel(table).length > 0);
         boolean exactlyOneInvoiceSelected = Tables.getSelectedRowsConvertedToModel(table).length == 1;
         editSelectedInvoiceAction.setEnabled(exactlyOneInvoiceSelected);
         hideDetailsResultPanel();
@@ -264,10 +264,10 @@ public class InvoicesView extends View {
     }
 
     private ListTableModel<InvoiceOverview> buildInvoiceOverviewTableModel() throws ServiceException {
-        boolean automaticCollectionEnabled = configurationService.getBookkeeping(document).isEnableAutomaticCollection();
-        Map<String, PartyAutomaticCollectionSettings> partyIdToPartyAutomaticCollectionsSettings = !automaticCollectionEnabled ? null :
-            automaticCollectionService.findSettingsForAllParties(document).stream()
-                    .collect(toMap(PartyAutomaticCollectionSettings::getPartyId, settings -> settings));
+        boolean sepaDirectDebitEnabled = configurationService.getBookkeeping(document).isEnableSepaDirectDebit();
+        Map<String, PartyDirectDebitSettings> partyIdToPartyDirectDebitSettings = !sepaDirectDebitEnabled ? null :
+            directDebitService.findSettingsForAllParties(document).stream()
+                    .collect(toMap(PartyDirectDebitSettings::getPartyId, settings -> settings));
 
         List<ColumnDefinition<InvoiceOverview>> columnDefinitions = new ArrayList<>();
         columnDefinitions.add(
@@ -293,11 +293,11 @@ public class InvoicesView extends View {
                 ColumnDefinition.<InvoiceOverview>builder("gen.emailAddress", String.class, 100)
                         .add(InvoiceOverview::getPartyEmailAddress)
                         .build());
-        if (automaticCollectionEnabled) {
+        if (sepaDirectDebitEnabled) {
             columnDefinitions.add(
                     ColumnDefinition.<InvoiceOverview>builder("gen.Iban", String.class, 100)
-                            .add(invoice -> partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPartyId()) != null ?
-                                    partyIdToPartyAutomaticCollectionsSettings.get(invoice.getPartyId()).getIban() : null)
+                            .add(invoice -> partyIdToPartyDirectDebitSettings.get(invoice.getPartyId()) != null ?
+                                    partyIdToPartyDirectDebitSettings.get(invoice.getPartyId()).getIban() : null)
                             .build());
         }
         columnDefinitions.add(
@@ -370,9 +370,9 @@ public class InvoicesView extends View {
         }
     }
 
-    private void onGenerateAutomaticCollectionFile() {
+    private void onGenerateDirectDebitFile() {
         try {
-            GenerateAutomaticCollectionFileView view = (GenerateAutomaticCollectionFileView) viewFactory.createView(GenerateAutomaticCollectionFileView.class);
+            GenerateSepaDirectDebitFileView view = (GenerateSepaDirectDebitFileView) viewFactory.createView(GenerateSepaDirectDebitFileView.class);
             List<Invoice> selectedInvoices = getSelectedInvoices();
             view.setSelectedInvoices(selectedInvoices);
             new ViewDialog(getViewOwner().getWindow(), view).showDialog();

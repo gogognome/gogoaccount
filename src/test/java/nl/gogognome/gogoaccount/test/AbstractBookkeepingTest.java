@@ -12,7 +12,7 @@ import java.util.*;
 import org.junit.jupiter.api.*;
 import nl.gogognome.dataaccess.transaction.*;
 import nl.gogognome.gogoaccount.businessobjects.*;
-import nl.gogognome.gogoaccount.component.automaticcollection.*;
+import nl.gogognome.gogoaccount.component.directdebit.*;
 import nl.gogognome.gogoaccount.component.configuration.*;
 import nl.gogognome.gogoaccount.component.document.*;
 import nl.gogognome.gogoaccount.component.importer.*;
@@ -44,8 +44,8 @@ public abstract class AbstractBookkeepingTest {
             new PaymentAmountAgainstDebtorAndCreditorValidator(configurationService, invoiceService, textResource);
     protected final LedgerService ledgerService = new LedgerService(textResource, configurationService, invoiceService, partyService,
             paymentAmountAgainstDebtorAndCreditorValidator);
-    protected final AutomaticCollectionService automaticCollectionService = new AutomaticCollectionService(configurationService, ledgerService, partyService);
-    protected final BookkeepingService bookkeepingService = new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);
+    protected final DirectDebitService directDebitService = new DirectDebitService(configurationService, ledgerService, partyService);
+    protected final BookkeepingService bookkeepingService = new BookkeepingService(directDebitService, ledgerService, configurationService, documentService, invoiceService, partyService);
 
     protected Document document;
     protected Bookkeeping bookkeeping;
@@ -83,16 +83,16 @@ public abstract class AbstractBookkeepingTest {
         bookkeeping.setStartOfPeriod(DateUtil.createDate(2011, 1, 1));
         configurationService.updateBookkeeping(document, bookkeeping);
 
-        AutomaticCollectionSettings settings = new AutomaticCollectionSettings();
+        DirectDebitSettings settings = new DirectDebitSettings();
         settings.setIban("NL37RABO1234567890");
         settings.setSequenceNumber(100L);
-        settings.setAutomaticCollectionContractNumber("CONTR12345");
+        settings.setSepaDirectDebitContractNumber("CONTR12345");
         settings.setBic("RABONL2U");
-        automaticCollectionService.setSettings(document, settings);
+        directDebitService.setSettings(document, settings);
 
         createParties();
 
-        createPartyAutomaticCollectionSettingsFor(pietPuk);
+        createPartyDirectDebitSettingsFor(pietPuk);
 
         for (Account account : createAccounts()) {
             configurationService.createAccount(document, account);
@@ -104,16 +104,16 @@ public abstract class AbstractBookkeepingTest {
     }
 
 
-    private void createPartyAutomaticCollectionSettingsFor(Party party) throws ServiceException {
-        PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = new PartyAutomaticCollectionSettings(party.getId());
-        partyAutomaticCollectionSettings.setIban("NL52ABNA0123456789");
-        partyAutomaticCollectionSettings.setName("P. Puk");
-        partyAutomaticCollectionSettings.setAddress("Sesamstraat 137");
-        partyAutomaticCollectionSettings.setZipCode("1234 AC");
-        partyAutomaticCollectionSettings.setCity("Hilvserum");
-        partyAutomaticCollectionSettings.setCountry("NL");
-        partyAutomaticCollectionSettings.setMandateDate(DateUtil.createDate(2015, 3, 17));
-        automaticCollectionService.setAutomaticCollectionSettings(document, partyAutomaticCollectionSettings);
+    private void createPartyDirectDebitSettingsFor(Party party) throws ServiceException {
+        PartyDirectDebitSettings partyDirectDebitSettings = new PartyDirectDebitSettings(party.getId());
+        partyDirectDebitSettings.setIban("NL52ABNA0123456789");
+        partyDirectDebitSettings.setName("P. Puk");
+        partyDirectDebitSettings.setAddress("Sesamstraat 137");
+        partyDirectDebitSettings.setZipCode("1234 AC");
+        partyDirectDebitSettings.setCity("Hilvserum");
+        partyDirectDebitSettings.setCountry("NL");
+        partyDirectDebitSettings.setMandateDate(DateUtil.createDate(2015, 3, 17));
+        directDebitService.setDirectDebitSettings(document, partyDirectDebitSettings);
     }
 
     private void initFactory() {

@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.component.automaticcollection;
+package nl.gogognome.gogoaccount.component.directdebit;
 
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.text.TextResource;

@@ -1,6 +1,6 @@
 package nl.gogognome.gogoaccount;
 
-import nl.gogognome.gogoaccount.component.automaticcollection.AutomaticCollectionService;
+import nl.gogognome.gogoaccount.component.directdebit.DirectDebitService;
 import nl.gogognome.gogoaccount.component.backup.*;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
@@ -185,10 +185,10 @@ public class BeanConfiguration {
     @Bean
     @Scope("prototype")
     public ConfigureBookkeepingView configureBookkeepingView(DocumentWrapper documentWrapper,
-                                                             AutomaticCollectionService automaticCollectionService,
+                                                             DirectDebitService directDebitService,
                                                              ConfigurationService configurationService,
                                                              LedgerService ledgerService) {
-        return new ConfigureBookkeepingView(documentWrapper.document, automaticCollectionService, configurationService, ledgerService);
+        return new ConfigureBookkeepingView(documentWrapper.document, directDebitService, configurationService, ledgerService);
     }
 
     @Bean
@@ -254,10 +254,10 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public GenerateAutomaticCollectionFileView generateAutomaticCollectionFileView(DocumentWrapper documentWrapper,
-                                                                                   AutomaticCollectionService automaticCollectionService,
-                                                                                   ConfigurationService configurationService) {
-        return new GenerateAutomaticCollectionFileView(documentWrapper.document, automaticCollectionService, configurationService);
+    public GenerateSepaDirectDebitFileView generateSepaDirectDebitFileView(DocumentWrapper documentWrapper,
+                                                                               DirectDebitService directDebitService,
+                                                                               ConfigurationService configurationService) {
+        return new GenerateSepaDirectDebitFileView(documentWrapper.document, directDebitService, configurationService);
     }
 
     @Bean
@@ -268,11 +268,11 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, AutomaticCollectionService automaticCollectionService,
+    public InvoicesView invoicesView(DocumentWrapper documentWrapper, AmountFormat amountFormat, DirectDebitService directDebitService,
                                      ConfigurationService configurationService, InvoiceService invoiceService, PartyService partyService,
                                      EditInvoiceController editInvoiceController,
                                      ViewFactory viewFactory) {
-        return new InvoicesView(documentWrapper.document, amountFormat, automaticCollectionService, configurationService, invoiceService, partyService, editInvoiceController, viewFactory);
+        return new InvoicesView(documentWrapper.document, amountFormat, directDebitService, configurationService, invoiceService, partyService, editInvoiceController, viewFactory);
     }
 
     @Bean
@@ -310,9 +310,9 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public PartiesView partiesView(DocumentWrapper documentWrapper, AutomaticCollectionService automaticCollectionService,
+    public PartiesView partiesView(DocumentWrapper documentWrapper, DirectDebitService directDebitService,
                                    PartyService partyService, ViewFactory viewFactory) {
-        return new PartiesView(documentWrapper.document, automaticCollectionService, partyService, viewFactory);
+        return new PartiesView(documentWrapper.document, directDebitService, partyService, viewFactory);
     }
 
     @Bean
@@ -359,9 +359,11 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public AutomaticCollectionService automaticCollectionService(ConfigurationService configurationService,
-                                                                 LedgerService ledgerService, PartyService partyService) {
-        return new AutomaticCollectionService(configurationService, ledgerService, partyService);
+    public DirectDebitService directDebitService(
+            ConfigurationService configurationService,
+            LedgerService ledgerService,
+            PartyService partyService) {
+        return new DirectDebitService(configurationService, ledgerService, partyService);
     }
 
     @Bean
@@ -372,10 +374,10 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public BookkeepingService bookkeepingService(AutomaticCollectionService automaticCollectionService, LedgerService ledgerService,
+    public BookkeepingService bookkeepingService(DirectDebitService directDebitService, LedgerService ledgerService,
                                                  ConfigurationService configurationService,
                                                  DocumentService documentService, InvoiceService invoiceService, PartyService partyService) {
-        return new BookkeepingService(automaticCollectionService, ledgerService, configurationService, documentService, invoiceService, partyService);
+        return new BookkeepingService(directDebitService, ledgerService, configurationService, documentService, invoiceService, partyService);
     }
 
     @Bean

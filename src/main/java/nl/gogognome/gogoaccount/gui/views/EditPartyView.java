@@ -1,7 +1,7 @@
 package nl.gogognome.gogoaccount.gui.views;
 
 import com.google.common.base.Strings;
-import nl.gogognome.gogoaccount.component.automaticcollection.PartyAutomaticCollectionSettings;
+import nl.gogognome.gogoaccount.component.directdebit.PartyDirectDebitSettings;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
 import nl.gogognome.gogoaccount.component.document.Document;
 import nl.gogognome.gogoaccount.component.party.Party;
@@ -42,13 +42,13 @@ public class EditPartyView extends OkCancelView {
     private final StringModel zipCodeModel = new StringModel();
     private final StringModel cityModel = new StringModel();
     private final StringModel emailAddressModel = new StringModel();
-    private final StringModel automaticCollectionNameModel = new StringModel();
-    private final StringModel automaticCollectionAddressModel = new StringModel();
-    private final StringModel automaticCollectionZipCodeModel = new StringModel();
-    private final StringModel automaticCollectionCityModel = new StringModel();
-    private final StringModel automaticCollectionCountryModel = new StringModel();
-    private final StringModel automaticCollectionIbanModel = new StringModel();
-    private final DateModel automaticCollectionMandateDateModel = new DateModel();
+    private final StringModel sepaDirectDebitNameModel = new StringModel();
+    private final StringModel sepaDirectDebitAddressModel = new StringModel();
+    private final StringModel sepaDirectDebitZipCodeModel = new StringModel();
+    private final StringModel sepaDirectDebitCityModel = new StringModel();
+    private final StringModel sepaDirectDebitCountryModel = new StringModel();
+    private final StringModel sepaDirectDebitIbanModel = new StringModel();
+    private final DateModel sepaDirectDebitMandateDateModel = new DateModel();
     private final List<ListModel<String>> tagListModels = new ArrayList<>();
     private final DateModel birthDateModel = new DateModel();
     private final JTextArea taRemarks = new JTextArea(5, 40);
@@ -57,10 +57,10 @@ public class EditPartyView extends OkCancelView {
 
     private Party initialParty;
     private List<String> initialTags;
-    private PartyAutomaticCollectionSettings initialAutomaticCollectionSettings;
+    private PartyDirectDebitSettings initialSepaDirectDebitSettings;
     private Party resultParty;
     private List<String> resultTags;
-    private PartyAutomaticCollectionSettings resulAutomaticCollectionSettings;
+    private PartyDirectDebitSettings resulSepaDirectDebitSettings;
 
     public EditPartyView(Document document, ConfigurationService configurationService, PartyService partyService) {
         this.document = document;
@@ -71,10 +71,10 @@ public class EditPartyView extends OkCancelView {
     }
 
     public void setInitialParty(Party party, List<String> initialTags,
-                                PartyAutomaticCollectionSettings automaticCollectionSettings) {
+                                PartyDirectDebitSettings sepaDirectDebitSettings) {
         this.initialParty = party;
         this.initialTags = initialTags;
-        this.initialAutomaticCollectionSettings = automaticCollectionSettings;
+        this.initialSepaDirectDebitSettings = sepaDirectDebitSettings;
     }
 
     @Override
@@ -111,14 +111,14 @@ public class EditPartyView extends OkCancelView {
             tagListModels.add(new ListModel<>(tags)); // add one empty tag input field to start with
         }
 
-        if (initialAutomaticCollectionSettings != null) {
-            automaticCollectionNameModel.setString(initialAutomaticCollectionSettings.getName());
-            automaticCollectionAddressModel.setString(initialAutomaticCollectionSettings.getAddress());
-            automaticCollectionZipCodeModel.setString(initialAutomaticCollectionSettings.getZipCode());
-            automaticCollectionCityModel.setString(initialAutomaticCollectionSettings.getCity());
-            automaticCollectionCountryModel.setString(initialAutomaticCollectionSettings.getCountry());
-            automaticCollectionIbanModel.setString(initialAutomaticCollectionSettings.getIban());
-            automaticCollectionMandateDateModel.setDate(initialAutomaticCollectionSettings.getMandateDate());
+        if (initialSepaDirectDebitSettings != null) {
+            sepaDirectDebitNameModel.setString(initialSepaDirectDebitSettings.getName());
+            sepaDirectDebitAddressModel.setString(initialSepaDirectDebitSettings.getAddress());
+            sepaDirectDebitZipCodeModel.setString(initialSepaDirectDebitSettings.getZipCode());
+            sepaDirectDebitCityModel.setString(initialSepaDirectDebitSettings.getCity());
+            sepaDirectDebitCountryModel.setString(initialSepaDirectDebitSettings.getCountry());
+            sepaDirectDebitIbanModel.setString(initialSepaDirectDebitSettings.getIban());
+            sepaDirectDebitMandateDateModel.setDate(initialSepaDirectDebitSettings.getMandateDate());
         }
 	}
 
@@ -142,18 +142,18 @@ public class EditPartyView extends OkCancelView {
         panel.add(ifc, BorderLayout.NORTH);
 
         try {
-            if (configurationService.getBookkeeping(document).isEnableAutomaticCollection()) {
-                InputFieldsColumn automaticCollectionFields = new InputFieldsColumn();
-                automaticCollectionFields.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.automaticCollectionInformation"));
-                automaticCollectionFields.addField("editPartyView.autoCollectionName", automaticCollectionNameModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionAddress", automaticCollectionAddressModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionZipCode", automaticCollectionZipCodeModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionCity", automaticCollectionCityModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionCountry", automaticCollectionCountryModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionIban", automaticCollectionIbanModel);
-                automaticCollectionFields.addField("editPartyView.autoCollectionMandateDate", automaticCollectionMandateDateModel);
+            if (configurationService.getBookkeeping(document).isEnableSepaDirectDebit()) {
+                InputFieldsColumn sepaDirectDebitFields = new InputFieldsColumn();
+                sepaDirectDebitFields.setBorder(widgetFactory.createTitleBorderWithPadding("editPartyView.directDebitInformation"));
+                sepaDirectDebitFields.addField("editPartyView.sepaDirectDebitName", sepaDirectDebitNameModel);
+                sepaDirectDebitFields.addField("editPartyView.sepaDirectDebitAddress", sepaDirectDebitAddressModel);
+                sepaDirectDebitFields.addField("editPartyView.sepaDirectDebitZipCode", sepaDirectDebitZipCodeModel);
+                sepaDirectDebitFields.addField("editPartyView.sepaDirectDebitCity", sepaDirectDebitCityModel);
+                sepaDirectDebitFields.addField("editPartyView.sepaDirectDebitCountry", sepaDirectDebitCountryModel);
+                sepaDirectDebitFields.addField("editPartyView.sepaDirectDebitIban", sepaDirectDebitIbanModel);
+                sepaDirectDebitFields.addField("editPartyView.sepaDirectDebitMandateDate", sepaDirectDebitMandateDateModel);
 
-                panel.add(automaticCollectionFields, BorderLayout.SOUTH);
+                panel.add(sepaDirectDebitFields, BorderLayout.SOUTH);
             }
         } catch (ServiceException e) {
             messageDialog.showErrorMessage("gen.internalError", e);
@@ -219,14 +219,14 @@ public class EditPartyView extends OkCancelView {
             }
         }
 
-        resulAutomaticCollectionSettings = new PartyAutomaticCollectionSettings(resultParty.getId());
-        resulAutomaticCollectionSettings.setName(automaticCollectionNameModel.getString());
-        resulAutomaticCollectionSettings.setAddress(automaticCollectionAddressModel.getString());
-        resulAutomaticCollectionSettings.setZipCode(automaticCollectionZipCodeModel.getString());
-        resulAutomaticCollectionSettings.setCity(automaticCollectionCityModel.getString());
-        resulAutomaticCollectionSettings.setCountry(automaticCollectionCountryModel.getString());
-        resulAutomaticCollectionSettings.setIban(automaticCollectionIbanModel.getString());
-        resulAutomaticCollectionSettings.setMandateDate(automaticCollectionMandateDateModel.getDate());
+        resulSepaDirectDebitSettings = new PartyDirectDebitSettings(resultParty.getId());
+        resulSepaDirectDebitSettings.setName(sepaDirectDebitNameModel.getString());
+        resulSepaDirectDebitSettings.setAddress(sepaDirectDebitAddressModel.getString());
+        resulSepaDirectDebitSettings.setZipCode(sepaDirectDebitZipCodeModel.getString());
+        resulSepaDirectDebitSettings.setCity(sepaDirectDebitCityModel.getString());
+        resulSepaDirectDebitSettings.setCountry(sepaDirectDebitCountryModel.getString());
+        resulSepaDirectDebitSettings.setIban(sepaDirectDebitIbanModel.getString());
+        resulSepaDirectDebitSettings.setMandateDate(sepaDirectDebitMandateDateModel.getDate());
 
         requestClose();
     }
@@ -248,11 +248,11 @@ public class EditPartyView extends OkCancelView {
     }
 
     /**
-     * Gets the settings for automatic collection for a party as entered by the user.
-     * @return the automatic settings or <code>null</code> if the user canceled this dialog
+     * Gets the settings for direct debit for a party as entered by the user.
+     * @return the direct debit settings or <code>null</code> if the user canceled this dialog
      */
-    public PartyAutomaticCollectionSettings getEnteredAutomaticCollectionSettings() {
-        return resulAutomaticCollectionSettings;
+    public PartyDirectDebitSettings getEnteredSepaDirectDebitSettings() {
+        return resulSepaDirectDebitSettings;
     }
 
     /**

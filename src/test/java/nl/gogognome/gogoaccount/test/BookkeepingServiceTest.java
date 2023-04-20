@@ -10,7 +10,7 @@ import java.io.*;
 import java.util.*;
 import org.junit.jupiter.api.*;
 import nl.gogognome.gogoaccount.businessobjects.*;
-import nl.gogognome.gogoaccount.component.automaticcollection.*;
+import nl.gogognome.gogoaccount.component.directdebit.*;
 import nl.gogognome.gogoaccount.component.configuration.*;
 import nl.gogognome.gogoaccount.component.document.*;
 import nl.gogognome.gogoaccount.component.invoice.*;
@@ -520,7 +520,7 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             bookkeeping.setCurrency(Currency.getInstance("EUR"));
             bookkeeping.setInvoiceIdFormat("I-yyyy.nnn");
             bookkeeping.setPartyIdFormat("P-yyyy.nnn");
-            bookkeeping.setEnableAutomaticCollection(true);
+            bookkeeping.setEnableSepaDirectDebit(true);
             bookkeeping.setOrganizationAddress("Organization address");
             bookkeeping.setOrganizationCity("Organization city");
             bookkeeping.setOrganizationCountry("NL");
@@ -545,20 +545,20 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void closeBookkeepingShouldCopyAutomaticCollectionDetails() throws Exception {
+    public void closeBookkeepingShouldCopyDirectDebitDetails() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            AutomaticCollectionSettings settings = automaticCollectionService.getSettings(document);
-            settings.setAutomaticCollectionContractNumber("contract number");
+            DirectDebitSettings settings = directDebitService.getSettings(document);
+            settings.setSepaDirectDebitContractNumber("contract number");
             settings.setBic("bic");
             settings.setIban("iban");
             settings.setSequenceNumber(123456L);
-            automaticCollectionService.setSettings(document, settings);
+            directDebitService.setSettings(document, settings);
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            AutomaticCollectionSettings newSettings = automaticCollectionService.getSettings(newDocument);
-            assertEquals(settings.getAutomaticCollectionContractNumber(), newSettings.getAutomaticCollectionContractNumber());
+            DirectDebitSettings newSettings = directDebitService.getSettings(newDocument);
+            assertEquals(settings.SepaDirectDebitContractNumber(), newSettings.SepaDirectDebitContractNumber());
             assertEquals(settings.getBic(), newSettings.getBic());
             assertEquals(settings.getIban(), newSettings.getIban());
             assertEquals(settings.getSequenceNumber(), newSettings.getSequenceNumber());
@@ -568,10 +568,10 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
     }
 
     @Test
-    public void closeBookkeepingShouldCopyAutomaticCollectionDetailsForParties() throws Exception {
+    public void closeBookkeepingShouldCopyDirectDebitDetailsForParties() throws Exception {
         File newBookkeepingFile = File.createTempFile("test", "h2.db");
         try {
-            PartyAutomaticCollectionSettings settings = automaticCollectionService.findSettings(document, pietPuk);
+            PartyDirectDebitSettings settings = directDebitService.findSettings(document, pietPuk);
             settings.setAddress("address");
             settings.setCity("city");
             settings.setCountry("NL");
@@ -579,11 +579,11 @@ public class BookkeepingServiceTest extends AbstractBookkeepingTest {
             settings.setMandateDate(createDate(2016, 10, 3));
             settings.setName("name");
             settings.setZipCode("zipCode");
-            automaticCollectionService.setAutomaticCollectionSettings(document, settings);
+            directDebitService.setDirectDebitSettings(document, settings);
 
             Document newDocument = closeBookkeeping(newBookkeepingFile, createDate(2012, 1, 1));
 
-            PartyAutomaticCollectionSettings newSettings = automaticCollectionService.findSettings(newDocument, pietPuk);
+            PartyDirectDebitSettings newSettings = directDebitService.findSettings(newDocument, pietPuk);
             assertEquals(settings.getAddress(), newSettings.getAddress());
             assertEquals(settings.getCity(), newSettings.getCity());
             assertEquals(settings.getCountry(), newSettings.getCountry());

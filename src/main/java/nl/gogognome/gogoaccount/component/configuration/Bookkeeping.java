@@ -17,7 +17,7 @@ public class Bookkeeping {
     private String organizationZipCode;
     private String organizationCity;
     private String organizationCountry;
-    private boolean enableAutomaticCollection;
+    private boolean enableSepaDirectDebit;
 
     public String getDescription() {
         return description;
@@ -99,12 +99,12 @@ public class Bookkeeping {
         this.startOfPeriod = startOfPeriod;
     }
 
-    public boolean isEnableAutomaticCollection() {
-        return enableAutomaticCollection;
+    public boolean isEnableSepaDirectDebit() {
+        return enableSepaDirectDebit;
     }
 
-    public void setEnableAutomaticCollection(boolean enableAutomaticCollection) {
-        this.enableAutomaticCollection = enableAutomaticCollection;
+    public void setEnableSepaDirectDebit(boolean enableSepaDirectDebit) {
+        this.enableSepaDirectDebit = enableSepaDirectDebit;
     }
 
     public boolean isClosed() {

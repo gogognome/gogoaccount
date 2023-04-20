@@ -1,18 +1,18 @@
-package nl.gogognome.gogoaccount.component.automaticcollection;
+package nl.gogognome.gogoaccount.component.directdebit;
 
-public class AutomaticCollectionSettings {
+public class DirectDebitSettings {
 
     private String iban;
     private String bic;
-    private String automaticCollectionContractNumber;
+    private String sepaDirectDebitContractNumber;
     private long sequenceNumber;
 
-    public String getAutomaticCollectionContractNumber() {
-        return automaticCollectionContractNumber;
+    public String SepaDirectDebitContractNumber() {
+        return sepaDirectDebitContractNumber;
     }
 
-    public void setAutomaticCollectionContractNumber(String automaticCollectionContractNumber) {
-        this.automaticCollectionContractNumber = automaticCollectionContractNumber;
+    public void setSepaDirectDebitContractNumber(String sepaDirectDebitContractNumber) {
+        this.sepaDirectDebitContractNumber = sepaDirectDebitContractNumber;
     }
 
     public String getIban() {

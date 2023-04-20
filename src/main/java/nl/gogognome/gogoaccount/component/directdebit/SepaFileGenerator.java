@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.component.automaticcollection;
+package nl.gogognome.gogoaccount.component.directdebit;
 
 import nl.gogognome.gogoaccount.component.configuration.Bookkeeping;
 import nl.gogognome.gogoaccount.component.configuration.ConfigurationService;
@@ -43,9 +43,9 @@ class SepaFileGenerator {
         this.configurationService = configurationService;
     }
 
-    void generate(AutomaticCollectionSettings settings, List<Invoice> invoices, File fileToCreate,
+    void generate(DirectDebitSettings settings, List<Invoice> invoices, File fileToCreate,
                   Date collectionDate, Map<String, Party> idToParty,
-                  Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings)
+                  Map<String, PartyDirectDebitSettings> idToPartyDirectDebitSettings)
             throws Exception {
         Bookkeeping bookkeeping = configurationService.getBookkeeping(document);
         amountFormat = new AmountFormat(Locale.US, bookkeeping.getCurrency()); // must use US locale. Therefore, amount format cannot be injected
@@ -109,12 +109,12 @@ class SepaFileGenerator {
 
         for (Invoice invoice : invoices) {
             Party party = idToParty.get(invoice.getPartyId());
-            PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = idToPartyAutomaticCollectionSettings.get(invoice.getPartyId());
-            if (partyAutomaticCollectionSettings == null) {
-                throw new ServiceException("Party " + party.toString() + " has no automatic collection settings. " +
+            PartyDirectDebitSettings partyDirectDebitSettings = idToPartyDirectDebitSettings.get(invoice.getPartyId());
+            if (partyDirectDebitSettings == null) {
+                throw new ServiceException("Party " + party.toString() + " has no direct debit settings. " +
                         "Those settings are required to generate a SEPA file");
             }
-            addInvoiceElements(doc, paymentInformationIdentification, invoice, party, partyAutomaticCollectionSettings, settings,
+            addInvoiceElements(doc, paymentInformationIdentification, invoice, party, partyDirectDebitSettings, settings,
                     invoice.getDescription());
         }
 
@@ -128,7 +128,7 @@ class SepaFileGenerator {
     }
 
     private void addInvoiceElements(org.w3c.dom.Document doc, Element parent, Invoice invoice, Party party,
-                                    PartyAutomaticCollectionSettings partyAutomaticCollectionSettings, AutomaticCollectionSettings settings,
+                                    PartyDirectDebitSettings partyDirectDebitSettings, DirectDebitSettings settings,
                                     String description) throws ServiceException {
         Element ddTransactionInformation = addElement(doc, parent, "DrctDbtTxInf");
         addElement(doc, ddTransactionInformation, "PmtId/EndToEndId", toAlphaNumerical(invoice.getId(), 35));
@@ -143,33 +143,33 @@ class SepaFileGenerator {
         Element directDebitTransaction = addElement(doc, ddTransactionInformation, "DrctDbtTx");
         Element mandateRelatedInformation = addElement(doc, directDebitTransaction, "MndtRltdInf");
         addElement(doc, mandateRelatedInformation, "MndtId", toAlphaNumerical(party.getId(), 35));
-        if (partyAutomaticCollectionSettings.getMandateDate() == null) {
+        if (partyDirectDebitSettings.getMandateDate() == null) {
             throw new IllegalArgumentException("Party " + party.toString() + " has no mandate date specified, " +
                     "which is required to generate a SEPA file");
         }
-        addElement(doc, mandateRelatedInformation, "DtOfSgntr", dateFormat.format(partyAutomaticCollectionSettings.getMandateDate()));
+        addElement(doc, mandateRelatedInformation, "DtOfSgntr", dateFormat.format(partyDirectDebitSettings.getMandateDate()));
         addElement(doc, mandateRelatedInformation, "AmdmntInd", "false");
 
         Element other = addElement(doc, directDebitTransaction, "CdtrSchmeId/Id/PrvtId/Othr");
-        addElement(doc, other, "Id", toAlphaNumerical(settings.getAutomaticCollectionContractNumber(), 35));
+        addElement(doc, other, "Id", toAlphaNumerical(settings.SepaDirectDebitContractNumber(), 35));
         addElement(doc, other, "SchmeNm/Prtry", "SEPA");
 
         addElement(doc, ddTransactionInformation, "DbtrAgt/FinInstnId/Othr/Id", "NOTPROVIDED");
 
         Element debtor = addElement(doc, ddTransactionInformation, "Dbtr");
-        addElement(doc, debtor, "Nm", partyAutomaticCollectionSettings.getName());
+        addElement(doc, debtor, "Nm", partyDirectDebitSettings.getName());
         Element postalAddress = addElement(doc, debtor, "PstlAdr");
-        addElement(doc, postalAddress, "Ctry", partyAutomaticCollectionSettings.getCountry());
-        if (!StringUtil.isNullOrEmpty(partyAutomaticCollectionSettings.getAddress())) {
-            addElement(doc, postalAddress, "AdrLine", partyAutomaticCollectionSettings.getAddress());
+        addElement(doc, postalAddress, "Ctry", partyDirectDebitSettings.getCountry());
+        if (!StringUtil.isNullOrEmpty(partyDirectDebitSettings.getAddress())) {
+            addElement(doc, postalAddress, "AdrLine", partyDirectDebitSettings.getAddress());
         }
         String zipCodeAndCity = (StringUtil.nullToEmptyString(party.getZipCode()) + ' '
-                + StringUtil.nullToEmptyString(partyAutomaticCollectionSettings.getCity())).trim();
+                + StringUtil.nullToEmptyString(partyDirectDebitSettings.getCity())).trim();
         if (!StringUtil.isNullOrEmpty(zipCodeAndCity)) {
             addElement(doc, postalAddress, "AdrLine", zipCodeAndCity);
         }
 
-        String iban = partyAutomaticCollectionSettings.getIban();
+        String iban = partyDirectDebitSettings.getIban();
         ibanValidator.validate(iban);
         addElement(doc, ddTransactionInformation, "DbtrAcct/Id/IBAN", iban);
         addElement(doc, ddTransactionInformation, "Purp/Cd", "OTHR");

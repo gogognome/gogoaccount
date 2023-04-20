@@ -13,7 +13,7 @@ import javax.swing.filechooser.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.slf4j.*;
-import nl.gogognome.gogoaccount.component.automaticcollection.*;
+import nl.gogognome.gogoaccount.component.directdebit.*;
 import nl.gogognome.gogoaccount.component.document.*;
 import nl.gogognome.gogoaccount.component.party.*;
 import nl.gogognome.gogoaccount.gui.*;
@@ -34,7 +34,7 @@ public class PartiesView extends View {
     private final static Logger logger = LoggerFactory.getLogger(PartiesView.class);
 
     private final Document document;
-    private final AutomaticCollectionService automaticCollectionService;
+    private final DirectDebitService directDebitService;
     private final PartyService partyService;
     private final ViewFactory viewFactory;
     private final MessageDialog messageDialog;
@@ -57,8 +57,8 @@ public class PartiesView extends View {
 
     private Party[] selectedParties;
 
-    public PartiesView(Document document, AutomaticCollectionService automaticCollectionService, PartyService partyService, ViewFactory viewFactory) {
-        this.automaticCollectionService = automaticCollectionService;
+    public PartiesView(Document document, DirectDebitService directDebitService, PartyService partyService, ViewFactory viewFactory) {
+        this.directDebitService = directDebitService;
         this.partyService = partyService;
         this.document = document;
         this.viewFactory = viewFactory;
@@ -215,9 +215,9 @@ public class PartiesView extends View {
             List<String> tags = editPartyView.getEnteredTags();
             if (party != null && tags != null) {
                 party = partyService.createPartyWithNewId(document, party, tags);
-                PartyAutomaticCollectionSettings enteredAutomaticCollectionSettings = editPartyView.getEnteredAutomaticCollectionSettings();
-                enteredAutomaticCollectionSettings.setPartyId(party.getId());
-                automaticCollectionService.setAutomaticCollectionSettings(document, enteredAutomaticCollectionSettings);
+                PartyDirectDebitSettings enteredDirectDebitSettings = editPartyView.getEnteredSepaDirectDebitSettings();
+                enteredDirectDebitSettings.setPartyId(party.getId());
+                directDebitService.setDirectDebitSettings(document, enteredDirectDebitSettings);
             }
             onSearch();
         });
@@ -232,7 +232,7 @@ public class PartiesView extends View {
 
             Party oldParty = partiesTableModel.getRow(row);
             List<String> oldTags = partyService.findTagsForParty(document, oldParty);
-            PartyAutomaticCollectionSettings oldSettings = automaticCollectionService.findSettings(document, oldParty);
+            PartyDirectDebitSettings oldSettings = directDebitService.findSettings(document, oldParty);
             EditPartyView editPartyView = (EditPartyView) viewFactory.createView(EditPartyView.class);
             editPartyView.setInitialParty(oldParty, oldTags, oldSettings);
             ViewDialog dialog = new ViewDialog(getViewOwner().getWindow(), editPartyView);
@@ -242,7 +242,7 @@ public class PartiesView extends View {
             List<String> tags = editPartyView.getEnteredTags();
             if (party != null && tags != null) {
                 partyService.updateParty(document, party, tags);
-                automaticCollectionService.setAutomaticCollectionSettings(document, editPartyView.getEnteredAutomaticCollectionSettings());
+                directDebitService.setDirectDebitSettings(document, editPartyView.getEnteredSepaDirectDebitSettings());
             }
             onSearch();
 

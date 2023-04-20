@@ -1,4 +1,4 @@
-package nl.gogognome.gogoaccount.component.automaticcollection;
+package nl.gogognome.gogoaccount.component.directdebit;
 
 import au.com.bytecode.opencsv.CSVWriter;
 import nl.gogognome.gogoaccount.component.configuration.Account;
@@ -31,36 +31,36 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
-public class AutomaticCollectionService {
+public class DirectDebitService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ConfigurationService configurationService;
     private final LedgerService ledgerService;
     private final PartyService partyService;
 
-    public AutomaticCollectionService(ConfigurationService configurationService, LedgerService ledgerService,
-                                      PartyService partyService) {
+    public DirectDebitService(ConfigurationService configurationService, LedgerService ledgerService,
+                              PartyService partyService) {
         this.configurationService = configurationService;
         this.ledgerService = ledgerService;
         this.partyService = partyService;
     }
 
-    public AutomaticCollectionSettings getSettings(Document document) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new AutomaticCollectionSettingsDAO(document).getSettings());
+    public DirectDebitSettings getSettings(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new DirectDebitSettingsDAO(document).getSettings());
     }
 
-    public void setSettings(Document document, AutomaticCollectionSettings settings) throws ServiceException {
-        ServiceTransaction.withoutResult(() -> new AutomaticCollectionSettingsDAO(document).setSettings(settings));
+    public void setSettings(Document document, DirectDebitSettings settings) throws ServiceException {
+        ServiceTransaction.withoutResult(() -> new DirectDebitSettingsDAO(document).setSettings(settings));
     }
 
-    public PartyAutomaticCollectionSettings findSettings(Document document, Party party) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new PartyAutomaticCollectionSettingsDAO(document).find(party.getId()));
+    public PartyDirectDebitSettings findSettings(Document document, Party party) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new PartyDirectDebitSettingsDAO(document).find(party.getId()));
     }
 
-    public void setAutomaticCollectionSettings(Document document, PartyAutomaticCollectionSettings settings)
+    public void setDirectDebitSettings(Document document, PartyDirectDebitSettings settings)
             throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
-            PartyAutomaticCollectionSettingsDAO dao = new PartyAutomaticCollectionSettingsDAO(document);
+            PartyDirectDebitSettingsDAO dao = new PartyDirectDebitSettingsDAO(document);
             if (dao.exists(settings.getPartyId())) {
                 dao.update(settings);
             } else {
@@ -69,11 +69,11 @@ public class AutomaticCollectionService {
         });
     }
 
-    public List<PartyAutomaticCollectionSettings> findSettingsForAllParties(Document document) throws ServiceException {
-        return ServiceTransaction.withResult(() -> new PartyAutomaticCollectionSettingsDAO(document).findAll());
+    public List<PartyDirectDebitSettings> findSettingsForAllParties(Document document) throws ServiceException {
+        return ServiceTransaction.withResult(() -> new PartyDirectDebitSettingsDAO(document).findAll());
     }
 
-    public void createSepaAutomaticCollectionFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate, TaskProgressListener progressListener)
+    public void createSepaDirectDebitFile(Document document, File fileToCreate, List<Invoice> invoices, Date collectionDate, TaskProgressListener progressListener)
             throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             progressListener.onProgressUpdate(0);
@@ -84,16 +84,16 @@ public class AutomaticCollectionService {
             }
 
             // Get data needed for generating the SEPA file
-            AutomaticCollectionSettings settings = getSettings(document);
+            DirectDebitSettings settings = getSettings(document);
             List<String> partyIds = invoices.stream().map(Invoice::getPartyId).collect(toList());
             Map<String, Party> idToParty = partyService.getIdToParty(document, partyIds);
-            Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings =
-                    new PartyAutomaticCollectionSettingsDAO(document).getIdToParty(partyIds);
+            Map<String, PartyDirectDebitSettings> idToPartyDirectDebitSettings =
+                    new PartyDirectDebitSettingsDAO(document).getIdToParty(partyIds);
 
             // Determine which invoices that lead to validation errors in the SEPA file
             SepaFileGenerator sepaFileGenerator = new SepaFileGenerator(document, configurationService);
             List<String> invalidInvoices = determineInvalidInvoices(fileToCreate, invoices, collectionDate,
-                    settings, idToParty, idToPartyAutomaticCollectionSettings, sepaFileGenerator, progressListener);
+                    settings, idToParty, idToPartyDirectDebitSettings, sepaFileGenerator, progressListener);
 
             if (!invalidInvoices.isEmpty()) {
                 if (!fileToCreate.delete()) {
@@ -106,7 +106,7 @@ public class AutomaticCollectionService {
 
             // Generate the SEPA file for all invoices
             sepaFileGenerator.generate(settings, invoices, fileToCreate, collectionDate,
-                    idToParty, idToPartyAutomaticCollectionSettings);
+                    idToParty, idToPartyDirectDebitSettings);
 
             // Increase sequence number for next SEPA file
             settings.setSequenceNumber(settings.getSequenceNumber() + 1);
@@ -114,16 +114,22 @@ public class AutomaticCollectionService {
         });
     }
 
-    private List<String> determineInvalidInvoices(File fileToCreate, List<Invoice> invoices, Date collectionDate, AutomaticCollectionSettings settings,
-                                                  Map<String, Party> idToParty, Map<String, PartyAutomaticCollectionSettings> idToPartyAutomaticCollectionSettings,
-                                                  SepaFileGenerator sepaFileGenerator, TaskProgressListener progressListener) throws Exception {
+    private List<String> determineInvalidInvoices(
+            File fileToCreate,
+            List<Invoice> invoices,
+            Date collectionDate,
+            DirectDebitSettings settings,
+            Map<String, Party> idToParty,
+            Map<String, PartyDirectDebitSettings> idToPartyDirectDebbitSettings,
+            SepaFileGenerator sepaFileGenerator,
+            TaskProgressListener progressListener) throws Exception {
         List<String> invalidInvoices = new ArrayList<>();
         for (int i=0; i<invoices.size(); i++) {
             progressListener.onProgressUpdate((i+1) * 100 / invoices.size());
             try {
                 sepaFileGenerator.generate(settings, invoices.subList(i, i+1), fileToCreate, collectionDate,
-                        idToParty, idToPartyAutomaticCollectionSettings);
-                validateSepaAutomaticCollectionFile(fileToCreate);
+                        idToParty, idToPartyDirectDebbitSettings);
+                validateSepaDirectDebitFile(fileToCreate);
             } catch (ServiceException e) {
                 invalidInvoices.add(invoices.get(i).getId() + " (" + idToParty.get(invoices.get(i).getPartyId())
                         + "): " + e.getMessage());
@@ -132,10 +138,9 @@ public class AutomaticCollectionService {
         return invalidInvoices;
     }
 
-    public void validateSepaAutomaticCollectionFile(File sepaFile) throws ServiceException {
+    public void validateSepaDirectDebitFile(File sepaFile) throws ServiceException {
         try {
-            SchemaFactory factory =
-                    SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try (InputStream xsdStream = getClass().getResourceAsStream("/sepa/pain.008.001.02.xsd")) {
                 Schema schema = factory.newSchema(new StreamSource(xsdStream));
                 Validator validator = schema.newValidator();
@@ -146,9 +151,14 @@ public class AutomaticCollectionService {
         }
     }
 
-    public void createJournalEntryForAutomaticCollection(Document document, Date collectionDate, String journalEntryId,
-                                                         String journalEntryDescription, List<Invoice> invoices,
-                                                         Account bankAccount, Account debtorAccount) throws ServiceException {
+    public void createJournalEntryForDirectDebit(
+            Document document,
+            Date collectionDate,
+            String journalEntryId,
+            String journalEntryDescription,
+            List<Invoice> invoices,
+            Account bankAccount,
+            Account debtorAccount) throws ServiceException {
         JournalEntry journalEntry = new JournalEntry();
         journalEntry.setDate(collectionDate);
         journalEntry.setId(journalEntryId);
@@ -172,25 +182,25 @@ public class AutomaticCollectionService {
         ledgerService.addJournalEntry(document, journalEntry, details, true);
     }
 
-    public void createCsvForAutomaticCollectionFile(Document document, File csvFile, List<Invoice> invoices) throws ServiceException {
+    public void createCsvForDirectDebitFile(Document document, File csvFile, List<Invoice> invoices) throws ServiceException {
         ServiceTransaction.withoutResult(() -> {
             Currency currency = configurationService.getBookkeeping(document).getCurrency();
             AmountFormat amountFormat = new AmountFormat(new Locale("nl", "NL"), currency);
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            PartyAutomaticCollectionSettingsDAO partyAutomaticCollectionSettingsDAO = new PartyAutomaticCollectionSettingsDAO(document);
+            PartyDirectDebitSettingsDAO partyDirectDebitSettingsDAO = new PartyDirectDebitSettingsDAO(document);
             try (CSVWriter csvWriter = new CSVWriter(new FileWriter(csvFile), ';')) {
                 for (Invoice invoice : invoices) {
                     String[] line = new String[11];
                     line[0] = amountFormat.formatAmountWithoutCurrency(invoice.getAmountToBePaid().toBigInteger());
                     line[1] = invoice.getPartyId();
-                    PartyAutomaticCollectionSettings partyAutomaticCollectionSettings = partyAutomaticCollectionSettingsDAO.get(invoice.getPartyId());
-                    line[2] = dateFormat.format(partyAutomaticCollectionSettings.getMandateDate());
+                    PartyDirectDebitSettings partyDirectDebitSettings = partyDirectDebitSettingsDAO.get(invoice.getPartyId());
+                    line[2] = dateFormat.format(partyDirectDebitSettings.getMandateDate());
                     line[3] = "";
-                    line[4] = partyAutomaticCollectionSettings.getIban();
-                    line[5] = partyAutomaticCollectionSettings.getName();
-                    line[6] = partyAutomaticCollectionSettings.getCountry();
-                    line[7] = partyAutomaticCollectionSettings.getAddress();
-                    line[8] = (partyAutomaticCollectionSettings.getZipCode() + ' ' + partyAutomaticCollectionSettings.getCity()).trim();
+                    line[4] = partyDirectDebitSettings.getIban();
+                    line[5] = partyDirectDebitSettings.getName();
+                    line[6] = partyDirectDebitSettings.getCountry();
+                    line[7] = partyDirectDebitSettings.getAddress();
+                    line[8] = (partyDirectDebitSettings.getZipCode() + ' ' + partyDirectDebitSettings.getCity()).trim();
                     line[9] = "OTHR";
                     line[10] = invoice.getDescription();
                     csvWriter.writeNext(line);
