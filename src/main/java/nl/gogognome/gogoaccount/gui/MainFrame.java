@@ -147,7 +147,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenu helpMenu = widgetFactory.createMenu("mi.help");
 
         // the file menu
-        JMenuItem miNewEdition = widgetFactory.createMenuItem("mi.newBookkeeping", e -> handleNewEdition());
+        JMenuItem miNewEdition = widgetFactory.createMenuItem("mi.newBookkeeping", e -> handleNewBookkeeping());
         JMenuItem miOpenEdition = widgetFactory.createMenuItem("mi.openBookkeeping", e -> handleOpenBookkeeping());
         JMenuItem miConfigureBookkeeping = widgetFactory.createMenuItem("mi.configureBookkeeping", this);
         JMenuItem miConfigureEmail = widgetFactory.createMenuItem("mi.configureEmail", e -> onConfigureEmail());
@@ -226,7 +226,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.about".equals(command)) { handleAbout(); }
     }
 
-    public void handleNewEdition() {
+    public void handleNewBookkeeping() {
         handleException.of("mf.failedToCreateNewBookkeeping", () -> {
             File file = askUserForFileOfNewBookkeeping();
             if (file == null) {
@@ -254,7 +254,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
 
     private File askUserForFileOfNewBookkeeping() {
         String extension = ".h2.db";
-        File directory = document != null ? new File(document.getFilePath()).getParentFile() : null;
+        File directory = document != null ? document.getDatabaseFile().getParentFile() : null;
         JFileChooser fc = new JFileChooser(directory);
         fc.setFileFilter(new FileFilter() {
             @Override
@@ -283,8 +283,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     private void handleOpenBookkeeping()
     {
         JFileChooser fc = new JFileChooser();
-        if (document != null && document.getFilePath() != null) {
-            fc.setCurrentDirectory(new File(document.getFilePath()));
+        if (document != null && document.getDatabaseFile() != null) {
+            fc.setCurrentDirectory(document.getDatabaseFile());
         }
         fc.setFileFilter(new FileFilter() {
             @Override
@@ -366,8 +366,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private Document doLoadFile(File file) throws ServiceException {
-        String filename = file.getAbsolutePath();
-        Document newDocument = documentService.openDocument(filename);
+        Document newDocument = documentService.openDocument(file);
 
         Currency currency = configurationService.getBookkeeping(newDocument).getCurrency();
         Factory.bindSingleton(AmountFormat.class, new AmountFormat(Factory.getInstance(Locale.class), currency));

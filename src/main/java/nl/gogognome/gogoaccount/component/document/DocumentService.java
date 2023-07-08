@@ -25,12 +25,12 @@ public class DocumentService {
         this.configurationService = configurationService;
     }
 
-    public Document openDocument(String filePath) throws ServiceException {
+    public Document openDocument(File databaseFile) throws ServiceException {
         return ServiceTransaction.withResult(() -> {
-            String fileNameWithoutExtension = getFilePathWithoutExtension(filePath);
+            String fileNameWithoutExtension = getFilePathWithoutExtension(databaseFile);
             String jdbcUrl = "jdbc:h2:file:" + fileNameWithoutExtension;
             Document document = new Document();
-            document.setFilePath(filePath);
+            document.setDatabaseFile(databaseFile);
 
             registerDataSource(document, jdbcUrl);
             applyDatabaseMigrations(document, Long.MAX_VALUE);
@@ -48,11 +48,14 @@ public class DocumentService {
     }
 
     public Document createNewDocument(File file, String description) throws ServiceException {
-        String jdbcUrl = "jdbc:h2:file:" + getFilePathWithoutExtension(file.getAbsolutePath());
-        return createDocument(jdbcUrl, description);
+        String jdbcUrl = "jdbc:h2:file:" + getFilePathWithoutExtension(file);
+        Document document = createDocument(jdbcUrl, description);
+        document.setDatabaseFile(file);
+        return document;
     }
 
-    private String getFilePathWithoutExtension(String path) {
+    private String getFilePathWithoutExtension(File file) {
+        String path = file.getAbsolutePath();
         String fileNameWithouExtension = path;
         String extension = ".h2.db";
         if (path.toLowerCase().endsWith(extension)) {

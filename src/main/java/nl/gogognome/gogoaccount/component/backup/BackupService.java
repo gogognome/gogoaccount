@@ -20,7 +20,7 @@ public class BackupService {
 	}
 
 	public void createBackupOfSqlStatements(Document document) throws ServiceException {
-		File originalPath = new File(document.getFilePath());
+		File originalPath = document.getDatabaseFile();
 		String backupFilename = getBackupFile(originalPath, ".sql.zip").getAbsolutePath();
 		ServiceTransaction.withoutResult(() -> new BackupDAO(document).createBackupOfDocument(backupFilename));
 	}

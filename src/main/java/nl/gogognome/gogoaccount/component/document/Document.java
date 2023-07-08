@@ -3,6 +3,7 @@ package nl.gogognome.gogoaccount.component.document;
 import nl.gogognome.dataaccess.transaction.CurrentTransaction;
 import nl.gogognome.dataaccess.transaction.Transaction;
 
+import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -15,7 +16,7 @@ public class Document {
 
     private final ArrayList<DocumentListener> listeners = new ArrayList<>();
     private final String bookkeepingId = UUID.randomUUID().toString();
-    private String filePath;
+    private File databaseFile;
     private Locale locale = Locale.US;
     protected Connection connectionToKeepInMemoryDatabaseAlive;
     private boolean readonly;
@@ -70,14 +71,12 @@ public class Document {
         this.locale = locale;
     }
 
-    public String getFilePath()
-    {
-        return filePath;
+    public File getDatabaseFile() {
+        return databaseFile;
     }
 
-    public void setFilePath(String filePath)
-    {
-        this.filePath = filePath;
+    public void setDatabaseFile(File databaseFile) {
+        this.databaseFile = databaseFile;
         notifyChange();
     }
 
