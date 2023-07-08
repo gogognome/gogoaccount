@@ -38,6 +38,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,8 +112,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     }
 
     private void initModels() {
-        List<TransactionImporter> importers = new ArrayList<>();
-        importers.add(new RabobankCSVImporter());
+        List<TransactionImporter> importers = List.of(new RabobankCSVImporter());
         importersModel.setItems(importers);
         importersModel.setSelectedIndex(0, null);
 
@@ -221,13 +221,11 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private void handleImport() {
         File file = fileSelectionModel.getFile();
 
-        Reader reader = null;
         try {
             settingsService.save(document, IMPORT_BANK_STATEMENT_VIEW_PATH, file.getParent());
 
-            reader = new FileReader(file);
             TransactionImporter importer = importersModel.getSelectedItem();
-            List<ImportedTransaction> transactions = importer.importTransactions(reader);
+            List<ImportedTransaction> transactions = importer.importTransactions(file);
             fileSelectionModel.setEnabled(false, this);
             importersModel.setEnabled(false, this);
             if (!transactions.isEmpty()) {
@@ -243,14 +241,6 @@ public class ImportBankStatementView extends View implements ModelChangeListener
             messageDialog.showErrorMessage("importBankStatementView.fileNotFound", file.getAbsoluteFile());
         } catch (Exception e) {
             messageDialog.showErrorMessage(e, "importBankStatementView.problemWhileImportingTransactions");
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    LOGGER.warn("Failed to close the file " + file.getAbsolutePath(), e);
-                }
-            }
         }
     }
 

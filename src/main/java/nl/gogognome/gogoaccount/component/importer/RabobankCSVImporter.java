@@ -1,38 +1,58 @@
 package nl.gogognome.gogoaccount.component.importer;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Currency;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-
-import nl.gogognome.lib.text.Amount;
-import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.util.DateUtil;
-import au.com.bytecode.opencsv.CSVReader;
+import java.io.*;
+import java.nio.charset.*;
+import java.text.*;
+import java.util.*;
+import com.google.common.base.*;
+import au.com.bytecode.opencsv.*;
+import nl.gogognome.lib.text.*;
 
 
 /**
  * This class reads a comma separated values file that was created by the Rabobank.
- * A list of {@link ImportedTransactionRabobankCsv}s is created that represents the contents
+ * A list of {@link ImportedTransaction}s is created that represents the contents
  * of the CSV file.
  */
 public class RabobankCSVImporter implements TransactionImporter {
 
+	private static final String OWN_IBAN = "IBAN/BBAN";
+	private static final String OTHER_IBAN = "Tegenrekening IBAN/BBAN";
+	private static final String OTHER_NAME = "Naam tegenpartij";
+	private static final String AMOUNT = "Bedrag";
+	private static final String CURRENCY = "Munt";
+	private static final String DATE = "Datum";
+	private static final String DESCRIPTION_1 = "Omschrijving-1";
+
+	private final Locale DUTCH = new Locale("nl");
+	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", DUTCH);
+
+	private final Map<String, Integer> headerToIndex = new HashMap<>();
 	private List<ImportedTransaction> transactions = new ArrayList<>();
+
 
 	public RabobankCSVImporter() {
 	}
 
 	@Override
-	public List<ImportedTransaction> importTransactions(Reader reader)
-			throws IOException, ParseException {
+	public List<ImportedTransaction> importTransactions(File file) throws IOException, ParseException {
+		try (FileReader reader = new FileReader(file, Charset.forName("windows-1252"))) {
+			return importTransactions(reader);
+		}
+	}
+
+	public List<ImportedTransaction> importTransactions(Reader reader) throws IOException, ParseException {
 		CSVReader csvReader = new CSVReader(reader);
-		parseValues(csvReader.readAll());
-		reader.close();
+		List<String[]> lines = csvReader.readAll();
+		parseHeader(lines.get(0));
+		parseValues(lines.subList(1, lines.size()));
 		return transactions;
+	}
+
+	private void parseHeader(String[] header) {
+		for (int index=0; index<header.length; index++) {
+			headerToIndex.put(header[index], index);
+		}
 	}
 
 	private void parseValues(List<String[]> values) throws ParseException {
@@ -42,76 +62,57 @@ public class RabobankCSVImporter implements TransactionImporter {
 	}
 
 	private void parseLine(String[] values) throws ParseException {
-		if (values.length == 19) {
-			if ("C".equals(values[3])) {
-				parseCreditTransaction(values);
-			} else if ("D".equals(values[3])) {
-				parseDebetTransaction(values);
-			} else {
-				throw new ParseException("Invalid BY_AF_CODE");
-			}
+		Amount amount = parseAmount(getValue(values, AMOUNT), getValue(values, CURRENCY));
+
+		String fromAccount = getValue(values, amount.isNegative() ? OWN_IBAN : OTHER_IBAN);
+		String fromName = amount.isNegative() ? null : getValue(values, OTHER_NAME);
+		String toAccount = getValue(values, amount.isNegative() ? OTHER_IBAN : OWN_IBAN);
+		String toName = amount.isNegative() ? getValue(values, OTHER_NAME) : null;
+		Date date = parseDate(getValue(values, DATE));
+		String description = getValue(values, DESCRIPTION_1);
+
+		transactions.add(new ImportedTransaction(
+				fromAccount,
+				fromName,
+				amount.isNegative() ? amount.negate() : amount,
+				date,
+				toAccount,
+				toName,
+				description));
+	}
+
+	private String getValue(String[] values, String column) throws ParseException {
+		Integer index = headerToIndex.get(column);
+		if (index == null) {
+			throw new ParseException("The file does not have a column '" + column + "'.");
 		}
+		return Strings.emptyToNull(values[index]);
 	}
 
-	private void parseDebetTransaction(String[] values) throws ParseException {
-		String fromAccount = values[0];
-		String toAccount = values[5];
-		String toName = values[6];
-		Date date = parseDate(values);
-		Amount amount = parseAmount(values);
-		String description = parseDescription(values);
-
-		transactions.add(new ImportedTransactionRabobankCsv(fromAccount, null, amount, date, toAccount,
-				toName, description));
-	}
-
-	private void parseCreditTransaction(String[] values) throws ParseException {
-		String fromAccount = values[5];
-		String fromName = values[6];
-		String toAccount = values[0];
-		Date date = parseDate(values);
-		Amount amount = parseAmount(values);
-		String description = parseDescription(values);
-
-		transactions.add(new ImportedTransactionRabobankCsv(fromAccount, fromName, amount, date, toAccount,
-				null, description));
-	}
-
-	private Date parseDate(String[] values) throws ParseException {
-		String dateString = values[2];
+	private Date parseDate(String dateAsString) throws ParseException {
 		try {
-			return DateUtil.parseDateYYYYMMDD(dateString);
+			return dateFormat.parse(dateAsString);
 		} catch (java.text.ParseException e) {
-			throw new ParseException("\"" + dateString + "\" is not a valid date.", e);
+			throw new ParseException("The date '" + dateAsString + "' has an invalid format.");
 		}
 	}
 
-	private Amount parseAmount(String[] values) throws ParseException {
-		Currency currency = parseCurrency(values);
-		String amountString = values[4];
+	private Amount parseAmount(String amount, String currencyCode) throws ParseException {
+		Currency currency = parseCurrency(currencyCode);
 
 		try {
-			return new Amount(new AmountFormat(Locale.US, currency).parse(amountString));
+			return new Amount(new AmountFormat(DUTCH, currency).parse(amount));
 		} catch (java.text.ParseException e) {
-			throw new ParseException("\"" + amountString + "\" is not a valid amount.", e);
+			throw new ParseException("\"" + amount + "\" is not a valid amount.", e);
 		}
 	}
 
-	private Currency parseCurrency(String[] values) throws ParseException {
-		String currencyCode = values[1];
+	private Currency parseCurrency(String currencyCode) throws ParseException {
 		try {
 			return Currency.getInstance(currencyCode);
 		} catch (IllegalArgumentException e) {
 			throw new ParseException("\"" + currencyCode + "\" is not a valid currency code.", e);
 		}
-	}
-
-	private String parseDescription(String[] values) {
-		StringBuilder sb = new StringBuilder(100);
-		for (int i=10; i<=15; i++) {
-			sb.append(values[i]);
-		}
-		return sb.toString();
 	}
 
 }

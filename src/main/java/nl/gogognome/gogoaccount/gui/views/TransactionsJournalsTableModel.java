@@ -30,20 +30,20 @@ class TransactionsJournalsTableModel extends ListTableModel<Transaction> {
         this.partyService = partyService;
         setColumnDefinitions(
                 ColumnDefinition.<Transaction>builder("importBankStatementView.date", Date.class, 70)
-                    .add(row -> row.getImportedTransaction().getDate())
+                    .add(row -> row.getImportedTransaction().date())
                     .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.toAccount", String.class, 100)
-                    .add(row -> row.getImportedTransaction().getToAccount())
+                    .add(row -> row.getImportedTransaction().toAccount())
                     .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.fromAccount", String.class, 100)
-                    .add(row -> row.getImportedTransaction().getFromAccount())
+                    .add(row -> row.getImportedTransaction().fromAccount())
                     .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.amount", Amount.class, 100)
                     .add(new AmountCellRenderer(amountFormat))
-                    .add(row -> row.getImportedTransaction().getAmount())
+                    .add(row -> row.getImportedTransaction().amount())
                     .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.description1", String.class, 200)
-                    .add(row -> row.getImportedTransaction().getDescription())
+                    .add(row -> row.getImportedTransaction().description())
                     .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.id", String.class, 50)
                     .add(row -> row.getJournalEntry() != null ? row.getJournalEntry().getId() : null)

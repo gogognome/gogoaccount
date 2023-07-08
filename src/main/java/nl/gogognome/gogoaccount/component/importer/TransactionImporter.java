@@ -1,7 +1,6 @@
 package nl.gogognome.gogoaccount.component.importer;
 
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -15,11 +14,11 @@ public interface TransactionImporter {
 	 * Reads a bank statement and returns a list of transactions.
 	 * This method does not close the reader.
 	 *
-	 * @param reader contains the bank statement
+	 * @param file contains the bank statement
 	 * @return the transactions
 	 * @throws IOException if a problem occurred while reading the file
 	 * @throws ParseException if a problem occurred while interpreting the file
 	 */
-	public List<ImportedTransaction> importTransactions(Reader reader)
+	public List<ImportedTransaction> importTransactions(File file)
 		throws IOException, ParseException;
 }

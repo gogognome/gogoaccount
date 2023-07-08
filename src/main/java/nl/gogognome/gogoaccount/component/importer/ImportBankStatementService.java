@@ -21,7 +21,7 @@ public class ImportBankStatementService {
      *         null if no account was found
      */
     public Account getFromAccount(Document document, ImportedTransaction transaction) throws ServiceException {
-        return getAccountForImportedAccount(document, transaction.getFromAccount(), transaction.getFromName());
+        return getAccountForImportedAccount(document, transaction.fromAccount(), transaction.fromName());
     }
 
     /**
@@ -29,7 +29,7 @@ public class ImportBankStatementService {
      *         null if no account was found
      */
     public Account getToAccount(Document document, ImportedTransaction transaction) throws ServiceException {
-        return getAccountForImportedAccount(document, transaction.getToAccount(), transaction.getToName());
+        return getAccountForImportedAccount(document, transaction.toAccount(), transaction.toName());
     }
 
     private Account getAccountForImportedAccount(Document document, String account, String name) throws ServiceException {
@@ -45,11 +45,11 @@ public class ImportBankStatementService {
     }
 
     public void setImportedToAccount(Document document, ImportedTransaction transaction, Account account) throws ServiceException {
-        setAccountForImportedAccount(document, transaction.getToAccount(), transaction.getToName(), account.getId());
+        setAccountForImportedAccount(document, transaction.toAccount(), transaction.toName(), account.getId());
     }
 
     public void setImportedFromAccount(Document document, ImportedTransaction transaction,	Account account) throws ServiceException {
-        setAccountForImportedAccount(document, transaction.getFromAccount(), transaction.getFromName(), account.getId());
+        setAccountForImportedAccount(document, transaction.fromAccount(), transaction.fromName(), account.getId());
     }
 
     public void setAccountForImportedAccount(Document document, String importedAccount, String name, String accountId) throws ServiceException {

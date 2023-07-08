@@ -38,11 +38,11 @@ public class AddJournalForTransactionView extends EditJournalView {
 
     private ImportedTransaction importedTransaction;
 
-    private JLabel fromAccount = new JLabel();
-    private JLabel amount = new JLabel();
-    private JLabel date = new JLabel();
-    private JLabel toAccount = new JLabel();
-    private JLabel description = new JLabel();
+    private final JLabel fromAccount = new JLabel();
+    private final JLabel amount = new JLabel();
+    private final JLabel date = new JLabel();
+    private final JLabel toAccount = new JLabel();
+    private final JLabel description = new JLabel();
 
     public AddJournalForTransactionView(Document document, ConfigurationService configurationService,
                                         ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
@@ -98,8 +98,8 @@ public class AddJournalForTransactionView extends EditJournalView {
     }
 
     private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
-        dateModel.setDate(t.getDate());
-        descriptionModel.setString(t.getDescription());
+        dateModel.setDate(t.date());
+        descriptionModel.setString(t.description());
         Account debetAccount = importBankStatementService.getFromAccount(document, t);
         Account creditAccount = importBankStatementService.getToAccount(document, t);
         if (debetAccount != null && creditAccount != null) {
@@ -109,11 +109,11 @@ public class AddJournalForTransactionView extends EditJournalView {
     }
 
     private void updateLabelsForImportedTransaction(ImportedTransaction t) {
-        date.setText(textResource.formatDate("gen.dateFormat", t.getDate()));
-        fromAccount.setText(formatAccountAndName(t.getFromAccount(), t.getFromName()));
-        toAccount.setText(formatAccountAndName(t.getToAccount(), t.getToName()));
-        amount.setText(Factory.getInstance(AmountFormat.class).formatAmount(t.getAmount().toBigInteger()));
-        description.setText(t.getDescription());
+        date.setText(textResource.formatDate("gen.dateFormat", t.date()));
+        fromAccount.setText(formatAccountAndName(t.fromAccount(), t.fromName()));
+        toAccount.setText(formatAccountAndName(t.toAccount(), t.toName()));
+        amount.setText(Factory.getInstance(AmountFormat.class).formatAmount(t.amount().toBigInteger()));
+        description.setText(t.description());
     }
 
     private String formatAccountAndName(String account, String name) {
@@ -136,7 +136,7 @@ public class AddJournalForTransactionView extends EditJournalView {
             }
 
             JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(importedTransaction.getAmount());
+            journalEntryDetail.setAmount(importedTransaction.amount());
             journalEntryDetail.setAccountId(account != null ? account.getId() : null);
             journalEntryDetail.setDebet(true);
             return journalEntryDetail;
@@ -148,7 +148,7 @@ public class AddJournalForTransactionView extends EditJournalView {
                 account = getDefaultAccount();
             }
             JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(importedTransaction.getAmount());
+            journalEntryDetail.setAmount(importedTransaction.amount());
             journalEntryDetail.setAccountId(account != null ? account.getId() : null);
             journalEntryDetail.setDebet(false);
             return journalEntryDetail;

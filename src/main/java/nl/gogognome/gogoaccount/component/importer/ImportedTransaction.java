@@ -4,20 +4,12 @@ import java.util.Date;
 
 import nl.gogognome.lib.text.Amount;
 
-public interface ImportedTransaction {
-
-	String getFromAccount();
-
-	String getFromName();
-
-	Amount getAmount();
-
-	Date getDate();
-
-	String getToAccount();
-
-	String getToName();
-
-	String getDescription();
-
-}
+public record ImportedTransaction(
+		String fromAccount,
+		String fromName,
+		Amount amount,
+		Date date,
+		String toAccount,
+		String toName,
+		String description
+) { }

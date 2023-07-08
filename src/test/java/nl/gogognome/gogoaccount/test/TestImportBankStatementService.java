@@ -1,5 +1,6 @@
 package nl.gogognome.gogoaccount.test;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
 import java.nio.charset.*;
@@ -12,18 +13,35 @@ import nl.gogognome.lib.util.*;
 
 public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
+	private static final String HEADER = "'IBAN/BBAN','Munt','BIC','Volgnr','Datum','Rentedatum','Bedrag','Saldo na trn','Tegenrekening IBAN/BBAN','Naam tegenpartij','Naam uiteindelijke partij','Naam initiërende partij','BIC tegenpartij','Code','Batch ID','Transactiereferentie','Machtigingskenmerk','Incassant ID','Betalingskenmerk','Omschrijving-1','Omschrijving-2','Omschrijving-3','Reden retour','Oorspr bedrag','Oorspr munt','Koers'";
+
+	@Test
+	public void testAmountIsAlwaysPositiveInTransaction() throws Exception {
+		List<ImportedTransaction> transactions = importRabobankTransactions(
+				HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''",
+				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Returned allowance',' ','','','','',''");
+
+		assertThat(transactions)
+				.extracting("fromName", "fromAccount", "amount", "toName", "toAccount")
+				.containsExactly(
+						tuple(null, "NL01RABO0123456789", AmountBuilder.build("3.50"), "Piet Puk", "NL98RABO9876543210"),
+						tuple("Piet Puk", "NL98RABO9876543210", AmountBuilder.build("3.50"), null, "NL01RABO0123456789"));
+	}
+
 	@Test
 	public void testGettersFromImportedTransaction() throws Exception {
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-				"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
-		ImportedTransaction it = transactions.get(0);
+				HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
+		ImportedTransaction transaction = transactions.get(0);
 
-		assertEquals(AmountBuilder.build(450), it.getAmount());
-		assertEqualDayOfYear(DateUtil.createDate(2003, 1, 11), it.getDate());
-		assertEquals("0170059286", it.getToAccount());
-		assertNull(it.getToName());
-		assertEquals("P0063925", it.getFromAccount());
-		assertEquals("FIRMA JANSSEN", it.getFromName());
+		assertEquals(AmountBuilder.build("3.50"), transaction.amount());
+		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 8), transaction.date());
+		assertEquals("NL98RABO9876543210", transaction.toAccount());
+		assertEquals("Piet Puk", transaction.toName());
+		assertEquals("NL01RABO0123456789", transaction.fromAccount());
+		assertNull(transaction.fromName());
 	}
 
 	@Test
@@ -32,15 +50,16 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
-		ImportedTransaction it = transactions.get(0);
+				HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
+		ImportedTransaction transaction = transactions.get(0);
 
-		assertNull(importBankStatementService.getFromAccount(document, it));
-		importBankStatementService.setImportedFromAccount(document, it, account101);
-		assertEquals(account101, importBankStatementService.getFromAccount(document, it));
+		assertNull(importBankStatementService.getFromAccount(document, transaction));
+		importBankStatementService.setImportedFromAccount(document, transaction, account101);
+		assertEquals(account101, importBankStatementService.getFromAccount(document, transaction));
 
-		importBankStatementService.setImportedFromAccount(document, it, account100);
-		assertEquals(account100, importBankStatementService.getFromAccount(document, it));
+		importBankStatementService.setImportedFromAccount(document, transaction, account100);
+		assertEquals(account100, importBankStatementService.getFromAccount(document, transaction));
 	}
 
 	@Test
@@ -49,15 +68,16 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0170059286','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
-		ImportedTransaction it = transactions.get(0);
+				HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
+		ImportedTransaction transaction = transactions.get(0);
 
-		assertNull(importBankStatementService.getToAccount(document, it));
-		importBankStatementService.setImportedToAccount(document, it, account101);
-		assertEquals(account101, importBankStatementService.getToAccount(document, it));
+		assertNull(importBankStatementService.getToAccount(document, transaction));
+		importBankStatementService.setImportedToAccount(document, transaction, account101);
+		assertEquals(account101, importBankStatementService.getToAccount(document, transaction));
 
-		importBankStatementService.setImportedToAccount(document, it, account100);
-		assertEquals(account100, importBankStatementService.getToAccount(document, it));
+		importBankStatementService.setImportedToAccount(document, transaction, account100);
+		assertEquals(account100, importBankStatementService.getToAccount(document, transaction));
 	}
 
 	@Test
@@ -66,16 +86,17 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0170059308','EUR',20030105,'C',9550.00,'0000000000','STORTING',20030103,'','','','','','','','','','',''");
-		ImportedTransaction it = transactions.get(0);
-		assertNull(it.getFromAccount());
+				HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','50,00','+616,86','','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
+		ImportedTransaction transaction = transactions.get(0);
+		assertNull(transaction.fromAccount());
 
-		assertNull(importBankStatementService.getFromAccount(document, it));
-		importBankStatementService.setImportedFromAccount(document, it, account101);
-		assertEquals(account101, importBankStatementService.getFromAccount(document, it));
+		assertNull(importBankStatementService.getFromAccount(document, transaction));
+		importBankStatementService.setImportedFromAccount(document, transaction, account101);
+		assertEquals(account101, importBankStatementService.getFromAccount(document, transaction));
 
-		importBankStatementService.setImportedFromAccount(document, it, account100);
-		assertEquals(account100, importBankStatementService.getFromAccount(document, it));
+		importBankStatementService.setImportedFromAccount(document, transaction, account100);
+		assertEquals(account100, importBankStatementService.getFromAccount(document, transaction));
 	}
 
 	@Test
@@ -84,9 +105,10 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		Account account101 = configurationService.getAccount(document, "101");
 
 		List<ImportedTransaction> transactions = importRabobankTransactions(
-			"'0000000000','EUR',20030111,'C',450.00,'P0063925','FIRMA JANSSEN',20030110,'','','REFUND VAN 16-12-2002','','','','','','','',''");
+				HEADER,
+				"'','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','50,00','+616,86','','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
 		ImportedTransaction it = transactions.get(0);
-		assertNull(it.getToAccount());
+		assertNull(it.toAccount());
 
 		assertNull(importBankStatementService.getToAccount(document, it));
 		importBankStatementService.setImportedToAccount(document, it, account101);
@@ -101,10 +123,9 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 		for (String l : lines) {
 			sb.append(l.replace('\'', '"')).append('\n');
 		}
-		ByteArrayInputStream bais = new ByteArrayInputStream(sb.toString().getBytes(StandardCharsets.UTF_8));
+		ByteArrayInputStream bais = new ByteArrayInputStream(sb.toString().getBytes(Charset.forName("windows-1252")));
 		try (Reader reader = new InputStreamReader(bais)) {
-			TransactionImporter importer = new RabobankCSVImporter();
-			return importer.importTransactions(reader);
+			return new RabobankCSVImporter().importTransactions(reader);
 		}
 	}
 }
