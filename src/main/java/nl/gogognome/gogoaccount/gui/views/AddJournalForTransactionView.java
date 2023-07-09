@@ -129,32 +129,32 @@ public class AddJournalForTransactionView extends EditJournalView {
     @Override
     protected JournalEntryDetail createDefaultItemToBeAdded() throws ServiceException {
         switch (journalEntryDetailsTableModel.getRowCount()) {
-        case 0: { // first item
-            Account account = importBankStatementService.getToAccount(document, importedTransaction);
-            if (account == null) {
-                account = getDefaultAccount();
-            }
+            case 0 -> { // first item
+                Account account = importBankStatementService.getToAccount(document, importedTransaction);
+                if (account == null) {
+                    account = getDefaultAccount();
+                }
 
-            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(importedTransaction.amount());
-            journalEntryDetail.setAccountId(account != null ? account.getId() : null);
-            journalEntryDetail.setDebet(true);
-            return journalEntryDetail;
-        }
-
-        case 1: { // second item
-            Account account = importBankStatementService.getFromAccount(document, importedTransaction);
-            if (account == null) {
-                account = getDefaultAccount();
+                JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+                journalEntryDetail.setAmount(importedTransaction.amount());
+                journalEntryDetail.setAccountId(account != null ? account.getId() : null);
+                journalEntryDetail.setDebet(true);
+                return journalEntryDetail;
             }
-            JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
-            journalEntryDetail.setAmount(importedTransaction.amount());
-            journalEntryDetail.setAccountId(account != null ? account.getId() : null);
-            journalEntryDetail.setDebet(false);
-            return journalEntryDetail;
-        }
-        default: // other item
-            return null;
+            case 1 -> { // second item
+                Account account = importBankStatementService.getFromAccount(document, importedTransaction);
+                if (account == null) {
+                    account = getDefaultAccount();
+                }
+                JournalEntryDetail journalEntryDetail = new JournalEntryDetail();
+                journalEntryDetail.setAmount(importedTransaction.amount());
+                journalEntryDetail.setAccountId(account != null ? account.getId() : null);
+                journalEntryDetail.setDebet(false);
+                return journalEntryDetail;
+            }
+            default -> { // other item
+                return null;
+            }
         }
     }
 
