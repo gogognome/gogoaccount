@@ -1,4 +1,4 @@
-Gogo Account 3.0.5
+Gogo Account 3.0.6
 Copyright 2011-2023 Sander Kooijmans
 https://gogognome.nl
 
