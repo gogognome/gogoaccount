@@ -17,6 +17,7 @@ import nl.gogognome.lib.util.Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +31,7 @@ public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDe
     private final InvoiceService invoiceService;
     private final PartyService partyService;
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 
 	private final static ColumnDefinition<JournalEntryDetail> ACCOUNT =
@@ -66,7 +68,7 @@ public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDe
 
     @Override
 	public Object getValueAt(int row, int col) {
-    	ColumnDefinition colDef = COLUMN_DEFINTIIONS.get(col);
+    	ColumnDefinition<?> colDef = COLUMN_DEFINTIIONS.get(col);
         AmountFormat af = Factory.getInstance(AmountFormat.class);
         String result = null;
         JournalEntryDetail journalEntryDetail = getRow(row);

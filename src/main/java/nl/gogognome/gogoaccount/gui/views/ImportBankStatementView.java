@@ -53,14 +53,14 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
-    private FileModel fileSelectionModel = new FileModel();
+    private final FileModel fileSelectionModel = new FileModel();
 
     private JournalEntryDetailsTableModel itemsTableModel;
 
     private JTable transactionsJournalsTable;
     private TransactionsJournalsTableModel transactionJournalsTableModel;
 
-    private ListModel<TransactionImporter> importersModel = new ListModel<>();
+    private final ListModel<TransactionImporter> importersModel = new ListModel<>();
 
     private JButton importButton;
     private JButton addButton;
