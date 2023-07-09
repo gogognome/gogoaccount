@@ -11,7 +11,7 @@ import nl.gogognome.gogoaccount.component.importer.*;
 import nl.gogognome.gogoaccount.test.builders.*;
 import nl.gogognome.lib.util.*;
 
-public class TestImportBankStatementService extends AbstractBookkeepingTest {
+public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 
 	private static final String HEADER = "'IBAN/BBAN','Munt','BIC','Volgnr','Datum','Rentedatum','Bedrag','Saldo na trn','Tegenrekening IBAN/BBAN','Naam tegenpartij','Naam uiteindelijke partij','Naam initiërende partij','BIC tegenpartij','Code','Batch ID','Transactiereferentie','Machtigingskenmerk','Incassant ID','Betalingskenmerk','Omschrijving-1','Omschrijving-2','Omschrijving-3','Reden retour','Oorspr bedrag','Oorspr munt','Koers'";
 
@@ -116,6 +116,54 @@ public class TestImportBankStatementService extends AbstractBookkeepingTest {
 
 		importBankStatementService.setImportedToAccount(document, it, account100);
 		assertEquals(account100, importBankStatementService.getToAccount(document, it));
+	}
+
+	@Test
+	public void setMultipleValuesWithSameAccountAndDifferentDescriptions_getAccountForSameAccountAndSimilarDescription_returnsMostSpecificAccount() throws Exception {
+		Account account1 = configurationService.getAccount(document, "100");
+		Account account2 = configurationService.getAccount(document, "101");
+
+		ImportedTransaction transaction1 = TdbImportedTransaction.aNew()
+				.withDescription("Factuur JANUARI 2022")
+				.build();
+		ImportedTransaction transaction2 = TdbImportedTransaction.aNew()
+				.withDescription("ONKOSTENVERGOEDING 09-07-2023")
+				.build();
+
+		importBankStatementService.setImportedFromAccount(document, transaction1, account1);
+		importBankStatementService.setImportedFromAccount(document, transaction2, account2);
+
+		ImportedTransaction transaction3 = TdbImportedTransaction.aNew()
+				.withDescription("Factuur FEBRUARI 2022")
+				.build();
+		ImportedTransaction transaction4 = TdbImportedTransaction.aNew()
+				.withDescription("onkostenvergoeding 10-08-2023")
+				.build();
+
+		assertThat(importBankStatementService.getFromAccount(document, transaction3)).isEqualTo(account1);
+		assertThat(importBankStatementService.getFromAccount(document, transaction4)).isEqualTo(account2);
+	}
+
+	@Test
+	public void setMultipleValuesWithSameAccountAndDifferentDescriptions_getAccountForSameAccountButDifferentDescription_returnsLastRecordedAccount() throws Exception {
+		Account account1 = configurationService.getAccount(document, "100");
+		Account account2 = configurationService.getAccount(document, "101");
+
+		ImportedTransaction transaction1 = TdbImportedTransaction.aNew()
+				.withDescription("Factuur JANUARI 2022")
+				.build();
+		ImportedTransaction transaction2 = TdbImportedTransaction.aNew()
+				.withDescription("ONKOSTENVERGOEDING 09-07-2023")
+				.build();
+
+		importBankStatementService.setImportedFromAccount(document, transaction1, account1);
+		importBankStatementService.setImportedFromAccount(document, transaction2, account2);
+
+		ImportedTransaction transaction3 = TdbImportedTransaction.aNew()
+				.withDescription("Contributie 2023")
+				.build();
+
+		assertThat(importBankStatementService.getFromAccount(document, transaction3)).isEqualTo(account2);
 	}
 
 	private List<ImportedTransaction> importRabobankTransactions(String... lines) throws Exception {

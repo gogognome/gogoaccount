@@ -16,12 +16,17 @@ class ImportedAccountDAO extends AbstractDAO {
     public void setImportedAccount(String importedAccount, String accountId) throws SQLException {
         importedAccount = escapeNull(importedAccount);
         execute("delete from import_account where import_account=?", importedAccount).ignoreResult();
-        insert("import_account", new NameValuePairs().add("import_account", importedAccount).add("account_id", accountId));
+
+        NameValuePairs nvps = new NameValuePairs()
+                .add("import_account", importedAccount)
+                .add("account_id", accountId);
+        insert("import_account", nvps);
     }
 
     public String findAccountIdByFrom(String importedAccount) throws SQLException {
         importedAccount = escapeNull(importedAccount);
-        return execute("select account_id from import_account where import_account=?", importedAccount).findFirst(r -> r.getString(1));
+        return execute("select account_id from import_account where import_account=?", importedAccount)
+                .findFirst(r -> r.getString(1));
     }
 
     private String escapeNull(String importedAccount) {
@@ -29,6 +34,9 @@ class ImportedAccountDAO extends AbstractDAO {
     }
 
     public Map<String, String> findImportedTransactionAccountToAccountMap() throws SQLException {
-        return execute("select import_account, account_id from import_account").toTreeMap(r -> r.getString(1), r -> r.getString(2));
+        return execute("select import_account, account_id from import_account")
+                .toTreeMap(
+                        r -> r.getString(1),
+                        r -> r.getString(2));
     }
 }
