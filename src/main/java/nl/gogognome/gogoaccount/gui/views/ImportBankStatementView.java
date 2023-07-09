@@ -35,6 +35,7 @@ import nl.gogognome.lib.util.*;
 public class ImportBankStatementView extends View implements ModelChangeListener,
         ListSelectionListener, AddJournalForTransactionView.Plugin{
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ImportBankStatementView.class);
@@ -69,8 +70,18 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final Document document;
     private final AmountFormat amountFormat;
 
-    public ImportBankStatementView(Document document, AmountFormat amountFormat, ConfigurationService configurationService, ImportBankStatementService importBankStatementService, InvoiceService invoiceService, LedgerService ledgerService,
-                                   PartyService partyService, SettingsService settingsService, ViewFactory viewFactory, DeleteJournalController deleteJournalController, EditJournalController editJournalController) {
+    public ImportBankStatementView(
+            Document document,
+            AmountFormat amountFormat,
+            ConfigurationService configurationService,
+            ImportBankStatementService importBankStatementService,
+            InvoiceService invoiceService,
+            LedgerService ledgerService,
+            PartyService partyService,
+            SettingsService settingsService,
+            ViewFactory viewFactory,
+            DeleteJournalController deleteJournalController,
+            EditJournalController editJournalController) {
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.ledgerService = ledgerService;
@@ -115,8 +126,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         InputFieldsColumn ifc = new InputFieldsColumn();
         addCloseable(ifc);
         ifc.addField("importBankStatementView.selectFileToImport", fileSelectionModel);
-        ifc.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel,
-                new ImporterFormatter());
+        ifc.addComboBoxField("importBankStatementView.typeOfBankStatement", importersModel, new ImporterFormatter());
 
         ButtonPanel buttonPanel = new ButtonPanel(SwingConstants.LEFT);
         importButton = buttonPanel.addButton("importBankStatementView.import", this::handleImport);
@@ -147,8 +157,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         // Add components to the view.
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
-        tablesPanel.add(widgetFactory.createScrollPane(transactionsJournalsTable,
-                "importBankStatementView.transactionsJournals"),
+        tablesPanel.add(
+                widgetFactory.createScrollPane(transactionsJournalsTable, "importBankStatementView.transactionsJournals"),
                 SwingUtils.createPanelGBConstraints(0, 1));
 
         JScrollPane scrollPane = new JScrollPane(itemsTable);

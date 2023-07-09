@@ -60,7 +60,6 @@ public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDe
     }
 
     // TODO: replace parameter by list of objects that contain all details to be shown so that no service calls are needed by this class.
-    @Deprecated
     public void setJournalEntryDetails(List<JournalEntryDetail> journalEntryDetails) {
     	setRows(journalEntryDetails);
     }
