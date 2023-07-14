@@ -79,6 +79,10 @@ public class ImportBankStatementService {
     }
 
     private String stripSpacesNumbersAndMonths(String description) {
+        if (description == null) {
+            return "";
+        }
+
         description = description.toLowerCase();
 
         for (String substringToBeIgnored : SUBSTRINGS_TO_BE_IGNORED) {
