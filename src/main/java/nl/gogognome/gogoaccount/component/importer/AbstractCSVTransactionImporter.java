@@ -25,8 +25,7 @@ abstract class AbstractCSVTransactionImporter implements TransactionImporter {
 	protected List<String[]> readAllLinesFrom(File file, Charset charset) throws IOException {
 		try (Reader reader = getReader(file, charset)) {
 			CSVReader csvReader = new CSVReader(reader, separator);
-			List<String[]> lines = csvReader.readAll();
-			return lines;
+			return csvReader.readAll();
 		}
 	}
 

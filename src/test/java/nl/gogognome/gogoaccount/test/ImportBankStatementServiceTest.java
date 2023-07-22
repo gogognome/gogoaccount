@@ -91,7 +91,7 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		assertNull(transaction.toAccount());
 		assertEquals("Piet Puk", transaction.toName());
 		assertEquals("NL01RABO0123456789", transaction.fromAccount());
-		assertNull(transaction.fromName());;
+		assertNull(transaction.fromName());
 	}
 
 	@Test
