@@ -30,30 +30,36 @@ class TransactionsJournalsTableModel extends ListTableModel<Transaction> {
         this.partyService = partyService;
         setColumnDefinitions(
                 ColumnDefinition.<Transaction>builder("importBankStatementView.date", Date.class, 70)
-                    .add(row -> row.getImportedTransaction().date())
-                    .build(),
-                ColumnDefinition.<Transaction>builder("importBankStatementView.toAccount", String.class, 100)
-                    .add(row -> row.getImportedTransaction().toAccount())
-                    .build(),
+                        .add(row -> row.getImportedTransaction().date())
+                        .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.fromAccount", String.class, 100)
-                    .add(row -> row.getImportedTransaction().fromAccount())
-                    .build(),
+                        .add(row -> row.getImportedTransaction().fromAccount())
+                        .build(),
+                ColumnDefinition.<Transaction>builder("importBankStatementView.fromName", String.class, 100)
+                        .add(row -> row.getImportedTransaction().fromName())
+                        .build(),
+                ColumnDefinition.<Transaction>builder("importBankStatementView.toAccount", String.class, 100)
+                        .add(row -> row.getImportedTransaction().toAccount())
+                        .build(),
+                ColumnDefinition.<Transaction>builder("importBankStatementView.toName", String.class, 100)
+                        .add(row -> row.getImportedTransaction().toName())
+                        .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.amount", Amount.class, 100)
-                    .add(new AmountCellRenderer(amountFormat))
-                    .add(row -> row.getImportedTransaction().amount())
-                    .build(),
+                        .add(new AmountCellRenderer(amountFormat))
+                        .add(row -> row.getImportedTransaction().amount())
+                        .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.description1", String.class, 200)
-                    .add(row -> row.getImportedTransaction().description())
-                    .build(),
+                        .add(row -> row.getImportedTransaction().description())
+                        .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.id", String.class, 50)
-                    .add(row -> row.getJournalEntry() != null ? row.getJournalEntry().getId() : null)
-                    .build(),
+                        .add(row -> row.getJournalEntry() != null ? row.getJournalEntry().getId() : null)
+                        .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.description2", String.class, 200)
-                    .add(row -> row.getJournalEntry() != null ? row.getJournalEntry().getDescription() : null)
-                    .build(),
+                        .add(row -> row.getJournalEntry() != null ? row.getJournalEntry().getDescription() : null)
+                        .build(),
                 ColumnDefinition.<Transaction>builder("importBankStatementView.invoice", String.class, 200)
-                    .add(row -> getInvoice(row))
-                    .build()
+                        .add(row -> getInvoice(row))
+                        .build()
         );
         this.document = document;
     }
