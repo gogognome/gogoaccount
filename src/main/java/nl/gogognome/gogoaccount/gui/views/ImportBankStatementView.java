@@ -107,9 +107,8 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     }
 
     private void initModels() {
-        List<TransactionImporter> importers = List.of(new RabobankCSVImporter(), new KnabCSVImporter());
+        List<TransactionImporter> importers = List.of(new RabobankCSVImporter(), new RabobankCreditCardCSVImporter(), new KnabCSVImporter());
         importersModel.setItems(importers);
-        importersModel.setSelectedIndex(0, null);
 
         String defaultPath;
         try {
@@ -383,6 +382,8 @@ class ImporterFormatter implements ObjectFormatter<TransactionImporter> {
         String id;
         if (t instanceof RabobankCSVImporter) {
             id = "importBankStatementView.rabobankCsv";
+        } else if (t instanceof RabobankCreditCardCSVImporter) {
+            id = "importBankStatementView.rabobankCreditcardCsv";
         } else if (t instanceof KnabCSVImporter) {
             id = "importBankStatementView.knabCsv";
         } else {

@@ -15,6 +15,8 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 
 	private static final String RABOBANK_HEADER = "'IBAN/BBAN','Munt','BIC','Volgnr','Datum','Rentedatum','Bedrag','Saldo na trn','Tegenrekening IBAN/BBAN','Naam tegenpartij','Naam uiteindelijke partij','Naam initiërende partij','BIC tegenpartij','Code','Batch ID','Transactiereferentie','Machtigingskenmerk','Incassant ID','Betalingskenmerk','Omschrijving-1','Omschrijving-2','Omschrijving-3','Reden retour','Oorspr bedrag','Oorspr munt','Koers'";
 
+	private static final String RABOBANK_CREDITCARD_HEADER = "'Tegenrekening IBAN','Munt','Creditcard Nummer','Productnaam','Creditcard Regel1','Creditcard Regel2','Transactiereferentie','Datum','Bedrag','Omschrijving','Oorspr bedrag','Oorspr munt','Koers'";
+
 	private static final String KNAB_INDICATOR = "KNAB EXPORT;;;;;;;;;;;;;;;;";
 	private static final String KNAB_HEADER = "Rekeningnummer;Transactiedatum;Valutacode;CreditDebet;Bedrag;Tegenrekeningnummer;Tegenrekeninghouder;Valutadatum;Betaalwijze;Omschrijving;Type betaling;Machtigingsnummer;Incassant ID;Adres;Referentie;Boekdatum;";
 
@@ -30,6 +32,20 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				.containsExactly(
 						tuple(null, "NL01RABO0123456789", AmountBuilder.build("3.50"), "Piet Puk", "NL98RABO9876543210"),
 						tuple("Piet Puk", "NL98RABO9876543210", AmountBuilder.build("3.50"), null, "NL01RABO0123456789"));
+	}
+
+	@Test
+	public void rabobankCreditcard_testAmountIsAlwaysPositiveInTransaction() throws Exception {
+		List<ImportedTransaction> transactions = importRabobankCreditcardTransactions(
+				RABOBANK_CREDITCARD_HEADER,
+				"'NL01RABO0123456789','EUR','1234','RaboCard Mastercard','P. Puk','','0021000000001','2023-07-22','-4,46','PAYPAL *PATREON  MEMBE   123-456-7890 USACA','','',''",
+				"'NL01RABO0123456789','EUR','1234','RaboCard Mastercard','P. Puk','','0021000000002','2023-07-23','+7,45','Verrekening vorig overzicht','','',''");
+
+		assertThat(transactions)
+				.extracting("fromName", "fromAccount", "amount", "toName", "toAccount")
+				.containsExactly(
+						tuple(null, "RaboCard Mastercard 1234", AmountBuilder.build("4.46"), null, null),
+						tuple(null, null, AmountBuilder.build("7.45"), null, "RaboCard Mastercard 1234"));
 	}
 
 	@Test
@@ -59,6 +75,21 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		assertEquals("NL98RABO9876543210", transaction.toAccount());
 		assertEquals("Piet Puk", transaction.toName());
 		assertEquals("NL01RABO0123456789", transaction.fromAccount());
+		assertNull(transaction.fromName());
+	}
+
+	@Test
+	public void rabobankCreditcard_testGettersFromImportedTransaction() throws Exception {
+		List<ImportedTransaction> transactions = importRabobankCreditcardTransactions(
+				RABOBANK_CREDITCARD_HEADER,
+				"'NL01RABO0123456789','EUR','1234','RaboCard Mastercard','P. Puk','','0021000000001','2023-07-22','-4,46','PAYPAL *PATREON  MEMBE   123-456-7890 USACA','','',''");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertEquals(AmountBuilder.build("4.46"), transaction.amount());
+		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 22), transaction.date());
+		assertNull(transaction.toAccount());
+		assertNull(transaction.toName());
+		assertEquals("RaboCard Mastercard 1234", transaction.fromAccount());
 		assertNull(transaction.fromName());
 	}
 
@@ -254,6 +285,18 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		String fileAsString = buidlFilesAsString(lines);
 
 		return new RabobankCSVImporter() {
+			@Override
+			protected Reader getReader(File file, Charset charset) throws IOException {
+				ByteArrayInputStream bais = new ByteArrayInputStream(fileAsString.getBytes(charset));
+				return new InputStreamReader(bais);
+			}
+		}.importTransactions(null);
+	}
+
+	private List<ImportedTransaction> importRabobankCreditcardTransactions(String... lines) throws Exception {
+		String fileAsString = buidlFilesAsString(lines);
+
+		return new RabobankCreditCardCSVImporter() {
 			@Override
 			protected Reader getReader(File file, Charset charset) throws IOException {
 				ByteArrayInputStream bais = new ByteArrayInputStream(fileAsString.getBytes(charset));
