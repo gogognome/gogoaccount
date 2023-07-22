@@ -73,6 +73,7 @@ public class ImportBankStatementService {
 
     private String getKey(String account, String name, String description) {
         String key = getKey(account, name) + "|" + stripSpacesNumbersAndMonths(description);
+
         return key.length() < 100
                 ? key
                 : key.substring(0, 100);
