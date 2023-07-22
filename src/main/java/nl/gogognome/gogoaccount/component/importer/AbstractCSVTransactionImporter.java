@@ -56,7 +56,7 @@ abstract class AbstractCSVTransactionImporter implements TransactionImporter {
 		if (index == null) {
 			throw new ParseException("The file does not have a column '" + column + "'.");
 		}
-		return Strings.emptyToNull(values[index]);
+		return Strings.emptyToNull(values[index].trim());
 	}
 
 	protected Date parseDate(String dateAsString) throws ParseException {

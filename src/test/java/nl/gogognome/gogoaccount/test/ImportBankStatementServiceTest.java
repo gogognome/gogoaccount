@@ -79,6 +79,22 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 	}
 
 	@Test
+	public void knab_testGettersFromImportedTransactionWithoutToAccount() throws Exception {
+		List<ImportedTransaction> transactions = importKnabTransactions(
+				KNAB_INDICATOR,
+				KNAB_HEADER,
+				"'NL01RABO0123456789';'08-07-2023';'EUR';'D';'3,5';' ';'Piet Puk';'30-12-2022';'Overboeking';'allowance';'';'';'';'';'CSAFD23XSHJ';'08-07-2023';");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertEquals(AmountBuilder.build("3.50"), transaction.amount());
+		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 8), transaction.date());
+		assertNull(transaction.toAccount());
+		assertEquals("Piet Puk", transaction.toName());
+		assertEquals("NL01RABO0123456789", transaction.fromAccount());
+		assertNull(transaction.fromName());;
+	}
+
+	@Test
 	public void knab_testFileWithoutIndicator() throws Exception {
 		String line = "'NL01RABO0123456789';'08-07-2023';'EUR';'D';'3,5';'NL98RABO9876543210';'Piet Puk';'30-12-2022';'Overboeking';'Allowance';'';'';'';'';'CSAFD23XSHJ';'08-07-2023';";
 		assertThatThrownBy(() -> importKnabTransactions(KNAB_HEADER, line))
