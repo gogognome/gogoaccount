@@ -18,6 +18,8 @@ import nl.gogognome.lib.util.Factory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.stream.*;
+import com.google.common.base.*;
 
 /**
  * This class extends the {@link EditJournalView} so that it can
@@ -97,15 +99,21 @@ public class AddJournalForTransactionView extends EditJournalView {
         return journalEntry;
     }
 
-    private void initValuesForImportedTransaction(ImportedTransaction t) throws ServiceException {
-        dateModel.setDate(t.date());
-        descriptionModel.setString(t.description());
-        Account debetAccount = importBankStatementService.getFromAccount(document, t);
-        Account creditAccount = importBankStatementService.getToAccount(document, t);
+    private void initValuesForImportedTransaction(ImportedTransaction importedTransaction) throws ServiceException {
+        dateModel.setDate(importedTransaction.date());
+        descriptionModel.setString(buildInitialDescription(importedTransaction));
+        Account debetAccount = importBankStatementService.getFromAccount(document, importedTransaction);
+        Account creditAccount = importBankStatementService.getToAccount(document, importedTransaction);
         if (debetAccount != null && creditAccount != null) {
             journalEntryDetailsTableModel.addRow(createDefaultItemToBeAdded());
             journalEntryDetailsTableModel.addRow(createDefaultItemToBeAdded());
         }
+    }
+
+    private String buildInitialDescription(ImportedTransaction importedTransaction) {
+        return Stream.of(importedTransaction.fromName(), importedTransaction.toName(), importedTransaction.description())
+                .filter(s -> !Strings.isNullOrEmpty(s))
+                .collect(Collectors.joining(" "));
     }
 
     private void updateLabelsForImportedTransaction(ImportedTransaction t) {
