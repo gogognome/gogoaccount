@@ -8,6 +8,11 @@ import nl.gogognome.gogoaccount.component.document.*;
 import nl.gogognome.gogoaccount.services.*;
 import nl.gogognome.lib.util.*;
 
+/**
+ * This service creates backup of the database file. Backups are stored in a subdirectory of the directory containing
+ * the database file. The subdirectory is named "backup-[database file without extension]" and it will be created
+ * if it does not exist yet.
+ */
 public class BackupService {
 
 	public void createBackupOfDatabaseFile(File file) throws ServiceException {
@@ -20,15 +25,26 @@ public class BackupService {
 	}
 
 	public void createBackupOfSqlStatements(Document document) throws ServiceException {
-		File originalPath = document.getDatabaseFile();
-		String backupFilename = getBackupFile(originalPath, ".sql.zip").getAbsolutePath();
-		ServiceTransaction.withoutResult(() -> new BackupDAO(document).createBackupOfDocument(backupFilename));
+		File backupFile = getBackupFile(document.getDatabaseFile(), ".sql.zip");
+		ServiceTransaction.withoutResult(() -> new BackupDAO(document).createBackupOfDocument(backupFile));
 	}
 
 	private File getBackupFile(File originalPath, String extension) {
-		String formattedDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(DateUtil.createNow());
-		File directory = originalPath.getParentFile();
-		String backupFilename = ("backup-" + formattedDate + "-" + originalPath.getName() + extension);
+		String backupFilename = getBackupFilename(originalPath, extension);
+		File directory = getBackupDirectory(originalPath);
 		return new File(directory, backupFilename);
+	}
+
+	private File getBackupDirectory(File originalPath) {
+		File directory = new File(originalPath.getParentFile(), "backup");
+		if (!directory.exists()) {
+			directory.mkdir();
+		}
+		return directory;
+	}
+
+	private String getBackupFilename(File originalPath, String extension) {
+		String formattedDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(DateUtil.createNow());
+		return ("backup-" + formattedDate + "-" + originalPath.getName() + extension);
 	}
 }
