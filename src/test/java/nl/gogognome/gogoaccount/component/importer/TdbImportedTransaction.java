@@ -22,8 +22,18 @@ public class TdbImportedTransaction {
 		return new TdbImportedTransaction();
 	}
 
+	public TdbImportedTransaction withToAccount(String toAccount) {
+		this.toAccount = toAccount;
+		return this;
+	}
+
 	public TdbImportedTransaction withDescription(String description) {
 		this.description = description;
+		return this;
+	}
+
+	public TdbImportedTransaction withToName(String toName) {
+		this.toName = toName;
 		return this;
 	}
 

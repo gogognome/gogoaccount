@@ -1,7 +1,6 @@
 package nl.gogognome.gogoaccount.test;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
@@ -70,12 +69,12 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
 		ImportedTransaction transaction = transactions.get(0);
 
-		assertEquals(AmountBuilder.build("3.50"), transaction.amount());
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("3.50"));
 		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 8), transaction.date());
-		assertEquals("NL98RABO9876543210", transaction.toAccount());
-		assertEquals("Piet Puk", transaction.toName());
-		assertEquals("NL01RABO0123456789", transaction.fromAccount());
-		assertNull(transaction.fromName());
+		assertThat(transaction.toAccount()).isEqualTo("NL98RABO9876543210");
+		assertThat(transaction.toName()).isEqualTo("Piet Puk");
+		assertThat(transaction.fromAccount()).isEqualTo("NL01RABO0123456789");
+		assertThat(transaction.fromName()).isNull();
 	}
 
 	@Test
@@ -85,12 +84,12 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				"'NL01RABO0123456789','EUR','1234','RaboCard Mastercard','P. Puk','','0021000000001','2023-07-22','-4,46','PAYPAL *PATREON  MEMBE   123-456-7890 USACA','','',''");
 		ImportedTransaction transaction = transactions.get(0);
 
-		assertEquals(AmountBuilder.build("4.46"), transaction.amount());
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("4.46"));
 		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 22), transaction.date());
-		assertNull(transaction.toAccount());
-		assertNull(transaction.toName());
-		assertEquals("RaboCard Mastercard 1234", transaction.fromAccount());
-		assertNull(transaction.fromName());
+		assertThat(transaction.toAccount()).isNull();
+		assertThat(transaction.toName()).isNull();
+		assertThat(transaction.fromAccount()).isEqualTo("RaboCard Mastercard 1234");
+		assertThat(transaction.fromName()).isNull();
 	}
 
 	@Test
@@ -101,12 +100,12 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				"'NL01RABO0123456789';'08-07-2023';'EUR';'D';'3,5';'NL98RABO9876543210';'Piet Puk';'30-12-2022';'Overboeking';'Allowance';'';'';'';'';'CSAFD23XSHJ';'08-07-2023';");
 		ImportedTransaction transaction = transactions.get(0);
 
-		assertEquals(AmountBuilder.build("3.50"), transaction.amount());
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("3.50"));
 		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 8), transaction.date());
-		assertEquals("NL98RABO9876543210", transaction.toAccount());
-		assertEquals("Piet Puk", transaction.toName());
-		assertEquals("NL01RABO0123456789", transaction.fromAccount());
-		assertNull(transaction.fromName());
+		assertThat(transaction.toAccount()).isEqualTo("NL98RABO9876543210");
+		assertThat(transaction.toName()).isEqualTo("Piet Puk");
+		assertThat(transaction.fromAccount()).isEqualTo("NL01RABO0123456789");
+		assertThat(transaction.fromName()).isNull();
 	}
 
 	@Test
@@ -117,12 +116,12 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				"'NL01RABO0123456789';'08-07-2023';'EUR';'D';'3,5';' ';'Piet Puk';'30-12-2022';'Overboeking';'allowance';'';'';'';'';'CSAFD23XSHJ';'08-07-2023';");
 		ImportedTransaction transaction = transactions.get(0);
 
-		assertEquals(AmountBuilder.build("3.50"), transaction.amount());
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("3.50"));
 		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 8), transaction.date());
-		assertNull(transaction.toAccount());
-		assertEquals("Piet Puk", transaction.toName());
-		assertEquals("NL01RABO0123456789", transaction.fromAccount());
-		assertNull(transaction.fromName());
+		assertThat(transaction.toAccount()).isNull();
+		assertThat(transaction.toName()).isEqualTo("Piet Puk");
+		assertThat(transaction.fromAccount()).isEqualTo("NL01RABO0123456789");
+		assertThat(transaction.fromName()).isNull();
 	}
 
 	@Test
@@ -143,12 +142,12 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
 		ImportedTransaction transaction = transactions.get(0);
 
-		assertNull(importBankStatementService.getFromAccount(document, transaction));
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isNull();
 		importBankStatementService.setImportedFromAccount(document, transaction, account101);
-		assertEquals(account101, importBankStatementService.getFromAccount(document, transaction));
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isEqualTo(account101);
 
 		importBankStatementService.setImportedFromAccount(document, transaction, account100);
-		assertEquals(account100, importBankStatementService.getFromAccount(document, transaction));
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isEqualTo(account100);
 	}
 
 	@Test
@@ -161,12 +160,12 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
 		ImportedTransaction transaction = transactions.get(0);
 
-		assertNull(importBankStatementService.getToAccount(document, transaction));
+		assertThat(importBankStatementService.getToAccount(document, transaction)).isNull();
 		importBankStatementService.setImportedToAccount(document, transaction, account101);
-		assertEquals(account101, importBankStatementService.getToAccount(document, transaction));
+		assertThat(importBankStatementService.getToAccount(document, transaction)).isEqualTo(account101);
 
 		importBankStatementService.setImportedToAccount(document, transaction, account100);
-		assertEquals(account100, importBankStatementService.getToAccount(document, transaction));
+		assertThat(importBankStatementService.getToAccount(document, transaction)).isEqualTo(account100);
 	}
 
 	@Test
@@ -178,14 +177,14 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				RABOBANK_HEADER,
 				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','50,00','+616,86','','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
 		ImportedTransaction transaction = transactions.get(0);
-		assertNull(transaction.fromAccount());
+		assertThat(transaction.fromAccount()).isNull();
 
-		assertNull(importBankStatementService.getFromAccount(document, transaction));
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isNull();
 		importBankStatementService.setImportedFromAccount(document, transaction, account101);
-		assertEquals(account101, importBankStatementService.getFromAccount(document, transaction));
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isEqualTo(account101);
 
 		importBankStatementService.setImportedFromAccount(document, transaction, account100);
-		assertEquals(account100, importBankStatementService.getFromAccount(document, transaction));
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isEqualTo(account100);
 	}
 
 	@Test
@@ -197,14 +196,39 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				RABOBANK_HEADER,
 				"'','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','50,00','+616,86','','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
 		ImportedTransaction it = transactions.get(0);
-		assertNull(it.toAccount());
+		assertThat(it.toAccount()).isNull();
 
-		assertNull(importBankStatementService.getToAccount(document, it));
+		assertThat(importBankStatementService.getToAccount(document, it)).isNull();
 		importBankStatementService.setImportedToAccount(document, it, account101);
-		assertEquals(account101, importBankStatementService.getToAccount(document, it));
+		assertThat(importBankStatementService.getToAccount(document, it)).isEqualTo(account101);
 
 		importBankStatementService.setImportedToAccount(document, it, account100);
-		assertEquals(account100, importBankStatementService.getToAccount(document, it));
+		assertThat(importBankStatementService.getToAccount(document, it)).isEqualTo(account100);
+	}
+
+
+	@Test
+	public void setAndGetToAccountWithSameAccountWithDifferentNames() throws Exception {
+		Account account100 = configurationService.getAccount(document, "100");
+		Account account101 = configurationService.getAccount(document, "101");
+
+		ImportedTransaction it1 = TdbImportedTransaction.aNew()
+				.withToAccount("NL98RABO9876543210")
+				.withToName("Name 1")
+				.build();
+		ImportedTransaction it2 = TdbImportedTransaction.aNew()
+				.withToAccount("NL98RABO9876543210")
+				.withToName("Name 2")
+				.build();
+
+		assertThat(importBankStatementService.getToAccount(document, it1)).isNull();
+		importBankStatementService.setImportedToAccount(document, it1, account101);
+		assertThat(importBankStatementService.getToAccount(document, it1)).isEqualTo(account101);
+
+		assertThat(importBankStatementService.getToAccount(document, it2)).isNull();
+		importBankStatementService.setImportedToAccount(document, it2, account100);
+		assertThat(importBankStatementService.getToAccount(document, it2)).isEqualTo(account100);
+		assertThat(importBankStatementService.getToAccount(document, it1)).isEqualTo(account101);
 	}
 
 	@Test

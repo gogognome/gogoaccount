@@ -1,6 +1,8 @@
 package nl.gogognome.gogoaccount.component.importer;
 
 import java.util.*;
+import java.util.stream.*;
+import com.google.common.base.*;
 import nl.gogognome.gogoaccount.component.configuration.*;
 import nl.gogognome.gogoaccount.component.document.*;
 import nl.gogognome.gogoaccount.services.*;
@@ -94,7 +96,9 @@ public class ImportBankStatementService {
     }
 
     private String getKey(String account, String name) {
-        return account != null ? account : name;
+        return Stream.of(account, name)
+                .map(s -> Strings.nullToEmpty(s))
+                .collect(Collectors.joining("|"));
     }
 
 
