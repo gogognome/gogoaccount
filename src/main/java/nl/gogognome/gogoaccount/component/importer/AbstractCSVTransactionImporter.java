@@ -50,12 +50,22 @@ abstract class AbstractCSVTransactionImporter implements TransactionImporter {
 
 	protected abstract ImportedTransaction parseLine(String[] values) throws ParseException;
 
-	protected String getValue(String[] values, String column) throws ParseException {
-		Integer index = headerToIndex.get(column);
-		if (index == null) {
-			throw new ParseException("The file does not have a column '" + column + "'.");
+	protected String getValue(String[] values, String columnName) throws ParseException {
+		Integer columnIndex = headerToIndex.get(columnName);
+		if (columnIndex == null) {
+			throw new ParseException("The file does not have a column '" + columnName + "'.");
 		}
-		return Strings.emptyToNull(values[index].trim());
+		return getValue(values, columnIndex);
+	}
+
+	protected String getValue(String[] values, int columnIndex) {
+		return Strings.emptyToNull(trim(values[columnIndex]));
+	}
+
+	protected String trim(String s) {
+		return s
+				.replaceAll("\\s+", " ") // replace multiple spaces by a single space.
+				.trim(); // replace space at begin and end.
 	}
 
 	protected Date parseDate(String dateAsString) throws ParseException {

@@ -63,6 +63,19 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 	}
 
 	@Test
+	public void abnAmroBankTsv_testAmountIsAlwaysPositiveInTransaction() throws Exception {
+		List<ImportedTransaction> transactions = importAbnAmroBankTsvTransactions(
+				"123456789\tEUR\t20220902\t5121,54\t4904,54\t20220902\t-217,00\tSEPA Incasso algemeen doorlopend Incassant: NL12345678901234567  Naam: Piet Puk                   Machtiging: 000123792531        Omschrijving: Allowance                                                                    IBAN: NL12ABNA3456789012                                         ",
+				"123456789\tEUR\t20220902\t4904,54\t5121,54\t20220902\t216,35\tSEPA Incasso algemeen doorlopend Incassant: NL12345678901234567   Naam: Piet Puk                   Machtiging: 000123792531        Omschrijving: Returned allowance                                                           IBAN: NL12ABNA3456789012                                         ");
+
+		assertThat(transactions)
+				.extracting("fromName", "fromAccount", "amount", "toName", "toAccount")
+				.containsExactly(
+						tuple(null, "123456789", AmountBuilder.build("217"), "Piet Puk", "NL12ABNA3456789012"),
+						tuple("Piet Puk", "NL12ABNA3456789012", AmountBuilder.build("216.35"), null, "123456789"));
+	}
+
+	@Test
 	public void rabobank_testGettersFromImportedTransaction() throws Exception {
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 				RABOBANK_HEADER,
@@ -106,6 +119,80 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		assertThat(transaction.toName()).isEqualTo("Piet Puk");
 		assertThat(transaction.fromAccount()).isEqualTo("NL01RABO0123456789");
 		assertThat(transaction.fromName()).isNull();
+	}
+
+	@Test
+	public void abnAmroBankTsv_testGettersFromImportedTransaction() throws Exception {
+		List<ImportedTransaction> transactions = importAbnAmroBankTsvTransactions(
+				"123456789\tEUR\t20220324\t7504,55\t7301,27\t20220324\t-203,28\tSEPA Overboeking                 IBAN: NL12ABNA3456789012        BIC: ABNANL2A                    Naam: Piet Puk                                                   Omschrijving: Invoice 1234 03-2022                               Kenmerk: abcd98765432");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("203.28"));
+		assertEqualDayOfYear(DateUtil.createDate(2022, 3, 24), transaction.date());
+		assertThat(transaction.toAccount()).isEqualTo("NL12ABNA3456789012");
+		assertThat(transaction.toName()).isEqualTo("Piet Puk");
+		assertThat(transaction.fromAccount()).isEqualTo("123456789");
+		assertThat(transaction.fromName()).isNull();
+	}
+
+	@Test
+	public void abnAmroBankTsv_testGettersFromImportedTransaction_slashesInDescription() throws Exception {
+		List<ImportedTransaction> transactions = importAbnAmroBankTsvTransactions(
+				"123456789\tEUR\t20220301\t6317,08\t7992,09\t20220301\t1675,01\t/TRTP/SEPA OVERBOEKING/IBAN/NL12ABNA3456789012/BIC/ABNANL2A/NAME/Piet Puk/REMI/5087/5781/EREF/NOTPROVIDED                  ");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("1675.01"));
+		assertEqualDayOfYear(DateUtil.createDate(2022, 3, 1), transaction.date());
+		assertThat(transaction.toAccount()).isEqualTo("123456789");
+		assertThat(transaction.toName()).isNull();
+		assertThat(transaction.fromAccount()).isEqualTo("NL12ABNA3456789012");
+		assertThat(transaction.fromName()).isEqualTo("Piet Puk");
+		assertThat(transaction.description()).isEqualTo("5087");
+	}
+
+	@Test
+	public void abnAmroBankTsv_testGettersFromImportedTransaction_slashesInDescriptionIncludingReference() throws Exception {
+		List<ImportedTransaction> transactions = importAbnAmroBankTsvTransactions(
+				"123456789\tEUR\t20230628\t5517,94\t5251,94\t20230628\t-266,00\t/TRTP/SEPA Incasso algemeen doorlopend/CSID/NL12ZZZ345678890000/NAME/Piet Puk/MARF/12345678/REMI/Kenmerk  9821386747562123 Omschrijving  Klantnummer  54234523-3 BTW  46.40 Periode  2023-06 Sesamstraat 32 HILVERSUM/IBAN/NL12ABNA3456789012/BIC/ABNANL2A /EREF/9435843851231251");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("266"));
+		assertEqualDayOfYear(DateUtil.createDate(2023, 6, 28), transaction.date());
+		assertThat(transaction.toAccount()).isEqualTo("NL12ABNA3456789012");
+		assertThat(transaction.toName()).isEqualTo("Piet Puk");
+		assertThat(transaction.fromAccount()).isEqualTo("123456789");
+		assertThat(transaction.fromName()).isNull();
+		assertThat(transaction.description()).isEqualTo("Kenmerk 9821386747562123 Omschrijving Klantnummer 54234523-3 BTW 46.40 Periode 2023-06 Sesamstraat 32 HILVERSUM 9435843851231251");
+	}
+
+	@Test
+	public void abnAmroBankTsv_testGettersFromImportedTransaction_slashesInDescriptionExcludingActualDescriptionAndReference() throws Exception {
+		List<ImportedTransaction> transactions = importAbnAmroBankTsvTransactions(
+				"123456789\tEUR\t20230704\t4866,61\t6541,62\t20230704\t1675,01\t/TRTP/SEPA Incasso Batch/PREF/5/NRTX/0000011/PIND/BRUTO/");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("1675.01"));
+		assertEqualDayOfYear(DateUtil.createDate(2023, 7, 4), transaction.date());
+		assertThat(transaction.toAccount()).isEqualTo("123456789");
+		assertThat(transaction.toName()).isNull();
+		assertThat(transaction.fromAccount()).isNull();
+		assertThat(transaction.fromName()).isNull();
+		assertThat(transaction.description()).isEqualTo("/TRTP/SEPA Incasso Batch/PREF/5/NRTX/0000011/PIND/BRUTO/");
+	}
+
+	@Test
+	public void abnAmroBankTsv_testGettersFromImportedTransaction_noNameInDescription() throws Exception {
+		List<ImportedTransaction> transactions = importAbnAmroBankTsvTransactions(
+				"123456789\tEUR\t20220301\t6317,08\t7992,09\t20220301\t1675,01\tSEPA Incasso Batch               Referentie: tbob1234567-RCUR-brek987654                          Aantal opdrachten: 23");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("1675.01"));
+		assertEqualDayOfYear(DateUtil.createDate(2022, 3, 1), transaction.date());
+		assertThat(transaction.toAccount()).isEqualTo("123456789");
+		assertThat(transaction.toName()).isNull();
+		assertThat(transaction.fromAccount()).isNull();
+		assertThat(transaction.fromName()).isNull();
+		assertThat(transaction.description()).isEqualTo("SEPA Incasso Batch Referentie: tbob1234567-RCUR-brek987654 Aantal opdrachten: 23");
 	}
 
 	@Test
@@ -205,7 +292,6 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		importBankStatementService.setImportedToAccount(document, it, account100);
 		assertThat(importBankStatementService.getToAccount(document, it)).isEqualTo(account100);
 	}
-
 
 	@Test
 	public void setAndGetToAccountWithSameAccountWithDifferentNames() throws Exception {
@@ -333,6 +419,18 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		String fileAsString = buidlFilesAsString(lines);
 
 		return new KnabCSVImporter() {
+			@Override
+			protected Reader getReader(File file, Charset charset) throws IOException {
+				ByteArrayInputStream bais = new ByteArrayInputStream(fileAsString.getBytes(charset));
+				return new InputStreamReader(bais);
+			}
+		}.importTransactions(null);
+	}
+
+	private List<ImportedTransaction> importAbnAmroBankTsvTransactions(String... lines) throws Exception {
+		String fileAsString = buidlFilesAsString(lines);
+
+		return new AbnAmroBankTSVTransactionImporter() {
 			@Override
 			protected Reader getReader(File file, Charset charset) throws IOException {
 				ByteArrayInputStream bais = new ByteArrayInputStream(fileAsString.getBytes(charset));
