@@ -85,7 +85,8 @@
                             <commands>
                                 <command>color: 0, 0, 0</command>
                                 <command>font: Arial Bold, 30</command>
-                                <command>text: 130, 30, gogo account ${project.version}</command>
+                                <command>text: 170, 30, Gogo Account</command>
+                                <command>text: 170, 60, ${project.version}</command>
                             </commands>
                         </configuration>
                     </execution>
