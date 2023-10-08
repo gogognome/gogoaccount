@@ -13,6 +13,7 @@ import nl.gogognome.lib.util.*;
 public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 
 	private static final String RABOBANK_HEADER = "'IBAN/BBAN','Munt','BIC','Volgnr','Datum','Rentedatum','Bedrag','Saldo na trn','Tegenrekening IBAN/BBAN','Naam tegenpartij','Naam uiteindelijke partij','Naam initiërende partij','BIC tegenpartij','Code','Batch ID','Transactiereferentie','Machtigingskenmerk','Incassant ID','Betalingskenmerk','Omschrijving-1','Omschrijving-2','Omschrijving-3','Reden retour','Oorspr bedrag','Oorspr munt','Koers'";
+	private static final String RABOBANK_BUSINESS_HEADER = "'IBAN/BBAN','Valuta','BIC','Volg nr','Datum','Valuta datum','Bedrag','saldo na boeking','IBAN/BBAN tegenpartij','Naam tegenpartij','Naam uiteind begunst','Naam initiërende partij','BIC tegenpartij','Transactie soort','Batch nr','Transactiereferentie','Machtigingskenmerk','Incassant ID','Betalingskenmerk','Omschrijving - 1','Omschrijving - 2','Omschrijving - 3','Oorzaakscode','Oorspr bedrag','Oorspr valuta','Koers','Naam rekeninghouder','Naam adm gebruik','Omschrijving oorzaakscode','Ref.correspondentbank','Transactiereferentie','Trans.Info.Extra.Details','Trans.Info.Extra.Details.Type','Boekingsreferentie','Veld 86'";
 
 	private static final String RABOBANK_CREDITCARD_HEADER = "'Tegenrekening IBAN','Munt','Creditcard Nummer','Productnaam','Creditcard Regel1','Creditcard Regel2','Transactiereferentie','Datum','Bedrag','Omschrijving','Oorspr bedrag','Oorspr munt','Koers'";
 
@@ -31,6 +32,20 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 				.containsExactly(
 						tuple(null, "NL01RABO0123456789", AmountBuilder.build("3.50"), "Piet Puk", "NL98RABO9876543210"),
 						tuple("Piet Puk", "NL98RABO9876543210", AmountBuilder.build("3.50"), null, "NL01RABO0123456789"));
+	}
+
+	@Test
+	public void rabobankBusiness_testAmountIsAlwaysPositiveInTransaction() throws Exception {
+		List<ImportedTransaction> transactions = importRabobankBusinessTransactions(
+				RABOBANK_BUSINESS_HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2UXXX','','02-09-2023','01-09-2023','-3,50','1234.56','NL98RABO9876543210','Piet Puk','','','','db','','','','','','Allowance','','','','','','','My Club','','','','','','','',''",
+				"'NL01RABO0123456789','EUR','RABONL2UXXX','','02-09-2023','01-09-2023','3,50','1234.56','NL98RABO9876543210','Piet Puk','','','','db','','','','','','Returned allowance','','','','','','','My Club','','','','','','','',''");
+
+		assertThat(transactions)
+				.extracting("fromName", "fromAccount", "amount", "toName", "toAccount")
+				.containsExactly(
+						tuple("My Club", "NL01RABO0123456789", AmountBuilder.build("3.50"), "Piet Puk", "NL98RABO9876543210"),
+						tuple("Piet Puk", "NL98RABO9876543210", AmountBuilder.build("3.50"), "My Club", "NL01RABO0123456789"));
 	}
 
 	@Test
@@ -91,10 +106,25 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 	}
 
 	@Test
+	public void rabobankBusiness_testGettersFromImportedTransaction() throws Exception {
+		List<ImportedTransaction> transactions = importRabobankBusinessTransactions(
+				RABOBANK_BUSINESS_HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2UXXX','','02-09-2023','01-09-2023','-3,50','1234.56','NL98RABO9876543210','Piet Puk','','','','db','','','','','','Allowance','','','','','','','My Club','','','','','','','',''");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("3.50"));
+		assertEqualDayOfYear(DateUtil.createDate(2023, 9, 2), transaction.date());
+		assertThat(transaction.toAccount()).isEqualTo("NL98RABO9876543210");
+		assertThat(transaction.toName()).isEqualTo("Piet Puk");
+		assertThat(transaction.fromAccount()).isEqualTo("NL01RABO0123456789");
+		assertThat(transaction.fromName()).isEqualTo("My Club");
+	}
+
+	@Test
 	public void rabobankCreditcard_testGettersFromImportedTransaction() throws Exception {
 		List<ImportedTransaction> transactions = importRabobankCreditcardTransactions(
 				RABOBANK_CREDITCARD_HEADER,
-				"'NL01RABO0123456789','EUR','1234','RaboCard Mastercard','P. Puk','','0021000000001','2023-07-22','-4,46','PAYPAL *PATREON  MEMBE   123-456-7890 USACA','','',''");
+				"'NL01RABO0123456789','EUR','1234','RaboCard Mastercard','P. Puk','','0021000000001','2023-07-22','-4,46','Online shop invoice','','',''");
 		ImportedTransaction transaction = transactions.get(0);
 
 		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("4.46"));
@@ -227,6 +257,24 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		List<ImportedTransaction> transactions = importRabobankTransactions(
 				RABOBANK_HEADER,
 				"'NL01RABO0123456789','EUR','RABONL2U','000000000000016431','2023-07-08','2023-07-81','-3,50','+616,86','NL98RABO9876543210','Piet Puk','','Rabobank Nederland APO','RABONL2UXXX','bg','','','','','','Allowance',' ','','','','',''");
+		ImportedTransaction transaction = transactions.get(0);
+
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isNull();
+		importBankStatementService.setImportedFromAccount(document, transaction, account101);
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isEqualTo(account101);
+
+		importBankStatementService.setImportedFromAccount(document, transaction, account100);
+		assertThat(importBankStatementService.getFromAccount(document, transaction)).isEqualTo(account100);
+	}
+
+	@Test
+	public void rabobankBusiness_setAndGetFromAccount() throws Exception {
+		Account account100 = configurationService.getAccount(document, "100");
+		Account account101 = configurationService.getAccount(document, "101");
+
+		List<ImportedTransaction> transactions = importRabobankBusinessTransactions(
+				RABOBANK_BUSINESS_HEADER,
+				"'NL01RABO0123456789','EUR','RABONL2UXXX','','02-09-2023','01-09-2023','-3,50','1234.56','NL98RABO9876543210','Piet Puk','','','','db','','','','','','Allowance','','','','','','','My Club','','','','','','','',''");
 		ImportedTransaction transaction = transactions.get(0);
 
 		assertThat(importBankStatementService.getFromAccount(document, transaction)).isNull();
@@ -395,6 +443,18 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 		String fileAsString = buidlFilesAsString(lines);
 
 		return new RabobankCSVImporter() {
+			@Override
+			protected Reader getReader(File file, Charset charset) throws IOException {
+				ByteArrayInputStream bais = new ByteArrayInputStream(fileAsString.getBytes(charset));
+				return new InputStreamReader(bais);
+			}
+		}.importTransactions(null);
+	}
+
+	private List<ImportedTransaction> importRabobankBusinessTransactions(String... lines) throws Exception {
+		String fileAsString = buidlFilesAsString(lines);
+
+		return new RabobankBusinessCSVImporter() {
 			@Override
 			protected Reader getReader(File file, Charset charset) throws IOException {
 				ByteArrayInputStream bais = new ByteArrayInputStream(fileAsString.getBytes(charset));

@@ -23,9 +23,22 @@ abstract class AbstractCSVTransactionImporter implements TransactionImporter {
 	}
 
 	protected List<String[]> readAllLinesFrom(File file, Charset charset) throws IOException {
+		List<String[]> lines;
 		try (Reader reader = getReader(file, charset)) {
 			CSVReader csvReader = new CSVReader(reader, separator);
-			return csvReader.readAll();
+			lines = csvReader.readAll();
+		}
+
+		if (charset.equals(StandardCharsets.UTF_8)) {
+			removeByteOrderMark(lines);
+		}
+
+		return lines;
+	}
+
+	private void removeByteOrderMark(List<String[]> lines) {
+		if (!lines.isEmpty() && lines.get(0).length > 0) {
+			lines.get(0)[0] = lines.get(0)[0].replace("\uFEFF", "");
 		}
 	}
 
