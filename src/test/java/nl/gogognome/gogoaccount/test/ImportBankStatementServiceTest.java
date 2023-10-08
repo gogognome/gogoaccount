@@ -109,10 +109,10 @@ public class ImportBankStatementServiceTest extends AbstractBookkeepingTest {
 	public void rabobankBusiness_testGettersFromImportedTransaction() throws Exception {
 		List<ImportedTransaction> transactions = importRabobankBusinessTransactions(
 				RABOBANK_BUSINESS_HEADER,
-				"'NL01RABO0123456789','EUR','RABONL2UXXX','','02-09-2023','01-09-2023','-3,50','1234.56','NL98RABO9876543210','Piet Puk','','','','db','','','','','','Allowance','','','','','','','My Club','','','','','','','',''");
+				"'NL01RABO0123456789','EUR','RABONL2UXXX','','02-09-2023','01-09-2023','-1.234,56','1234.56','NL98RABO9876543210','Piet Puk','','','','db','','','','','','Allowance','','','','','','','My Club','','','','','','','',''");
 		ImportedTransaction transaction = transactions.get(0);
 
-		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("3.50"));
+		assertThat(transaction.amount()).isEqualTo(AmountBuilder.build("1234.56"));
 		assertEqualDayOfYear(DateUtil.createDate(2023, 9, 2), transaction.date());
 		assertThat(transaction.toAccount()).isEqualTo("NL98RABO9876543210");
 		assertThat(transaction.toName()).isEqualTo("Piet Puk");

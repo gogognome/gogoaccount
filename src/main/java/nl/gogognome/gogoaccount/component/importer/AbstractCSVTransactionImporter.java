@@ -93,7 +93,8 @@ abstract class AbstractCSVTransactionImporter implements TransactionImporter {
 		Currency currency = parseCurrency(currencyCode);
 
 		try {
-			return new Amount(new AmountFormat(DUTCH, currency).parse(amount));
+			String amountWithoutThousandsSeparators = amount.replace(".", "");
+			return new Amount(new AmountFormat(DUTCH, currency).parse(amountWithoutThousandsSeparators));
 		} catch (java.text.ParseException e) {
 			throw new ParseException("\"" + amount + "\" is not a valid amount.", e);
 		}
