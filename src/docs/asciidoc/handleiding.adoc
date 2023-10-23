@@ -1,0 +1,52 @@
+= Handleiding Gogo Account
+Sander Kooijmans
+:toc:
+:imagesdir: images
+
+Auteur: {author}
+
+Versie: {revnumber}
+
+Datum: {revdate}
+
+## Waarom een nieuw boekhoudprogramma schrijven?
+
+In 2006 werd ik penningmeester van een volleybalverening die bestond uit een zestigtal leden. Ik heb destijds een aantal boekhoudprogramma's bekeken: een commercieel programma en een aantal gratis programma's. Geen enkel van de programma's die ik bekeken had voldeden aan mijn eisen:
+
+* Het programma moet klein zijn wat betreft geheugen gebruik en gebruik van de harde schijf.
+* Het programma moet eenvoudig in gebruik zijn.
+* Het programma moet bedoeld zijn voor kleine boekhoudingen.
+
+Uit frustratie hierover ben ik begonnen aan mijn eigen boekhoudprogramma. Het programma is inmiddels door verschillende personen gebruikt in vijf verenigingen waarvan het aantal leden varieerde van 10 tot 125 leden.
+
+Het boekhoudprogramma is ook prima bruikbaar om de financiën van je huishouden op een rij te zetten.
+
+## Eigenschappen van Gogo Account
+
+Gogo account heeft de volgende eigenschappen:
+
+* Zelf te definiëren grootboekrekeningen
+* Journaal
+* Balans en resultatenrekening
+* Relaties om je ledenlijst, debiteuren en crediteuren te beheren
+* Facturen
+* Import van bankafschriften van een aantal Nederlands banken
+
+Gogo account bevat geen dagboeken.
+
+## Licentie informatie
+
+Gogo Account is beschikbaar onder de Apache License versie 2. Dit betekent in het kort dat je het progamma gratis mag gebruiken, ook voor commerciële toepassingen. De auteur is niet aansprakelijk voor schades die ontstaan door
+gebruik van het programma, ook niet als er programmeerfouten in het programma blijken te zitten.
+
+Hieronder de offiële tekst die helaas alleen in het Engels beschikbaar is:
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+## Auteur
+
+Gogo Account is geschreven door Sander Kooijmans. Als je vragen hebt of een bug hebt ontdekt, neem dan contact op met de auteur door een e-mail te sturen naar gogoaccount@gogognome.nl.
