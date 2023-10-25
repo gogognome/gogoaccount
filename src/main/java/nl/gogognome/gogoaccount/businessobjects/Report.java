@@ -151,12 +151,7 @@ public class Report {
     }
 
     public List<LedgerLine> getLedgerLinesForAccount(Account account) {
-        List<LedgerLine> items = accountToLedgerLines.get(account);
-        if (items == null) {
-            items = new ArrayList<>();
-            accountToLedgerLines.put(account, items);
-        }
-        return items;
+        return accountToLedgerLines.computeIfAbsent(account, k -> new ArrayList<>());
     }
 
     void addInvoice(Invoice invoice) {
