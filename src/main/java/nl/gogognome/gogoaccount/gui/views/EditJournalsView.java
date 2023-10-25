@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.*;
 import java.util.List;
 
 import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
@@ -238,6 +239,9 @@ public class EditJournalsView extends View {
 
     public List<FormattedJournalEntry> getFilteredRows() throws ServiceException {
         Criterion criterion = isNullOrEmpty(searchCriterionModel.getString()) ? null : new Parser().parse(searchCriterionModel.getString());
-        return ledgerService.findFormattedJournalEntries(document, criterion);
+        return ledgerService.findFormattedJournalEntries(document, criterion).
+                stream()
+                .sorted(Comparator.comparing((FormattedJournalEntry entry) -> entry.date).reversed())
+                .toList();
     }
 }
