@@ -200,7 +200,7 @@ public class Report {
         }
     }
 
-    public Amount getRemaingAmountForInvoice(Invoice invoice) {
+    public Amount getRemainingAmountForInvoice(Invoice invoice) {
         Amount amount = invoiceToRemainingAmount.get(invoice);
         if (amount == null) {
             amount = Amount.ZERO;

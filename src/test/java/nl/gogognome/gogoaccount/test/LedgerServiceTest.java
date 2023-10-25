@@ -166,7 +166,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
         Report report = bookkeepingService.createReport(document, someDate);
         assertAmountEquals(23, report.getBalanceForDebtor(pietPuk));
-        assertAmountEquals(23, report.getRemaingAmountForInvoice(invoice));
+        assertAmountEquals(23, report.getRemainingAmountForInvoice(invoice));
     }
 
     @Test
@@ -177,7 +177,7 @@ public class LedgerServiceTest extends AbstractBookkeepingTest {
 
         Report report = bookkeepingService.createReport(document, someDate);
         assertAmountEquals(23, report.getBalanceForCreditor(pietPuk));
-        assertAmountEquals(-23, report.getRemaingAmountForInvoice(invoice));
+        assertAmountEquals(-23, report.getRemainingAmountForInvoice(invoice));
     }
 
     @Test
