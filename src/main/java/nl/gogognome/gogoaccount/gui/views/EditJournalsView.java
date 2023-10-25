@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 
@@ -41,9 +42,10 @@ import static nl.gogognome.lib.util.StringUtil.isNullOrEmpty;
  */
 public class EditJournalsView extends View {
 
-	private static final long serialVersionUID = 1L;
+	@Serial
+    private static final long serialVersionUID = 1L;
 
-    private Logger logger = LoggerFactory.getLogger(EditJournalsView.class);
+    private final Logger logger = LoggerFactory.getLogger(EditJournalsView.class);
 
     private final Document document;
     private final ConfigurationService configurationService;
@@ -61,7 +63,7 @@ public class EditJournalsView extends View {
 
     private FormattedJournalEntriesTableModel journalEntriesTableModel;
     private JTable journalEntriesTable;
-    private StringModel searchCriterionModel = new StringModel();
+    private final StringModel searchCriterionModel = new StringModel();
 
     private DocumentListener documentListener;
 
@@ -155,9 +157,7 @@ public class EditJournalsView extends View {
     }
 
     private void onSearch() {
-        handleException.of(() -> {
-            journalEntriesTableModel.setRows(getFilteredRows());
-        });
+        handleException.of(() -> journalEntriesTableModel.setRows(getFilteredRows()));
     }
 
     private ButtonPanel createButtonPanel() {

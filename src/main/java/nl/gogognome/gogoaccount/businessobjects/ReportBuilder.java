@@ -35,13 +35,13 @@ public class ReportBuilder {
     private final Bookkeeping bookkeeping;
     private Report report;
 
-    private Map<String, Account> idToAccount;
-    private Map<Account, Amount> accountToTotalDebet = new HashMap<>();
-    private Map<Account, Amount> accountToTotalCredit = new HashMap<>();
-    private Map<Account, Amount> accountToStartDebet = new HashMap<>();
-    private Map<Account, Amount> accountToStartCredit = new HashMap<>();
+    private final Map<String, Account> idToAccount;
+    private final Map<Account, Amount> accountToTotalDebet = new HashMap<>();
+    private final Map<Account, Amount> accountToTotalCredit = new HashMap<>();
+    private final Map<Account, Amount> accountToStartDebet = new HashMap<>();
+    private final Map<Account, Amount> accountToStartCredit = new HashMap<>();
 
-    private TextResource textResource = Factory.getInstance(TextResource.class);
+    private final TextResource textResource = Factory.getInstance(TextResource.class);
 
     public ReportBuilder(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
                          PartyService partyService) throws ServiceException {

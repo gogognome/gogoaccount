@@ -12,13 +12,14 @@ import nl.gogognome.lib.util.Factory;
 import java.util.*;
 
 /**
- * This class contains the financial report for a specific date.
+ * <p>This class contains the financial report for a specific date. It contains:</p>
  *
- * It contains:
- * - the balance sheet
- * - the operational result
- * - all mutations of all accounts
- * - the debtors and creditors that have open invoices
+ * <ul>
+ *   <li>the balance sheet</li>
+ *   <li>the operational result</li>
+ *   <li>all mutations of all accounts</li>
+ *   <li>the debtors and creditors that have open invoices</li>
+ * </ul>
  */
 public class Report {
 
@@ -48,19 +49,19 @@ public class Report {
     private Account resultOfOperationsAccount;
     private Amount resultOfOperations;
 
-    private List<Invoice> invoices = new ArrayList<>();
+    private final List<Invoice> invoices = new ArrayList<>();
 
-    private Map<Account, Amount> accountToAmount = new HashMap<>();
+    private final Map<Account, Amount> accountToAmount = new HashMap<>();
 
-    private Map<Account, List<LedgerLine>> accountToLedgerLines = new HashMap<>();
+    private final Map<Account, List<LedgerLine>> accountToLedgerLines = new HashMap<>();
 
-    private Map<Invoice, Amount> invoiceToRemainingAmount = new HashMap<>();
+    private final Map<Invoice, Amount> invoiceToRemainingAmount = new HashMap<>();
 
-    private Map<Party, Amount> debtorToRemainingAmount = new HashMap<>();
+    private final Map<Party, Amount> debtorToRemainingAmount = new HashMap<>();
 
-    private Map<Party, Amount> creditorToRemainingAmount = new HashMap<>();
+    private final Map<Party, Amount> creditorToRemainingAmount = new HashMap<>();
 
-    private TextResource textResource = Factory.getInstance(TextResource.class);
+    private final TextResource textResource = Factory.getInstance(TextResource.class);
 
     public Report() {
         super();
