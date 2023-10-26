@@ -363,11 +363,11 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.journals"));
+        result.append(textResource.getString("rep.journalEntries"));
         result.append(textFormat.getNewLine());
 
         if (endIndex - startIndex <= 0) {
-            result.append(textResource.getString("rep.noJournals"));
+            result.append(textResource.getString("rep.noJournalEntries"));
             result.append(textFormat.getNewLine());
         } else {
             result.append(textFormat.getStartOfTable(("l|l|r|r|l"),
