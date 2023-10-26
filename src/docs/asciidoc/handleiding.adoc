@@ -9,37 +9,40 @@ Versie: {revnumber}
 
 Datum: {revdate}
 
-## Waarom een nieuw boekhoudprogramma schrijven?
+## Introductie
 
-In 2006 werd ik penningmeester van een volleybalverening die bestond uit een zestigtal leden. Ik heb destijds een aantal boekhoudprogramma's bekeken: een commercieel programma en een aantal gratis programma's. Geen enkel van de programma's die ik bekeken had voldeden aan mijn eisen:
+### Historie van Gogo Account
+
+In 2006 werd ik penningmeester van een volleybalvereniging die bestond uit een zestigtal leden. Ik heb destijds een aantal boekhoudprogramma's bekeken: een commercieel programma en een aantal gratis programma's. Geen enkel van de programma's die ik bekeken had voldeden aan mijn eisen:
 
 * Het programma moet klein zijn wat betreft geheugen gebruik en gebruik van de harde schijf.
 * Het programma moet eenvoudig in gebruik zijn.
 * Het programma moet bedoeld zijn voor kleine boekhoudingen.
+* Het programma moet op Windows-, Linux- en Apple-computers werken.
 
 Uit frustratie hierover ben ik begonnen aan mijn eigen boekhoudprogramma. Het programma is inmiddels door verschillende personen gebruikt in vijf verenigingen waarvan het aantal leden varieerde van 10 tot 125 leden.
 
 Het boekhoudprogramma is ook prima bruikbaar om de financiën van je huishouden op een rij te zetten.
 
-## Eigenschappen van Gogo Account
+### Eigenschappen van Gogo Account
 
 Gogo account heeft de volgende eigenschappen:
 
-* Zelf te definiëren grootboekrekeningen
-* Journaal
+* Grootboek met zelf te definiëren grootboekrekeningen
+* Journaalposten
 * Balans en resultatenrekening
 * Relaties om je ledenlijst, debiteuren en crediteuren te beheren
 * Facturen
 * Import van bankafschriften van een aantal Nederlands banken
 
-Gogo account bevat geen dagboeken.
+Gogo account bevat geen dagboeken. En hoewel er grootboekrekeningen worden gebruikt wordt het grootboek
 
-## Licentie informatie
+### Licentie
 
-Gogo Account is beschikbaar onder de Apache License versie 2. Dit betekent in het kort dat je het progamma gratis mag gebruiken, ook voor commerciële toepassingen. De auteur is niet aansprakelijk voor schades die ontstaan door
+Gogo Account is beschikbaar onder de Apache License versie 2. Dit betekent in het kort dat je het programma gratis mag gebruiken, ook voor commerciële toepassingen. De auteur is niet aansprakelijk voor eventuele schades die ontstaan door
 gebruik van het programma, ook niet als er programmeerfouten in het programma blijken te zitten.
 
-Hieronder de offiële tekst die helaas alleen in het Engels beschikbaar is:
+Hieronder de officiële tekst die helaas alleen in het Engels beschikbaar is:
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
 
@@ -47,6 +50,60 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
-## Auteur
+### Auteur
 
 Gogo Account is geschreven door Sander Kooijmans. Als je vragen hebt of een bug hebt ontdekt, neem dan contact op met de auteur door een e-mail te sturen naar gogoaccount@gogognome.nl.
+
+## Installeren
+
+### Java Runtime
+
+Gogo Account is geschreven in de programmeertaal Java. Om Gogo Account te kunnen uitvoeren is er een zogenaamde Java Runtime nodig. Op veel computers is er al een Java Runtime aanwezig.
+
+Om te testen of er een Java Runtime aanwezig is, kun je in Windows een command prompt of Powershell opstarten vanuit het startmenu, of in Linux een shell opstarten, en het volgende commando intypen en uitvoeren door op enter te drukken:
+
+    java -version
+
+Als er een Java Runtime aanwezig is dan zal het volgende verschijnen.
+
+    C:\Users\sande>java -version
+    java version "17.0.7" 2023-04-18 LTS
+    Java(TM) SE Runtime Environment (build 17.0.7+8-LTS-224)
+    Java HotSpot(TM) 64-Bit Server VM (build 17.0.7+8-LTS-224, mixed mode, sharing)
+
+Het is waarschijnlijk dat de versienummers op jouw computer anders zijn. Dat is geen probleem, zolang het versienummer maar begint met het getal 17 of getal groter dan 17.
+
+Mocht er geen Java Runtime aanwezig zijn, dan kun je die downloaden van de website van Oracle: https://www.oracle.com/nl/java/technologies/downloads/
+
+### Gogo Account starten
+
+Gogo Account is te downloaden vanaf de website van Sander Kooijmans: https://gogognome.nl/gogo-account.html . Het bestand dat je downloadt heet gogoaccount-{revnumber}.jar.
+
+Je kunt Gogo Account starten door te dubbelklikken op jar-bestand dat je hebt gedownload.
+
+Een _splash screen_ verschijnt om aan te geven dat Gogo Account wordt geladen:
+
+image::splash.png[]
+
+Als Gogo Account is opgestart, verschijnt dit venster:
+
+image::nl-after-loading.png[]
+
+### Opstarten met een batchbestand (Windows)
+
+Het kan handig zijn om Gogo Account met een batchbestand te starten. Je kunt dan direct een specifieke boekhouding openen en je kunt de taal van Gogo Account instellen.
+
+Start een command prompt of Powershell op vanuit het startmenu. Typ het volgende commando in en voer het uit door op enter te drukken:
+
+[source,subs="attributes+"]
+----
+echo java -jar gogoaccount-{revnumber}.jar -lang=nl boekhouding.h2.db > gogoaccount.bat
+----
+
+TODO: hier verder
+
+## Begrippen
+
+Financiële feiten worden vastgelegd in een *journaalpost*. Een feit wordt op grootboekrekeningen aan zowel debet- als  creditzijde geboekt, zodat iedere journaalpost in balans is. Dit is de basis van *dubbel boekhouden*.
+
+Een *grootboek* is een overzicht van alle *grootboekrekeningen* en toont de mutaties van elke grootboekrekening op basis van alle journaalposten. Grootboekrekeningen worden gebruikt om de balans en resultatenrekening op te stellen. Iedere grootboekrekening wordt òf op de balans vermeld òf op de resultatenrekening.
