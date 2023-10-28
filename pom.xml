@@ -141,7 +141,6 @@
                             <outputDirectory>${project.build.directory}/html</outputDirectory>
                             <preserveDirectories>true</preserveDirectories>
                             <attributes>
-                                <author>Pingenti ontwikkelaars</author>
                                 <revnumber>${project.version}</revnumber>
                                 <revdate>${maven.build.timestamp}</revdate>
                                 <source-highlighter>coderay</source-highlighter>
@@ -163,7 +162,6 @@
                             <outputDirectory>${project.build.directory}/pdf</outputDirectory>
                             <preserveDirectories>true</preserveDirectories>
                             <attributes>
-                                <author>Pingenti ontwikkelaars</author>
                                 <revnumber>${project.version}</revnumber>
                                 <revdate>${maven.build.timestamp}</revdate>
                                 <source-highlighter>rouge</source-highlighter>
