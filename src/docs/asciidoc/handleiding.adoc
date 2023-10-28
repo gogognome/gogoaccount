@@ -91,16 +91,97 @@ image::nl-after-loading.png[]
 
 === Opstarten met een batchbestand (Windows)
 
+Deze sectie is niet noodzakelijk en vereist dat je wat afweet van een command prompt of Powershell.
+
 Het kan handig zijn om Gogo Account met een batchbestand te starten. Je kunt dan direct een specifieke boekhouding openen en je kunt de taal van Gogo Account instellen.
 
-Start een command prompt of Powershell op vanuit het startmenu. Typ het volgende commando in en voer het uit door op enter te drukken:
+Start een command prompt of Powershell op vanuit het startmenu. Wijzig de huidige directory naar de directory waar Gogo Account staat. Typ het volgende commando in en voer het uit door op enter te drukken:
+
+[source,subs="attributes+"]
+----
+echo java -jar gogoaccount-{revnumber}.jar -lang=nl > gogoaccount.bat
+----
+
+Door nu het batch-bestand `gogoaccount.bat` te starten, start je Gogo Account op met een Nederlands user interface. Dit kan handig zijn als je een Engelstalige versie van Windows gebruikt.
+
+Gogo Account ondersteunt de talen Nederlands en Engels. Als je Engels wilt gebruiken, vervang dan `-lang=nl` door `-lang=en` in bovenstaand commando.
+
+Wil je ook dat bij het opstarten van Gogo Account automatisch een specifieke boekhouding wordt geopend, dan kun je het volgende commando gebruiken om een batchbestand te maken:
 
 [source,subs="attributes+"]
 ----
 echo java -jar gogoaccount-{revnumber}.jar -lang=nl boekhouding.h2.db > gogoaccount.bat
 ----
 
-TODO: hier verder
+Als je nu het batchbestand `gogoaccount.bat` start, zal automatisch het bestand `boekhouding.h2.db` worden geopend. Dit werkt alleen als de boekhouding in dezelfde directory staat als Gogo Account en het batchbestand.
+
+=== Opstarten met een shell script (Linux)
+
+Deze sectie is niet noodzakelijk en vereist dat je wat afweet van een shell.
+
+Het kan handig zijn om Gogo Account met een shell script te starten. Je kunt dan direct een specifieke boekhouding openen en je kunt de taal van Gogo Account instellen.
+
+Start een shell. Wijzig de huidige directory naar de directory waar Gogo Account staat. Typ de volgende commando's in en voer het uit door op enter te drukken:
+
+[source,subs="attributes+"]
+----
+echo java -jar gogoaccount-{revnumber}.jar -lang=nl > gogoaccount.sh
+chmod a+x gogoaccount.sh
+----
+
+Door nu het shell script `gogoaccount.sh` te starten, start je Gogo Account op met een Nederlands user interface. Dit kan handig zijn als je een Engelstalige versie van Linux gebruikt.
+
+Gogo Account ondersteunt de talen Nederlands en Engels. Als je Engels wilt gebruiken, vervang dan `-lang=nl` door `-lang=en` in bovenstaand commando.
+
+Wil je ook dat bij het opstarten van Gogo Account automatisch een specifieke boekhouding wordt geopend, dan kun je de volgende commando's gebruiken om een shell script te maken:
+
+[source,subs="attributes+"]
+----
+echo java -jar gogoaccount-{revnumber}.jar -lang=nl boekhouding.h2.db > gogoaccount.sh
+chmod a+x gogoaccount.sh
+----
+
+Als je nu het shell script  `gogoaccount.sh` start, zal automatisch het bestand `boekhouding.h2.db` worden geopend. Dit werkt alleen als de boekhouding in dezelfde directory staat als Gogo Account en het batchbestand.
+
+=== Een nieuwe boekhouding beginnen
+
+Om een nieuwe boekhouding te beginnen kies je in het menu de optie Bestand -> Nieuwe boekhouding.
+
+Gogo account vraagt je om een bestandsnaam te kiezen voor de boekhouding. Als voorbeeld kies ik de naam "boekhouding-2023":
+
+image::nl-new-bookkeeping-file-selection.png[]
+
+Als je kijkt in de directory waar de boekhouding wordt aangemaakt, zie je de volgende bestanden:
+
+    boekhouding-2023.h2.db
+    boekhouding-2023.lock.db
+
+Het eerste bestand bevat de daadwerkelijke boekhouding. Gogo Account gebruikt een library genaamd H2-database om de boekhouding in een database op te slaan. De H2-database library gebruikt de extensie `.h2.db` voor een bestand dat een hele database bevat.
+
+Het tweede bestand wordt door de H2-database library gebruikt om ervoor te zorgen dat maar 1 programma tegelijk de database kan gebruiken. Als Gogo Account wordt afgesloten, dan verdwijnt het `.lock.db` bestand weer.
+
+De reden waarom ik een jaartal toevoeg aan de bestandsnaam, is dat er per boekjaar een bestand wordt gebruikt. Als een boekjaar voorbij is, dan kan de boekhouding worden afgesloten, waarnaar het bestand van het oude boekjaar niet meer te wijzigen is en wordt er een nieuw bestand gemaakt voor het nieuwe boekjaar.
+
+Na het kiezen van de bestandsnaam, verschijnt het tabblad "Boekhouding configureren":
+
+image::nl-configure-bookkeeping-initially.png[]
+
+Dit tabblad kun je ook via het menu openen via de optie Bestand -> Configureren boekhouding...
+
+Vul de gegevens in. Bij "Land organisatie" moet een landcode worden ingevuld van 2 letters, volgens de https://nl.wikipedia.org/wiki/ISO_3166-1_alpha-2[ISO 3166-1-norm].
+
+Hier is een voorbeeld van hoe de velden kunnen worden ingevuld voor een fictieve club:
+
+image::nl-configure-bookkeeping-address-filled.png[]
+
+
+
+== Backups
+
+Mocht je Gogo Account een keer hebben afgesloten en opnieuw opgestart, dan zie je dat er ook een directory `backup` is aangemaakt. Iedere keer dat een boekhouding wordt geopend, wordt het `.h2.db`-bestand gekopieerd naar deze directory.
+
+TODO: HOE TERUG TE ZETTEN?
+
 
 == Begrippen
 
