@@ -174,7 +174,25 @@ Hier is een voorbeeld van hoe de velden kunnen worden ingevuld voor een fictieve
 
 image::nl-configure-bookkeeping-address-filled.png[]
 
+Tot slot moeten er nog grootboekrekeningen worden toegevoegd aan de boekhouding. Klik op de knop "Toevoegen grootboekrekening...". Er verschijnt een venster:
 
+image::nl-new-account.png[]
+
+Iedere grootboekrekening krijgt een id. Traditioneel wordt in een boekhouding een getal van 3 of 4 cijfers gebruikt als id van een grootboekrekening. Maar je mag ook letters gebruiken als je dat fijner vindt.
+
+Ieder grootboekrekening heeft een type. Je kunt kiezen uit de volgende typen:
+
+* activa: dit is een eigendom van je club. Denk hierbij aan bankrekeningen, kasgeld, gebouwen (bv. kantine), spullen (bv. ballen, netten, sportkleding).
+* debiteur: dit is een speciale vorm van activa. Gebruik dit type voor een grootboekrekening voor debiteuren. Debiteuren kun je koppelen aan verkoopfacturen.
+* passiva: dit zijn schulden die de club heeft naar andere personen (bv. financieringen)
+* crediteur: dit is een speciale vorm van passiva. Gebruik dit type voor een grootboekrekening voor crediteuren. Crediteuren kun je koppelen aan inkoopfacturen.
+* eigen vermogen: deze grootboekrekening representeert de waarde van je club. De boekhoudregels zorgen ervoor dat geldt: eigen vermogen = activa - passiva.
+* uitgaven: uitgaven geven aan waaraan jouw club geld uitgeeft. Simpelweg gezegd: ze leggen uit waarom er geld van de lopende rekening is afgehaald.
+* inkomsten: inkomsten geven aan waaraan jouw club geld verdient. Simpelweg gezegd: ze leggen uit waarom er geld op de lopende rekening is binnengekomen.
+
+Hieronder is een voorbeeld van de configuratie van een boekhouding met een aantal grootboekrekeningen:
+
+image::nl-configuration-with-accounts.png[]
 
 == Backups
 
@@ -188,3 +206,7 @@ TODO: HOE TERUG TE ZETTEN?
 Financiële feiten worden vastgelegd in een *journaalpost*. Een feit wordt op grootboekrekeningen aan zowel debet- als  creditzijde geboekt, zodat iedere journaalpost in balans is. Dit is de basis van *dubbel boekhouden*.
 
 Een *grootboek* is een overzicht van alle *grootboekrekeningen* en toont de mutaties van elke grootboekrekening op basis van alle journaalposten. Grootboekrekeningen worden gebruikt om de balans en resultatenrekening op te stellen. Iedere grootboekrekening wordt òf op de balans vermeld òf op de resultatenrekening.
+
+*Verkoopfactuur* is een factuur waarbij jouw club geld ontvangt voor een dienst of spullen die jouw club levert aan iemand. Je gebruikt een verkoopfactuur bijvoorbeeld om je leden contributie te laten betalen.
+
+*Inkoopfactuur* is een factuur waarbij jouw club geld moet betalen voor een dienst of goederen die jouw club heeft ontvangen van iemand anders. Denk bijvoorbeeld aan zaalhuur of de aanschaf van materiaal (ballen, netten of drank voor de kantine).
