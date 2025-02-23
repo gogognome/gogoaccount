@@ -162,8 +162,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miEditParties = widgetFactory.createMenuItem("mi.editParties", this);
 
         // the view menu
-        JMenuItem miBalanceAndOperationalResult = widgetFactory.createMenuItem("mi.viewBalanceAndOperationalResult", this);
-        JMenuItem miAccountOverview = widgetFactory.createMenuItem("mi.viewAccountOverview", this);
+        JMenuItem miBalanceAndOperationalResult = widgetFactory.createMenuItem("mi.viewBalanceSheetAndIncomeStatement", this);
+        JMenuItem miAccountOverview = widgetFactory.createMenuItem("mi.viewLedgerAccount", this);
         JMenuItem miInvoiceOverview = widgetFactory.createMenuItem("mi.viewInvoicesOverview", e -> handleInvoiceOverview());
 
         // the reporting menu
@@ -217,8 +217,8 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.configureBookkeeping".equals(command)) { handleConfigureBookkeeping(); }
         if ("mi.importBankStatement".equals(command)) { handleImportBankStatement(); }
         if ("mi.exit".equals(command)) { handleExit(); }
-        if ("mi.viewBalanceAndOperationalResult".equals(command)) { handleViewBalanceAndOperationalResult(); }
-        if ("mi.viewAccountOverview".equals(command)) { handleViewAccountMutations(); }
+        if ("mi.viewBalanceSheetAndIncomeStatement".equals(command)) { handleViewBalanceSheetAndIncomeStatement(); }
+        if ("mi.viewLedgerAccount".equals(command)) { handleViewAccountMutations(); }
         if ("mi.addJournal".equals(command)) { run(this, this::handleAddJournal); }
         if ("mi.editJournals".equals(command)) { run(this, this::handleEditJournals); }
         if ("mi.addInvoices".equals(command)) { run(this, this::handleAddInvoices); }
@@ -341,7 +341,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
                     }
                     Document newDocument = bookkeepingService.closeBookkeeping(document, file, description, date, accountToAddResultTo);
                     setDocument(newDocument);
-                    handleViewBalanceAndOperationalResult();
+                    handleViewBalanceSheetAndIncomeStatement();
                 } catch (ServiceException e) {
                     messageDialog.showErrorMessage(e, "mf.closeBookkeepingException");
                 }
@@ -359,7 +359,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
             Document newDocument = doLoadFile(file);
             newDocument.notifyChange();
             setDocument(newDocument);
-            handleViewBalanceAndOperationalResult();
+            handleViewBalanceSheetAndIncomeStatement();
         } catch (ServiceException e) {
             messageDialog.showErrorMessage(e, "mf.errorOpeningFile");
         }
@@ -416,7 +416,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         logger.info("Exited");
     }
 
-    private void handleViewBalanceAndOperationalResult() {
+    private void handleViewBalanceSheetAndIncomeStatement() {
         ensureAccountsPresent(() -> openView(BalanceAndOperationResultView.class));
     }
 
