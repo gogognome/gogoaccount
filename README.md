@@ -13,6 +13,8 @@ Key features of Gogo Account include:
 * Management of parties, which can be used as debtors or creditors or to manage the members of your sport club or employees of your organization.
 * Invoice handling capabilities.
 
+Gogo Account is licensed under [Apache License, version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
 ## Download
 
 You can download a prebuilt version of Gogo Account from [my website](https://gogognome.nl/gogo-account.html). Examples of templates for sending emails with invoices can be downloaded
