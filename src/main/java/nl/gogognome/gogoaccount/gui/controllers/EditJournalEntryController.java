@@ -17,9 +17,9 @@ import nl.gogognome.lib.text.TextResource;
 import java.awt.*;
 
 /**
- * This controller lets the user edit an existing journal.
+ * This controller lets the user edit an existing journal entry.
  */
-public class EditJournalController {
+public class EditJournalEntryController {
 
     private final InvoiceService invoiceService;
 	private final LedgerService ledgerService;
@@ -32,7 +32,7 @@ public class EditJournalController {
     private JournalEntry journalEntry;
     private JournalEntry updatedJournalEntry;
 
-    public EditJournalController(Document document, InvoiceService invoiceService, LedgerService ledgerService, ViewFactory viewFactory, TextResource textResource) {
+    public EditJournalEntryController(Document document, InvoiceService invoiceService, LedgerService ledgerService, ViewFactory viewFactory, TextResource textResource) {
         this.document = document;
         this.invoiceService = invoiceService;
         this.ledgerService = ledgerService;

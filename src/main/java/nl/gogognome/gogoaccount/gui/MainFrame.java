@@ -156,7 +156,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         JMenuItem miExit = widgetFactory.createMenuItem("mi.exit", this);
 
         // the edit menu
-        JMenuItem miAddJournal = widgetFactory.createMenuItem("mi.addJournal", this);
+        JMenuItem miAddJournal = widgetFactory.createMenuItem("mi.addJournalEntry", this);
         JMenuItem miEditJournals = widgetFactory.createMenuItem("mi.editJournals", this);
         JMenuItem miAddInvoices = widgetFactory.createMenuItem("mi.addInvoices", this);
         JMenuItem miEditParties = widgetFactory.createMenuItem("mi.editParties", this);
@@ -219,7 +219,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
         if ("mi.exit".equals(command)) { handleExit(); }
         if ("mi.viewBalanceSheetAndIncomeStatement".equals(command)) { handleViewBalanceSheetAndIncomeStatement(); }
         if ("mi.viewLedgerAccount".equals(command)) { handleViewAccountMutations(); }
-        if ("mi.addJournal".equals(command)) { run(this, this::handleAddJournal); }
+        if ("mi.addJournalEntry".equals(command)) { run(this, this::handleAddJournal); }
         if ("mi.editJournals".equals(command)) { run(this, this::handleEditJournals); }
         if ("mi.addInvoices".equals(command)) { run(this, this::handleAddInvoices); }
         if ("mi.editParties".equals(command)) { handleEditParties(); }

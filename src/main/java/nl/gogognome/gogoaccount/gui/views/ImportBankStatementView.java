@@ -33,7 +33,7 @@ import nl.gogognome.lib.util.*;
  * based on the bank statement.
  */
 public class ImportBankStatementView extends View implements ModelChangeListener,
-        ListSelectionListener, AddJournalForTransactionView.Plugin{
+        ListSelectionListener, AddJournalEntryForTransactionView.Plugin{
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -49,7 +49,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
     private final SettingsService settingsService;
     private final ViewFactory viewFactory;
     private final DeleteJournalController deleteJournalController;
-    private final EditJournalController editJournalController;
+    private final EditJournalEntryController editJournalEntryController;
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
@@ -81,7 +81,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
             SettingsService settingsService,
             ViewFactory viewFactory,
             DeleteJournalController deleteJournalController,
-            EditJournalController editJournalController) {
+            EditJournalEntryController editJournalEntryController) {
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.ledgerService = ledgerService;
@@ -92,7 +92,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         this.amountFormat = amountFormat;
         this.viewFactory = viewFactory;
         this.deleteJournalController = deleteJournalController;
-        this.editJournalController = editJournalController;
+        this.editJournalEntryController = editJournalEntryController;
         messageDialog = new MessageDialog(textResource, this);
         handleException = new HandleException(messageDialog);
     }
@@ -149,7 +149,7 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         ButtonPanel buttonsPanel = new ButtonPanel(SwingConstants.CENTER);
         buttonsPanel.setOpaque(false);
 
-        editButton = buttonsPanel.addButton("ejd.editJournal", this::editJournalForSelectedTransaction);
+        editButton = buttonsPanel.addButton("ejd.editJournalEntry", this::editJournalForSelectedTransaction);
         addButton = buttonsPanel.addButton("ejd.addJournal", this::addJournalForSelectedTransaction);
         deleteButton = buttonsPanel.addButton("ejd.deleteJournal", this::deleteJournalFromSelectedTransaction);
 
@@ -247,18 +247,18 @@ public class ImportBankStatementView extends View implements ModelChangeListener
         int row = getSelectedRowIndexInTableModel();
         if (row != -1) {
             JournalEntry journalEntry = transactionJournalsTableModel.getRow(row).getJournalEntry();
-            editJournalController.setOwner(this);
-            editJournalController.setJournalEntry(journalEntry);
-            editJournalController.execute();
-            if (editJournalController.isJournalUpdated()) {
-                updateTransactionJournal(row, editJournalController.getUpdatedJournalEntry());
+            editJournalEntryController.setOwner(this);
+            editJournalEntryController.setJournalEntry(journalEntry);
+            editJournalEntryController.execute();
+            if (editJournalEntryController.isJournalUpdated()) {
+                updateTransactionJournal(row, editJournalEntryController.getUpdatedJournalEntry());
             }
         }
     }
 
     private void addJournalForSelectedTransaction() {
         handleException.of(() -> {
-            AddJournalForTransactionView view = (AddJournalForTransactionView) viewFactory.createView(AddJournalForTransactionView.class);
+            AddJournalEntryForTransactionView view = (AddJournalEntryForTransactionView) viewFactory.createView(AddJournalEntryForTransactionView.class);
             view.setInitialValuesPlugin(this);
             ViewDialog dialog = new ViewDialog(this, view);
             dialog.showDialog();

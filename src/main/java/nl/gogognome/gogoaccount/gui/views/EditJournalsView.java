@@ -10,7 +10,7 @@ import nl.gogognome.gogoaccount.component.ledger.LedgerService;
 import nl.gogognome.gogoaccount.component.party.PartyService;
 import nl.gogognome.gogoaccount.gui.ViewFactory;
 import nl.gogognome.gogoaccount.gui.controllers.DeleteJournalController;
-import nl.gogognome.gogoaccount.gui.controllers.EditJournalController;
+import nl.gogognome.gogoaccount.gui.controllers.EditJournalEntryController;
 import nl.gogognome.gogoaccount.gui.dialogs.JournalEntryDetailsTableModel;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsColumn;
@@ -54,7 +54,7 @@ public class EditJournalsView extends View {
     private final PartyService partyService;
     private final ViewFactory viewFactory;
     private final DeleteJournalController deleteJournalController;
-    private final EditJournalController editJournalController;
+    private final EditJournalEntryController editJournalEntryController;
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
@@ -69,14 +69,14 @@ public class EditJournalsView extends View {
 
 	public EditJournalsView(Document document, ConfigurationService configurationService, InvoiceService invoiceService,
                             LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory,
-                            DeleteJournalController deleteJournalController, EditJournalController editJournalController) {
+                            DeleteJournalController deleteJournalController, EditJournalEntryController editJournalEntryController) {
         this.document = document;
         this.configurationService = configurationService;
         this.invoiceService = invoiceService;
         this.ledgerService = ledgerService;
         this.partyService = partyService;
         this.deleteJournalController = deleteJournalController;
-        this.editJournalController = editJournalController;
+        this.editJournalEntryController = editJournalEntryController;
         this.viewFactory = viewFactory;
         messageDialog = new MessageDialog(textResource, this);
         handleException = new HandleException(messageDialog);
@@ -145,7 +145,7 @@ public class EditJournalsView extends View {
         JPanel tablesPanel = new JPanel(new GridBagLayout());
         tablesPanel.setOpaque(false);
 
-        JScrollPane scrollPane = widgetFactory.createScrollPane(journalEntriesTable, "editJournalsView.journals");
+        JScrollPane scrollPane = widgetFactory.createScrollPane(journalEntriesTable, "editJournalsView.journalEntries");
         tablesPanel.add(scrollPane, SwingUtils.createGBConstraints(0, 0, 1, 1, 1.0, 3.0,
                 GridBagConstraints.CENTER, GridBagConstraints.BOTH, 0, 0, 0, 0));
 
@@ -166,7 +166,7 @@ public class EditJournalsView extends View {
 
         Action editAction = Actions.build(this, this::editJournal);
         addCloseable(Tables.onSelectionChange(journalEntriesTable, () -> editAction.setEnabled(journalEntriesTable.getSelectedRowCount() == 1)));
-        buttonPanel.addButton("ejd.editJournal", editAction);
+        buttonPanel.addButton("ejd.editJournalEntry", editAction);
 
         buttonPanel.addButton("ejd.addJournal", this::addJournal);
 
@@ -203,9 +203,9 @@ public class EditJournalsView extends View {
             int row = Tables.getSelectedRowConvertedToModel(journalEntriesTable);
             if (row != -1) {
                 JournalEntry journalEntry = journalEntriesTableModel.getRow(row).journalEntry;
-                editJournalController.setOwner(this);
-                editJournalController.setJournalEntry(journalEntry);
-                editJournalController.execute();
+                editJournalEntryController.setOwner(this);
+                editJournalEntryController.setJournalEntry(journalEntry);
+                editJournalEntryController.execute();
                 updateJournalItemTable(row);
             }
         });

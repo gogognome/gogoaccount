@@ -26,7 +26,7 @@ import com.google.common.base.*;
  * shows details about the transaction for which a journal is created.
  * The initial values of the view depend on the current transaction.
  */
-public class AddJournalForTransactionView extends EditJournalView {
+public class AddJournalEntryForTransactionView extends EditJournalView {
 
     public interface Plugin {
         ImportedTransaction getNextImportedTransaction();
@@ -46,9 +46,9 @@ public class AddJournalForTransactionView extends EditJournalView {
     private final JLabel toAccount = new JLabel();
     private final JLabel description = new JLabel();
 
-    public AddJournalForTransactionView(Document document, ConfigurationService configurationService,
-                                        ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
-                                        LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory) {
+    public AddJournalEntryForTransactionView(Document document, ConfigurationService configurationService,
+                                             ImportBankStatementService importBankStatementService, InvoiceService invoiceService,
+                                             LedgerService ledgerService, PartyService partyService, ViewFactory viewFactory) {
         super(document, configurationService, invoiceService, ledgerService, partyService, viewFactory);
         this.importBankStatementService = importBankStatementService;
         this.configurationService = configurationService;
