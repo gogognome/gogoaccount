@@ -172,8 +172,8 @@ public class BeanConfiguration {
 
     @Bean
     @Scope("prototype")
-    public BalanceAndOperationResultView balanceAndOperationResultView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService) {
-        return new BalanceAndOperationResultView(documentWrapper.document, bookkeepingService);
+    public BalanceSheetAndIncomeStatementView balanceSheetAndIncomeStatementView(DocumentWrapper documentWrapper, BookkeepingService bookkeepingService) {
+        return new BalanceSheetAndIncomeStatementView(documentWrapper.document, bookkeepingService);
     }
 
     @Bean

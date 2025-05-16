@@ -26,7 +26,7 @@ import nl.gogognome.lib.util.DateUtil;
 
 /**
  * This view lets the user fill in parameters to generate a report.
- * A report consists of balance sheet, operational result and overviews of
+ * A report consists of balance sheet, income statement and overviews of
  * debtors and creditors, journals and ledger.
  */
 public class GenerateReportView extends OkCancelView {

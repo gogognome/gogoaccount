@@ -417,7 +417,7 @@ public class MainFrame extends JFrame implements ActionListener, DocumentListene
     }
 
     private void handleViewBalanceSheetAndIncomeStatement() {
-        ensureAccountsPresent(() -> openView(BalanceAndOperationResultView.class));
+        ensureAccountsPresent(() -> openView(BalanceSheetAndIncomeStatementView.class));
     }
 
     private void handleEditParties() {

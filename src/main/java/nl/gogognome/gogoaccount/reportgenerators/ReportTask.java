@@ -138,7 +138,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.balanceOf", textResource.formatDate("gen.dateFormatFull", date)));
+        result.append(textResource.getString("rep.balanceSheetPer", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         result.append(textFormat.getStartOfTable(("lr|lr"),
@@ -213,7 +213,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.operationalResultOf", textResource.formatDate("gen.dateFormatFull", date)));
+        result.append(textResource.getString("rep.incomeStatementPer", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         result.append(textFormat.getStartOfTable(("lr|lr"),
@@ -274,7 +274,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.debtorsOf", textResource.formatDate("gen.dateFormatFull", date)));
+        result.append(textResource.getString("rep.debtorsPer", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         List<Party> debtors = report.getDebtors();
@@ -311,7 +311,7 @@ public class ReportTask implements Task {
 
         result.append(textFormat.getNewParagraph());
 
-        result.append(textResource.getString("rep.creditorsOf", textResource.formatDate("gen.dateFormatFull", date)));
+        result.append(textResource.getString("rep.creditorsPer", textResource.formatDate("gen.dateFormatFull", date)));
         result.append(textFormat.getNewLine());
 
         List<Party> creditors = report.getCreditors();

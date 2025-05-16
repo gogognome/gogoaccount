@@ -10,8 +10,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import nl.gogognome.gogoaccount.component.document.Document;
-import nl.gogognome.gogoaccount.gui.components.BalanceComponent;
-import nl.gogognome.gogoaccount.gui.components.OperationalResultComponent;
+import nl.gogognome.gogoaccount.gui.components.BalanceSheetComponent;
+import nl.gogognome.gogoaccount.gui.components.IncomeStatementComponent;
 import nl.gogognome.gogoaccount.services.BookkeepingService;
 import nl.gogognome.gogoaccount.services.ServiceException;
 import nl.gogognome.lib.gui.beans.InputFieldsRow;
@@ -21,9 +21,9 @@ import nl.gogognome.lib.swing.views.View;
 import nl.gogognome.lib.swing.dialogs.MessageDialog;
 
 /**
- * This class implements a view the shows a balance and operation result.
+ * This class implements a view the shows a balance sheet and income statement.
  */
-public class BalanceAndOperationResultView extends View {
+public class BalanceSheetAndIncomeStatementView extends View {
 
 	private static final long serialVersionUID = 1L;
 
@@ -34,7 +34,7 @@ public class BalanceAndOperationResultView extends View {
     private final MessageDialog messageDialog;
     private DateModel dateModel;
 
-    public BalanceAndOperationResultView(Document document, BookkeepingService bookkeepingService) {
+    public BalanceSheetAndIncomeStatementView(Document document, BookkeepingService bookkeepingService) {
         this.document = document;
         this.bookkeepingService = bookkeepingService;
         messageDialog = new MessageDialog(textResource, this);
@@ -42,7 +42,7 @@ public class BalanceAndOperationResultView extends View {
 
     @Override
 	public String getTitle() {
-        return textResource.getString("balanceAndOperationalResultView.title");
+        return textResource.getString("balanceSheetAndIncomeStatementView.title");
     }
 
     @Override
@@ -74,30 +74,30 @@ public class BalanceAndOperationResultView extends View {
 		northPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 10, 0));
 
         add(northPanel, BorderLayout.NORTH);
-        add(createBalanceAndOperationalResultPanel(), BorderLayout.CENTER);
+        add(createBalanceSheetAndIncomeStatementPanel(), BorderLayout.CENTER);
 	}
 
     private JPanel createInputFieldsPanel() {
 		InputFieldsRow row = new InputFieldsRow();
 		addCloseable(row);
-		row.addField("balanceAndOperationalResultView.selectDate", dateModel);
+		row.addField("balanceSheetAndIncomeStatementView.selectDate", dateModel);
 		return row;
 	}
 
-    private JPanel createBalanceAndOperationalResultPanel() throws ServiceException {
+    private JPanel createBalanceSheetAndIncomeStatementPanel() throws ServiceException {
         JPanel panel = new JPanel(new GridBagLayout());
 
         panel.setBackground(BACKGROUND_COLOR);
-        BalanceComponent balanceComponent = new BalanceComponent(document, bookkeepingService, dateModel);
-        addCloseable(balanceComponent);
-        balanceComponent.setBackground(BACKGROUND_COLOR);
-        panel.add(balanceComponent, createConstraints(0, 0));
+        BalanceSheetComponent balanceSheetComponent = new BalanceSheetComponent(document, bookkeepingService, dateModel);
+        addCloseable(balanceSheetComponent);
+        balanceSheetComponent.setBackground(BACKGROUND_COLOR);
+        panel.add(balanceSheetComponent, createConstraints(0, 0));
 
-        OperationalResultComponent operationalResultComponent =
-            new OperationalResultComponent(document, bookkeepingService, dateModel);
-        addCloseable(operationalResultComponent);
-        operationalResultComponent.setBackground(BACKGROUND_COLOR);
-        panel.add(operationalResultComponent, createConstraints(0, 1));
+        IncomeStatementComponent incomeStatementComponent =
+            new IncomeStatementComponent(document, bookkeepingService, dateModel);
+        addCloseable(incomeStatementComponent);
+        incomeStatementComponent.setBackground(BACKGROUND_COLOR);
+        panel.add(incomeStatementComponent, createConstraints(0, 1));
 
         return panel;
     }

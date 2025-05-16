@@ -24,9 +24,9 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * This class implements a graphical component that shows an operational result.
+ * This class implements a graphical component that shows an income statement.
  */
-public class OperationalResultComponent extends JScrollPane implements Closeable {
+public class IncomeStatementComponent extends JScrollPane implements Closeable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -42,7 +42,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
 
     private final WidgetFactory widgetFactory = Factory.getInstance(WidgetFactory.class);
 
-    public OperationalResultComponent(Document document, BookkeepingService bookkeepingService, DateModel dateModel) throws ServiceException {
+    public IncomeStatementComponent(Document document, BookkeepingService bookkeepingService, DateModel dateModel) throws ServiceException {
         super();
         this.document = document;
         this.bookkeepingService = bookkeepingService;
@@ -79,7 +79,7 @@ public class OperationalResultComponent extends JScrollPane implements Closeable
     private void initComponents() {
         Date date = dateModel.getDate();
         if (date == null) {
-            return; // do not change the current operational result if the date is invalid
+            return; // do not change the current income statement if the date is invalid
         }
 
         try {
