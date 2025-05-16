@@ -65,7 +65,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
 
     @Override
     public String getTitle() {
-        String id = itemToBeEdited != null ? "EditJournalItemView.titleAdd" : "EditJournalItemView.titleEdit";
+        String id = itemToBeEdited == null ? "EditJournalItemView.titleAdd" : "EditJournalItemView.titleEdit";
         return textResource.getString(id);
     }
 
