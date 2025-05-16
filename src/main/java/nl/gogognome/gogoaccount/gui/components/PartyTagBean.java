@@ -42,7 +42,7 @@ public class PartyTagBean extends JPanel implements Bean {
 
         add(comboboxBean.getComponent(), SwingUtils.createTextFieldGBConstraints(0, 0));
         WidgetFactory wf = Factory.getInstance(WidgetFactory.class);
-        JButton button = wf.createIconButton("gen.btnNew", new NewPartyTypeAction(), 21);
+        JButton button = wf.createIconButton("gen.btnNew", new NewPartyTagAction(), 21);
         add(button);
     }
 
@@ -85,7 +85,7 @@ public class PartyTagBean extends JPanel implements Bean {
         });
     }
 
-    private final class NewPartyTypeAction extends AbstractAction {
+    private final class NewPartyTagAction extends AbstractAction {
         @Override
         public void actionPerformed(ActionEvent e) {
             showNewPartyTypeDialog();
@@ -116,7 +116,7 @@ public class PartyTagBean extends JPanel implements Bean {
         protected JComponent createCenterComponent() {
             InputFieldsColumn ifc = new InputFieldsColumn();
             addCloseable(ifc);
-            ifc.addField("PartyTypeBean.newPartyLabel", newPartyTypeModel, 20);
+            ifc.addField("PartyTagBean.newPartyTag", newPartyTypeModel, 20);
             return ifc;
         }
 
