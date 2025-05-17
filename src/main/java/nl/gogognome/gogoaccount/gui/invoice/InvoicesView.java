@@ -210,7 +210,7 @@ public class InvoicesView extends View {
             JPanel detailsWithHeaderTable = Tables.createNonScrollableTablePanel(detailsTable);
             detailsWithHeaderTable.setBorder(widgetFactory.createTitleBorder("invoicesView.invoiceLines"));
             invoiceDetailsPanel.add(detailsWithHeaderTable,
-                    SwingUtils.createGBConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 10, 0, 0, 0));
+                    SwingUtils.createGBConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, 10, 0, 0, 0));
         } catch (ServiceException e) {
             messageDialog.showErrorMessage("gen.internalError", e);
         }
@@ -220,7 +220,7 @@ public class InvoicesView extends View {
             JPanel detailsWithHeaderTable = Tables.createNonScrollableTablePanel(paymentsTable);
             detailsWithHeaderTable.setBorder(widgetFactory.createTitleBorder("invoicesView.payments"));
             invoiceDetailsPanel.add(detailsWithHeaderTable,
-                    SwingUtils.createGBConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, 10, 0, 0, 0));
+                    SwingUtils.createGBConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, 10, 0, 0, 0));
         } catch (ServiceException e) {
             messageDialog.showErrorMessage("gen.internalError", e);
         }
@@ -391,13 +391,13 @@ public class InvoicesView extends View {
 
     private ListTableModel<InvoiceDetail> buildDetailTableModel(InvoiceOverview invoice, List<InvoiceDetail> details) {
         ListTableModel<InvoiceDetail> tableModel = new ListTableModel<>(asList(
-                ColumnDefinition.<InvoiceDetail>builder("gen.date", Date.class, 200)
+                ColumnDefinition.<InvoiceDetail>builder("gen.date", Date.class, 75)
                         .add(invoiceDetail -> invoice.getIssueDate())
                         .build(),
-                ColumnDefinition.<InvoiceDetail>builder("gen.description", String.class, 200)
+                ColumnDefinition.<InvoiceDetail>builder("gen.description", String.class, 100)
                         .add(InvoiceDetail::getDescription)
                         .build(),
-                ColumnDefinition.<InvoiceDetail>builder("gen.amountToBePaid", Amount.class, 100)
+                ColumnDefinition.<InvoiceDetail>builder("gen.amountToBePaid", Amount.class, 50)
                         .add(new AmountCellRenderer(amountFormat))
                         .add(invoiceDetail -> invoice.isSalesInvoice() ? invoiceDetail.getAmount() : invoiceDetail.getAmount().negate())
                         .build()
@@ -408,13 +408,13 @@ public class InvoicesView extends View {
 
     private ListTableModel<Payment> buildPaymentsTableModel(InvoiceOverview invoice, List<Payment> payments) {
         ListTableModel<Payment> tableModel = new ListTableModel<>(asList(
-                ColumnDefinition.<Payment>builder("gen.date", Date.class, 200)
+                ColumnDefinition.<Payment>builder("gen.date", Date.class, 75)
                         .add(Payment::getDate)
                         .build(),
-                ColumnDefinition.<Payment>builder("gen.description", String.class, 200)
+                ColumnDefinition.<Payment>builder("gen.description", String.class, 100)
                         .add(Payment::getDescription)
                         .build(),
-                ColumnDefinition.<Payment>builder("gen.amountPaid", Amount.class, 100)
+                ColumnDefinition.<Payment>builder("gen.amountPaid", Amount.class, 50)
                         .add(new AmountCellRenderer(amountFormat))
                         .add(payment -> invoice.isSalesInvoice() ? payment.getAmount() : payment.getAmount().negate())
                         .build()
