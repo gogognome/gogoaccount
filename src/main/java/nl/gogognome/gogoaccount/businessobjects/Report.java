@@ -281,6 +281,14 @@ public class Report {
         return total;
     }
 
+    public boolean totalDebitAccountsDiffersFromTotalDebtors() {
+		return !getTotalAmountOfDebtorAccounts().equals(getTotalDebtors());
+    }
+
+    public Amount getTotalAmountOfDebtorAccounts() {
+        return getTotalOfAccounts(assets.stream().filter(a -> a.getType() == AccountType.DEBTOR).toList());
+    }
+
     /**
      * Gets the total amount of the debtors.
      * @return the total amount.
@@ -291,6 +299,14 @@ public class Report {
             total = total.add(a);
         }
         return total;
+    }
+
+    public boolean totalDebitAccountsDiffersFromTotalCreditors() {
+        return !getTotalAmountOfCreditorAccounts().equals(getTotalCreditors());
+    }
+
+    public Amount getTotalAmountOfCreditorAccounts() {
+        return getTotalOfAccounts(liabilities.stream().filter(a -> a.getType() == AccountType.CREDITOR).toList());
     }
 
     /**

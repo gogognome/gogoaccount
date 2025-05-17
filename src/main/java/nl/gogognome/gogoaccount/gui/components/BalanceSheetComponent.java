@@ -14,13 +14,13 @@ import nl.gogognome.lib.swing.dialogs.MessageDialog;
 import nl.gogognome.lib.swing.models.AbstractModel;
 import nl.gogognome.lib.swing.models.DateModel;
 import nl.gogognome.lib.swing.models.ModelChangeListener;
-import nl.gogognome.lib.text.AmountFormat;
-import nl.gogognome.lib.text.TextResource;
+import nl.gogognome.lib.text.*;
 import nl.gogognome.lib.util.Factory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,6 +30,7 @@ import java.util.List;
  */
 public class BalanceSheetComponent extends JScrollPane implements Closeable {
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 
     private final Document document;
@@ -100,21 +101,34 @@ public class BalanceSheetComponent extends JScrollPane implements Closeable {
 
             int row = 5 + Math.max(leftRows.size(), rightRows.size());
 
-            balanceSheet.add(new JLabel(textResource.getString("balanceSheetComponent.totalDebtors")),
-                    SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
-                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalDebtors().toBigInteger())),
-                    SwingUtils.createGBConstraints(2, row, 2, 1, 0.0, 0.0,
-                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-            row++;
+			if (report.totalDebitAccountsDiffersFromTotalDebtors() || report.totalDebitAccountsDiffersFromTotalCreditors()) {
+				for (int i=1; i<=2; i++) {
+					balanceSheet.add(new JLabel(textResource.getString("balanceSheetComponent.differenceFoundBetweenBalanceSheetAndInvoices_" + i)),
+							SwingUtils.createGBConstraints(0, row, 4, 1, 0.0, 0.0,
+									GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+					row++;
+				}
+			}
 
-            balanceSheet.add(new JLabel(textResource.getString("balanceSheetComponent.totalCreditors")),
-                    SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 0.0,
-                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-            balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalCreditors().toBigInteger())),
-                    SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 0.0,
-                            GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
-            row++;
+			if (report.totalDebitAccountsDiffersFromTotalDebtors()) {
+				balanceSheet.add(new JLabel(textResource.getString("balanceSheetComponent.totalDebtors")),
+						SwingUtils.createGBConstraints(0, row, 2, 1, 0.0, 0.0,
+								GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+				balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalDebtors().toBigInteger())),
+						SwingUtils.createGBConstraints(2, row, 2, 1, 0.0, 0.0,
+								GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+				row++;
+			}
+
+			if (report.totalDebitAccountsDiffersFromTotalCreditors()) {
+				balanceSheet.add(new JLabel(textResource.getString("balanceSheetComponent.totalCreditors")),
+						SwingUtils.createGBConstraints(0, row, 2, 1, 1.0, 0.0,
+								GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+				balanceSheet.add(new JLabel(Factory.getInstance(AmountFormat.class).formatAmount(report.getTotalCreditors().toBigInteger())),
+						SwingUtils.createGBConstraints(2, row, 2, 1, 1.0, 0.0,
+								GridBagConstraints.WEST, GridBagConstraints.BOTH, 0, 0, 0, 0));
+				row++;
+			}
 		} catch (ServiceException e) {
 			messageDialog.showErrorMessage(e, "gen.internalError");
             close();
