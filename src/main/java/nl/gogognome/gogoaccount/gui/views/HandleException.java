@@ -17,7 +17,7 @@ public class HandleException {
         try {
             runnable.run();
         } catch (DebetAndCreditAmountsDifferException e) {
-            messageDialog.showErrorMessage("ajd.debetAndCreditAmountsDiffer");
+            messageDialog.showErrorMessage("ajd.debitAndCreditAmountsDiffer");
         } catch (Exception e) {
             messageDialog.showErrorMessage(e, "gen.problemOccurred");
         }
@@ -27,7 +27,7 @@ public class HandleException {
         try {
             runnable.run();
         } catch (DebetAndCreditAmountsDifferException e) {
-            messageDialog.showErrorMessage("ajd.debetAndCreditAmountsDiffer");
+            messageDialog.showErrorMessage("ajd.debitAndCreditAmountsDiffer");
         } catch (Exception e) {
             messageDialog.showErrorMessage(e, messageId);
         }

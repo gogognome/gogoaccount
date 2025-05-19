@@ -145,7 +145,7 @@ public class ReportTask implements Task {
                 new int[] { 40, 15, 0, 40, 15 }));
 
         String[] values = new String[5];
-        values[0] = textResource.getString("gen.debet");
+        values[0] = textResource.getString("gen.debit");
         values[1] = "";
         values[2] = null; // invisible column separator
         values[3] = "";
@@ -378,7 +378,7 @@ public class ReportTask implements Task {
             values[1] = "";
             values[2] = textResource.getString("gen.description");
             values[3] = "";
-            values[4] = textResource.getString("gen.debet");
+            values[4] = textResource.getString("gen.debit");
             values[5] = "";
             values[6] = textResource.getString("gen.credit");
             values[7] = "";
@@ -446,7 +446,7 @@ public class ReportTask implements Task {
             values[1] = "";
             values[2] = textResource.getString("gen.description");
             values[3] = "";
-            values[4] = textResource.getString("gen.debet");
+            values[4] = textResource.getString("gen.debit");
             values[5] = "";
             values[6] = textResource.getString("gen.credit");
             values[7] = "";

@@ -84,7 +84,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
         handleException.of(() -> {
             accountListModel.setItems(configurationService.findAllAccounts(document));
 
-            List<String> sides = Arrays.asList(textResource.getString("gen.debet"),
+            List<String> sides = Arrays.asList(textResource.getString("gen.debit"),
                     textResource.getString("gen.credit"));
             sideListModel.setItems(sides);
             sideListModel.setSelectedIndex(0, null);

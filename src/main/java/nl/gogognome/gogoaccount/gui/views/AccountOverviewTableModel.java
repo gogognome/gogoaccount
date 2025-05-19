@@ -40,7 +40,7 @@ public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTab
             new ColumnDefinition<>("gen.description", String.class, 200);
 
     private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> DEBET =
-        ColumnDefinition.<AccountOverviewTableModel.LineInfo>builder("gen.debet", String.class, 100)
+        ColumnDefinition.<AccountOverviewTableModel.LineInfo>builder("gen.debit", String.class, 100)
     		.add(new RightAlignedRenderer()).build();
 
     private final static ColumnDefinition<AccountOverviewTableModel.LineInfo> CREDIT =

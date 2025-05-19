@@ -38,7 +38,7 @@ public class JournalEntryDetailsTableModel extends ListTableModel<JournalEntryDe
 		new ColumnDefinition<JournalEntryDetail>("gen.account", String.class, 300);
 
 	private final static ColumnDefinition<JournalEntryDetail> DEBET =
-		ColumnDefinition.<JournalEntryDetail>builder("gen.debet", String.class, 100)
+		ColumnDefinition.<JournalEntryDetail>builder("gen.debit", String.class, 100)
 			.add(new RightAlignedRenderer()).build();
 
 	private final static ColumnDefinition<JournalEntryDetail> CREDIT =
