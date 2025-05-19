@@ -14,6 +14,7 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 import nl.gogognome.lib.util.Factory;
 
+import java.io.*;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +27,8 @@ import static java.util.Arrays.asList;
  */
 public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTableModel.LineInfo> {
 
-    private static final long serialVersionUID = 1L;
+    @Serial
+	private static final long serialVersionUID = 1L;
 
     private final PartyService partyService;
 
@@ -59,7 +61,7 @@ public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTab
     private Account account;
 
     /** This class contains the information to be shown in a single row of the table. */
-    class LineInfo {
+    static class LineInfo {
     	Date date;
     	String id;
         String description;
@@ -107,12 +109,10 @@ public class AccountOverviewTableModel extends ListTableModel<AccountOverviewTab
 
     @Override
 	public Object getValueAt(int row, int column) {
-    	ColumnDefinition col = getColumnDefinition(column);
+    	ColumnDefinition<?> col = getColumnDefinition(column);
         LineInfo lineInfo = getRow(row);
         if (DATE.equals(col)) {
         	return lineInfo.date;
-        } else if (ID.equals(col)) {
-        	return lineInfo.id;
         } else if (ID.equals(col)) {
         	return lineInfo.id;
         } else if (DESCRIPTION.equals(col)) {

@@ -1,9 +1,6 @@
 package nl.gogognome.gogoaccount.gui.views;
 
-import nl.gogognome.gogoaccount.component.ledger.DebetAndCreditAmountsDifferException;
-import nl.gogognome.lib.swing.MessageDialog;
-
-import java.awt.*;
+import nl.gogognome.gogoaccount.component.ledger.*;
 
 public class HandleException {
 

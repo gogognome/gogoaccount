@@ -21,6 +21,7 @@ import nl.gogognome.lib.text.Amount;
 import nl.gogognome.lib.text.AmountFormat;
 
 import javax.swing.*;
+import java.io.*;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.Locale;
 
 public class EditJournalEntryDetailView extends OkCancelView {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final ConfigurationService configurationService;
@@ -37,13 +39,13 @@ public class EditJournalEntryDetailView extends OkCancelView {
     private final MessageDialog messageDialog;
     private final HandleException handleException;
 
-    private Document document;
+    private final Document document;
     private InvoiceBean invoiceBean;
     private JournalEntryDetail itemToBeEdited;
 
-    private ListModel<Account> accountListModel = new ListModel<>();
-    private StringModel amountModel = new StringModel();
-    private ListModel<String> sideListModel = new ListModel<>();
+    private final ListModel<Account> accountListModel = new ListModel<>();
+    private final StringModel amountModel = new StringModel();
+    private final ListModel<String> sideListModel = new ListModel<>();
 
     private JournalEntryDetail enteredJournalEntryDetail;
 
@@ -125,7 +127,7 @@ public class EditJournalEntryDetailView extends OkCancelView {
     }
 
     /**
-     * Gets the journal item has has been entered.
+     * Gets the journal item has been entered.
      * Its value will be set when the user presses the ok button and the input fields
      * are correct. Otherwise, this variable will be null.
      * @return the entered journal item or null
