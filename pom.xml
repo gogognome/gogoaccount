@@ -74,7 +74,7 @@
                                 <command>font: Arial Bold, 60</command>
                                 <command>text: 40, 450, Gogo Account ${project.version}</command>
                                 <command>font: Arial, 30</command>
-                                <command>text: 40, 500, © 2011-2023 Sander Kooijmans</command>
+                                <command>text: 40, 500, © 2011-2025 Sander Kooijmans</command>
                                 <command>text: 40, 530, https://gogognome.nl</command>
                             </commands>
                         </configuration>
